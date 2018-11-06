@@ -19,7 +19,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
-    packages=['bbpipe', 'bbpipe.sites', 'bbpipe_example'],
+    packages=['bbpipe', 'bbpipe.sites'],
     entry_points={
         'console_scripts':['bbpipe=bbpipe.main:main']
     },
