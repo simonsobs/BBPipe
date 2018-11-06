@@ -1,31 +1,11 @@
 from bbpipe import PipelineStage
-from .types import FitsFile, YamlFile, TextFile, NmtFieldFile
+from .types import FitsFile, TextFile
 
-class MapPreproc(PipelineStage):
+class BBMaskPreproc(PipelineStage):
     """
     Template for a map pre-processing stage
     """
-    name="MapPreproc"
-    inputs=[('raw_splits',FitsFile),('window_function',FitsFile)]
-    outputs=[]#('nmt_fields',NmtFieldFile)]
-    config_options={'purify_b':False}
-
-    def run(self) :
-        for inp,_ in self.inputs :
-            fname=self.get_input(inp)
-            print("Reading "+fname)
-            open(fname)
-
-        for out,_ in self.outputs :
-            fname=self.get_output(out)
-            print("Writing "+fname)
-            open(fname,"w")
-
-class MaskPreproc(PipelineStage):
-    """
-    Template for a map pre-processing stage
-    """
-    name='MaskPreproc'
+    name='BBMaskPreproc'
     inputs= [('binary_mask',FitsFile),('source_data',TextFile)]
     outputs=[('window_function',FitsFile)]
     config_options={'aposize_edges':1.0,

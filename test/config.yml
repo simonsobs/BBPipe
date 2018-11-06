@@ -1,7 +1,7 @@
-MapPreproc:
+BBMapsPreproc:
     purify_b: True
 
-MaskPreproc:
+BBMaskPreproc:
     aposize_edges: 1.0
     aposize_srcs: 0.1
     apotype_edges: 'C1'

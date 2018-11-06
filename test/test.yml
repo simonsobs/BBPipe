@@ -2,7 +2,7 @@
 # stage classes.  Any stages imported in these
 # modules are automatically detected and their names can
 # be used below
-modules: bbpipe_example
+modules: bbpower
 
 # The launcher to use
 # These are defined in bbpipe/sites
@@ -12,9 +12,9 @@ launcher: local
 # The list of stages to run and the number of processors
 # to use for each.
 stages:
-    - name: MapPreproc
+    - name: BBMapsPreproc
       nprocess: 1
-    - name: MaskPreproc
+    - name: BBMaskPreproc
       nprocess: 1
 
 # Definitions of where to find inputs for the overall pipeline.
