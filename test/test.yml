@@ -2,10 +2,10 @@
 # stage classes.  Any stages imported in these
 # modules are automatically detected and their names can
 # be used below
-modules: bb_pipe_example
+modules: bbpipe_example
 
 # The launcher to use
-# These are defined in bb_pipe/sites
+# These are defined in bbpipe/sites
 launcher: local
 
 

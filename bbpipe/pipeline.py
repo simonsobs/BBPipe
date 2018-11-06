@@ -118,7 +118,7 @@ class Pipeline:
             else:
                 print(f"Pipeline queuing stage {stage.name} with {sec.nprocess} processes")
                 future = app(inputs=inputs, outputs=outputs)
-                future._bb_pipe_name = stage.name
+                future._bbpipe_name = stage.name
                 futures.append(future)
                 for i, output in enumerate(stage.output_tags()):
                     data_elements[output] = future.outputs[i]
@@ -128,11 +128,11 @@ class Pipeline:
             try:
                 future.result()
             except parsl.app.errors.AppFailure:
-                stdout_file = f'{log_dir}/{future._bb_pipe_name}.err'
-                stderr_file = f'{log_dir}/{future._bb_pipe_name}.out'
+                stdout_file = f'{log_dir}/{future._bbpipe_name}.err'
+                stderr_file = f'{log_dir}/{future._bbpipe_name}.out'
                 sys.stderr.write(f"""
 *************************************************
-Error running pipeline stage {future._bb_pipe_name}.
+Error running pipeline stage {future._bbpipe_name}.
 
 Standard output and error streams below.
 

@@ -55,7 +55,7 @@ Missing these names on the command line:
         use_mpi = args.get('mpi', False)
         if use_mpi:
             try:
-                # This isn't a bb_pipe dependency, so give a sensible error message if not installed.
+                # This isn't a bbpipe dependency, so give a sensible error message if not installed.
                 import mpi4py.MPI
             except ImportError:
                 print('ERROR: Using --mpi option requires mpi4py to be installed.')

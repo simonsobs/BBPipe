@@ -43,12 +43,12 @@ base_launcher = {
 
 
 def add_site_config(config, nodes, walltime_minutes, partition):
-    script_dir = os.environ.get("BB_PIPE_SCRIPT_DIR", 
+    script_dir = os.environ.get("BBPIPE_SCRIPT_DIR", 
             os.path.join(os.environ["SCRATCH"], "parsl-scripts"))  # default value
     try:
-        setup_script = os.environ["BB_PIPE_SETUP"]
+        setup_script = os.environ["BBPIPE_SETUP"]
     except KeyError:
-        raise KeyError("Please set the environment variable BB_PIPE_SETUP to a script to be sourced when running bb_pipe")
+        raise KeyError("Please set the environment variable BBPIPE_SETUP to a script to be sourced when running bbpipe")
     setup_command = f"""#SBATCH --constraint=haswell                                        
                         source {setup_script}"""
 

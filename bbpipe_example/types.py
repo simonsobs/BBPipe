@@ -71,3 +71,13 @@ class YamlFile(DataFile):
     A data file in yaml format.
     """
     suffix = 'yml'
+
+class NmtFieldFile(DataFile) :
+    """
+    A data file for namaster file structures
+    """
+    suffix = 'nmtf'
+
+    @classmethod
+    def open(cls, path, mode, **kwargs):
+        raise NotImplementedError("Not implemented yet!")
