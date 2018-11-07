@@ -1,0 +1,2 @@
+#[1]-R.A.[deg] [2]-dec.[deg] [3]-size[arcmin]
+12. -20. 2.

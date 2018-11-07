@@ -72,11 +72,11 @@ class YamlFile(DataFile):
     """
     suffix = 'yml'
 
-class NmtFieldFile(DataFile) :
+class DummyFile(DataFile) :
     """
     A data file for namaster file structures
     """
-    suffix = 'nmtf'
+    suffix = 'dum'
 
     @classmethod
     def open(cls, path, mode, **kwargs):

@@ -1,5 +1,6 @@
 from bbpipe import PipelineStage
 from .types import FitsFile, TextFile
+import numpy as np
 
 class BBMaskPreproc(PipelineStage):
     """
@@ -14,15 +15,21 @@ class BBMaskPreproc(PipelineStage):
                     'apotype_srcs':'C1'}
 
     def run(self) :
-        for inp,_ in self.inputs :
-            fname=self.get_input(inp)
-            print("Reading "+fname)
-            open(fname)
+        #Read input mask
+        import healpy as hp #We will want to be more general than assuming HEALPix
+        mask_raw=hp.read_map(self.get_input('binary_mask'),verbose=False)
 
-        for out,_ in self.outputs :
-            fname=self.get_output(out)
-            print("Writing "+fname)
-            open(fname,"w")
+        #Read point source data
+        #Right now this is a simple text file, but this is probably not ideal.
+        ps_ra,ps_dec,ps_size=np.loadtxt(self.get_input('source_data'),unpack=True,ndmin=2)
+
+        #Now we should do stuff (apodization, inverse-variance weighting etc.)
+        #but this is just a placeholder
+        print("BBMaskPreproc currently does nothing")
+
+        #Write window function
+        #Currently just writing the input mask.
+        hp.write_map(self.get_output('window_function'),mask_raw,overwrite=True)
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
