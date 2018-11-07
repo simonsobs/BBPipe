@@ -1,0 +1,9 @@
+*/__pycache__
+dist/
+build/
+BBPipe.egg-info/
+*.pyc
+test/outputs
+test/logs
+log.txt
+runinfo

@@ -23,6 +23,8 @@ Creating a new pipeline stage involves creating a python module. Note that this 
 - Each stage is defined by a class which must inherit from `bbpipe.PipelineStage`. Each class must have its own `name`, `inputs` and `outputs` attributes (essentially the names of the expected input and output data), and a `run` method that executes the stage.
 - The `run` method should use the parent methods from `PipelineStage` to get its inputs and outputs etc.
 
+Have a look at the extended comments in [bbpower_test/mask_preproc.py](bbpower_test/mask_preproc.py) for more details on the structure of any pipeline stage.
+
 To create the yaml file that puts your pipeline together, have a look at the [test file](test/test.yml). This file should contain:
 - A list of modules where the different pipeline stages are to be found.
 - The launcher type (to be used by PARSL to launch each stage). Currently the only defined launcher type is the `local` one (i.e. launch jobs serially in your machine), but more will be defined. They will be located in [`bbpipe/sites`](bbpipe/sites).

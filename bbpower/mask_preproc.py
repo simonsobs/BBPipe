@@ -4,7 +4,7 @@ import numpy as np
 
 class BBMaskPreproc(PipelineStage):
     """
-    Template for a map pre-processing stage
+    Template for a mask pre-processing stage
     """
     name='BBMaskPreproc'
     inputs= [('binary_mask',FitsFile),('source_data',TextFile)]

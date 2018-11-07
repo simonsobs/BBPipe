@@ -10,5 +10,3 @@ If you think something is missing in `BBPipe` or any of the associated pipelines
  - Make a pull request (PR) for your new branch as soon as you're happy to do it. You don't have to finish the work to open the PR. Often it's useful to open PRs early on so other contributors know that you're working on this specific issue. For the same reason, it's probably a good idea to advertise the new work in the slack channel if you think others will be interested.
  - As soon as you think your work is done, ask for volunteers to review your PR. Note that you can nominate specific PR reviewers by clicking on 'Reviewers', on the top right corner of your PR.
  - When your PR gets accepted, merge it onto master!
-
-
