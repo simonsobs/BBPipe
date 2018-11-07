@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Lightweight B-modes pipeline constructor
+B-modes pipeline constructor
 Based on DESC's ceci by F. Lanusse, J. Zuntz and others
 https://github.com/LSSTDESC/ceci
 """
