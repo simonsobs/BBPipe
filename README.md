@@ -30,7 +30,7 @@ To create the yaml file that puts your pipeline together, have a look at the [te
 - The launcher type (to be used by PARSL to launch each stage). Currently the only defined launcher type is the `local` one (i.e. launch jobs serially in your machine), but more will be defined. They will be located in [`bbpipe/sites`](bbpipe/sites).
 - The list of stages that define your pipeline. Note that this list is not related to the order in which the different stages will be executed. This order is automatically determined from the inputs and outputs of each pipeline stage.
 - The overall inputs of the pipeline (accessible to all pipeline stages).
-- A path to another yaml file (`config`) containing configuration options for each individual pipeline stage. Have a look at [`test/config.yml`](test/config.yml) to see an example for our test power spectrum pipeline.
+- A path to another yaml file (`config`) containing configuration options for each individual pipeline stage as well as global options. Have a look at [`test/config.yml`](test/config.yml) to see an example for our test power spectrum pipeline.
 - A value for the `resume` parameter, which determines whether a given stage is run if its outputs already exist.
 - An output directory where the pipeline outputs will be stored.
 
