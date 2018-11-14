@@ -1,3 +1,7 @@
+global:
+    bpw_edges: [2,30,50]
+    beam_correct: True
+
 BBMapsPreproc:
     purify_b: True
 
@@ -8,16 +12,13 @@ BBMaskPreproc:
     apotype_srcs: 'C1'
 
 BBPowerSpecter:
-    bpw_edges: [2,30,50]
-    beam_correct: True
+    pcl_code: 'NaMaster'
 
 BBNullTester:
-    bpw_edges: [2,30,50]
-    beam_correct: True
+    compute_statistics: False
 
 BBCovFeFe:
-    bpw_edges: [2,30,50]
-    beam_correct: True
+    analytic_covariance: False
 
 BBCompSep:
     foreground_model: 'test/inputs/fg_model.yml'

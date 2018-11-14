@@ -10,8 +10,9 @@ class BBCovFeFe(PipelineStage):
             ('mode_coupling_matrix',DummyFile)]
     outputs=[('sims_powspec_list',TextFile),('covariance_matrix',DummyFile)]
     #Should we add a transfer function here?
-    config_options={'bpw_edges':[2,30,50,70,90,110,130,150,170,190,210,230,250,270,290,350,1000],
-                    'beam_correct':True}
+    config_options={'bpw_edges':[90,110,130],
+                    'beam_correct':True,
+                    'analytic_covariance':False}
 
     def run(self) :
         #This stage currently does nothing whatsoever

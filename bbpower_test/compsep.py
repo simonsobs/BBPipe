@@ -9,7 +9,7 @@ class BBCompSep(PipelineStage):
     inputs=[('splits_info',YamlFile),('power_spectra_splits',DummyFile),
             ('covariance_matrix',DummyFile)]
     outputs=[('param_chains',DummyFile)]
-    config_options={}
+    config_options={'foreground_model':'none'}
 
     def run(self) :
         #This stage currently does nothing whatsoever
