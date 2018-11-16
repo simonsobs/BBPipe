@@ -155,8 +155,6 @@ Missing these names on the command line:
             kwargs['comm'] = self.comm
 
             # XXX: This is also not a dependency, but it should be.
-            #      Or even better would be to make it a dependency of descformats where it
-            #      is actually used.
             import h5py
             if not h5py.get_config().mpi:
                 print(dedent("""\
