@@ -7,6 +7,7 @@ To install `BBPipe`, just clone this repository and run
 ```bash
 python setup.py install
 ```
+(add `--user` if you don't have permissions, which is probably the case at e.g. NERSC).
 
 Once installed, you can test the installation by running it on the current [test power-spectrum pipeline](bbpower_test) (mostly made out of placeholders). To do so, type:
 ```bash
