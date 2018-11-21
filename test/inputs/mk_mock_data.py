@@ -26,9 +26,34 @@ def get_sky_sim_gaus(nside,
                      ABB_dust=3.8,AEE_dust=3.8,alpha_dust=-0.42,
                      beta_dust=1.59,temp_dust=20.,nu0_dust=353.,
                      freqs=[0.],seed_cmb=None,seed_fg=None,need_fg=True) :
+"""
+Generates a Gaussian sky simulation containing CMB and foregrounds.
+nside : resolution parameter
+r_cmb : tensor-to-scalar ratio
+ABB_sync : amplitude of the synchrotron BB power spectrum at the reference frequency and ell=80. The model is:
+                     l*(l+1)*C_l(nu1,nu2) = A_BB * (l/80.)^alpha_sync * 
+                            S_sync(nu1,beta_sync,curv_sync) * S_sync(nu1,beta_sync,curv_sync)/S_sync(nu_ref,beta_sync,curv_sync)^2
+           where S_sync is the synchrotron SED (a curved power law).
+AEE_sync : same as ABB_sync for EE.
+alpha_sync : spectral tilt of the synchrotron power spectrum.
+beta_sync : synchrotron spectral index.
+curv_sync : synchrotron curvature index.
+nu0_sync : synchrotron reference frequency.
+ABB_dust : same as ABB_sync for dust.
+AEE_dust : same as AEE_sync for dust.
+alpha_dust : same as alpha_sync for dust.
+beta_dust : dust spectral index.
+temp_dust : dust temperature.
+nu0_dust : dust reference frequency.
+freqs : list of frequencies at which to output maps
+seed_cmb : seed for the CMB simulation
+seed_fg : seed for the foreground simulation
+need_fg : set to False if you only want CMB maps
+"""
     if seed_cmb is not None :
         np.random.seed(seed_cmb)
         
+    #Set CMB power spectra
     nell=3*nside
     nnu=len(freqs)
     lp,cteb_prim=read_cl_teb("data/planck1_r1p00_tensCls.dat")
@@ -49,6 +74,7 @@ def get_sky_sim_gaus(nside,
         if seed_fg is not None :
             np.random.seed(seed_fg)
         
+        #Set foreground power spectra
         ell=np.arange(nell)
         dl_prefac=2*np.pi/((ell+0.01)*(ell+1))
         clZERO=np.zeros_like(ell)
@@ -75,7 +101,8 @@ def get_sky_sim_gaus(nside,
         clt_dust[2]=clBB_dust[None,None,:]*spec_dust[:,None,None]*spec_dust[None,:,None]
         input_dust={'spec':spec_dust,'ctt':clTT_dust,'cte':clTE_dust,'cee':clEE_dust,'cbb':clBB_dust,
                     'ctot':clt_dust}
-
+        
+        #Generate foreground maps
         amp_sync=np.array(hp.synfast([clTT_sync,clEE_sync,clBB_sync,clTE_sync,clZERO,clZERO],
                                      nside,pol=True,new=True,verbose=False))
         mp_sync=amp_sync[None,:,:]*spec_sync[:,None,None]
@@ -84,17 +111,21 @@ def get_sky_sim_gaus(nside,
         mp_dust=amp_dust[None,:,:]*spec_dust[:,None,None]
     else :
         input_sync=None; amp_sync=0; mp_sync=0; input_dust=None; amp_dust=0; mp_dust=0;
+    #Generate CMB maps
     amp_cmb=np.array(hp.synfast([clTT_cmb,clEE_cmb,clBB_cmb,clTE_cmb,clZERO,clZERO],
                                 nside,pol=True,new=True,verbose=False))
     mp_cmb=amp_cmb[None,:,:]*spec_cmb[:,None,None]
 
+    #Return CMB and foregrounds separately.
     return mp_cmb,mp_dust+mp_sync
 
 def get_nhits() :
+    #Read nhits map
     fname_out='data/norm_nHits_SA_35FOV_G.fits'
     return hp.ud_grade(hp.read_map(fname_out,verbose=False),
                        nside_out=nside)
 def get_mask() :
+    #Generate mask
     nh=get_nhits()
     nh/=np.amax(nh)
     msk=np.zeros(len(nh))
@@ -103,6 +134,14 @@ def get_mask() :
     return msk
 
 def get_noise_sim(nside,sensitivity=2,knee=1,ny_lf=1.,seed=None) :
+    """
+    Generate noise realization.
+    nside : resolution parameter
+    sensitivity : sensitivity level (0, 1 or 2)
+    knee : ell_knee model (0 or 1)
+    ny_lf : number of years spent in LF channel
+    seed : seed for noise realization
+    """
     if seed is not None :
         np.random.seed(seed)
     freqs=v3.so_V3_SA_bands()
@@ -139,15 +178,19 @@ def get_noise_sim(nside,sensitivity=2,knee=1,ny_lf=1.,seed=None) :
         
     return mps_no,msk
 
+#Number of splits to generate
 nsplits=2
 nside=64
 nus=v3.so_V3_SA_bands()
+#Generate foreground and CMB maps
 mp_cmb,mp_fgs=get_sky_sim_gaus(nside,0,0.5,freqs=nus)
 
 #Write maps
 for isplit in range(nsplits) :
+    #Generate noise realizations
     mp_noi,mask=get_noise_sim(nside)
     for inu,nu in enumerate(nus) :
+        #Add maps and write to file
         hp.write_map("map_split%dof%d_nu%dof%d.fits"%(isplit+1,nsplits,inu+1,len(nus)),
                      mp_cmb[inu]+mp_fgs[inu]+mp_noi[inu],overwrite=True)
 
