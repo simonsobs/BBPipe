@@ -74,7 +74,7 @@ class YamlFile(DataFile):
 
 class DummyFile(DataFile) :
     """
-    A data file for namaster file structures
+    A dummy type
     """
     suffix = 'dum'
 
