@@ -1,8 +1,8 @@
 import numpy as np
 # constants
 TCMB = 2.725  # Kelvin
-hplanck = 6.626068e-34  # MKS
-kboltz = 1.3806503e-23  # MKS
+hplanck = 6.626070150e-34  # MKS
+kboltz = 1.380649e-23  # MKS
 clight = 299792458.0  # MKS
 # consider using numba or cython...or really F90 or C++
 
