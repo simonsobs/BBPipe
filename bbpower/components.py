@@ -23,69 +23,21 @@ def normed_synch(nu, beta):
     nu0 = 30.e9
     return (nu/nu0)**beta
 
+def synch(nu, beta):
+    nu0 = 30.e9
+    units = blackbody(nu0, TCMB) / blackbody(nu, TCMB)
+    return (nu/nu0)**beta * units
+
 def normed_dust(nu, beta):
     # biceps model for mbb (I think)
     Td = 19.6 # K
     nu0 = 353.e9
-    return (nu/nu0)**(Bd-2.) * blackbody(nu, Td) / blackbody(nu0, Td)
+    return (nu/nu0)**(beta-2.) * blackbody(nu, Td) / blackbody(nu0, Td)
     
-
-def model(params):
-    # offensively bad model here, but it is just to test our understanding of the data and usage of sacc. 
-    # need to implement CMB / figure out how to do unit conversions. 
-    r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
-    
-    # load bmode spectrum
-    # cmb_bb = np.load(bmodes)
-    
-    # precompute SEDs
-    empty = np.empty(len(tns)) # number of datasets = 12
-    seds = {'synch':[], 'dust': [], 'cmb':[]}
-    for tn in tns:
-        # integrate bandpasses 
-        nus = bpasses[tn][0]
-        bpass = bpasses[tn][1]
-        nom_synch = fgs.normed_synch(nus, beta_s)
-        nom_dust = fgs.normed_dust(nus, beta_d)
-        seds['synch'][tn] = np.dot(nom_synch, bpass)
-        seds['dust'][tn] = np.dot(nom_dust, bpass)
-        # cmb
-    # seds have shape 12
-    
-    # precompute power laws in ell 
-    nom_synch_spectrum = fgs.normed_plaw(bpw_l, alpha_s)
-    nom_dust_spectrum = fgs.normed_plaw(bpw_l, alpha_d)
-    nom_cross_spectrum = np.sqrt(nom_synch_spectrum * nom_dust_spectrum)
-    # cmb
-    # these have length 600
-    
-    cls_array_list = [] 
-    for t1,t2,typ,ells,ndx in order:
-        # questionable lmao 
-        if typ == b'BB':
-            # multiply and sum (and get the right order and such)
-            windows = s.binning.windows[ndx]
-            synch_spectrum = [np.dot(w, nom_synch_spectrum) for w in windows]
-            dust_spectrum = [np.dot(w, nom_dust_spectrum) for w in windows]
-            cross_spectrum = [np.dot(w, nom_cross_spectrum) for w in windows]        
-            #cmb 
-            # these have length 9 
-            
-            fs1 = seds['synch'][t1]
-            fs2 = seds['synch'][t2]
-            fd1 = seds['dust'][t1]
-            fd2 = seds['dust'][t2]
-            
-            synch = A_s * fs1*fs2 * synch_spectrum
-            dust = A_d * fd1*fd2 * dust_spectrum
-            cross = np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
-            #cmb 
-            
-            model = cmb + synch + dust + cross
-            
-            cls_array_list.append(model)
-    
-    return cls_array_list.reshape(len(indx), ) 
-
-
+def dust(nu, beta):
+    # biceps model for mbb (I think)
+    Td = 19.6 # K
+    nu0 = 353.e9
+    units = blackbody(nu0, TCMB) / blackbody(nu, TCMB)
+    return (nu/nu0)**(beta-2.) * blackbody(nu, Td) / blackbody(nu0, Td) * units
 
