@@ -23,7 +23,20 @@ class BBCompSep(PipelineStage):
         self.order=self.s.sortTracers()
 
         #Get bandpasses
-        self.bpasses=[[t.z,t.Nz] for t in self.s.tracers]
+        self.bpasses=[]
+        for t in self.s.tracers :
+            #Frequencies
+            nu=t.z
+            #Frequency intervals
+            #TODO: this is hacky. We probably want dnu to be stored by SACC too
+            #      right now this is a patch caused by how the BICEP pipeline does this.
+            dnu=np.zeros_like(nu);
+            dnu[1:-1]=0.5*(nu[2:]-nu[:-2]);
+            dnu[0]=nu[1]-nu[0]; 
+            dnu[-1]=nu[-1]-nu[-2];
+            #Bandpass
+            bnu=t.Nz
+            self.bpasses.append([nu,dnu,bnu])
 
         #Get bandpowers
         self.bpw_l=self.s.binning.windows[0].ls
