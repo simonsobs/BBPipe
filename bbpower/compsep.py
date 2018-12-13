@@ -96,12 +96,11 @@ class BBCompSep(PipelineStage):
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
-            bpass_integration = dnu*nus*nus*bpass
+            bpass_integration = dnu*bpass
     
             cmb_thermo_units = fgs.normed_cmb_thermo_units(nus)
             cmb_int = np.dot(bpass_integration, cmb_thermo_units)
             
-            # TODO:make this less shitty
             cmb_synch_norm = fgs.normed_cmb_thermo_units(30.e9)
             cmb_dust_norm = fgs.normed_cmb_thermo_units(353.e9)
             
@@ -131,7 +130,7 @@ class BBCompSep(PipelineStage):
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
-            bpass_integration = dnu*nus*nus*bpass
+            bpass_integration = dnu*bpass
 
             nom_synch = fgs.normed_synch(nus, beta_s)
             nom_dust = fgs.normed_dust(nus, beta_d)
@@ -171,7 +170,7 @@ class BBCompSep(PipelineStage):
                 
                 synch = A_s * fs1*fs2 * synch_spectrum
                 dust = A_d * fd1*fd2 * dust_spectrum
-                cross = np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
+                cross = epsilon * np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
                 
                 model = cmb_bb + synch + dust + cross
                 cls_array_list.append(model)
@@ -181,16 +180,26 @@ class BBCompSep(PipelineStage):
     def lnpriors(self, params):
         # bad parameters are bad
         r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
-        
+
+        prior = 0
+        if r < 0:
+            return -np.inf
         if A_s < 0:
             return -np.inf
         if A_d < 0:
             return -np.inf
-        if r < 0:
+        bs0 = -3.
+        prior += -0.5 * (beta_s - bs0)**2 / (0.3)**2
+        bd0 = 1.6
+        prior += -0.5 * (beta_d - bd0)**2 / (0.1)**2
+        
+        if alpha_s > 0 or alpha_s < -1.:
+            return -np.inf
+        if alpha_d > 0 or alpha_d < -1.:
             return -np.inf
         if np.abs(epsilon) > 1:
             return -np.inf
-        return 0.
+        return prior
     
     def lnlike(self, params):
         model_cls = self.model(params)

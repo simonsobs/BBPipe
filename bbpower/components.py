@@ -8,7 +8,7 @@ clight = 299792458.0  # MKS
 def normed_cmb_thermo_units(nu):
     X = hplanck * nu / (kboltz * TCMB)
     eX = np.exp(X)
-    return eX * (X / (eX - 1.))**2 
+    return eX * X**4 / (eX - 1.)**2 
 
 def normed_plaw(ell, alpha):
     ell0 = 80.
@@ -16,15 +16,14 @@ def normed_plaw(ell, alpha):
 
 def normed_synch(nu, beta):
     nu0 = 30.e9
-    return (nu/nu0)**beta
+    return (nu/nu0)**(2.+beta)
 
 def normed_dust(nu, beta):
-    # biceps model for mbb (I think)
     Td = 19.6 # K
     nu0 = 353.e9
     X = hplanck * nu / (kboltz * Td)
     X0 = hplanck * nu0 / (kboltz * Td)
-    return (nu/nu0)**(1.+beta) * (np.exp(X0) - 1.) / (np.exp(X) - 1.)
+    return (nu/nu0)**(3.+beta) * (np.exp(X0) - 1.) / (np.exp(X) - 1.)
 
 
 # don't need these 
