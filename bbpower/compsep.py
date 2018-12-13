@@ -3,6 +3,7 @@ from .types import DummyFile
 from sacc.sacc import SACC
 import numpy as np
 import components as fgs
+import emcee
 
 class BBCompSep(PipelineStage):
     """
@@ -26,7 +27,7 @@ class BBCompSep(PipelineStage):
         self.bpasses=[]
         for t in self.s.tracers :
             #Frequencies
-            nu=t.z
+            nu=t.z*1.e9
             #Frequency intervals
             #TODO: this is hacky. We probably want dnu to be stored by SACC too
             #      right now this is a patch caused by how the BICEP pipeline does this.
@@ -62,15 +63,17 @@ class BBCompSep(PipelineStage):
         self.n_tracers = np.arange(12) # hard coded number of data sets.. can calculate from sacc I'm sure. 
 
         self.indx = []
-        for t1,t2,typ,ells,ndx in order:
+        for t1,t2,typ,ells,ndx in self.order:
             if typ == b'BB':
                 self.indx+=list(ndx)
 
-        self.bbdata = self.data[indx]
-        self.bbcovar = self.covar[indx][:, indx]
+        self.bbdata = self.data[self.indx]
+        self.bbcovar = self.covar[self.indx][:, self.indx]
+        self.invcov = np.linalg.solve(self.bbcovar, np.identity(len(self.bbcovar)))
+        # check this inverse is good? 
 
         # Load CMB B-mode data
-        # TODO: Incorporate into the pipeline. 
+        # TODO: Incorporate loading into the pipeline?
         # check units 
         # strong assumption that this file is sampled at the same ells as the bandpass_l (which is true for now)
         # otherwise we will have to interpolate. That's yucky though so better to enforce this sampling. 
@@ -84,7 +87,36 @@ class BBCompSep(PipelineStage):
         self.cmb_bblensing = cmb_lensingfile[:, 3][mask]
         return
 
+    def precompute_units(self):
+        # making things complicated now for when we generalize...
+        # in any case. Just computing the units for the bandpass integral
+        synch_units = []
+        dust_units = []
+        for tn in self.n_tracers:
+            nus = self.bpasses[tn][0]
+            bpass = self.bpasses[tn][1]
+            dnu = self.bpasses[tn][2]
+            bpass_integration = dnu*nus*nus*bpass
+    
+            cmb_thermo_units = fgs.normed_cmb_thermo_units(nus)
+            cmb_int = np.dot(bpass_integration, cmb_thermo_units)
+            
+            # TODO:make this less shitty
+            cmb_synch_norm = fgs.normed_cmb_thermo_units(30.e9)
+            cmb_dust_norm = fgs.normed_cmb_thermo_units(353.e9)
+            
+            synch_units.append(cmb_int / cmb_synch_norm)
+            dust_units.append(cmb_int / cmb_dust_norm)
+
+        self.cmb_units = {'synch_units':np.asarray(synch_units), \
+                          'dust_units':np.asarray(dust_units)}
+        return
+        
+
     def model(self, params):
+        # TODO: generalize 
+        # break into SED and harmonic terms
+
         r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
         
         # CMB model
@@ -92,25 +124,31 @@ class BBCompSep(PipelineStage):
         
         # precompute SEDs
         # seds will have shape 12 = len(tns)
-        fgseds = {'synch':[], 'dust': []}
+        synch_seds = []
+        dust_seds = []
         for tn in self.n_tracers:
             # integrate bandpasses 
-            nus = bpasses[tn][0]
-            bpass = bpasses[tn][1]
+            nus = self.bpasses[tn][0]
+            bpass = self.bpasses[tn][1]
+            dnu = self.bpasses[tn][2]
+            bpass_integration = dnu*nus*nus*bpass
 
-            # unit issue?
-            #blackbody = fgs.blackbody(nus, TCMB)
-        
-            #nom_synch = fgs.normed_synch(nus, beta_s)
-            #nom_dust = fgs.normed_dust(nus, beta_d)
-            nom_synch = fgs.synch(nus, beta_s)
-            nom_dust = fgs.dust(nus, beta_d)
+            nom_synch = fgs.normed_synch(nus, beta_s)
+            nom_dust = fgs.normed_dust(nus, beta_d)
 
-            fgseds['synch'].append(np.dot(nom_synch, bpass))
-            fgseds['dust'].append(np.dot(nom_dust, bpass))
+            synch_units = self.cmb_units['synch_units'][tn]
+            dust_units = self.cmb_units['dust_units'][tn]
+
+            synch_int = np.dot(nom_synch, bpass_integration) / synch_units
+            dust_int = np.dot(nom_dust, bpass_integration) / dust_units
+            
+            synch_seds.append(synch_int)
+            dust_seds.append(dust_int)
+
+        fgseds = {'synch':np.asarray(synch_seds), \
+                  'dust':np.asarray(dust_seds)}
         
         # precompute power laws in ell 
-        # these have length 600
         nom_synch_spectrum = fgs.normed_plaw(self.bpw_l, alpha_s)
         nom_dust_spectrum = fgs.normed_plaw(self.bpw_l, alpha_d)
         nom_cross_spectrum = np.sqrt(nom_synch_spectrum * nom_dust_spectrum)
@@ -121,10 +159,10 @@ class BBCompSep(PipelineStage):
                 # Integrate window functions
                 # these have length 9 (number of bicep ell bins)
                 windows = self.s.binning.windows[ndx]
-                synch_spectrum = np.asarray([np.dot(w, nom_synch_spectrum) for w in windows])
-                dust_spectrum = np.asarray([np.dot(w, nom_dust_spectrum) for w in windows])
-                cross_spectrum = np.asarray([np.dot(w, nom_cross_spectrum) for w in windows])
-                cmb_bb = np.asarray([np.dot(w, cmb_bmodes) for w in windows])
+                synch_spectrum = np.asarray([np.dot(w.w, nom_synch_spectrum) for w in windows])
+                dust_spectrum = np.asarray([np.dot(w.w, nom_dust_spectrum) for w in windows])
+                cross_spectrum = np.asarray([np.dot(w.w, nom_cross_spectrum) for w in windows])
+                cmb_bb = np.asarray([np.dot(w.w, cmb_bmodes) for w in windows])
                 
                 fs1 = fgseds['synch'][t1]
                 fs2 = fgseds['synch'][t2]
@@ -138,32 +176,47 @@ class BBCompSep(PipelineStage):
                 model = cmb_bb + synch + dust + cross
                 cls_array_list.append(model)
         
-        return np.asarray(cls_array_list).reshape(len(indx), ) 
+        return np.asarray(cls_array_list).reshape(len(self.indx), ) 
 
-    def lnpriors(self):
+    def lnpriors(self, params):
         # bad parameters are bad
-        # break if inf
-        return 
+        r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
+        
+        if A_s < 0:
+            return -np.inf
+        if A_d < 0:
+            return -np.inf
+        if r < 0:
+            return -np.inf
+        if np.abs(epsilon) > 1:
+            return -np.inf
+        return 0.
     
-    def lnprob(self, params):
-        model_cls = self.model(params)
-        # do we need to invert this covariance matrix.....??
-        return -0.5 * np.mat(self.bbdata - model_cls) * np.mat(self.bbcovar) * np.mat(self.bbdata - model_cls).T
-
     def lnlike(self, params):
-        priors = self.lnpriors()
-        lnprob = self.lnprob(params)
-        return priors + lnprob
+        model_cls = self.model(params)
+        return -0.5 * np.mat(self.bbdata - model_cls) * np.mat(self.invcov) * np.mat(self.bbdata - model_cls).T
 
-    def covfefe_sampler(self):
-        # import emcee
-        # emcee some shit
-        # sampler.sample(stuff, model, params)
+    def lnprob(self, params):
+        prior = self.lnpriors(params)
+        if not np.isfinite(prior):
+            return -np.inf
+        lnprob = self.lnlike(params)
+        return prior + lnprob
+
+    def emcee_LOL_sampler(self):
+        ndim, nwalkers = 8, 128
+        popt = [1., 1., 1., -3., 1.5, -0.5, -0.5, 0.5]
+        pos = [popt * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, args=[params])
+        sampler.run_mcmc(pos, 2**5);
+        return sampler
+
 
     def run(self) :
         # First, read SACC file containing reduced power spectra,
         # bandpasses, bandpowers and covariances.
         self.parse_sacc_file()
+        self.precompute_units()
             
         #This stage currently does nothing whatsoever
 
