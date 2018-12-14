@@ -20,11 +20,11 @@ tracers=[get_tracer_from_name(t,e) for t,e in zip(tracer_names,exp_names)]
 
 #Mean vector
 dv=np.loadtxt("BK15_cosmomc/data/BK15/BK15_cl_hat.dat",unpack=True)[1:]
-nells=dv.shape[-1]
+ncls,nells=dv.shape
 meanvec=sacc.MeanVec(dv.flatten())
 
 #Precision matrix
-precis=sacc.Precision(np.loadtxt("BK15_cosmomc/data/BK15/BK15_covmat_dust.dat",unpack=True))
+precis=sacc.Precision(np.transpose(np.loadtxt("BK15_cosmomc/data/BK15/BK15_covmat_dust.dat",unpack=True).reshape([nells,ncls,nells,ncls]),axes=[1,0,3,2]))
 
 #Binning
 ls=np.loadtxt("BK15_cosmomc/data/BK15/windows/BK15_bpwf_bin1.txt",unpack=True)[0]
