@@ -12,7 +12,7 @@ class BBCompSep(PipelineStage):
     name="BBCompSep"
     inputs=[('sacc_file',SACC)]
     outputs=[('param_chains',DummyFile)]
-    config_options={'foreground_model':'none'}
+    config_options={'foreground_model':{'components': ['dust', 'synch']}, 'power_spectrum_options':{'BB':True}}
 
     def parse_sacc_file(self) :
         #Read sacc file
