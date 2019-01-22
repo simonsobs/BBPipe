@@ -12,21 +12,15 @@ class BBCompSep(PipelineStage):
     name="BBCompSep"
     inputs=[('sacc_file',SACC)]
     outputs=[('param_chains',DummyFile)]
-    config_options={'foreground_model':'none'}
+    # We should load all the options like this. Foreground models, parameters, priors, data sets to consider, etc etc.
+    config_options={'foreground_model':{'components': ['dust', 'synch']}, 'power_spectrum_options':{'BB':True}}
 
     def parse_sacc_file(self) :
-        #Read sacc file
         self.s=SACC.loadFromHDF(self.get_input('sacc_file'))
-        #This just prints information about the contents of this file
-        #self.s.printInfo()
-
-        #Get power spectrum ordering
         self.order=self.s.sortTracers()
 
-        #Get bandpasses
         self.bpasses=[]
         for t in self.s.tracers :
-            #Frequencies
             nu=t.z*1.e9
             #Frequency intervals
             #TODO: this is hacky. We probably want dnu to be stored by SACC too
@@ -35,47 +29,32 @@ class BBCompSep(PipelineStage):
             dnu[1:-1]=0.5*(nu[2:]-nu[:-2]);
             dnu[0]=nu[1]-nu[0]; 
             dnu[-1]=nu[-1]-nu[-2];
-            #Bandpass
+
             bnu=t.Nz
             self.bpasses.append([nu,dnu,bnu])
 
-        #Get bandpowers
         self.bpw_l=self.s.binning.windows[0].ls
         # We're assuming that all bandpowers are sampled at the same values of ell.
         # This is the case for the BICEP data and we may enforce it, but it is not
         # enforced within SACC.
-        # we will not need this in fact. I am loading them one at a time. 
-        #self.bpw_w=np.array([w.w for w in self.s.binning.windows])
-        # At this point self.bpw_w is an array of shape [n_bpws,n_ells], where 
-        # n_bpws is the number of power spectra stored in this file.
-
-        #Get data vector
         self.data=self.s.mean.vector
-
-        #Get covariance matrix
-        self.covar=self.s.precision.getCovarianceMatrix().reshape((2700, 2700)) #sorry
+        self.covar=self.s.precision.getCovarianceMatrix()
         # TODO: At this point we haven't implemented any scale cuts, or cuts
         # on e.g. using only BB etc.
         # This could be done here with some SACC routines if needed.
-
-        # Grabbing BB data only. 
-        # Need to organize this better. 
         self.n_tracers = np.arange(12) # hard coded number of data sets.. can calculate from sacc I'm sure. 
-
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
             if typ == b'BB':
                 self.indx+=list(ndx)
-
         self.bbdata = self.data[self.indx]
         self.bbcovar = self.covar[self.indx][:, self.indx]
         self.invcov = np.linalg.solve(self.bbcovar, np.identity(len(self.bbcovar)))
         # check this inverse is good? 
-
         # Load CMB B-mode data
         # TODO: Incorporate loading into the pipeline?
         # check units 
-        # strong assumption that this file is sampled at the same ells as the bandpass_l (which is true for now)
+        # assumption that this file is sampled at the same ells as the bandpass_l (which is true for now)
         # otherwise we will have to interpolate. That's yucky though so better to enforce this sampling. 
         cmb_bbfile = np.loadtxt('/Users/abitbol/code/self_calibration_fg/data/camb_lens_r1.dat')
         cmb_lensingfile = np.loadtxt('/Users/abitbol/code/self_calibration_fg/data/camb_lens_nobb.dat')
@@ -88,8 +67,6 @@ class BBCompSep(PipelineStage):
         return
 
     def precompute_units(self):
-        # making things complicated now for when we generalize...
-        # in any case. Just computing the units for the bandpass integral
         synch_units = []
         dust_units = []
         for tn in self.n_tracers:
@@ -180,26 +157,16 @@ class BBCompSep(PipelineStage):
     def lnpriors(self, params):
         # bad parameters are bad
         r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
-
-        prior = 0
-        if r < 0:
-            return -np.inf
+        
         if A_s < 0:
             return -np.inf
         if A_d < 0:
             return -np.inf
-        bs0 = -3.
-        prior += -0.5 * (beta_s - bs0)**2 / (0.3)**2
-        bd0 = 1.6
-        prior += -0.5 * (beta_d - bd0)**2 / (0.1)**2
-        
-        if alpha_s > 0 or alpha_s < -1.:
-            return -np.inf
-        if alpha_d > 0 or alpha_d < -1.:
+        if r < 0:
             return -np.inf
         if np.abs(epsilon) > 1:
             return -np.inf
-        return prior
+        return 0.
     
     def lnlike(self, params):
         model_cls = self.model(params)
@@ -227,8 +194,6 @@ class BBCompSep(PipelineStage):
         self.parse_sacc_file()
         self.precompute_units()
             
-        #This stage currently does nothing whatsoever
-
         #Write outputs
         for out,_ in self.outputs :
             fname=self.get_output(out)

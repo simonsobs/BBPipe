@@ -3,7 +3,7 @@ dist/
 build/
 BBPipe.egg-info/
 *.pyc
-test/outputs
-test/logs
+*/outputs
+*/logs
 log.txt
 runinfo
