@@ -3,4 +3,4 @@ global:
     beam_correct: True
 
 BBCompSep:
-    foreground_model: 'test/inputs/fg_model.yml'
+    foreground_model: 'fg_model.yml'

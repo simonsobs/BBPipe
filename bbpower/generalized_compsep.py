@@ -8,11 +8,11 @@ import emcee
 
 class BBCompSep(PipelineStage):
     """
-    Template for a component separation stage
+    Component separation stage
     """
     name = "BBCompSep"
-    inputs = [('sacc_file',SACC)]
-    outputs = [('param_chains',DummyFile)]
+    inputs = [('sacc_file', SACC)]
+    outputs = [('param_chains', DummyFile)]
     config_options = {'foreground_model':{'components': ['dust', 'synch']}, 'power_spectrum_options':{'BB':True}}
 
     def setup_compsep(self):
@@ -22,6 +22,7 @@ class BBCompSep(PipelineStage):
         return
 
     def parse_sacc_file(self):
+        # We're assuming that all bandpowers are sampled at the same values of ell.
         self.s = SACC.loadFromHDF(self.get_input('sacc_file'))
         self.order = self.s.sortTracers()
 
@@ -38,7 +39,6 @@ class BBCompSep(PipelineStage):
             self.bpasses.append([nu, dnu, bnu])
 
         self.bpw_l = self.s.binning.windows[0].ls
-        # We're assuming that all bandpowers are sampled at the same values of ell.
         self.data = self.s.mean.vector
         #self.covar = self.s.precision.getCovarianceMatrix()
         self.covar = self.s.precision.getCovarianceMatrix().reshape((2700, 2700))
@@ -65,6 +65,7 @@ class BBCompSep(PipelineStage):
         return
 
     def load_foregrounds(self):
+        # load here 
         synch_units = []
         dust_units = []
         for tn in self.n_tracers:
@@ -92,6 +93,7 @@ class BBCompSep(PipelineStage):
         
 
     def model(self, params):
+        # load here? 
         r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
         
         cmb_bmodes = r * self.cmb_bbr + self.cmb_bblensing
@@ -147,6 +149,7 @@ class BBCompSep(PipelineStage):
         return np.asarray(cls_array_list).reshape(len(self.indx), ) 
 
     def lnpriors(self, params):
+        # can we do anything here? 
         r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
 
         prior = 0
@@ -180,18 +183,19 @@ class BBCompSep(PipelineStage):
         lnprob = self.lnlike(params)
         return prior + lnprob
 
-    def emcee_LOL_sampler(self, n_iters=2**4):
+    def emcee_sampler(self, n_iters=2**4):
         ndim, nwalkers = 8, 128
         popt = [1., 1., 1., -3., 1.5, -0.5, -0.5, 0.5]
         pos = [popt * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, args=[params])
         sampler.run_mcmc(pos, n_iters);
+        np.save('somecoolfilename_samplerchain', sampler.chain)
         return sampler
 
 
     def run(self) :
         self.setup_compsep()
-        self.emcee_LOL_sampler(n_iters)
+        self.emcee_sampler(n_iters)
             
         # this part doesn't work yet
         for out,_ in self.outputs :
