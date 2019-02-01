@@ -2,7 +2,8 @@ from bbpipe import PipelineStage
 from .types import DummyFile
 from sacc.sacc import SACC
 import numpy as np
-import components as fgs
+from . import components as fgs
+#import components as fgs
 from fgbuster import CMB, Dust, Synchrotron
 import emcee
 
@@ -46,7 +47,7 @@ class BBCompSep(PipelineStage):
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
             if typ == b'BB':
-                self.indx + =list(ndx)
+                self.indx += list(ndx)
         self.bbdata = self.data[self.indx]
         self.bbcovar = self.covar[self.indx][:, self.indx]
         self.invcov = np.linalg.solve(self.bbcovar, np.identity(len(self.bbcovar)))
@@ -187,7 +188,7 @@ class BBCompSep(PipelineStage):
         ndim, nwalkers = 8, 128
         popt = [1., 1., 1., -3., 1.5, -0.5, -0.5, 0.5]
         pos = [popt * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, args=[params])
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
         np.save('somecoolfilename_samplerchain', sampler.chain)
         return sampler
@@ -195,7 +196,7 @@ class BBCompSep(PipelineStage):
 
     def run(self) :
         self.setup_compsep()
-        self.emcee_sampler(n_iters)
+        self.emcee_sampler(2**4)
             
         # this part doesn't work yet
         for out,_ in self.outputs :

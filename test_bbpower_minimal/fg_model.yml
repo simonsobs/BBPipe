@@ -1,7 +1,18 @@
-Components:
-    Dust: 'Dust' 
-    Synchrotron: 'Synchrotron'
+# How should we do this. 
+# Named from FGBuster
+Dust:
+    free_parameters: "beta_d", "alpha_d", "amp_d"
+    fixed_parameters: {"temp_d":19.6}
+    priors: {"beta_d":[1., 1.6, 2.]}
 
+Synchrotron: 
+    free_parameters: "beta_s", "alpha_s", "amp_s"
+    fixed_parameters: 
+    priors: {"beta_pl":[-4., -3., -2.]}
+    
+    
 
-#or something
+Cross: True
+
+#or something like this
     

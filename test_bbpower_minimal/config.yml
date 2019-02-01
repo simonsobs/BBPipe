@@ -4,3 +4,4 @@ global:
 
 BBCompSep:
     foreground_model: 'fg_model.yml'
+    
