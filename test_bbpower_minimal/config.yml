@@ -3,5 +3,22 @@ global:
     beam_correct: True
 
 BBCompSep:
-    foreground_model: 'fg_model.yml'
+    Dust:
+        free_parameters:
+            beta_d: "flat" 
+        fixed_parameters:
+            temp_d: 19.6
+            nu_0: 353.
+        priors: 
+            beta_d: [1., 1.6, 2.]
+
+    Synchrotron: 
+        free_parameters:
+            beta_s: "flat" 
+        fixed_parameters:
+            nu_0: 30.
+        priors: 
+            beta_s: [-4., -3., -2.]
+        
+    Cross: True
     

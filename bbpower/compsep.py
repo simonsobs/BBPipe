@@ -1,10 +1,12 @@
-from bbpipe import PipelineStage
-from .types import DummyFile
-from sacc.sacc import SACC
 import numpy as np
-from . import components as fgs
+
+from bbpipe import PipelineStage
+from .types import DummyFile, YamlFile
+from sacc.sacc import SACC
+
 from fgbuster import CMB, Dust, Synchrotron
 import emcee
+
 
 class BBCompSep(PipelineStage):
     """
@@ -13,7 +15,7 @@ class BBCompSep(PipelineStage):
     name = "BBCompSep"
     inputs = [('sacc_file', SACC)]
     outputs = [('param_chains', DummyFile)]
-    config_options = {'foreground_model':{'components': ['dust', 'synch']}, 'power_spectrum_options':{'BB':True}}
+    config_options = {'Dust':Dust, 'Synchrotron':Synchrotron}
 
     def setup_compsep(self):
         self.parse_sacc_file()
@@ -65,6 +67,11 @@ class BBCompSep(PipelineStage):
         return
 
     def load_foregrounds(self):
+#        fg_model = self.get_config('foreground_model')
+        fg_model = self.config
+        print(self.config)
+
+
         # load here 
         synch_units = []
         dust_units = []
@@ -121,8 +128,8 @@ class BBCompSep(PipelineStage):
         fgseds = {'synch':np.asarray(synch_seds), \
                   'dust':np.asarray(dust_seds)}
         
-        nom_synch_spectrum = fgs.normed_plaw(self.bpw_l, alpha_s)
-        nom_dust_spectrum = fgs.normed_plaw(self.bpw_l, alpha_d)
+        nom_synch_spectrum = normed_plaw(self.bpw_l, alpha_s)
+        nom_dust_spectrum = normed_plaw(self.bpw_l, alpha_d)
         nom_cross_spectrum = np.sqrt(nom_synch_spectrum * nom_dust_spectrum)
         
         cls_array_list = [] 
@@ -203,6 +210,11 @@ class BBCompSep(PipelineStage):
             print("Writing "+fname)
             open(fname,"w")
 
+
+def normed_plaw(ell, alpha):
+    ell0 = 80.
+    return (ell/ell0)**alpha 
+
+
 if __name__ == '__main__':
     cls = PipelineStage.main()
-
