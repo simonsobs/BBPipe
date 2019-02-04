@@ -11,27 +11,33 @@ import emcee
 class BBCompSep(PipelineStage):
     """
     Component separation stage
+    This stage does harmonic domain foreground cleaning (e.g. BICEP).
+    The foreground model parameters are defined in the config.yml file. 
     """
     name = "BBCompSep"
     inputs = [('sacc_file', SACC)]
     outputs = [('param_chains', DummyFile)]
-    #config_options = {'Dust':Dust, 'Synchrotron':Synchrotron}
 
     def setup_compsep(self):
+        """
+        Pre-load the data, CMB BB power spectrum, and foreground models.
+        """
+        # TODO: unit checks?
         self.parse_sacc_file()
         self.load_cmb()
         self.load_foregrounds()
         return
 
     def parse_sacc_file(self):
-        # We're assuming that all bandpowers are sampled at the same values of ell.
+        """
+        Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
+        """
         self.s = SACC.loadFromHDF(self.get_input('sacc_file'))
         self.order = self.s.sortTracers()
 
         self.bpasses = []
         for t in self.s.tracers :
             nu = t.z
-            #nu = t.z*1.e9
             dnu = np.zeros_like(nu);
             dnu[1:-1] = 0.5 * (nu[2:] - nu[:-2])
             dnu[0] = nu[1] - nu[0]
@@ -42,8 +48,7 @@ class BBCompSep(PipelineStage):
 
         self.bpw_l = self.s.binning.windows[0].ls
         self.data = self.s.mean.vector
-        #self.covar = self.s.precision.getCovarianceMatrix()
-        self.covar = self.s.precision.getCovarianceMatrix().reshape((2700, 2700))
+        self.covar = self.s.precision.getCovarianceMatrix()
         self.n_tracers = np.arange(12) 
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
@@ -55,9 +60,11 @@ class BBCompSep(PipelineStage):
         return
 
     def load_cmb(self):
-        #load these file names from inputs
-        cmb_bbfile = np.loadtxt('/Users/abitbol/code/self_calibration_fg/data/camb_lens_r1.dat')
-        cmb_lensingfile = np.loadtxt('/Users/abitbol/code/self_calibration_fg/data/camb_lens_nobb.dat')
+        """
+        Loads the CMB BB spectrum as defined in the config file. 
+        """
+        cmb_lensingfile = np.loadtxt(self.config['cmb_files'][0])
+        cmb_bbfile = np.loadtxt(self.config['cmb_files'][1])
         
         self.cmb_ells = cmb_bbfile[:, 0]
         mask = self.cmb_ells <= self.bpw_l.max()
@@ -67,40 +74,48 @@ class BBCompSep(PipelineStage):
         return
 
     def load_foregrounds(self):
-        fg_model = self.config
-        print(self.config)
-        
-        # load here 
-        synch_units = []
-        dust_units = []
+        """
+        Loads the foreground models and prepares the unit conversions to K_CMB units. 
+        """
+        unit = 'K_RJ'
+        self.get_cmb_norms(unit)
+
+        fg_model = self.config['fg_model']
+        self.components = fg_model.keys()
+
+        self.fg_sed_model = {}
+        self.fg_nu0_norm = {}
+        for component in self.components: 
+            sed_name = fg_model['sed']
+            sed_fnc = get_fgbuster_sed(sed_name)
+            self.fg_sed_model[component] = sed_fnc(*fg_model['parameters'], units=unit)
+
+            nu0 = fg_model[component]['parameters']['nu_0']
+            self.fg_nu0_norm[component] = CMB(unit).eval(nu0) * nu0**2
+        return 
+            
+    def get_cmb_norms(self, unit):
+        """
+        Evaulates the CMB unit conversion over the bandpasses. 
+        """
+        cmb_norms = [] 
         for tn in self.n_tracers:
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
             bpass_integration = dnu*bpass
-    
-            cmb_thermo_units = CMB('K_RJ').eval(nus) * nus**2 
-            cmb_int = np.dot(bpass_integration, cmb_thermo_units)
-            
-            # fuck me, needs fixing, probably load from config_options
-            cmb_synch_norm = CMB('K_RJ').eval(30.) * (30.**2)
-            cmb_dust_norm = CMB('K_RJ').eval(353.) * (353.**2)
-            
-            synch_units.append(cmb_int / cmb_synch_norm)
-            dust_units.append(cmb_int / cmb_dust_norm)
 
-        self.cmb_units = {'synch_units':np.asarray(synch_units), \
-                          'dust_units':np.asarray(dust_units)}
-
-        self.synch = Synchrotron(30., units='K_RJ')
-        self.dust = Dust(353., temp=19.6, units='K_RJ')
+            cmb_thermo_units = CMB(unit).eval(nus) * nus**2 
+            cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
+        self.cmb_norm = np.asarray(cmb_norms)
         return
-        
 
     def model(self, params):
-        # load here? 
+        """
+        Defines the total model and integrates over the bandpasses and windows. 
+        """
         r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
-        
+
         cmb_bmodes = r * self.cmb_bbr + self.cmb_bblensing
         
         synch_seds = []
@@ -111,17 +126,18 @@ class BBCompSep(PipelineStage):
             dnu = self.bpasses[tn][2]
             bpass_integration = dnu*bpass
 
-            nom_synch = self.synch.eval(nus, beta_s) * (nus/30.)**2
-            nom_dust = self.dust.eval(nus, beta_d) * (nus/353.)**2
+            for component in self.components: 
+                #self.fg_sed_model[component]
+                nom_synch = self.synch.eval(nus, beta_s) * (nus/30.)**2
+                nom_dust = self.dust.eval(nus, beta_d) * (nus/353.)**2
 
-            synch_units = self.cmb_units['synch_units'][tn]
-            dust_units = self.cmb_units['dust_units'][tn]
-
-            synch_int = np.dot(nom_synch, bpass_integration) / synch_units
-            dust_int = np.dot(nom_dust, bpass_integration) / dust_units
-            
-            synch_seds.append(synch_int)
-            dust_seds.append(dust_int)
+                # units = self.fg_nu0_norm / self.cmb_norm[tn]
+                # TIMES UNITS now.  not divided
+                #synch_int = np.dot(nom_synch, bpass_integration) / synch_units
+                #dust_int = np.dot(nom_dust, bpass_integration) / dust_units
+                
+                synch_seds.append(synch_int)
+                dust_seds.append(dust_int)
 
         fgseds = {'synch':np.asarray(synch_seds), \
                   'dust':np.asarray(dust_seds)}
@@ -154,6 +170,9 @@ class BBCompSep(PipelineStage):
         return np.asarray(cls_array_list).reshape(len(self.indx), ) 
 
     def lnpriors(self, params):
+        """
+        Assign priors for emcee. 
+        """
         # can we do anything here? 
         r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
 
@@ -178,10 +197,17 @@ class BBCompSep(PipelineStage):
         return prior
 
     def lnlike(self, params):
+        """
+        Our likelihood. 
+        TODO: Needs to be replaced with H&L approx.
+        """
         model_cls = self.model(params)
         return -0.5 * np.mat(self.bbdata - model_cls) * np.mat(self.invcov) * np.mat(self.bbdata - model_cls).T
 
     def lnprob(self, params):
+        """
+        Likelihood with priors. 
+        """
         prior = self.lnpriors(params)
         if not np.isfinite(prior):
             return -np.inf
@@ -189,18 +215,22 @@ class BBCompSep(PipelineStage):
         return prior + lnprob
 
     def emcee_sampler(self, n_iters=2**4):
+        """
+        Sample the model with MCMC. 
+        TODO: Need to save the data appropriately. 
+        """
         ndim, nwalkers = 8, 128
         popt = [1., 1., 1., -3., 1.5, -0.5, -0.5, 0.5]
         pos = [popt * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
-        np.save('somecoolfilename_samplerchain', sampler.chain)
+        np.save('loadingtests', sampler.chain)
         return sampler
 
 
     def run(self) :
         self.setup_compsep()
-        self.emcee_sampler(2**4)
+        self.emcee_sampler(self.config['n_iter'])
             
         # this part doesn't work yet
         for out,_ in self.outputs :
@@ -213,6 +243,11 @@ def normed_plaw(ell, alpha):
     ell0 = 80.
     return (ell/ell0)**alpha 
 
+def get_fgbuster_sed(sed_name):
+    #magic? 
+    return sed_fnc
+
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
+
