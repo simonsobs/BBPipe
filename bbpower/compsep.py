@@ -15,7 +15,7 @@ class BBCompSep(PipelineStage):
     name = "BBCompSep"
     inputs = [('sacc_file', SACC)]
     outputs = [('param_chains', DummyFile)]
-    config_options = {'Dust':Dust, 'Synchrotron':Synchrotron}
+    #config_options = {'Dust':Dust, 'Synchrotron':Synchrotron}
 
     def setup_compsep(self):
         self.parse_sacc_file()
@@ -67,11 +67,9 @@ class BBCompSep(PipelineStage):
         return
 
     def load_foregrounds(self):
-#        fg_model = self.get_config('foreground_model')
         fg_model = self.config
         print(self.config)
-
-
+        
         # load here 
         synch_units = []
         dust_units = []

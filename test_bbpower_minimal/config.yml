@@ -4,6 +4,8 @@ global:
 
 BBCompSep:
     Dust:
+        name: "Dust"
+        sed: "Dust"
         free_parameters:
             beta_d: "flat" 
         fixed_parameters:
@@ -13,12 +15,12 @@ BBCompSep:
             beta_d: [1., 1.6, 2.]
 
     Synchrotron: 
+        name: "Synchrotron"
+        sed: "Synchrotron"
         free_parameters:
             beta_s: "flat" 
         fixed_parameters:
             nu_0: 30.
         priors: 
             beta_s: [-4., -3., -2.]
-        
-    Cross: True
     
