@@ -4,8 +4,8 @@ global:
 
 BBCompSep:
     n_iter: 32
-    cmb_files: ["/home/max/projects/BBPipe/bbpower/data/camb_lens_nobb.dat", 
-                "/home/max/projects/BBPipe/bbpower/data/camb_lens_r1.dat"]
+    cmb_files: ["./bbpower/data/camb_lens_nobb.dat", 
+                "./bbpower/data/camb_lens_r1.dat"]
     fg_model:
         component_1:
             name: Dust
