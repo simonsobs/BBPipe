@@ -1,10 +1,11 @@
 import numpy as np
+from collections import OrderedDict
 
 from bbpipe import PipelineStage
 from .types import DummyFile, YamlFile
 from sacc.sacc import SACC
 
-from fgbuster import CMB, Dust, Synchrotron
+from fgbuster.component_model import CMB, Dust, Synchrotron, AnalyticComponent, AME, FreeFree 
 import emcee
 
 
@@ -80,18 +81,20 @@ class BBCompSep(PipelineStage):
         unit = 'K_RJ'
         self.get_cmb_norms(unit)
 
-        fg_model = self.config['fg_model']
+        self.fg_model = self.config['fg_model']
         self.components = fg_model.keys()
 
         self.fg_sed_model = {}
         self.fg_nu0_norm = {}
         for component in self.components: 
-            sed_name = fg_model['sed']
+            sed_name = self.fg_model['sed']
             sed_fnc = get_fgbuster_sed(sed_name)
-            self.fg_sed_model[component] = sed_fnc(*fg_model['parameters'], units=unit)
+            self.fg_sed_model[component] = sed_fnc(**self.fg_model[component]['parameters'], units=unit)
 
-            nu0 = fg_model[component]['parameters']['nu_0']
+            nu0 = fg_model[component]['parameters']['nu0']
             self.fg_nu0_norm[component] = CMB(unit).eval(nu0) * nu0**2
+
+        self.define_parameters()
         return 
             
     def get_cmb_norms(self, unit):
@@ -109,17 +112,31 @@ class BBCompSep(PipelineStage):
             cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
         self.cmb_norm = np.asarray(cmb_norms)
         return
+    
+    def define_parameters(self):
+        self.param_init = []
+        self.param_index = {}
+        self.param_index['r'] = 0
+        # r prior init...questionable af. 
+        self.param_init.append(0)
+        pindx = 1
+        for component in self.components:
+            for param in self.fg_model[component]['priors']:
+                self.param_index[param] = pindx
+                self.param_init.append(self.fg_model[component]['priors'][param][1])
+                pindx += 1
+        return
 
     def model(self, params):
         """
         Defines the total model and integrates over the bandpasses and windows. 
         """
-        r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
-
-        cmb_bmodes = r * self.cmb_bbr + self.cmb_bblensing
+        cmb_bmodes = params[0] * self.cmb_bbr + self.cmb_bblensing
         
-        synch_seds = []
-        dust_seds = []
+        fg_scaling = {}
+        for component in self.components:
+            fg_scaling[component] = []
+
         for tn in self.n_tracers:
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
@@ -127,21 +144,24 @@ class BBCompSep(PipelineStage):
             bpass_integration = dnu*bpass
 
             for component in self.components: 
-                #self.fg_sed_model[component]
-                nom_synch = self.synch.eval(nus, beta_s) * (nus/30.)**2
-                nom_dust = self.dust.eval(nus, beta_d) * (nus/353.)**2
+                conv_rj = (nus / self.fg_model[component]['parameters']['nu0'])**2
 
-                # units = self.fg_nu0_norm / self.cmb_norm[tn]
-                # TIMES UNITS now.  not divided
-                #synch_int = np.dot(nom_synch, bpass_integration) / synch_units
-                #dust_int = np.dot(nom_dust, bpass_integration) / dust_units
+                fg_comp_params = [] 
+                for param in self.fg_sed_model[component].params:
+                    pindx = self.param_index[param]
+                    fg_comp_params.append(params[pindx])
+
+                fg_sed_eval = self.fg_sed_model[component].eval(nus, *fg_comp_params) * conv_rj
+                # YOU ARE HERE
+
+                fg_units = self.fg_nu0_norm[component] / self.cmb_norm[tn]
+                fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
+                fg_scaling[component].append(fg_sed_int)
                 
-                synch_seds.append(synch_int)
-                dust_seds.append(dust_int)
-
-        fgseds = {'synch':np.asarray(synch_seds), \
-                  'dust':np.asarray(dust_seds)}
+        #fgseds = {'synch':np.asarray(synch_seds), \
+        #          'dust':np.asarray(dust_seds)}
         
+        # need to grab fg components here again. 
         nom_synch_spectrum = normed_plaw(self.bpw_l, alpha_s)
         nom_dust_spectrum = normed_plaw(self.bpw_l, alpha_d)
         nom_cross_spectrum = np.sqrt(nom_synch_spectrum * nom_dust_spectrum)
@@ -150,19 +170,22 @@ class BBCompSep(PipelineStage):
         for t1,t2,typ,ells,ndx in self.order:
             if typ == b'BB':
                 windows = self.s.binning.windows[ndx]
-                synch_spectrum = np.asarray([np.dot(w.w, nom_synch_spectrum) for w in windows])
-                dust_spectrum = np.asarray([np.dot(w.w, nom_dust_spectrum) for w in windows])
-                cross_spectrum = np.asarray([np.dot(w.w, nom_cross_spectrum) for w in windows])
-                cmb_bb = np.asarray([np.dot(w.w, cmb_bmodes) for w in windows])
+                # we can integrate this just once at the end after summing
+                # need to generalize over components! 
+
+                #synch_spectrum = np.asarray([np.dot(w.w, nom_synch_spectrum) for w in windows])
+                #dust_spectrum = np.asarray([np.dot(w.w, nom_dust_spectrum) for w in windows])
+                #cross_spectrum = np.asarray([np.dot(w.w, nom_cross_spectrum) for w in windows])
+                #cmb_bb = np.asarray([np.dot(w.w, cmb_bmodes) for w in windows])
                 
-                fs1 = fgseds['synch'][t1]
-                fs2 = fgseds['synch'][t2]
-                fd1 = fgseds['dust'][t1]
-                fd2 = fgseds['dust'][t2]
+                #fs1 = fgseds['synch'][t1]
+                #fs2 = fgseds['synch'][t2]
+                #fd1 = fgseds['dust'][t1]
+                #fd2 = fgseds['dust'][t2]
                 
-                synch = A_s * fs1*fs2 * synch_spectrum
-                dust = A_d * fd1*fd2 * dust_spectrum
-                cross = epsilon * np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
+                #synch = A_s * fs1*fs2 * synch_spectrum
+                #dust = A_d * fd1*fd2 * dust_spectrum
+                #cross = epsilon * np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
                 
                 model = cmb_bb + synch + dust + cross
                 cls_array_list.append(model)
@@ -244,8 +267,20 @@ def normed_plaw(ell, alpha):
     return (ell/ell0)**alpha 
 
 def get_fgbuster_sed(sed_name):
-    #magic? 
-    return sed_fnc
+    sed_fncs = {
+        'Dust': Dust, 
+        'ModifiedBlackBody': Dust, 
+        'Synchrotron': Synchrotron,
+        'PowerLaw': Synchrotron,
+        'AME': AME, 
+        'FreeFree': FreeFree,
+        'AnalyticComponent': AnalyticComponent
+        }
+    try:
+        return sed_fncs[sed_name] 
+    except KeyError:
+        print("Foreground named %s is not a valid FGBuster foreground name", %(sed_name))
+    return 
 
 
 if __name__ == '__main__':
