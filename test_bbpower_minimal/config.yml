@@ -7,13 +7,6 @@ BBCompSep:
     cmb_files: ["./test_bbpower_minimal/camb_lens_nobb.dat", 
                 "./test_bbpower_minimal/camb_lens_r1.dat"]
     fg_model:
-    # Foreground model names must comply exactly with FGBuster naming scheme. 
-    # See component_model.py in fgbuster. 
-    # Dust and Synchrotron must be given a nu0 all other parameters are optional. 
-    # Dust takes nu0, temp, beta_d. 
-    # Synchrotron takes nu0, beta_pl, nu_pivot, running.
-    # Give a value if you want to fix that paramter, give None and then a prior for free parameters. 
-    # Don't include the parameter if you don't want it (e.g the synch running).
         component_1:
             name: Dust
             sed: Dust
@@ -23,10 +16,14 @@ BBCompSep:
                 nu0: 353.
             spectrum:
                 alpha_d:
+            cross: 
+                name: component_2
+                param: epsilon
             priors: 
                 beta_d: [1., 1.6, 2.]
                 alpha_d: [0, 0.5, 1]
                 amp_d: [0, 1, 10000]
+                epsilon: [-1., 0, 1.]
 
         component_2:
             name: Synchrotron
@@ -36,13 +33,12 @@ BBCompSep:
                 nu0: 30.
             spectrum:
                 alpha_pl:
+            cross: 
+                name: component_1
+                param: epsilon
             priors: 
                 beta_pl: [-4., -3., -2.]
                 alpha_pl: [0, 0.5, 1]
                 amp_pl: [0, 1, 10000]
-    cross:
-        names: ["component_1", "component_2"]
-        parameters: epsilon
-        priors: [-1., 0, 1.]
-
+                epsilon: [-1., 0, 1.]
     

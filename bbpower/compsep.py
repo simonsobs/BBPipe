@@ -1,13 +1,11 @@
 import numpy as np
-from collections import OrderedDict
 
 from bbpipe import PipelineStage
 from .types import DummyFile, YamlFile
+import foreground_loading as fgl
 from sacc.sacc import SACC
 
-from fgbuster.component_model import CMB, Dust, Synchrotron, AnalyticComponent, AME, FreeFree 
 import emcee
-
 
 class BBCompSep(PipelineStage):
     """
@@ -26,7 +24,7 @@ class BBCompSep(PipelineStage):
         # TODO: unit checks?
         self.parse_sacc_file()
         self.load_cmb()
-        self.load_foregrounds()
+        self.fg_model = fgl.FGModel(self.config)
         return
 
     def parse_sacc_file(self):
@@ -43,8 +41,7 @@ class BBCompSep(PipelineStage):
             dnu[1:-1] = 0.5 * (nu[2:] - nu[:-2])
             dnu[0] = nu[1] - nu[0]
             dnu[-1] = nu[-1] - nu[-2]
-
-            bnu=t.Nz
+            bnu = t.Nz
             self.bpasses.append([nu, dnu, bnu])
 
         self.bpw_l = self.s.binning.windows[0].ls
@@ -72,32 +69,10 @@ class BBCompSep(PipelineStage):
         self.cmb_ells = self.cmb_ells[mask] 
         self.cmb_bbr = cmb_bbfile[:, 3][mask]
         self.cmb_bblensing = cmb_lensingfile[:, 3][mask]
+        self.get_cmb_norms()
         return
 
-    def load_foregrounds(self):
-        """
-        Loads the foreground models and prepares the unit conversions to K_CMB units. 
-        """
-        unit = 'K_RJ'
-        self.get_cmb_norms(unit)
-
-        self.fg_model = self.config['fg_model']
-        self.components = self.fg_model.keys()
-
-        self.fg_sed_model = {}
-        self.fg_nu0_norm = {}
-        for component in self.components: 
-            sed_name = self.fg_model[component]['sed']
-            sed_fnc = get_fgbuster_sed(sed_name)
-            self.fg_sed_model[component] = sed_fnc(**self.fg_model[component]['parameters'], units=unit)
-
-            nu0 = self.fg_model[component]['parameters']['nu0']
-            self.fg_nu0_norm[component] = CMB(unit).eval(nu0) * nu0**2
-
-        self.define_parameters()
-        return 
-            
-    def get_cmb_norms(self, unit):
+    def get_cmb_norms(self):
         """
         Evaulates the CMB unit conversion over the bandpasses. 
         """
@@ -108,28 +83,11 @@ class BBCompSep(PipelineStage):
             dnu = self.bpasses[tn][2]
             bpass_integration = dnu*bpass
 
-            cmb_thermo_units = CMB(unit).eval(nus) * nus**2 
+            cmb_thermo_units = CMB('K_RJ').eval(nus) * nus**2 
             cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
         self.cmb_norm = np.asarray(cmb_norms)
         return
     
-    def define_parameters(self):
-        self.param_init = []
-        self.param_index = {}
-        self.amp_index = {} 
-        self.param_index['r'] = 0
-        self.param_init.append(0)
-        pindx = 1
-        for component in self.components:
-            for param in self.fg_model[component]['priors']:
-                self.param_index[param] = pindx
-                self.param_init.append(self.fg_model[component]['priors'][param][1])
-                if 'amp' in param:
-                    self.amp_index[component] = pindx
-                pindx += 1
-                # TODO: need something for cross correlation params as well 
-        return
-
     def model(self, params):
         """
         Defines the total model and integrates over the bandpasses and windows. 
@@ -137,7 +95,7 @@ class BBCompSep(PipelineStage):
         cmb_bmodes = params[0] * self.cmb_bbr + self.cmb_bblensing
         
         fg_scaling = {}
-        for component in self.components:
+        for component in self.fg_model.components:
             fg_scaling[component] = []
 
         for tn in self.n_tracers:
@@ -146,16 +104,9 @@ class BBCompSep(PipelineStage):
             dnu = self.bpasses[tn][2]
             bpass_integration = dnu*bpass
 
-            for component in self.components: 
-                conv_rj = (nus / self.fg_model[component]['parameters']['nu0'])**2
-
-                fg_comp_params = [] 
-                for param in self.fg_sed_model[component].params:
-                    pindx = self.param_index[param]
-                    fg_comp_params.append(params[pindx])
-
-                fg_sed_eval = self.fg_sed_model[component].eval(nus, *fg_comp_params) * conv_rj
-
+            # TODO: fix with new foreground_loading class. 
+            fg_seds = self.fg_model.evaluate_seds(nus)
+            for key, component in self.fg_model.components: 
                 fg_units = self.fg_nu0_norm[component] / self.cmb_norm[tn]
                 fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
                 fg_scaling[component].append(fg_sed_int)
@@ -234,8 +185,8 @@ class BBCompSep(PipelineStage):
     def emcee_sampler(self, n_iters=2**4, nwalkers=128):
         """
         Sample the model with MCMC. 
-        TODO: Need to save the data appropriately. 
         """
+        # TODO: Need to save the data appropriately. 
         
         ndim = len(self.param_init)
         pos = [self.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
@@ -254,27 +205,6 @@ class BBCompSep(PipelineStage):
             fname = self.get_output(out)
             print("Writing "+fname)
             open(fname,"w")
-
-
-def normed_plaw(ell, alpha):
-    ell0 = 80.
-    return (ell/ell0)**alpha 
-
-def get_fgbuster_sed(sed_name):
-    sed_fncs = {
-        'Dust': Dust, 
-        'ModifiedBlackBody': Dust, 
-        'Synchrotron': Synchrotron,
-        'PowerLaw': Synchrotron,
-        'AME': AME, 
-        'FreeFree': FreeFree,
-        'AnalyticComponent': AnalyticComponent
-        }
-    try:
-        return sed_fncs[sed_name] 
-    except KeyError:
-        print("Foreground named %s is not a valid FGBuster foreground name" %(sed_name))
-    return 
 
 
 if __name__ == '__main__':
