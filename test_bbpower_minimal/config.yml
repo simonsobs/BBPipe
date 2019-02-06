@@ -4,8 +4,8 @@ global:
 
 BBCompSep:
     n_iter: 32
-    cmb_files: ["./bbpower/data/camb_lens_nobb.dat", 
-                "./bbpower/data/camb_lens_r1.dat"]
+    cmb_files: ["./test_bbpower_minimal/camb_lens_nobb.dat", 
+                "./test_bbpower_minimal/camb_lens_r1.dat"]
     fg_model:
     # Foreground model names must comply exactly with FGBuster naming scheme. 
     # See component_model.py in fgbuster. 
