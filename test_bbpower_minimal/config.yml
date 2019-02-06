@@ -7,41 +7,42 @@ BBCompSep:
     cmb_files: ["./bbpower/data/camb_lens_nobb.dat", 
                 "./bbpower/data/camb_lens_r1.dat"]
     fg_model:
-    """ 
-    Foreground model names must comply exactly with FGBuster naming scheme. 
-    See component_model.py in fgbuster. 
-    Dust and Synchrotron must be given a nu0 all other parameters are optional. 
-    Dust takes nu0, temp, beta_d. 
-    Synchrotron takes nu0, beta_pl, nu_pivot, running.
-    Give a value if you want to fix that paramter, give None and then a prior for free parameters. 
-    Don't include the parameter if you don't want it (e.g the synch running).
-    """
+    # Foreground model names must comply exactly with FGBuster naming scheme. 
+    # See component_model.py in fgbuster. 
+    # Dust and Synchrotron must be given a nu0 all other parameters are optional. 
+    # Dust takes nu0, temp, beta_d. 
+    # Synchrotron takes nu0, beta_pl, nu_pivot, running.
+    # Give a value if you want to fix that paramter, give None and then a prior for free parameters. 
+    # Don't include the parameter if you don't want it (e.g the synch running).
         component_1:
             name: Dust
             sed: Dust
             parameters:
-                beta_d: None
+                beta_d:
                 temp: 19.6
                 nu0: 353.
             spectrum:
-                alpha_d: None
-                amp_d: None
+                alpha_d:
             priors: 
                 beta_d: [1., 1.6, 2.]
                 alpha_d: [0, 0.5, 1]
-                amp_d: [0, 1, np.inf]
+                amp_d: [0, 1, 10000]
 
         component_2:
             name: Synchrotron
             sed: Synchrotron
             parameters:
-                beta_pl: None
+                beta_pl:
                 nu0: 30.
             spectrum:
-                alpha_s: None
-                amp_s: None
+                alpha_pl:
             priors: 
                 beta_pl: [-4., -3., -2.]
-                alpha_s: [0, 0.5, 1]
-                amp_s: [0, 1, np.inf]
+                alpha_pl: [0, 0.5, 1]
+                amp_pl: [0, 1, 10000]
+    cross:
+        names: ["component_1", "component_2"]
+        parameters: epsilon
+        priors: [-1., 0, 1.]
+
     

@@ -82,16 +82,16 @@ class BBCompSep(PipelineStage):
         self.get_cmb_norms(unit)
 
         self.fg_model = self.config['fg_model']
-        self.components = fg_model.keys()
+        self.components = self.fg_model.keys()
 
         self.fg_sed_model = {}
         self.fg_nu0_norm = {}
         for component in self.components: 
-            sed_name = self.fg_model['sed']
+            sed_name = self.fg_model[component]['sed']
             sed_fnc = get_fgbuster_sed(sed_name)
             self.fg_sed_model[component] = sed_fnc(**self.fg_model[component]['parameters'], units=unit)
 
-            nu0 = fg_model[component]['parameters']['nu0']
+            nu0 = self.fg_model[component]['parameters']['nu0']
             self.fg_nu0_norm[component] = CMB(unit).eval(nu0) * nu0**2
 
         self.define_parameters()
@@ -116,15 +116,18 @@ class BBCompSep(PipelineStage):
     def define_parameters(self):
         self.param_init = []
         self.param_index = {}
+        self.amp_index = {} 
         self.param_index['r'] = 0
-        # r prior init...questionable af. 
         self.param_init.append(0)
         pindx = 1
         for component in self.components:
             for param in self.fg_model[component]['priors']:
                 self.param_index[param] = pindx
                 self.param_init.append(self.fg_model[component]['priors'][param][1])
+                if 'amp' in param:
+                    self.amp_index[component] = pindx
                 pindx += 1
+                # TODO: need something for cross correlation params as well 
         return
 
     def model(self, params):
@@ -152,42 +155,36 @@ class BBCompSep(PipelineStage):
                     fg_comp_params.append(params[pindx])
 
                 fg_sed_eval = self.fg_sed_model[component].eval(nus, *fg_comp_params) * conv_rj
-                # YOU ARE HERE
 
                 fg_units = self.fg_nu0_norm[component] / self.cmb_norm[tn]
                 fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
                 fg_scaling[component].append(fg_sed_int)
                 
-        #fgseds = {'synch':np.asarray(synch_seds), \
-        #          'dust':np.asarray(dust_seds)}
-        
-        # need to grab fg components here again. 
-        nom_synch_spectrum = normed_plaw(self.bpw_l, alpha_s)
-        nom_dust_spectrum = normed_plaw(self.bpw_l, alpha_d)
-        nom_cross_spectrum = np.sqrt(nom_synch_spectrum * nom_dust_spectrum)
+        fg_pspectra = {}
+        for component in self.components:
+            pspec_param_vals = []
+            for param in self.fg_model[component]['spectrum']:
+                pindx = self.param_index[param]
+                #pspec_param_vals[param] = params[pindx]
+                pspec_param_vals.append(params[pindx])
+            fg_pspectra[component] = normed_plaw(self.bpw_l, *pspec_param_vals)
         
         cls_array_list = [] 
         for t1,t2,typ,ells,ndx in self.order:
             if typ == b'BB':
                 windows = self.s.binning.windows[ndx]
-                # we can integrate this just once at the end after summing
-                # need to generalize over components! 
-
-                #synch_spectrum = np.asarray([np.dot(w.w, nom_synch_spectrum) for w in windows])
-                #dust_spectrum = np.asarray([np.dot(w.w, nom_dust_spectrum) for w in windows])
-                #cross_spectrum = np.asarray([np.dot(w.w, nom_cross_spectrum) for w in windows])
-                #cmb_bb = np.asarray([np.dot(w.w, cmb_bmodes) for w in windows])
                 
-                #fs1 = fgseds['synch'][t1]
-                #fs2 = fgseds['synch'][t2]
-                #fd1 = fgseds['dust'][t1]
-                #fd2 = fgseds['dust'][t2]
+                model = cmb_bmodes
+                for component in self.components:
+                    sed_p_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
+                    model += self.amp_index[component] * sed_p_scaling * fg_pspectra[component]
                 
-                #synch = A_s * fs1*fs2 * synch_spectrum
-                #dust = A_d * fd1*fd2 * dust_spectrum
-                #cross = epsilon * np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
+                # TODO: Need to do something about this cross term. 
+                #for cross_comp in self.config['cross'].names:
+                #    cross_amp = 
+                    #cross = epsilon * np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
                 
-                model = cmb_bb + synch + dust + cross
+                model = np.asarray([np.dot(w.w, model) for w in windows])
                 cls_array_list.append(model)
         
         return np.asarray(cls_array_list).reshape(len(self.indx), ) 
@@ -196,34 +193,31 @@ class BBCompSep(PipelineStage):
         """
         Assign priors for emcee. 
         """
-        # can we do anything here? 
-        r, A_s, A_d, beta_s, beta_d, alpha_s, alpha_d, epsilon = params
-
-        prior = 0
-        if r < 0:
-            return -np.inf
-        if A_s < 0:
-            return -np.inf
-        if A_d < 0:
-            return -np.inf
-        bs0 = -3.
-        prior += -0.5 * (beta_s - bs0)**2 / (0.3)**2
-        bd0 = 1.6
-        prior += -0.5 * (beta_d - bd0)**2 / (0.1)**2
+        # TODO: How do we assign priors properly ?!
         
-        if alpha_s > 0 or alpha_s < -1.:
+        total_prior = 0
+        if params[0] < 0:
             return -np.inf
-        if alpha_d > 0 or alpha_d < -1.:
-            return -np.inf
-        if np.abs(epsilon) > 1:
-            return -np.inf
-        return prior
+        
+        for component in self.components:
+            for param in self.fg_model[component]['priors']:
+                prior = self.fg_model[component]['priors'][param]
+                pval = params[self.param_index[param]]
+                if pval < prior[0] or pval > prior[-1]:
+                    return -np.inf 
+
+        #bs0 = -3.
+        #prior += -0.5 * (beta_s - bs0)**2 / (0.3)**2
+        #bd0 = 1.6
+        #prior += -0.5 * (beta_d - bd0)**2 / (0.1)**2
+        
+        return total_prior
 
     def lnlike(self, params):
         """
         Our likelihood. 
-        TODO: Needs to be replaced with H&L approx.
         """
+        # TODO: Needs to be replaced with H&L approx.
         model_cls = self.model(params)
         return -0.5 * np.mat(self.bbdata - model_cls) * np.mat(self.invcov) * np.mat(self.bbdata - model_cls).T
 
@@ -237,14 +231,14 @@ class BBCompSep(PipelineStage):
         lnprob = self.lnlike(params)
         return prior + lnprob
 
-    def emcee_sampler(self, n_iters=2**4):
+    def emcee_sampler(self, n_iters=2**4, nwalkers=128):
         """
         Sample the model with MCMC. 
         TODO: Need to save the data appropriately. 
         """
-        ndim, nwalkers = 8, 128
-        popt = [1., 1., 1., -3., 1.5, -0.5, -0.5, 0.5]
-        pos = [popt * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
+        
+        ndim = len(self.param_init)
+        pos = [self.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
         np.save('loadingtests', sampler.chain)
@@ -279,7 +273,7 @@ def get_fgbuster_sed(sed_name):
     try:
         return sed_fncs[sed_name] 
     except KeyError:
-        print("Foreground named %s is not a valid FGBuster foreground name", %(sed_name))
+        print("Foreground named %s is not a valid FGBuster foreground name" %(sed_name))
     return 
 
 
