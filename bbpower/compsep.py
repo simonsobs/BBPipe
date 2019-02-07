@@ -2,7 +2,8 @@ import numpy as np
 
 from bbpipe import PipelineStage
 from .types import DummyFile, YamlFile
-import foreground_loading as fgl
+from .foreground_loading import FGModel, FGParameters, normed_plaw
+from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
 import emcee
@@ -21,10 +22,10 @@ class BBCompSep(PipelineStage):
         """
         Pre-load the data, CMB BB power spectrum, and foreground models.
         """
-        # TODO: unit checks?
         self.parse_sacc_file()
         self.load_cmb()
-        self.fg_model = fgl.FGModel(self.config)
+        self.fg_model = FGModel(self.config)
+        self.parameters = FGParameters(self.config)
         return
 
     def parse_sacc_file(self):
@@ -88,15 +89,10 @@ class BBCompSep(PipelineStage):
         self.cmb_norm = np.asarray(cmb_norms)
         return
     
-    def model(self, params):
-        """
-        Defines the total model and integrates over the bandpasses and windows. 
-        """
-        cmb_bmodes = params[0] * self.cmb_bbr + self.cmb_bblensing
-        
+    def integrate_seds(self, params):
         fg_scaling = {}
-        for component in self.fg_model.components:
-            fg_scaling[component] = []
+        for key in self.fg_model.components:
+            fg_scaling[key] = []
 
         for tn in self.n_tracers:
             nus = self.bpasses[tn][0]
@@ -104,21 +100,41 @@ class BBCompSep(PipelineStage):
             dnu = self.bpasses[tn][2]
             bpass_integration = dnu*bpass
 
-            # TODO: fix with new foreground_loading class. 
-            fg_seds = self.fg_model.evaluate_seds(nus)
-            for key, component in self.fg_model.components: 
-                fg_units = self.fg_nu0_norm[component] / self.cmb_norm[tn]
-                fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
-                fg_scaling[component].append(fg_sed_int)
+            for key, component in self.fg_model.components.items(): 
+                conv_rj = (nus / component['nu0'])**2
+
+                sed_params = [] 
+                for param in component['sed'].params:
+                    pindx = self.parameters.param_index[param]
+                    sed_params.append(params[pindx])
                 
+                fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
+                fg_sed_eval = component['sed'].eval(nus, *sed_params) * conv_rj
+                fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
+                fg_scaling[key].append(fg_sed_int)
+
+        return fg_scaling
+    
+    def evaluate_power_spectra(self, params):
         fg_pspectra = {}
-        for component in self.components:
-            pspec_param_vals = []
-            for param in self.fg_model[component]['spectrum']:
-                pindx = self.param_index[param]
-                #pspec_param_vals[param] = params[pindx]
-                pspec_param_vals.append(params[pindx])
-            fg_pspectra[component] = normed_plaw(self.bpw_l, *pspec_param_vals)
+        for key, component in self.fg_model.components.items():
+            pspec_params = []
+            # TODO: generalize for different power spectrum models
+            # should look like:
+            # for param in power_spectrum_model: get param index (same as the SEDs)
+            for param in component['spectrum_params']:
+                pindx = self.parameters.param_index[param]
+                pspec_params.append(params[pindx])
+            fg_pspectra[key] = normed_plaw(self.bpw_l, *pspec_params)
+        return fg_pspectra
+    
+    def model(self, params):
+        """
+        Defines the total model and integrates over the bandpasses and windows. 
+        """
+        cmb_bmodes = params[0] * self.cmb_bbr + self.cmb_bblensing
+        fg_scaling = self.integrate_seds(params)
+        fg_p_spectra = self.evaluate_power_spectra(params)
         
         cls_array_list = [] 
         for t1,t2,typ,ells,ndx in self.order:
@@ -126,10 +142,9 @@ class BBCompSep(PipelineStage):
                 windows = self.s.binning.windows[ndx]
                 
                 model = cmb_bmodes
-                for component in self.components:
-                    sed_p_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
-                    model += self.amp_index[component] * sed_p_scaling * fg_pspectra[component]
-                
+                for component in self.fg_model.components:
+                    sed_power_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
+                    model += self.parameters.amp_index[component] * sed_power_scaling * fg_p_spectra[component]
                 # TODO: Need to do something about this cross term. 
                 #for cross_comp in self.config['cross'].names:
                 #    cross_amp = 
@@ -150,13 +165,11 @@ class BBCompSep(PipelineStage):
         if params[0] < 0:
             return -np.inf
         
-        for component in self.components:
-            for param in self.fg_model[component]['priors']:
-                prior = self.fg_model[component]['priors'][param]
-                pval = params[self.param_index[param]]
-                if pval < prior[0] or pval > prior[-1]:
-                    return -np.inf 
-
+        for key, prior in self.parameters.priors.items():
+            pval = params[self.parameters.param_index[key]]
+            if pval < prior[0] or pval > prior[-1]:
+                return -np.inf 
+            
         #bs0 = -3.
         #prior += -0.5 * (beta_s - bs0)**2 / (0.3)**2
         #bd0 = 1.6
@@ -188,8 +201,8 @@ class BBCompSep(PipelineStage):
         """
         # TODO: Need to save the data appropriately. 
         
-        ndim = len(self.param_init)
-        pos = [self.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
+        ndim = len(self.parameters.param_init)
+        pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
         np.save('loadingtests', sampler.chain)

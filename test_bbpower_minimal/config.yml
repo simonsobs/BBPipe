@@ -23,7 +23,7 @@ BBCompSep:
                 beta_d: [1., 1.6, 2.]
                 alpha_d: [0, 0.5, 1]
                 amp_d: [0, 1, 10000]
-                epsilon: [-1., 0, 1.]
+                #epsilon: [-1., 0, 1.]
 
         component_2:
             name: Synchrotron
@@ -40,5 +40,5 @@ BBCompSep:
                 beta_pl: [-4., -3., -2.]
                 alpha_pl: [0, 0.5, 1]
                 amp_pl: [0, 1, 10000]
-                epsilon: [-1., 0, 1.]
+                #epsilon: [-1., 0, 1.]
     
