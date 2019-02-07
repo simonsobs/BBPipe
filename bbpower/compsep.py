@@ -145,11 +145,17 @@ class BBCompSep(PipelineStage):
                 for component in self.fg_model.components:
                     sed_power_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
                     model += self.parameters.amp_index[component] * sed_power_scaling * fg_p_spectra[component]
-                # TODO: Need to do something about this cross term. 
-                #for cross_comp in self.config['cross'].names:
-                #    cross_amp = 
-                    #cross = epsilon * np.sqrt(A_s * A_d) * (fs1*fd2 + fs2*fd1) * cross_spectrum
                 
+                    config_component = self.config['fg_model'][component]
+                    if 'cross' in config_component.keys():
+                        epsilon = config_component['cross']['param']
+                        epsilon_index = self.parameters.param_index[epsilon]
+                        cross_name = config_component['cross']['name']
+                        cross_scaling = fg_scaling[component][t1] * fg_scaling[cross_name][t2] + \
+                                        fg_scaling[cross_name][t1] * fg_scaling[component][t2]
+                        cross_spectrum = np.sqrt(fg_p_spectra[component] * fg_p_spectra[cross_name])
+                        model += params[epsilon_index] * cross_scaling * cross_spectrum
+
                 model = np.asarray([np.dot(w.w, model) for w in windows])
                 cls_array_list.append(model)
         

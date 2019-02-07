@@ -46,7 +46,6 @@ class FGParameters:
                 if 'amp' in param:
                     self.amp_index[key] = pindx
                 pindx += 1
-                # TODO: need something for cross correlation params as well 
         return
 
 def get_fgbuster_sed(sed_name):

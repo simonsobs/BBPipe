@@ -3,7 +3,7 @@ global:
     beam_correct: True
 
 BBCompSep:
-    n_iter: 32
+    n_iter: 1000
     cmb_files: ["./test_bbpower_minimal/camb_lens_nobb.dat", 
                 "./test_bbpower_minimal/camb_lens_r1.dat"]
     fg_model:
@@ -23,7 +23,7 @@ BBCompSep:
                 beta_d: [1., 1.6, 2.]
                 alpha_d: [0, 0.5, 1]
                 amp_d: [0, 1, 10000]
-                #epsilon: [-1., 0, 1.]
+                epsilon: [-1., 0, 1.]
 
         component_2:
             name: Synchrotron
@@ -33,12 +33,8 @@ BBCompSep:
                 nu0: 30.
             spectrum:
                 alpha_pl:
-            cross: 
-                name: component_1
-                param: epsilon
             priors: 
                 beta_pl: [-4., -3., -2.]
                 alpha_pl: [0, 0.5, 1]
                 amp_pl: [0, 1, 10000]
-                #epsilon: [-1., 0, 1.]
     
