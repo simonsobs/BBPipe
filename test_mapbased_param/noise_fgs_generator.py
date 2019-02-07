@@ -13,6 +13,7 @@ import pysm
 from pysm.nominal import models
 import mk_noise_map as mknm
 import V3calc as V3
+import os.path as op
 
 def grabargs():
 	parser = argparse.ArgumentParser()
@@ -101,11 +102,11 @@ def main():
 
 	column_names = []
 	[ column_names.extend( ('I_'+str(ch)+'GHz','Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in freqs]
-	hp.write_map(instrument_config['output_prefix']+'_binary_mask.fits', binary_mask, overwrite=True)
-	hp.write_map(instrument_config['output_prefix']+'_noise_mask.fits', nhits, overwrite=True)
-	hp.write_map(instrument_config['output_prefix']+'_frequency_maps'+tag+'.fits', freq_maps, overwrite=True, column_names=column_names)
-	hp.write_map(instrument_config['output_prefix']+'_noise_cov'+tag+'.fits', noise_cov, overwrite=True, column_names=column_names)
-	hp.write_map(instrument_config['output_prefix']+'_noise_maps'+tag+'.fits', noise_maps, overwrite=True, column_names=column_names)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_binary_mask.fits'), binary_mask, overwrite=True)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_noise_mask.fits'), nhits, overwrite=True)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_frequency_maps'+tag+'.fits'), freq_maps, overwrite=True, column_names=column_names)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_noise_cov'+tag+'.fits'), noise_cov, overwrite=True, column_names=column_names)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_noise_maps'+tag+'.fits'), noise_maps, overwrite=True, column_names=column_names)
 
 if __name__ == "__main__":
 
