@@ -28,7 +28,7 @@ def grabargs():
 	parser.add_argument("--nside", type=int,
 						help = "nside for the output maps resolutions",
 						default=128)	
-	parser.add_argument("--output_director", type=str, \
+	parser.add_argument("--output_directory", type=str, \
 						help = "folder to output fits files", \
 						default='.')
 	parser.add_argument("--tag", type=str, \
