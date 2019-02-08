@@ -3,7 +3,8 @@ global:
     beam_correct: True
 
 BBCompSep:
-    n_iter: 10000
+    n_iters: 10000
+    nwalkers: 128
     cmb_files: ["./test_bbpower_minimal/camb_lens_nobb.dat", 
                 "./test_bbpower_minimal/camb_lens_r1.dat"]
     fg_model:
