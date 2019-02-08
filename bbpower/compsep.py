@@ -48,6 +48,7 @@ class BBCompSep(PipelineStage):
         self.bpw_l = self.s.binning.windows[0].ls
         self.data = self.s.mean.vector
         self.covar = self.s.precision.getCovarianceMatrix()
+
         self.n_tracers = np.arange(12) 
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
@@ -84,7 +85,7 @@ class BBCompSep(PipelineStage):
             dnu = self.bpasses[tn][2]
             bpass_integration = dnu*bpass
 
-            cmb_thermo_units = CMB('K_RJ').eval(nus) * nus**2 
+            cmb_thermo_units = CMB('K_RJ').eval(nus) #* nus**2 
             cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
         self.cmb_norm = np.asarray(cmb_norms)
         return
@@ -144,7 +145,8 @@ class BBCompSep(PipelineStage):
                 model = cmb_bmodes
                 for component in self.fg_model.components:
                     sed_power_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
-                    model += self.parameters.amp_index[component] * sed_power_scaling * fg_p_spectra[component]
+                    p_amp = params[self.parameters.amp_index[component]]
+                    model += p_amp * sed_power_scaling * fg_p_spectra[component]
                 
                     config_component = self.config['fg_model'][component]
                     if 'cross' in config_component.keys():
@@ -154,7 +156,8 @@ class BBCompSep(PipelineStage):
                         cross_scaling = fg_scaling[component][t1] * fg_scaling[cross_name][t2] + \
                                         fg_scaling[cross_name][t1] * fg_scaling[component][t2]
                         cross_spectrum = np.sqrt(fg_p_spectra[component] * fg_p_spectra[cross_name])
-                        model += params[epsilon_index] * cross_scaling * cross_spectrum
+                        cross_amp = np.sqrt(p_amp * params[self.parameters.amp_index[cross_name]])
+                        model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
 
                 model = np.asarray([np.dot(w.w, model) for w in windows])
                 cls_array_list.append(model)
@@ -165,22 +168,21 @@ class BBCompSep(PipelineStage):
         """
         Assign priors for emcee. 
         """
-        # TODO: How do we assign priors properly ?!
-        
         total_prior = 0
         if params[0] < 0:
             return -np.inf
         
         for key, prior in self.parameters.priors.items():
             pval = params[self.parameters.param_index[key]]
-            if pval < prior[0] or pval > prior[-1]:
-                return -np.inf 
+
+            if prior[0].lower() == 'gaussian':
+                mu = prior[1][0]
+                sigma = prior[1][1]
+                total_prior += -0.5 * (pval - mu)**2 / sigma**2
+            elif prior[0].lower() == 'tophat': 
+                if pval < float(prior[1][0]) or pval > float(prior[1][2]):
+                    return -np.inf 
             
-        #bs0 = -3.
-        #prior += -0.5 * (beta_s - bs0)**2 / (0.3)**2
-        #bd0 = 1.6
-        #prior += -0.5 * (beta_d - bd0)**2 / (0.1)**2
-        
         return total_prior
 
     def lnlike(self, params):
@@ -211,7 +213,8 @@ class BBCompSep(PipelineStage):
         pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
-        np.save('loadingtests', sampler.chain)
+        np.save('big_sampling_check', sampler.chain)
+        np.save('params', [self.parameters.param_index, self.parameters.priors])
         return sampler
 
 
