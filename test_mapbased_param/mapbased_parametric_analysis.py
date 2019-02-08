@@ -23,10 +23,10 @@ class BBMapParamCompSep(PipelineStage):
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
         
-        hp.mollview(frequency_maps[0,0,:])
+        hp.mollview(frequency_maps[0,:])
         pl.show()
         exit()
-        
+
         # perform component separation
         # assuming inhomogeneous noise
         import fgbuster as fg
