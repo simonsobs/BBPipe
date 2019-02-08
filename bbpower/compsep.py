@@ -143,7 +143,8 @@ class BBCompSep(PipelineStage):
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
-            bpass_integration = dnu*bpass
+            #bpass_integration = dnu*bpass
+            bpass_integration = bpass * nus**2 * dnu
 
             cmb_thermo_units = CMB('K_RJ').eval(nus) #* nus**2 
             cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
@@ -159,18 +160,20 @@ class BBCompSep(PipelineStage):
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
-            bpass_integration = dnu*bpass
+            bpass_integration = bpass * nus**2 * dnu
 
             for key, component in self.fg_model.components.items(): 
-                conv_rj = (nus / component['nu0'])**2
+                #conv_rj = (nus / component['nu0'])**2
 
                 sed_params = [] 
                 for param in component['sed'].params:
                     pindx = self.parameters.param_index[param]
                     sed_params.append(params[pindx])
                 
-                fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
-                fg_sed_eval = component['sed'].eval(nus, *sed_params) * conv_rj
+                fg_units = 1. / self.cmb_norm[tn]
+                #fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
+                #fg_sed_eval = component['sed'].eval(nus, *sed_params) * conv_rj
+                fg_sed_eval = component['sed'].eval(nus, *sed_params) 
                 fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
                 fg_scaling[key].append(fg_sed_int)
 
@@ -213,10 +216,12 @@ class BBCompSep(PipelineStage):
                         epsilon = config_component['cross']['param']
                         epsilon_index = self.parameters.param_index[epsilon]
                         cross_name = config_component['cross']['name']
+
                         cross_scaling = fg_scaling[component][t1] * fg_scaling[cross_name][t2] + \
                                         fg_scaling[cross_name][t1] * fg_scaling[component][t2]
                         cross_spectrum = np.sqrt(fg_p_spectra[component] * fg_p_spectra[cross_name])
                         cross_amp = np.sqrt(p_amp * params[self.parameters.amp_index[cross_name]])
+
                         model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
                         
                 model = np.asarray([np.dot(w, model) for w in windows])
@@ -266,7 +271,7 @@ class BBCompSep(PipelineStage):
         lnprob = self.lnlike(params)
         return prior + lnprob
 
-    def emcee_sampler(self, n_iters=2**4, nwalkers=128):
+    def emcee_sampler(self, n_iters, nwalkers):
         """
         Sample the model with MCMC. 
         """
@@ -276,15 +281,26 @@ class BBCompSep(PipelineStage):
         pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
-        np.save('big_sampling_check', sampler.chain)
-        np.save('params', [self.parameters.param_index, self.parameters.priors])
         return sampler
 
 
-    def run(self) :
+    def run(self):
         self.setup_compsep()
-        self.emcee_sampler(self.config['n_iter'])
+
+        if self.config['n_iters']:
+            n_iters = self.config['n_iters']
+        else:
+            n_iters = 2**4
+        if self.config['nwalkers']:
+            nwalkers = self.config['nwalkers']
+        else:
+            nwalkers = 32
+
+        sampler = self.emcee_sampler(n_iters, nwalkers)
             
+        np.save('big_sampling_check2', sampler.chain)
+        np.save('params', [self.parameters.param_index, self.parameters.priors])
+
         # this part doesn't work yet
         for out,_ in self.outputs :
             fname = self.get_output(out)

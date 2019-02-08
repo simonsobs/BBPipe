@@ -1,6 +1,6 @@
 import numpy as np
 
-from fgbuster.component_model import CMB, Dust, Synchrotron, AnalyticComponent, AME, FreeFree 
+from fgbuster.component_model import CMB, Dust, Synchrotron, AnalyticComponent, FreeFree 
 
 class FGModel:
     def __init__(self, config):
@@ -58,7 +58,6 @@ def get_fgbuster_sed(sed_name):
         'ModifiedBlackBody': Dust, 
         'Synchrotron': Synchrotron,
         'PowerLaw': Synchrotron,
-        'AME': AME, 
         'FreeFree': FreeFree,
         'AnalyticComponent': AnalyticComponent
         }
