@@ -277,14 +277,11 @@ class BBCompSep(PipelineStage):
         """
         # TODO: Need to save the data appropriately. 
         
-        print("Evaluating")
-        print(self.lnprob(self.parameters.param_init));
-        return None
-        #ndim = len(self.parameters.param_init)
-        #pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
-        #sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
-        #sampler.run_mcmc(pos, n_iters);
-        #return sampler
+        ndim = len(self.parameters.param_init)
+        pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
+        sampler.run_mcmc(pos, n_iters);
+        return sampler
 
 
     def run(self):
