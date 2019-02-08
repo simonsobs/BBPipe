@@ -170,8 +170,8 @@ class BBCompSep(PipelineStage):
                     pindx = self.parameters.param_index[param]
                     sed_params.append(params[pindx])
                 
-                fg_units = 1. / self.cmb_norm[tn]
-                #fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
+                #fg_units = 1. / self.cmb_norm[tn]
+                fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
                 #fg_sed_eval = component['sed'].eval(nus, *sed_params) * conv_rj
                 fg_sed_eval = component['sed'].eval(nus, *sed_params) 
                 fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
