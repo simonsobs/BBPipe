@@ -27,7 +27,7 @@ class BBMapParamCompSep(PipelineStage):
         # assuming inhomogeneous noise
         import fgbuster as fg
         from fgbuster.component_model import CMB, Dust, Synchrotron
-        components = [CMB(), Dust(150.), Synchrotron(150.)]
+        components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
         instrument = {'frequencies':[30.0, 40.0, 95.0, 150.0, 220.0, 270.0]}
 
         from fgbuster.separation_recipies import weighted_comp_sep
