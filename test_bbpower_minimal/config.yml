@@ -4,8 +4,8 @@ global:
 
 BBCompSep:
     n_iter: 10000
-    cmb_files: ["./test_bbpower_minimal/camb_lens_nobb.dat", 
-                "./test_bbpower_minimal/camb_lens_r1.dat"]
+    cmb_files: ["./test_bbpower_minimal/data/camb_lens_nobb.dat", 
+                "./test_bbpower_minimal/data/camb_lens_r1.dat"]
     fg_model:
         component_1:
             name: Dust
