@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from bbpipe.types import FitsFile, TextFile
+from .types import FitsFile
 import numpy as np
 
 class BBMapParamCompSep(PipelineStage):
