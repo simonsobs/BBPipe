@@ -153,7 +153,7 @@ class BBCompSep(PipelineStage):
     
     def integrate_seds(self, params):
         fg_scaling = {}
-
+        for key in self.fg_model.components:
             fg_scaling[key] = []
 
         for tn in range(self.nfreqs):
@@ -203,7 +203,7 @@ class BBCompSep(PipelineStage):
         cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
         for t1 in range(self.nfreqs) :
             for t2 in range(t1,self.nfreqs) :
-                windows=self.windows[vector_indices[t1,t2]]
+                windows=self.windows[self.vector_indices[t1,t2]]
 
                 model = cmb_bmodes
                 for component in self.fg_model.components:
@@ -258,7 +258,7 @@ class BBCompSep(PipelineStage):
         """
         # TODO: Needs to be replaced with H&L approx.
         model_cls = self.model(params)
-        dx=self.matrix_to_vector(self.bbdata-model_cls)
+        dx=self.matrix_to_vector(self.bbdata-model_cls).flatten()
         return -0.5*np.einsum('i,ij,j',dx,self.invcov,dx)
 
     def lnprob(self, params):
@@ -277,11 +277,14 @@ class BBCompSep(PipelineStage):
         """
         # TODO: Need to save the data appropriately. 
         
-        ndim = len(self.parameters.param_init)
-        pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
-        sampler.run_mcmc(pos, n_iters);
-        return sampler
+        print("Evaluating")
+        print(self.lnprob(self.parameters.param_init));
+        return None
+        #ndim = len(self.parameters.param_init)
+        #pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
+        #sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
+        #sampler.run_mcmc(pos, n_iters);
+        #return sampler
 
 
     def run(self):
@@ -297,7 +300,7 @@ class BBCompSep(PipelineStage):
             nwalkers = 32
 
         sampler = self.emcee_sampler(n_iters, nwalkers)
-            
+        exit(1)
         np.save('big_sampling_check2', sampler.chain)
         np.save('params', [self.parameters.param_index, self.parameters.priors])
 
@@ -310,4 +313,3 @@ class BBCompSep(PipelineStage):
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
-
