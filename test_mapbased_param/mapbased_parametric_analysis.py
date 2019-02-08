@@ -24,6 +24,7 @@ class BBMapParamCompSep(PipelineStage):
 
         # perform component separation
         # assuming inhomogeneous noise
+        import fgbuster
         from fgbuster.component_model import CMB, Dust, Synchrotron
         components = [CMB(), Dust(150.), Synchrotron(150.)]
         frequencies = [30.0, 40.0, 95.0, 150.0, 220.0, 270.0]
