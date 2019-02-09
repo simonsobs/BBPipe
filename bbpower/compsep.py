@@ -224,7 +224,7 @@ class BBCompSep(PipelineStage):
 
                         model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
                         
-                model = np.asarray([np.dot(w, model) for w in windows])
+                model = np.dot(windows,model)
                 cls_array_list[:,t1,t2]=model
                 if t1!=t2 :
                     cls_array_list[:,t2,t1]=model
