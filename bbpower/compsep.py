@@ -15,7 +15,7 @@ class BBCompSep(PipelineStage):
     The foreground model parameters are defined in the config.yml file. 
     """
     name = "BBCompSep"
-    inputs = [('cells_data', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
+    inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
     outputs = [('param_chains', DummyFile)]
     config_options={'likelihood_type':'h&l'}
 
@@ -50,7 +50,7 @@ class BBCompSep(PipelineStage):
         """
         Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
         """
-        self.s = SACC.loadFromHDF(self.get_input('cells_data'))
+        self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
         self.use_handl=self.config['likelihood_type']=='h&l'
         if self.use_handl :
             s_fid=SACC.loadFromHDF(self.get_input('cells_fiducial'))
