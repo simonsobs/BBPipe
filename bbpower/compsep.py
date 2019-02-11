@@ -15,7 +15,7 @@ class BBCompSep(PipelineStage):
     The foreground model parameters are defined in the config.yml file. 
     """
     name = "BBCompSep"
-    inputs = [('sacc_file', SACC)]
+    inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
     outputs = [('param_chains', DummyFile)]
 
     def setup_compsep(self):
@@ -32,7 +32,21 @@ class BBCompSep(PipelineStage):
         """
         Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
         """
-        self.s = SACC.loadFromHDF(self.get_input('sacc_file'))
+        self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
+        self.use_handl=self.config['likelihood_type']=='h&l'
+        if self.use_handl :
+            s_fid=SACC.loadFromHDF(self.get_input('cells_fiducial'))
+            s_noi=SACC.loadFromHDF(self.get_input('cells_noise'))
+
+        #Keep only BB measurements
+        self.s.cullType(b'BB') # TODO: Modify if we want to use E
+        if self.use_handl :
+            s_fid.cullType(b'BB')
+            s_noi.cullType(b'BB')
+        self.nfreqs=len(self.s.tracers)
+        self.nmaps=self.nfreqs # TODO: Modify if we want to use E
+        self.index_ut=np.triu_indices(self.nmaps)
+        self.ncross=(self.nmaps*(self.nmaps+1))//2
         self.order = self.s.sortTracers()
 
         self.bpasses = []
@@ -165,9 +179,11 @@ class BBCompSep(PipelineStage):
                         cross_amp = np.sqrt(p_amp * params[self.parameters.amp_index[cross_name]])
 
                         model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
-
-                model = np.asarray([np.dot(w.w, model) for w in windows])
-                cls_array_list.append(model)
+                        
+                model = np.dot(windows,model)
+                cls_array_list[:,t1,t2]=model
+                if t1!=t2 :
+                    cls_array_list[:,t2,t1]=model
         
         return np.asarray(cls_array_list).reshape(len(self.indx), ) 
 
