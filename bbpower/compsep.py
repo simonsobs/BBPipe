@@ -15,9 +15,8 @@ class BBCompSep(PipelineStage):
     The foreground model parameters are defined in the config.yml file. 
     """
     name = "BBCompSep"
-    inputs = [('cells_data', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
+    inputs = [('sacc_file', SACC)]
     outputs = [('param_chains', DummyFile)]
-    config_options={'likelihood_type':'h&l'}
 
     def setup_compsep(self):
         """
@@ -29,45 +28,13 @@ class BBCompSep(PipelineStage):
         self.parameters = FGParameters(self.config)
         return
 
-    def matrix_to_vector(self,mat):
-        return mat[...,self.index_ut[0],self.index_ut[1]]
-
-    def vector_to_matrix(self,vec):
-        if vec.ndim==1 :
-            mat=np.zeros([self.nmaps,self.nmaps])
-            mat[self.index_ut]=vec
-            mat=mat+mat.T-np.diag(mat.diagonal())
-        elif vec.ndim==2 :
-            mat=np.zeros([len(vec),self.nmaps,self.nmaps])
-            mat[...,self.index_ut[0],self.index_ut[1]]=vec[...,:]
-            for i,m in enumerate(mat) :
-                mat[i]=m+m.T-np.diag(m.diagonal())
-        else :
-            raise ValueError("Input vector can only be 1- or 2-D")
-        return mat
-
     def parse_sacc_file(self):
         """
         Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
         """
-        self.s = SACC.loadFromHDF(self.get_input('cells_data'))
-        self.use_handl=self.config['likelihood_type']=='h&l'
-        if self.use_handl :
-            s_fid=SACC.loadFromHDF(self.get_input('cells_fiducial'))
-            s_noi=SACC.loadFromHDF(self.get_input('cells_noise'))
-
-        #Keep only BB measurements
-        self.s.cullType(b'BB') # TODO: Modify if we want to use E
-        if self.use_handl :
-            s_fid.cullType(b'BB')
-            s_noi.cullType(b'BB')
-        self.nfreqs=len(self.s.tracers)
-        self.nmaps=self.nfreqs # TODO: Modify if we want to use E
-        self.index_ut=np.triu_indices(self.nmaps)
-        self.ncross=(self.nmaps*(self.nmaps+1))//2
+        self.s = SACC.loadFromHDF(self.get_input('sacc_file'))
         self.order = self.s.sortTracers()
 
-        #Collect bandpasses
         self.bpasses = []
         for t in self.s.tracers :
             nu = t.z
@@ -78,44 +45,17 @@ class BBCompSep(PipelineStage):
             bnu = t.Nz
             self.bpasses.append([nu, dnu, bnu])
 
-        #Get ell sampling
         self.bpw_l = self.s.binning.windows[0].ls
-        _,_,_,self.ell_b,_=self.order[0]
-        self.n_bpws=len(self.ell_b)
-        self.windows=np.zeros([self.ncross,self.n_bpws,len(self.bpw_l)])
+        self.data = self.s.mean.vector
+        self.covar = self.s.precision.getCovarianceMatrix()
 
-        #Get power spectra and covariances
-        v = self.s.mean.vector
-        if len(v)!=self.n_bpws*self.ncross :
-            raise ValueError("C_ell vector's size is wrong")
-        cv = self.s.precision.getCovarianceMatrix()
-
-        #Parse into the right ordering
-        v2d=np.zeros([self.n_bpws,self.ncross])
-        if self.use_handl :
-            v2d_noi=np.zeros([self.n_bpws,self.ncross])
-            v2d_fid=np.zeros([self.n_bpws,self.ncross])
-        cv2d=np.zeros([self.n_bpws,self.ncross,self.n_bpws,self.ncross])
-        self.vector_indices=self.vector_to_matrix(np.arange(self.ncross,dtype=int)).astype(int)
+        self.n_tracers = np.arange(12) 
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
-            for b,i in enumerate(ndx) :
-                self.windows[self.vector_indices[t1,t2],b,:]=self.s.binning.windows[i].w
-            v2d[:,self.vector_indices[t1,t2]]=v[ndx]
-            if self.use_handl :
-                v2d_noi[:,self.vector_indices[t1,t2]]=s_noi.mean.vector[ndx]
-                v2d_fid[:,self.vector_indices[t1,t2]]=s_fid.mean.vector[ndx]
-            if len(ells)!=self.n_bpws :
-                raise ValueError("All power spectra need to be sampled at the same ells")
-            for t1b,t2b,typb,ellsb,ndxb in self.order:
-                cv2d[:,self.vector_indices[t1,t2],:,self.vector_indices[t1b,t2b]]=cv[ndx,:][:,ndxb]
-
-        #Store data
-        self.bbdata=self.vector_to_matrix(v2d)
-        if self.use_handl :
-            self.bbnoise=self.vector_to_matrix(v2d_noi)
-            self.bbfiducial=self.vector_to_matrix(v2d_fid)
-        self.bbcovar=cv2d.reshape([self.n_bpws*self.ncross,self.n_bpws*self.ncross])
+            if typ == b'BB':
+                self.indx += list(ndx)
+        self.bbdata = self.data[self.indx]
+        self.bbcovar = self.covar[self.indx][:, self.indx]
         self.invcov = np.linalg.solve(self.bbcovar, np.identity(len(self.bbcovar)))
         return
 
@@ -139,7 +79,7 @@ class BBCompSep(PipelineStage):
         Evaulates the CMB unit conversion over the bandpasses. 
         """
         cmb_norms = [] 
-        for tn in range(self.nfreqs):
+        for tn in self.n_tracers:
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
@@ -156,7 +96,7 @@ class BBCompSep(PipelineStage):
         for key in self.fg_model.components:
             fg_scaling[key] = []
 
-        for tn in range(self.nfreqs):
+        for tn in self.n_tracers:
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
@@ -178,7 +118,7 @@ class BBCompSep(PipelineStage):
                 fg_scaling[key].append(fg_sed_int)
 
         return fg_scaling
-
+    
     def evaluate_power_spectra(self, params):
         fg_pspectra = {}
         for key, component in self.fg_model.components.items():
@@ -200,11 +140,11 @@ class BBCompSep(PipelineStage):
         fg_scaling = self.integrate_seds(params)
         fg_p_spectra = self.evaluate_power_spectra(params)
         
-        cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
-        for t1 in range(self.nfreqs) :
-            for t2 in range(t1,self.nfreqs) :
-                windows=self.windows[self.vector_indices[t1,t2]]
-
+        cls_array_list = [] 
+        for t1,t2,typ,ells,ndx in self.order:
+            if typ == b'BB':
+                windows = self.s.binning.windows[ndx]
+                
                 model = cmb_bmodes
                 for component in self.fg_model.components:
                     sed_power_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
@@ -223,13 +163,11 @@ class BBCompSep(PipelineStage):
                         cross_amp = np.sqrt(p_amp * params[self.parameters.amp_index[cross_name]])
 
                         model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
-                        
-                model = np.asarray([np.dot(w, model) for w in windows])
-                cls_array_list[:,t1,t2]=model
-                if t1!=t2 :
-                    cls_array_list[:,t2,t1]=model
+
+                model = np.asarray([np.dot(w.w, model) for w in windows])
+                cls_array_list.append(model)
         
-        return cls_array_list
+        return np.asarray(cls_array_list).reshape(len(self.indx), ) 
 
     def lnpriors(self, params):
         """
@@ -258,8 +196,7 @@ class BBCompSep(PipelineStage):
         """
         # TODO: Needs to be replaced with H&L approx.
         model_cls = self.model(params)
-        dx=self.matrix_to_vector(self.bbdata-model_cls).flatten()
-        return -0.5*np.einsum('i,ij,j',dx,self.invcov,dx)
+        return -0.5 * np.mat(self.bbdata - model_cls) * np.mat(self.invcov) * np.mat(self.bbdata - model_cls).T
 
     def lnprob(self, params):
         """
@@ -297,7 +234,7 @@ class BBCompSep(PipelineStage):
             nwalkers = 32
 
         sampler = self.emcee_sampler(n_iters, nwalkers)
-        exit(1)
+            
         np.save('big_sampling_check2', sampler.chain)
         np.save('params', [self.parameters.param_index, self.parameters.priors])
 
@@ -310,3 +247,4 @@ class BBCompSep(PipelineStage):
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
+
