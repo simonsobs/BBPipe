@@ -96,11 +96,13 @@ class BBCompSep(PipelineStage):
         for key in self.fg_model.components:
             fg_scaling[key] = []
 
+        meannu = {}
         for tn in self.n_tracers:
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
             bpass_integration = bpass * nus**2 * dnu
+            meannu[tn] = np.sum(dnu * nus * bpass) / np.sum(dnu * bpass)
 
             for key, component in self.fg_model.components.items(): 
                 #conv_rj = (nus / component['nu0'])**2
@@ -117,7 +119,7 @@ class BBCompSep(PipelineStage):
                 fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
                 fg_scaling[key].append(fg_sed_int)
 
-        return fg_scaling
+        return fg_scaling, meannu
     
     def evaluate_power_spectra(self, params):
         fg_pspectra = {}
@@ -216,9 +218,16 @@ class BBCompSep(PipelineStage):
         
         ndim = len(self.parameters.param_init)
         pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
-        sampler.run_mcmc(pos, n_iters);
-        return sampler
+
+        fg_scaling, meannu = self.integrate_seds(self.parameters.param_init)
+        fg_p_spectra = self.evaluate_power_spectra(self.parameters.param_init)
+        np.save('scaling', fg_scaling)
+        np.save('pspectra', fg_p_spectra) 
+        np.save('meannu', meannu) 
+ 
+        #sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
+        #sampler.run_mcmc(pos, n_iters);
+        return None
 
 
     def run(self):
@@ -235,8 +244,8 @@ class BBCompSep(PipelineStage):
 
         sampler = self.emcee_sampler(n_iters, nwalkers)
             
-        np.save('big_sampling_check2', sampler.chain)
-        np.save('params', [self.parameters.param_index, self.parameters.priors])
+        #np.save('big_sampling_check2', sampler.chain)
+        #np.save('params', [self.parameters.param_index, self.parameters.priors])
 
         # this part doesn't work yet
         for out,_ in self.outputs :
