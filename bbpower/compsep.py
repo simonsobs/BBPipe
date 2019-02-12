@@ -205,8 +205,7 @@ class BBCompSep(PipelineStage):
             for t2 in range(t1,self.nfreqs) :
                 windows=self.windows[self.vector_indices[t1,t2]]
 
-                # have to be fucking kidding me. 
-                model = cmb_bmodes + np.zeros_like(cmb_bmodes)
+                model = cmb_bmodes.copy()
                 for component in self.fg_model.components:
                     sed_power_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
                     p_amp = params[self.parameters.amp_index[component]]
