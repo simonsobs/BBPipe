@@ -23,7 +23,6 @@ class FGModel:
             sed_fnc = get_fgbuster_sed(component['sed'])
             self.components[key]['sed'] = sed_fnc(**component['parameters'], units='K_RJ')
             self.components[key]['cmb_n0_norm'] = CMB('K_RJ').eval(nu0) * nu0**2
-            #self.components[key]['cmb_n0_norm'] = cmb(nu0)
             self.components[key]['nu0'] = nu0
             self.components[key]['spectrum_params'] = component['spectrum']
         return 
@@ -75,10 +74,5 @@ def normed_plaw(ell, alpha):
     ell0 = 80.
     return (ell/ell0)**alpha 
 
-
-def cmb(nus):
-    TCMB = 2.725
-    X = hplanck * nus *1.e9 / (kboltz * TCMB)
-    return X**4 * np.exp(X) / (np.exp(X) - 1.)**2
 
 

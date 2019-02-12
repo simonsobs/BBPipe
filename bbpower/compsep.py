@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
 from .types import DummyFile, YamlFile
@@ -27,22 +28,24 @@ class BBCompSep(PipelineStage):
         self.load_cmb()
         self.fg_model = FGModel(self.config)
         self.parameters = FGParameters(self.config)
+        if self.use_handl:
+            self.prepare_h_and_l()
         return
 
-    def matrix_to_vector(self,mat):
-        return mat[...,self.index_ut[0],self.index_ut[1]]
+    def matrix_to_vector(self, mat):
+        return mat[..., self.index_ut[0], self.index_ut[1]]
 
-    def vector_to_matrix(self,vec):
-        if vec.ndim==1 :
-            mat=np.zeros([self.nmaps,self.nmaps])
-            mat[self.index_ut]=vec
-            mat=mat+mat.T-np.diag(mat.diagonal())
-        elif vec.ndim==2 :
-            mat=np.zeros([len(vec),self.nmaps,self.nmaps])
-            mat[...,self.index_ut[0],self.index_ut[1]]=vec[...,:]
-            for i,m in enumerate(mat) :
-                mat[i]=m+m.T-np.diag(m.diagonal())
-        else :
+    def vector_to_matrix(self, vec):
+        if vec.ndim == 1:
+            mat = np.zeros([self.nmaps, self.nmaps])
+            mat[self.index_ut] = vec
+            mat = mat + mat.T - np.diag(mat.diagonal())
+        elif vec.ndim==2:
+            mat = np.zeros([len(vec), self.nmaps, self.nmaps])
+            mat[..., self.index_ut[0], self.index_ut[1]] = vec[...,:]
+            for i,m in enumerate(mat):
+                mat[i] = m + m.T - np.diag(m.diagonal())
+        else:
             raise ValueError("Input vector can only be 1- or 2-D")
         return mat
 
@@ -51,25 +54,25 @@ class BBCompSep(PipelineStage):
         Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
         """
         self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
-        self.use_handl=self.config['likelihood_type']=='h&l'
-        if self.use_handl :
-            s_fid=SACC.loadFromHDF(self.get_input('cells_fiducial'))
-            s_noi=SACC.loadFromHDF(self.get_input('cells_noise'))
+        self.use_handl = self.config['likelihood_type'] == 'h&l'
+        if self.use_handl:
+            s_fid = SACC.loadFromHDF(self.get_input('cells_fiducial'))
+            s_noi = SACC.loadFromHDF(self.get_input('cells_noise'))
 
         #Keep only BB measurements
         self.s.cullType(b'BB') # TODO: Modify if we want to use E
-        if self.use_handl :
+        if self.use_handl:
             s_fid.cullType(b'BB')
             s_noi.cullType(b'BB')
-        self.nfreqs=len(self.s.tracers)
-        self.nmaps=self.nfreqs # TODO: Modify if we want to use E
-        self.index_ut=np.triu_indices(self.nmaps)
-        self.ncross=(self.nmaps*(self.nmaps+1))//2
+        self.nfreqs = len(self.s.tracers)
+        self.nmaps = self.nfreqs # TODO: Modify if we want to use E
+        self.index_ut = np.triu_indices(self.nmaps)
+        self.ncross = (self.nmaps * (self.nmaps + 1)) // 2
         self.order = self.s.sortTracers()
 
         #Collect bandpasses
         self.bpasses = []
-        for t in self.s.tracers :
+        for t in self.s.tracers:
             nu = t.z
             dnu = np.zeros_like(nu);
             dnu[1:-1] = 0.5 * (nu[2:] - nu[:-2])
@@ -80,42 +83,42 @@ class BBCompSep(PipelineStage):
 
         #Get ell sampling
         self.bpw_l = self.s.binning.windows[0].ls
-        _,_,_,self.ell_b,_=self.order[0]
-        self.n_bpws=len(self.ell_b)
-        self.windows=np.zeros([self.ncross,self.n_bpws,len(self.bpw_l)])
+        _,_,_,self.ell_b,_ = self.order[0]
+        self.n_bpws = len(self.ell_b)
+        self.windows = np.zeros([self.ncross, self.n_bpws, len(self.bpw_l)])
 
         #Get power spectra and covariances
         v = self.s.mean.vector
-        if len(v)!=self.n_bpws*self.ncross :
+        if len(v) != self.n_bpws * self.ncross:
             raise ValueError("C_ell vector's size is wrong")
         cv = self.s.precision.getCovarianceMatrix()
 
         #Parse into the right ordering
-        v2d=np.zeros([self.n_bpws,self.ncross])
-        if self.use_handl :
-            v2d_noi=np.zeros([self.n_bpws,self.ncross])
-            v2d_fid=np.zeros([self.n_bpws,self.ncross])
-        cv2d=np.zeros([self.n_bpws,self.ncross,self.n_bpws,self.ncross])
-        self.vector_indices=self.vector_to_matrix(np.arange(self.ncross,dtype=int)).astype(int)
+        v2d = np.zeros([self.n_bpws, self.ncross])
+        if self.use_handl:
+            v2d_noi = np.zeros([self.n_bpws, self.ncross])
+            v2d_fid = np.zeros([self.n_bpws, self.ncross])
+        cv2d = np.zeros([self.n_bpws, self.ncross, self.n_bpws, self.ncross])
+        self.vector_indices = self.vector_to_matrix(np.arange(self.ncross, dtype=int)).astype(int)
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
-            for b,i in enumerate(ndx) :
-                self.windows[self.vector_indices[t1,t2],b,:]=self.s.binning.windows[i].w
-            v2d[:,self.vector_indices[t1,t2]]=v[ndx]
-            if self.use_handl :
-                v2d_noi[:,self.vector_indices[t1,t2]]=s_noi.mean.vector[ndx]
-                v2d_fid[:,self.vector_indices[t1,t2]]=s_fid.mean.vector[ndx]
-            if len(ells)!=self.n_bpws :
+            for b,i in enumerate(ndx):
+                self.windows[self.vector_indices[t1, t2], b, :] = self.s.binning.windows[i].w
+            v2d[:,self.vector_indices[t1, t2]] = v[ndx]
+            if self.use_handl:
+                v2d_noi[:, self.vector_indices[t1, t2]] = s_noi.mean.vector[ndx]
+                v2d_fid[:, self.vector_indices[t1, t2]] = s_fid.mean.vector[ndx]
+            if len(ells) != self.n_bpws:
                 raise ValueError("All power spectra need to be sampled at the same ells")
-            for t1b,t2b,typb,ellsb,ndxb in self.order:
-                cv2d[:,self.vector_indices[t1,t2],:,self.vector_indices[t1b,t2b]]=cv[ndx,:][:,ndxb]
+            for t1b, t2b, typb, ellsb, ndxb in self.order:
+                cv2d[:, self.vector_indices[t1, t2], :, self.vector_indices[t1b, t2b]] = cv[ndx, :][:, ndxb]
 
         #Store data
-        self.bbdata=self.vector_to_matrix(v2d)
-        if self.use_handl :
-            self.bbnoise=self.vector_to_matrix(v2d_noi)
-            self.bbfiducial=self.vector_to_matrix(v2d_fid)
-        self.bbcovar=cv2d.reshape([self.n_bpws*self.ncross,self.n_bpws*self.ncross])
+        self.bbdata = self.vector_to_matrix(v2d)
+        if self.use_handl:
+            self.bbnoise = self.vector_to_matrix(v2d_noi)
+            self.bbfiducial = self.vector_to_matrix(v2d_fid)
+        self.bbcovar = cv2d.reshape([self.n_bpws * self.ncross, self.n_bpws * self.ncross])
         self.invcov = np.linalg.solve(self.bbcovar, np.identity(len(self.bbcovar)))
         return
 
@@ -143,11 +146,9 @@ class BBCompSep(PipelineStage):
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
-            #bpass_integration = bpass * nus**2 * dnu
             bpass_integration = bpass * dnu
 
             cmb_thermo_units = CMB('K_RJ').eval(nus) * nus**2 
-            #cmb_thermo_units = cmb(nus) 
             cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
         self.cmb_norm = np.asarray(cmb_norms)
         return
@@ -161,7 +162,6 @@ class BBCompSep(PipelineStage):
             nus = self.bpasses[tn][0]
             bpass = self.bpasses[tn][1]
             dnu = self.bpasses[tn][2]
-            #bpass_integration = bpass * nus**2 * dnu
             bpass_integration = bpass * dnu
 
             for key, component in self.fg_model.components.items(): 
@@ -252,14 +252,60 @@ class BBCompSep(PipelineStage):
             
         return total_prior
 
-    def lnlike(self, params):
+    def chi_sq_lnlike(self, params):
         """
-        Our likelihood. 
+        Chi^2 likelihood. 
         """
-        # TODO: Needs to be replaced with H&L approx.
         model_cls = self.model(params)
         dx=self.matrix_to_vector(self.bbdata-model_cls).flatten()
         return -0.5*np.einsum('i,ij,j',dx,self.invcov,dx)
+
+    def prepare_h_and_l(self):
+        self.sqrt_fiducial = sqrtm(self.bbfiducial)
+        self.observed_cls = self.bbdata + self.bbnoise
+        return 
+
+    def h_and_l_lnlike_dumb(self, params):
+        """
+        Hamimeche and Lewis likelihood. 
+        """
+        model_cls = self.model(params)
+        invmodel = np.linalg.solve(model_cls, np.identity(len(model_cls)))
+        inv_sqrt_model = sqrtm(invmodel)
+
+        x = inv_sqrt_model.dot(self.observed_cls).dot(inv_sqrt_model)
+
+        diag, U = np.linalg.eigh(x)
+        g = np.sign( diag - 1.) * np.sqrt( 2. * ( diag - np.log(diag) - 1. ) ) 
+
+        gmat = U.T.dot(g).dot(U)
+
+        X = self.sqrt_fiducial.dot(gmat).dot(self.sqrt_fiducial)
+
+        dx = self.matrix_to_vector(X).flatten()
+        return -0.5 * np.einsum('i,ij,j', dx, self.invcov, dx)
+
+    def h_and_l_lnlike_smart(self, params):
+        """
+        Hamimeche and Lewis likelihood. 
+        """
+        model_cls = self.model(params)
+        
+        diag, U = np.linalg.eigh(model_cls)
+        rot = U.T.dot(self.observed_cls).dot(U)
+        roots = np.sqrt(diag)
+        for i, root in enumerate(roots):
+            rot[i, :] /= root
+            rot[:, i] /= root
+        U.dot(rot.dot(U.T), rot) #in place? 
+        diag, rot = np.linalg.eigh(rot)
+        diag = np.sign(diag - 1) * np.sqrt(2 * np.maximum(0, diag - np.log(diag) - 1))
+        self.sqrt_fiducial.dot(rot, U)
+        for i, d in enumerate(diag):
+            rot[:, i] = U[:, i] * d
+        X = rot.dot(U.T)
+        dx = self.matrix_to_vector(X).flatten()
+        return -0.5 * np.einsum('i,ij,j', dx, self.invcov, dx)
 
     def lnprob(self, params):
         """
