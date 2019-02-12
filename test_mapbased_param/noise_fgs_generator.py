@@ -35,6 +35,9 @@ def grabargs():
 	parser.add_argument("--tag", type=str, \
 						help = "specific tag for this run", \
 						default='SO_sims')
+	parser.add_argument('--white_noise', dest='white_noise', action='store_true', \
+					help='add white_noise',\
+					default=False)
 	args = parser.parse_args()
 	return args
 
@@ -45,8 +48,9 @@ def main():
 	# GENERATE NOISE MAP
 	nhits,noise_maps,nlev = mknm.get_noise_sim(sensitivity=args.sensitivity_mode, 
 					knee_mode=args.knee_mode,ny_lf=args.low_freq_year,nside_out=args.nside)
-	binary_mask = nhits*0.0
-	binary_mask[np.where(nhits!=0.0)[0]]=1.0
+	binary_mask = hp.read_map('mask_04000.fits')
+	binary_mask = hp.ud_grade(binary_mask, nside_out=args.nside)
+	binary_mask[np.where(nhits<1e-6)[0]] = 0.0
 	# GENERATE CMB AND FOREGROUNDS
 	d_config = models("d1", args.nside)
 	s_config = models("s1", args.nside)
@@ -78,12 +82,33 @@ def main():
 	# restructuration of the noise map
 	freq_maps = freq_maps.reshape(noise_maps.shape)
 	# adding noise
-	freq_maps += noise_maps
-	freq_maps += noise_maps
-	freq_maps *= binary_mask
-	noise_maps *= binary_mask
+	if args.white_noise:
+		nlev_map = freq_maps*0.0
+		for i in range(len(instrument_config['frequencies'])):
+			nlev_map[3*i:3*i+3,:] = np.array([instrument_config['sens_I'][i], instrument_config['sens_P'][i], instrument_config['sens_P'][i]])[:,np.newaxis]*np.ones((3,freq_maps.shape[-1]))
+		# nlev_map = np.vstack(([instrument_config['sens_I'], instrument_config['sens_P'], instrument_config['sens_P']]))
+		nlev_map /= hp.nside2resol(args.nside, arcmin=True)
+		noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)*binary_mask
+		freq_maps += noise_maps
+	else:
+		freq_maps += noise_maps*binary_mask
+	# freq_maps *= binary_mask
+	# noise_maps *= binary_mask
 	freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 	noise_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
+
+
+	# for i in range(len(instrument_config['frequencies'])):
+	#     hp.mollview( freq_maps[3*i,:], sub=(len(instrument_config['frequencies']),3,3*i+1))
+	#     hp.mollview( freq_maps[3*i+1,:], sub=(len(instrument_config['frequencies']),3,3*i+2))
+	#     hp.mollview( freq_maps[3*i+2,:], sub=(len(instrument_config['frequencies']),3,3*i+3))
+	# pl.figure()
+	# for i in range(len(instrument_config['frequencies'])):
+	#     hp.mollview( noise_maps[3*i,:], sub=(len(instrument_config['frequencies']),3,3*i+1))
+	#     hp.mollview( noise_maps[3*i+1,:], sub=(len(instrument_config['frequencies']),3,3*i+2))
+	#     hp.mollview( noise_maps[3*i+2,:], sub=(len(instrument_config['frequencies']),3,3*i+3))
+	# pl.show()
+	# exit()
 
 	# noise covariance 
 	noise_cov = freq_maps*0.0
@@ -92,6 +117,10 @@ def main():
 	noise_cov[2::3,:] = nlev[:,np.newaxis]
 	noise_cov *= binary_mask
 	noise_cov /= np.sqrt(nhits/np.amax(nhits))
+	# we put it to square !
+	noise_cov *= noise_cov
+	# noise_cov *= binary_mask
+	# noise_cov[:,np.where(binary_mask==0)[0]] = 1.0
 	noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
 	# save on disk frequency maps, noise maps, noise_cov, binary_mask
@@ -99,6 +128,7 @@ def main():
 	tag += '_sens'+str(args.sensitivity_mode)
 	tag += '_knee'+str(args.knee_mode)
 	tag += '_nylf'+str(args.low_freq_year)
+	if args.white_noise: tag += '_WN'
 
 	column_names = []
 	[ column_names.extend( ('I_'+str(ch)+'GHz','Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in freqs]
