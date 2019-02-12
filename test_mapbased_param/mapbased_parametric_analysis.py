@@ -3,7 +3,6 @@ from .types import FitsFile
 import numpy as np
 import pylab as pl
 
-instrument = {'frequencies':np.array([30.0, 40.0, 95.0, 150.0, 220.0, 270.0])}
 
 class BBMapParamCompSep(PipelineStage):
     """
@@ -26,6 +25,7 @@ class BBMapParamCompSep(PipelineStage):
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
 
         # reorganization of maps
+        instrument = {'frequencies':[30.0, 40.0, 95.0, 150.0, 220.0, 270.0]}
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
@@ -43,7 +43,6 @@ class BBMapParamCompSep(PipelineStage):
         import fgbuster as fg
         from fgbuster.component_model import CMB, Dust, Synchrotron
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
-        instrument = {'frequencies':[30.0, 40.0, 95.0, 150.0, 220.0, 270.0]}
 
         from fgbuster.separation_recipies import weighted_comp_sep
         res = fg.separation_recipies.weighted_comp_sep(components, instrument,
