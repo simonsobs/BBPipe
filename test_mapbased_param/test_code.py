@@ -6,12 +6,12 @@ import os.path as op
 # from fgbuster.pysm_helpers import get_instrument, get_sky
 # import mk_noise_map as mknm
 
-binary_mask=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits',verbose=False)
-frequency_maps=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+binary_mask=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits',verbose=False)
+frequency_maps=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
 # frequency_maps=hp.read_map('SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
-noise_cov=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+noise_cov=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
 # noise_cov=hp.read_map('SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
-noise_maps=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+noise_maps=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
 # noise_maps=hp.read_map('SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
 
 
