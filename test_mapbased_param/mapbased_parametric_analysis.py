@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types_ import FitsFile
+from .types import FitsFile
 import numpy as np
 import pylab as pl
 
