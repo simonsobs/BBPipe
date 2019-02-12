@@ -2,6 +2,9 @@ import numpy as np
 
 from fgbuster.component_model import CMB, Dust, Synchrotron, AnalyticComponent, FreeFree 
 
+hplanck = 6.626068e-34
+kboltz = 1.3806503e-23
+
 class FGModel:
     def __init__(self, config):
         self.load_foregrounds(config)
@@ -19,7 +22,8 @@ class FGModel:
             nu0 = component['parameters']['nu0']
             sed_fnc = get_fgbuster_sed(component['sed'])
             self.components[key]['sed'] = sed_fnc(**component['parameters'], units='K_RJ')
-            self.components[key]['cmb_n0_norm'] = CMB('K_RJ').eval(nu0) #* nu0**2
+            self.components[key]['cmb_n0_norm'] = CMB('K_RJ').eval(nu0) * nu0**2
+            #self.components[key]['cmb_n0_norm'] = cmb(nu0)
             self.components[key]['nu0'] = nu0
             self.components[key]['spectrum_params'] = component['spectrum']
         return 
@@ -36,7 +40,7 @@ class FGParameters:
         self.amp_index = {} 
         self.priors = {}
         self.param_index['r'] = 0
-        self.param_init.append(1.e-3)
+        self.param_init.append(0.02)
         pindx = 1
         for key, component in config['fg_model'].items():
             for param, prior in component['priors'].items():
@@ -71,5 +75,10 @@ def normed_plaw(ell, alpha):
     ell0 = 80.
     return (ell/ell0)**alpha 
 
+
+def cmb(nus):
+    TCMB = 2.725
+    X = hplanck * nus *1.e9 / (kboltz * TCMB)
+    return X**4 * np.exp(X) / (np.exp(X) - 1.)**2
 
 
