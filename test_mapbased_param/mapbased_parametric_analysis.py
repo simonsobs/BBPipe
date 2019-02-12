@@ -3,6 +3,8 @@ from .types import FitsFile
 import numpy as np
 import pylab as pl
 
+instrument = {'frequencies':np.array([30.0, 40.0, 95.0, 150.0, 220.0, 270.0])}
+
 class BBMapParamCompSep(PipelineStage):
     """
     Stage that performs three things:
