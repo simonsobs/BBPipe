@@ -8,3 +8,4 @@ BBPipe.egg-info/
 log.txt
 runinfo
 *.npy
+*.sacc

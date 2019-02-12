@@ -23,9 +23,9 @@ BBCompSep:
                 param: epsilon
             priors: 
                 beta_d: ['Gaussian', [1.6, 0.1]]
-                alpha_d: ['tophat', [-1., -0.5, 0.]]
-                amp_d: ['tophat', [0., 5., "inf"]]
-                epsilon: ['tophat', [-1., 0.5, 1.]]
+                alpha_d: ['tophat', [-1., -0.58, 0.]]
+                amp_d: ['tophat', [0., 4.7, "inf"]]
+                epsilon: ['tophat', [-1., -0.38, 1.]]
 
         component_2:
             name: Synchrotron
@@ -37,6 +37,6 @@ BBCompSep:
                 alpha_pl:
             priors: 
                 beta_pl: ['Gaussian', [-3., 0.3]]
-                alpha_pl: ['tophat', [-1., -0.5, 0.]]
-                amp_pl: ['tophat', [0., 2., "inf"]]
+                alpha_pl: ['tophat', [-1., -0.27, 0.]]
+                amp_pl: ['tophat', [0., 1.5, "inf"]]
     
