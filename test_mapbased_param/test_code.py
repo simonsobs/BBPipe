@@ -6,12 +6,12 @@ import os.path as op
 # from fgbuster.pysm_helpers import get_instrument, get_sky
 # import mk_noise_map as mknm
 
-binary_mask=hp.read_map('SO_sims_binary_mask.fits',verbose=False)
-frequency_maps=hp.read_map('SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+binary_mask=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits',verbose=False)
+frequency_maps=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
 # frequency_maps=hp.read_map('SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
-noise_cov=hp.read_map('SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+noise_cov=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
 # noise_cov=hp.read_map('SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
-noise_maps=hp.read_map('SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+noise_maps=hp.read_map('/global/csratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
 # noise_maps=hp.read_map('SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
 
 
@@ -94,7 +94,7 @@ else:
 # print res.s
 # print res.s.shape
 CMB_estimated=res.s[0,:,:]*1.0
-print '#################'
+# print '#################'
 # print res.invAtNA
 # print res.invAtNA.shape
 CMB_noise_cov_estimated = res.invAtNA[0,0,:,:]*1.0
@@ -110,11 +110,11 @@ CMB_estimated_[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 # hp.mollview(np.log10(CMB_noise_cov_estimated[0]), sub=(121))
 # hp.mollview(np.log10(CMB_noise_cov_estimated[1]), sub=(122))
 # pl.show()
-print '#################'
-print res.x
+# print '#################'
+print(res.x)
 # print res.x.shape
-print '#################'
-print res.Sigma
+# print '#################'
+print(res.Sigma)
 # print np.diag(res.Sigma)
 
 
