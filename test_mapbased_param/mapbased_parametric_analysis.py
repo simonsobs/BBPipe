@@ -47,16 +47,16 @@ class BBMapParamCompSep(PipelineStage):
 
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
-        A = MixingMatrix(*components)
-        A_ev = A.evaluator(instrument['frequencies'])
-        print(*components)
-        print(dir(A))
-        print(A.n_param)
-        print(A.params)
-        print(A.components)
-        print(A_ev(np.array([1.54, -3.0])))
-        A_dB_ev = A.diff_evaluator(instrument['frequencies'])
-        print(A_dB_ev(np.array([1.54, -3.0])))
+        # A = MixingMatrix(*components)
+        # A_ev = A.evaluator(instrument['frequencies'])
+        # print(*components)
+        # print(dir(A))
+        # print(A.n_param)
+        # print(A.params)
+        # print(A.components)
+        # print(A_ev(np.array([1.54, -3.0])))
+        # A_dB_ev = A.diff_evaluator(instrument['frequencies'])
+        # print(A_dB_ev(np.array([1.54, -3.0])))
 
         res = fg.separation_recipies.weighted_comp_sep(components, instrument,
                      data=frequency_maps_, cov=noise_cov_, nside=0)
@@ -79,8 +79,9 @@ class BBMapParamCompSep(PipelineStage):
         A = MixingMatrix(*components)
         column_names = []
         [ column_names.extend( ('I_'+str(ch)*optI,'Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in A.components]
-        
+        print(column_names)
         maps_estimated=res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+        print(maps_estimated.shape)
         hp.write_map(self.get_output('post_compsep_maps'), maps_estimated, overwrite=True, column_names=column_names)
 
         cov_estimated = res.invAtNA[:,:,:,:].diagonal()
