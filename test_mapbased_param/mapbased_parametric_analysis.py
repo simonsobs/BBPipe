@@ -2,7 +2,11 @@ from bbpipe import PipelineStage
 from .types import FitsFile
 import numpy as np
 import pylab as pl
-
+import fgbuster as fg
+from fgbuster.component_model import CMB, Dust, Synchrotron
+from fgbuster.mixingmatrix import MixingMatrix
+from fgbuster.mixingmatrix import MixingMatrix
+from fgbuster.separation_recipies import weighted_comp_sep
 
 class BBMapParamCompSep(PipelineStage):
     """
@@ -40,18 +44,15 @@ class BBMapParamCompSep(PipelineStage):
 
         # perform component separation
         # assuming inhomogeneous noise
-        import fgbuster as fg
-        from fgbuster.component_model import CMB, Dust, Synchrotron
+
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
-        from fgbuster.mixingmatrix import MixingMatrix
         A = MixingMatrix(*components)
         A_ev = A.evaluator(instrument['frequencies'])
         print(A_ev(np.array([1.54, -3.0])))
         A_dB_ev = A.diff_evaluator(instrument['frequencies'])
         print(A_dB_ev(np.array([1.54, -3.0])))
 
-        from fgbuster.separation_recipies import weighted_comp_sep
         res = fg.separation_recipies.weighted_comp_sep(components, instrument,
                      data=frequency_maps_, cov=noise_cov_, nside=0)
 
@@ -70,7 +71,6 @@ class BBMapParamCompSep(PipelineStage):
             optI = 1
             optQU = 1
         
-        from fgbuster.mixingmatrix import MixingMatrix
         A = MixingMatrix(*components)
         column_names = []
         [ column_names.extend( ('I_'+str(ch)*optI,'Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in A.components]
