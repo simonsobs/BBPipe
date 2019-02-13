@@ -28,8 +28,8 @@ class BBCompSep(PipelineStage):
         self.load_cmb()
         self.fg_model = FGModel(self.config)
         self.parameters = FGParameters(self.config)
-        if self.use_handl:
-            self.prepare_h_and_l()
+        #if self.use_handl:
+        #    self.prepare_h_and_l()
         return
 
     def matrix_to_vector(self, mat):
@@ -56,8 +56,10 @@ class BBCompSep(PipelineStage):
         self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
         self.use_handl = self.config['likelihood_type'] == 'h&l'
         if self.use_handl:
-            s_fid = SACC.loadFromHDF(self.get_input('cells_fiducial'))
-            s_noi = SACC.loadFromHDF(self.get_input('cells_noise'))
+            s_fid = SACC.loadFromHDF(self.get_input('cells_fiducial'), \
+                                     precision_filename=self.get_input('cells_coadded'))
+            s_noi = SACC.loadFromHDF(self.get_input('cells_noise'), \
+                                     precision_filename=self.get_input('cells_coadded'))
 
         #Keep only BB measurements
         self.s.cullType(b'BB') # TODO: Modify if we want to use E
@@ -291,6 +293,11 @@ class BBCompSep(PipelineStage):
         """
         model_cls = self.model(params)
         
+        for k in range(model_cls.shape[0]):
+            C = model_cls[k, :, :]
+            C += self.bbnoise[k, :, :] #or whatever shape
+            Chat = self.observed_cls[k, :, :]
+
         diag, U = np.linalg.eigh(model_cls)
         rot = U.T.dot(self.observed_cls).dot(U)
         roots = np.sqrt(diag)
@@ -341,14 +348,16 @@ class BBCompSep(PipelineStage):
         else:
             nwalkers = 32
 
-        params = self.parameters.param_init
-        model_cls = self.model(params)
-        np.save('bbmodel', model_cls)
-        np.save('bbdata', self.bbdata)
+        if True:
+            params = self.parameters.param_init
+            model_cls = self.model(params)
+            h_l_data = {'fiducial':self.bbfiducial, 'bbdata':self.bbdata, 'noise':self.bbnoise, \
+                        'model':model_cls, 'invcov':self.invcov}
+            np.save('h_l_data', h_l_data)
+            #np.save('params', [self.parameters.param_index, self.parameters.priors])
         
-        sampler = self.emcee_sampler(n_iters, nwalkers)
-        np.save('sampling_again_newcmb_2', sampler.chain)
-        np.save('params', [self.parameters.param_index, self.parameters.priors])
+        #sampler = self.emcee_sampler(n_iters, nwalkers)
+        #np.save('sampling_again_newcmb_2', sampler.chain)
 
         for out,_ in self.outputs :
             fname = self.get_output(out)
