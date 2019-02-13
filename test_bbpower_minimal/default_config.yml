@@ -3,7 +3,7 @@ global:
     beam_correct: True
 
 BBCompSep:
-    n_iters: 10000
+    n_iters: 5000
     nwalkers: 128
     likelihood_type: 'h&l'
     cmb_files: ["./test_bbpower_minimal/data/camb_lens_nobb.dat", 
