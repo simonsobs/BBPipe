@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import FitsFile
+from .types import FitsFile, TextFile
 import numpy as np
 import pylab as pl
 import fgbuster as fg
@@ -17,7 +17,7 @@ class BBMapParamCompSep(PipelineStage):
     """
     name='BBMapParamCompSep'
     inputs= [('binary_mask',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile)]
-    outputs=[('post_compsep_maps',FitsFile)]
+    outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile)]
 
     def run(self) :
         #Read input mask
