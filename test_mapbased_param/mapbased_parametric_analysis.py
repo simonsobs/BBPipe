@@ -32,7 +32,7 @@ class BBMapParamCompSep(PipelineStage):
         for f in range(len(instrument['frequencies'])) : 
             for i in range(3): 
                 frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
-                noise_cov_[f,i,:] =  noise_cov[ind,:]*1.0
+                noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
                 ind += 1
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
@@ -43,6 +43,12 @@ class BBMapParamCompSep(PipelineStage):
         import fgbuster as fg
         from fgbuster.component_model import CMB, Dust, Synchrotron
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
+
+        from fgbuster.mixingmatrix import MixingMatrix
+        A = MixingMatrix(*components)
+        A_ev = A.evaluator(instrument['frequencies'])
+        A_dB_ev = A.diff_evaluator(instrument['frequencies'])
+        print A_dB_ev(np.array([1.54, -3.0]))
 
         from fgbuster.separation_recipies import weighted_comp_sep
         res = fg.separation_recipies.weighted_comp_sep(components, instrument,
