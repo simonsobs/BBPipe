@@ -79,7 +79,7 @@ class BBMapParamCompSep(PipelineStage):
         A = MixingMatrix(*components)
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]
-        column_names = filter(None, column_names) # fastest
+        column_names = [x for x in column_names if x]
         print(column_names)
         maps_estimated=res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
         print(maps_estimated.shape)
