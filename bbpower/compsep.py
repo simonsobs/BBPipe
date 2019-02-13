@@ -348,7 +348,7 @@ class BBCompSep(PipelineStage):
             np.save('nu_ell', [self.meannu, [37.5, 72.5, 107.5, 142.5, 177.5, 212.5, 247.5, 282.5, 317.5]])
         
         sampler = self.emcee_sampler(n_iters, nwalkers)
-        np.save(self.chain_save_name, sampler.chain)
+        np.save(self.config['chain_save_name'], sampler.chain)
 
         for out,_ in self.outputs :
             fname = self.get_output(out)
