@@ -28,8 +28,8 @@ class BBCompSep(PipelineStage):
         self.load_cmb()
         self.fg_model = FGModel(self.config)
         self.parameters = FGParameters(self.config)
-        #if self.use_handl:
-        #    self.prepare_h_and_l()
+        if self.use_handl:
+            self.prepare_h_and_l()
         return
 
     def matrix_to_vector(self, mat):
@@ -178,7 +178,6 @@ class BBCompSep(PipelineStage):
                 fg_sed_eval = component['sed'].eval(nus, *sed_params) * conv_rj
                 fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
                 fg_scaling[key].append(fg_sed_int)
-
         return fg_scaling
 
     def evaluate_power_spectra(self, params):
@@ -227,9 +226,9 @@ class BBCompSep(PipelineStage):
                         model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
                         
                 model = np.dot(windows,model)
-                cls_array_list[:,t1,t2]=model
-                if t1!=t2 :
-                    cls_array_list[:,t2,t1]=model
+                cls_array_list[:, t1, t2] = model
+                if t1 != t2:
+                    cls_array_list[:, t2, t1] = model
         
         return cls_array_list
 
@@ -259,60 +258,46 @@ class BBCompSep(PipelineStage):
         Chi^2 likelihood. 
         """
         model_cls = self.model(params)
-        dx=self.matrix_to_vector(self.bbdata-model_cls).flatten()
-        return -0.5*np.einsum('i,ij,j',dx,self.invcov,dx)
+        dx = self.matrix_to_vector(self.bbdata - model_cls).flatten()
+        return -0.5*np.einsum('i, ij, j', dx, self.invcov, dx)
 
     def prepare_h_and_l(self):
-        self.sqrt_fiducial = sqrtm(self.bbfiducial)
+        fiducial_noise = self.bbfiducial + self.bbnoise
+        self.Cfl_sqrt = np.zeros_like(fiducial_noise)
+        for k in range(fiducial_noise.shape[0]):
+            self.Cfl_sqrt[k] = sqrtm(fiducial_noise[k])
         self.observed_cls = self.bbdata + self.bbnoise
         return 
 
-    def h_and_l_lnlike_dumb(self, params):
+    def h_and_l_lnlike(self, params):
         """
         Hamimeche and Lewis likelihood. 
+        Taken from Cobaya written by H, L and Torrado
+        See: https://github.com/CobayaSampler/cobaya/blob/master/cobaya/likelihoods/_cmblikes_prototype/_cmblikes_prototype.py
         """
         model_cls = self.model(params)
-        invmodel = np.linalg.solve(model_cls, np.identity(len(model_cls)))
-        inv_sqrt_model = sqrtm(invmodel)
-
-        x = inv_sqrt_model.dot(self.observed_cls).dot(inv_sqrt_model)
-
-        diag, U = np.linalg.eigh(x)
-        g = np.sign( diag - 1.) * np.sqrt( 2. * ( diag - np.log(diag) - 1. ) ) 
-
-        gmat = U.T.dot(g).dot(U)
-
-        X = self.sqrt_fiducial.dot(gmat).dot(self.sqrt_fiducial)
-
-        dx = self.matrix_to_vector(X).flatten()
-        return -0.5 * np.einsum('i,ij,j', dx, self.invcov, dx)
-
-    def h_and_l_lnlike_smart(self, params):
-        """
-        Hamimeche and Lewis likelihood. 
-        """
-        model_cls = self.model(params)
-        
+        dx_vec = []
         for k in range(model_cls.shape[0]):
-            C = model_cls[k, :, :]
-            C += self.bbnoise[k, :, :] #or whatever shape
-            Chat = self.observed_cls[k, :, :]
+            C = model_cls[k] + self.bbnoise[k]
+            X = self.h_and_l(C, self.observed_cls[k], self.Cfl_sqrt[k])
+            dx = self.matrix_to_vector(X).flatten()
+            dx_vec = np.concatenate([dx_vec, dx])
+        return -0.5 * np.einsum('i, ij, j', dx_vec, self.invcov, dx_vec)
 
-        diag, U = np.linalg.eigh(model_cls)
-        rot = U.T.dot(self.observed_cls).dot(U)
+    def h_and_l(self, C, Chat, Cfl_sqrt):
+        diag, U = np.linalg.eigh(C)
+        rot = U.T.dot(Chat).dot(U)
         roots = np.sqrt(diag)
         for i, root in enumerate(roots):
             rot[i, :] /= root
             rot[:, i] /= root
-        U.dot(rot.dot(U.T), rot) #in place? 
+        U.dot(rot.dot(U.T), rot)
         diag, rot = np.linalg.eigh(rot)
         diag = np.sign(diag - 1) * np.sqrt(2 * np.maximum(0, diag - np.log(diag) - 1))
-        self.sqrt_fiducial.dot(rot, U)
+        Cfl_sqrt.dot(rot, U)
         for i, d in enumerate(diag):
             rot[:, i] = U[:, i] * d
-        X = rot.dot(U.T)
-        dx = self.matrix_to_vector(X).flatten()
-        return -0.5 * np.einsum('i,ij,j', dx, self.invcov, dx)
+        return rot.dot(U.T)
 
     def lnprob(self, params):
         """
@@ -321,7 +306,10 @@ class BBCompSep(PipelineStage):
         prior = self.lnpriors(params)
         if not np.isfinite(prior):
             return -np.inf
-        lnprob = self.lnlike(params)
+        if self.use_handl:
+            lnprob = self.h_and_l_lnlike(params)
+        else:
+            lnprob = self.chi_sq_lnlike(params)
         return prior + lnprob
 
     def emcee_sampler(self, n_iters, nwalkers):
@@ -352,12 +340,12 @@ class BBCompSep(PipelineStage):
             params = self.parameters.param_init
             model_cls = self.model(params)
             h_l_data = {'fiducial':self.bbfiducial, 'bbdata':self.bbdata, 'noise':self.bbnoise, \
-                        'model':model_cls, 'invcov':self.invcov}
+                        'model':model_cls, 'invcov':self.invcov, 'bbcovar':self.bbcovar}
             np.save('h_l_data', h_l_data)
-            #np.save('params', [self.parameters.param_index, self.parameters.priors])
+            np.save('params', [self.parameters.param_index, self.parameters.priors])
         
-        #sampler = self.emcee_sampler(n_iters, nwalkers)
-        #np.save('sampling_again_newcmb_2', sampler.chain)
+        sampler = self.emcee_sampler(n_iters, nwalkers)
+        np.save('h_and_l_sampling', sampler.chain)
 
         for out,_ in self.outputs :
             fname = self.get_output(out)
