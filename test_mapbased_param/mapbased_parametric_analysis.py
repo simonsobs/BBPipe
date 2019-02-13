@@ -48,7 +48,7 @@ class BBMapParamCompSep(PipelineStage):
         A = MixingMatrix(*components)
         A_ev = A.evaluator(instrument['frequencies'])
         A_dB_ev = A.diff_evaluator(instrument['frequencies'])
-        print A_dB_ev(np.array([1.54, -3.0]))
+        print(A_dB_ev(np.array([1.54, -3.0])))
 
         from fgbuster.separation_recipies import weighted_comp_sep
         res = fg.separation_recipies.weighted_comp_sep(components, instrument,
