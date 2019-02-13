@@ -74,6 +74,7 @@ class BBCompSep(PipelineStage):
 
         #Collect bandpasses
         self.bpasses = []
+        self.meannu = []
         for t in self.s.tracers:
             nu = t.z
             dnu = np.zeros_like(nu);
@@ -82,6 +83,7 @@ class BBCompSep(PipelineStage):
             dnu[-1] = nu[-1] - nu[-2]
             bnu = t.Nz
             self.bpasses.append([nu, dnu, bnu])
+            self.meannu.append(np.sum(dnu*nu*bnu) / np.sum(dnu*bnu))
 
         #Get ell sampling
         self.bpw_l = self.s.binning.windows[0].ls
@@ -203,8 +205,8 @@ class BBCompSep(PipelineStage):
         
         cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
         for t1 in range(self.nfreqs) :
-            for t2 in range(t1,self.nfreqs) :
-                windows=self.windows[self.vector_indices[t1,t2]]
+            for t2 in range(t1, self.nfreqs) :
+                windows = self.windows[self.vector_indices[t1, t2]]
 
                 model = cmb_bmodes.copy()
                 for component in self.fg_model.components:
@@ -343,14 +345,14 @@ class BBCompSep(PipelineStage):
                         'model':model_cls, 'invcov':self.invcov, 'bbcovar':self.bbcovar}
             np.save('h_l_data', h_l_data)
             np.save('params', [self.parameters.param_index, self.parameters.priors])
+            np.save('nu_ell', [self.meannu, [37.5, 72.5, 107.5, 142.5, 177.5, 212.5, 247.5, 282.5, 317.5]])
         
         sampler = self.emcee_sampler(n_iters, nwalkers)
-        np.save('h_and_l_sampling', sampler.chain)
+        np.save(self.chain_save_name, sampler.chain)
 
         for out,_ in self.outputs :
             fname = self.get_output(out)
-            print("Writing "+fname)
-            open(fname,"w")
+            open(fname, "w")
 
 
 if __name__ == '__main__':
