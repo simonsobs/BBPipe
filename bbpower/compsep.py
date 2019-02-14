@@ -324,6 +324,21 @@ class BBCompSep(PipelineStage):
         sampler.run_mcmc(pos, n_iters);
         return sampler
 
+    def make_output_dir(self):
+        # help
+        from datetime import datetime
+        import os, errno
+        from shutil import copyfile
+        fmt='%Y-%m-%d-%H-%M-%S'
+        date = datetime.now().strftime(fmt)
+        output_dir = './test_bbpower_minimal/outputs/'+self.config['save_prefix']+'_'+date
+        try:
+            os.makedirs(output_dir)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+        copyfile('./test_bbpower_minimal/local_config.yml', output_dir+'/config.yml') 
+        return output_dir + '/'
 
     def run(self):
         # TODO: Need to save the data appropriately. 
@@ -338,21 +353,28 @@ class BBCompSep(PipelineStage):
         else:
             nwalkers = 32
 
+        output_dir = self.make_output_dir()
         if True:
             params = self.parameters.param_init
             model_cls = self.model(params)
-            h_l_data = {'fiducial':self.bbfiducial, 'bbdata':self.bbdata, 'noise':self.bbnoise, \
-                        'model':model_cls, 'invcov':self.invcov, 'bbcovar':self.bbcovar}
-            np.save('h_l_data', h_l_data)
-            np.save('params', [self.parameters.param_index, self.parameters.priors])
-            np.save('nu_ell', [self.meannu, [37.5, 72.5, 107.5, 142.5, 177.5, 212.5, 247.5, 282.5, 317.5]])
+            if self.use_handl:
+                likelihood_data = {'fiducial':self.bbfiducial, 'bbdata':self.bbdata, 'noise':self.bbnoise, \
+                                   'model':model_cls, 'invcov':self.invcov, 'bbcovar':self.bbcovar}
+            else: 
+                likelihood_data = {'bbdata':self.bbdata, 'model':model_cls, 'invcov':self.invcov, \
+                                   'bbcovar':self.bbcovar}
+            np.save(output_dir + 'data', likelihood_data)
+                
+            np.save(output_dir + 'params', [self.parameters.param_index, self.parameters.priors])
+            np.save(output_dir + 'nu_ell', [self.meannu, \
+                                            [37.5, 72.5, 107.5, 142.5, 177.5, 212.5, 247.5, 282.5, 317.5]])
         
         sampler = self.emcee_sampler(n_iters, nwalkers)
-        np.save(self.config['chain_save_name'], sampler.chain)
+        np.save(output_dir + 'chains', sampler.chain)
 
-        for out,_ in self.outputs :
-            fname = self.get_output(out)
-            open(fname, "w")
+        #for out,_ in self.outputs :
+        #    fname = self.get_output(out)
+        #    open(fname, "w")
 
 
 if __name__ == '__main__':
