@@ -329,7 +329,7 @@ class BBCompSep(PipelineStage):
         from datetime import datetime
         import os, errno
         from shutil import copyfile
-        fmt='%Y-%m-%d-%H-%M-%S'
+        fmt='%Y-%m-%d-%H-%M'
         date = datetime.now().strftime(fmt)
         output_dir = './test_bbpower_minimal/outputs/'+self.config['save_prefix']+'_'+date
         try:
@@ -354,7 +354,7 @@ class BBCompSep(PipelineStage):
             nwalkers = 32
 
         output_dir = self.make_output_dir()
-        if True:
+        if False:
             params = self.parameters.param_init
             model_cls = self.model(params)
             if self.use_handl:
@@ -364,7 +364,6 @@ class BBCompSep(PipelineStage):
                 likelihood_data = {'bbdata':self.bbdata, 'model':model_cls, 'invcov':self.invcov, \
                                    'bbcovar':self.bbcovar}
             np.save(output_dir + 'data', likelihood_data)
-                
             np.save(output_dir + 'params', [self.parameters.param_index, self.parameters.priors])
             np.save(output_dir + 'nu_ell', [self.meannu, \
                                             [37.5, 72.5, 107.5, 142.5, 177.5, 212.5, 247.5, 282.5, 317.5]])
