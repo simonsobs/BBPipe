@@ -23,5 +23,5 @@ setup(
     entry_points={
         'console_scripts':['bbpipe=bbpipe.main:main']
     },
-    install_requires=['pyyaml','parsl<0.6.0','cwlgen']
+    install_requires=['pyyaml','parsl<0.6.0']
 )

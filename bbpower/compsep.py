@@ -316,7 +316,6 @@ class BBCompSep(PipelineStage):
             lnprob = self.h_and_l_lnlike(params)
         else:
             lnprob = self.chi_sq_lnlike(params)
-        #print( (lnprob+prior)*2. )
         return prior + lnprob
 
     def emcee_sampler(self):
@@ -325,9 +324,12 @@ class BBCompSep(PipelineStage):
         """
         zmask = self.parameters.param_init == 0
         self.parameters.param_init[zmask] += 1.e-3 * np.ones_like(zmask)
-
+        
+        nwalkers = self.config['nwalkers']
+        n_iters = self.config['n_iters']
         ndim = len(self.parameters.param_init)
         pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
+
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
         return sampler
@@ -351,8 +353,11 @@ class BBCompSep(PipelineStage):
     def run(self):
         self.setup_compsep()
         sampler = self.emcee_sampler()
+
         output_dir = self.make_output_dir()
         np.save(output_dir + 'chains', sampler.chain)
+        np.save(self.get_output('param_chains'), sampler.chain)
+        return
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
