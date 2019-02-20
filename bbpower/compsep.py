@@ -356,7 +356,7 @@ class BBCompSep(PipelineStage):
 
         output_dir = self.make_output_dir()
         np.save(output_dir + 'chains', sampler.chain)
-        np.save(self.get_output('param_chains'), sampler.chain)
+        np.savez(self.get_output('param_chains'), sampler.chain)
         return
 
 if __name__ == '__main__':
