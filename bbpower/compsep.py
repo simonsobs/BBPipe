@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
-from .types import DummyFile, YamlFile
+from .types import NpzFile
 from .foreground_loading import FGModel, FGParameters, normed_plaw
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
@@ -17,7 +17,7 @@ class BBCompSep(PipelineStage):
     """
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
-    outputs = [('param_chains', DummyFile)]
+    outputs = [('param_chains', NpzFile)]
     config_options={'likelihood_type':'h&l'}
 
     def setup_compsep(self):
@@ -138,6 +138,7 @@ class BBCompSep(PipelineStage):
         self.cmb_ells = self.cmb_ells[mask] 
         self.cmb_bbr = cmb_bbfile[:, 3][mask]
         self.cmb_bblensing = cmb_lensingfile[:, 3][mask]
+        self.cmb_bbr -= self.cmb_bblensing
         self.get_cmb_norms()
         return
 
@@ -204,6 +205,7 @@ class BBCompSep(PipelineStage):
         fg_p_spectra = self.evaluate_power_spectra(params)
         
         cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
+        #bmodes_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
         for t1 in range(self.nfreqs) :
             for t2 in range(t1, self.nfreqs) :
                 windows = self.windows[self.vector_indices[t1, t2]]
@@ -227,11 +229,14 @@ class BBCompSep(PipelineStage):
 
                         model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
                         
-                model = np.dot(windows,model)
+                model = np.dot(windows, model)
                 cls_array_list[:, t1, t2] = model
+
+                #bmodes_int = np.dot(windows, self.cmb_bblensing)        
+                #bmodes_list[:, t1, t2] = bmodes_int
                 if t1 != t2:
                     cls_array_list[:, t2, t1] = model
-        
+        #self.cmb_save = bmodes_list
         return cls_array_list
 
     def lnpriors(self, params):
@@ -252,7 +257,6 @@ class BBCompSep(PipelineStage):
             elif prior[0].lower() == 'tophat': 
                 if pval < float(prior[1][0]) or pval > float(prior[1][2]):
                     return -np.inf 
-            
         return total_prior
 
     def chi_sq_lnlike(self, params):
@@ -312,6 +316,7 @@ class BBCompSep(PipelineStage):
             lnprob = self.h_and_l_lnlike(params)
         else:
             lnprob = self.chi_sq_lnlike(params)
+        #print( (lnprob+prior)*2. )
         return prior + lnprob
 
     def emcee_sampler(self, n_iters, nwalkers):
@@ -325,7 +330,6 @@ class BBCompSep(PipelineStage):
         return sampler
 
     def make_output_dir(self):
-        # help
         from datetime import datetime
         import os, errno
         from shutil import copyfile
@@ -341,7 +345,6 @@ class BBCompSep(PipelineStage):
         return output_dir + '/'
 
     def run(self):
-        # TODO: Need to save the data appropriately. 
         self.setup_compsep()
 
         if self.config['n_iters']:
@@ -354,8 +357,20 @@ class BBCompSep(PipelineStage):
             nwalkers = 32
 
         output_dir = self.make_output_dir()
+
+        np.save(self.get_output('param_chains'), chains)
+
+        #print('best fit')
+        #params = [0.02, 1.6, -0.58, 4.7, -0.38, -3.0, -0.27, 1.5]
+        #self.lnprob(params)
+
+        #print('second')
+        #params = [0.1, 1.5, -0.5, 6., 0.1, -3.2, -0.5, 4.]
+        #params = [0.04, 1.595, -0.54, 4.86, -0.356, -3.1, -0.494, 1.61]
+        #self.lnprob(params)
+
         if False:
-            params = self.parameters.param_init
+            #params = self.parameters.param_init
             model_cls = self.model(params)
             if self.use_handl:
                 likelihood_data = {'fiducial':self.bbfiducial, 'bbdata':self.bbdata, 'noise':self.bbnoise, \
@@ -365,6 +380,7 @@ class BBCompSep(PipelineStage):
                                    'bbcovar':self.bbcovar}
             np.save(output_dir + 'data', likelihood_data)
             np.save(output_dir + 'params', [self.parameters.param_index, self.parameters.priors])
+            np.save(output_dir + 'cmb', self.cmb_save)
             np.save(output_dir + 'nu_ell', [self.meannu, \
                                             [37.5, 72.5, 107.5, 142.5, 177.5, 212.5, 247.5, 282.5, 317.5]])
         
@@ -378,3 +394,5 @@ class BBCompSep(PipelineStage):
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
+
+

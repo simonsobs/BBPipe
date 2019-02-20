@@ -72,6 +72,12 @@ class YamlFile(DataFile):
     """
     suffix = 'yml'
 
+class NpzFile(DataFile):
+    """
+    A data file in yaml format.
+    """
+    suffix = 'npz'
+
 class DummyFile(DataFile) :
     """
     A dummy type
