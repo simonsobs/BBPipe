@@ -340,7 +340,6 @@ class BBCompSep(PipelineStage):
         from shutil import copyfile
         fmt='%Y-%m-%d-%H-%M'
         date = datetime.now().strftime(fmt)
-        # TODO: get output dir here
         output_dir = './test_bbpower_minimal/outputs/'+self.config['save_prefix']+'_'+date
         try:
             os.makedirs(output_dir)
@@ -354,6 +353,7 @@ class BBCompSep(PipelineStage):
         self.setup_compsep()
         sampler = self.emcee_sampler()
 
+        # TODO: save things correctly
         output_dir = self.make_output_dir()
         np.save(output_dir + 'chains', sampler.chain)
         np.savez(self.get_output('param_chains'), sampler.chain)
