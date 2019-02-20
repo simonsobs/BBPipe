@@ -39,7 +39,7 @@ class FGParameters:
         self.amp_index = {} 
         self.priors = {}
         self.param_index['r'] = 0
-        self.param_init.append(1.e-3)
+        self.param_init.append(config['r_init'])
         pindx = 1
         for key, component in config['fg_model'].items():
             for param, prior in component['priors'].items():

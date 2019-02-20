@@ -18,7 +18,7 @@ class BBCompSep(PipelineStage):
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
     outputs = [('param_chains', NpzFile)]
-    config_options={'likelihood_type':'h&l'}
+    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3}
 
     def setup_compsep(self):
         """
@@ -319,10 +319,13 @@ class BBCompSep(PipelineStage):
         #print( (lnprob+prior)*2. )
         return prior + lnprob
 
-    def emcee_sampler(self, n_iters, nwalkers):
+    def emcee_sampler(self):
         """
         Sample the model with MCMC. 
         """
+        zmask = self.parameters.param_init == 0
+        self.parameters.param_init[zmask] += 1.e-3 * np.ones_like(zmask)
+
         ndim = len(self.parameters.param_init)
         pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
@@ -335,6 +338,7 @@ class BBCompSep(PipelineStage):
         from shutil import copyfile
         fmt='%Y-%m-%d-%H-%M'
         date = datetime.now().strftime(fmt)
+        # TODO: get output dir here
         output_dir = './test_bbpower_minimal/outputs/'+self.config['save_prefix']+'_'+date
         try:
             os.makedirs(output_dir)
@@ -346,53 +350,10 @@ class BBCompSep(PipelineStage):
 
     def run(self):
         self.setup_compsep()
-
-        if self.config['n_iters']:
-            n_iters = self.config['n_iters']
-        else:
-            n_iters = 2**4
-        if self.config['nwalkers']:
-            nwalkers = self.config['nwalkers']
-        else:
-            nwalkers = 32
-
+        sampler = self.emcee_sampler()
         output_dir = self.make_output_dir()
-
-        np.save(self.get_output('param_chains'), chains)
-
-        #print('best fit')
-        #params = [0.02, 1.6, -0.58, 4.7, -0.38, -3.0, -0.27, 1.5]
-        #self.lnprob(params)
-
-        #print('second')
-        #params = [0.1, 1.5, -0.5, 6., 0.1, -3.2, -0.5, 4.]
-        #params = [0.04, 1.595, -0.54, 4.86, -0.356, -3.1, -0.494, 1.61]
-        #self.lnprob(params)
-
-        if False:
-            #params = self.parameters.param_init
-            model_cls = self.model(params)
-            if self.use_handl:
-                likelihood_data = {'fiducial':self.bbfiducial, 'bbdata':self.bbdata, 'noise':self.bbnoise, \
-                                   'model':model_cls, 'invcov':self.invcov, 'bbcovar':self.bbcovar}
-            else: 
-                likelihood_data = {'bbdata':self.bbdata, 'model':model_cls, 'invcov':self.invcov, \
-                                   'bbcovar':self.bbcovar}
-            np.save(output_dir + 'data', likelihood_data)
-            np.save(output_dir + 'params', [self.parameters.param_index, self.parameters.priors])
-            np.save(output_dir + 'cmb', self.cmb_save)
-            np.save(output_dir + 'nu_ell', [self.meannu, \
-                                            [37.5, 72.5, 107.5, 142.5, 177.5, 212.5, 247.5, 282.5, 317.5]])
-        
-        sampler = self.emcee_sampler(n_iters, nwalkers)
         np.save(output_dir + 'chains', sampler.chain)
-
-        #for out,_ in self.outputs :
-        #    fname = self.get_output(out)
-        #    open(fname, "w")
-
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
-
 
