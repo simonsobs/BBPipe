@@ -6,13 +6,14 @@ import os.path as op
 # from fgbuster.pysm_helpers import get_instrument, get_sky
 # import mk_noise_map as mknm
 
-binary_mask=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits',verbose=False)
-frequency_maps=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
-# frequency_maps=hp.read_map('SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
-noise_cov=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
-# noise_cov=hp.read_map('SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
-noise_maps=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
-# noise_maps=hp.read_map('SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
+# binary_mask=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits',verbose=False)
+binary_mask=hp.read_map('SO_sims_binary_mask.fits',verbose=False)
+# frequency_maps=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+frequency_maps=hp.read_map('SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
+# noise_cov=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+noise_cov=hp.read_map('SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
+# noise_maps=hp.read_map('/global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0.fits',verbose=False, field=None)
+noise_maps=hp.read_map('SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0_WN.fits',verbose=False, field=None)
 
 
 
@@ -110,6 +111,15 @@ CMB_estimated_[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 # hp.mollview(np.log10(CMB_noise_cov_estimated[0]), sub=(121))
 # hp.mollview(np.log10(CMB_noise_cov_estimated[1]), sub=(122))
 # pl.show()
+res.invAtNA = res.invAtNA#
+cov_maps = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
+cov_maps= cov_maps.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+print cov_maps
+print cov_maps.shape
+hp.mollview(cov_maps[0])
+pl.show()
+exit()
+
 # print '#################'
 print(res.x)
 # print res.x.shape

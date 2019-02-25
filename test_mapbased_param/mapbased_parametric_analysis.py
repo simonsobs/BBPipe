@@ -85,8 +85,8 @@ class BBMapParamCompSep(PipelineStage):
         print(maps_estimated.shape)
         hp.write_map(self.get_output('post_compsep_maps'), maps_estimated, overwrite=True, column_names=column_names)
 
-        cov_estimated = res.invAtNA[:,:,:,:].diagonal()
-        cov_estimated= cov_estimated.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+        cov_estimated = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
+        cov_estimated = cov_estimated.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
         hp.write_map(self.get_output('post_compsep_cov'), cov_estimated, overwrite=True, column_names=column_names)
 
         column_names = []
