@@ -23,7 +23,7 @@ class BBClEstimation(PipelineStage):
     w=nmt.NmtWorkspace()
     b=nmt.NmtBin(nside_map, nlb=10) ### nlb to be defined
 
-    print 'building mask ... '
+    print('building mask ... ')
     mask = self.get_input('binary_mask')
     mask_apo=nmt.mask_apodization(mask, 0.2, apotype='C1') ### change apodization scale and type of apodization
 
@@ -45,20 +45,20 @@ class BBClEstimation(PipelineStage):
     for comp_i in range(ncomp):
         for comp_j in range(ncomp)[comp_i:]:
 
-            print 'building f ... '
+            print('building f ... ')
             f=nmt.NmtField(mask_apo,[mask*Q_patch_map,mask*U_patch_map],purify_b=False)
 
-            print 'building w ... '
+            print('building w ... ')
             w.compute_coupling_matrix(f,f,b)
 
-            print 'building f ... '
+            print('building f ... ')
             f_clean_map = nmt.NmtField(mask,[mask*clean_map,mask*clean_map],purify_b=False)
             f_cov_map = nmt.NmtField(mask,[mask*cov_map,mask*cov_map],purify_b=False)
 
-            print 'computing Cl_NaMaster ... '
+            print('computing Cl_NaMaster ... ')
             Cl_clean.append(compute_master(f_cov_map,f_cov_map))
             Cl_cov_clean.append(compute_master(f_cov_map,f_cov_map))
 
-    print 'saving to disk ... '
+    print('saving to disk ... ')
     hp.fitsfunc.write_cl(self.get_output('Cl_clean'), Cl_clean, overwrite=False)
     hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), Cl_cov_clean, overwrite=False)
