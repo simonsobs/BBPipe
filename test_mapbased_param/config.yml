@@ -1,24 +1,14 @@
 global:
-    bpw_edges: [2,30,50]
-    beam_correct: True
+    frequencies: [30.0, 40.0, 95.0, 150.0, 220.0, 270.0]
 
-BBMapsPreproc:
-    purify_b: True
+BBMapParamCompSep:
+    nside: 0
 
-BBMaskPreproc:
-    aposize_edges: 1.0
+BBClEstimation:
     aposize_srcs: 0.1
     apotype_edges: 'C1'
-    apotype_srcs: 'C1'
 
-BBPowerSpecter:
-    pcl_code: 'NaMaster'
-
-BBNullTester:
-    compute_statistics: False
-
-BBCovFeFe:
-    analytic_covariance: False
-
-BBCompSep:
-    foreground_model: 'test/inputs/fg_model.yml'
+BBREstimation:
+    fsky: 0.1
+    lmin: 30
+    lmax: 200
