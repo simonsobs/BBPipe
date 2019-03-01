@@ -19,7 +19,7 @@ class BBrEstimation(PipelineStage):
 
     name='BBrEstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
-    outputs=[('estimated_cosmo_params'), TextFile]
+    outputs=[('estimated_cosmo_params', TextFile)]
 
     def run(self):
 
@@ -38,6 +38,7 @@ class BBrEstimation(PipelineStage):
                 Cov_model = Cl_BB_prim*r_loc + ClBB_model_other_than_prim
                 logL = np.sum( (2*ell_v+1)*fsky*( np.log( Cov_model ) + ClBB_tot/Cov_model ))
                 return logL
+
             # gridding -2log(L)
             logL = r_v*0.0
             for ir in range(len(r_v)):
@@ -62,7 +63,6 @@ class BBrEstimation(PipelineStage):
             return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
 
-
         print('cosmological analysis now ... ')
         # assuming input r=0.000
         lmin = self.config['lmin']
@@ -82,5 +82,4 @@ class BBrEstimation(PipelineStage):
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r_fit', 'sigma_r']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
-
 
