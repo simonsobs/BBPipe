@@ -79,4 +79,6 @@ class BBClEstimation(PipelineStage):
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=False)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=False)
 
+if __name__ == '__main__':
+    results = PipelineStage.main()
     

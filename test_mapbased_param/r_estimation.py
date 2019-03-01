@@ -83,3 +83,6 @@ class BBrEstimation(PipelineStage):
         column_names = ['r_fit', 'sigma_r']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
 
+
+if __name__ == '__main__':
+    results = PipelineStage.main()
