@@ -22,6 +22,7 @@ class BBClEstimation(PipelineStage):
         cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=False)
 
         nside_map = hp.nside2npix(hp.get_nside(clean_map[0]))
+        print('nside_map = ', nside_map)
         w=nmt.NmtWorkspace()
         b=nmt.NmtBin(nside_map, nlb=int(1./self.config['fsky'])) 
 
