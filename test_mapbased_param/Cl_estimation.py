@@ -25,10 +25,12 @@ class BBClEstimation(PipelineStage):
         w=nmt.NmtWorkspace()
         b=nmt.NmtBin(nside_map, nlb=10) ### nlb to be defined
 
+        print(self.config)
+        exit()
+
+
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask'))
-        print(mask)
-        print(mask.shape)
         mask_apo = nmt.mask_apodization(mask, 0.2, apotype='C1') ### change apodization scale and type of apodization
 
         print('building ell_eff ... ')
