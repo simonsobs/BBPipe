@@ -1,5 +1,6 @@
 global:
     frequencies: [30.0, 40.0, 95.0, 150.0, 220.0, 270.0]
+    fsky: 0.1
 
 BBMapParamCompSep:
     nside: 0
@@ -9,9 +10,9 @@ BBClEstimation:
     apotype: 'C2'
     purify_b: True
     nlb: 10
-    fsky: 0.1
+
 
 BBREstimation:
-    fsky: 0.1
     lmin: 30
     lmax: 200
+    r_input: 0.000

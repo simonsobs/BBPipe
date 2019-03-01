@@ -18,7 +18,7 @@ class BBrEstimation(PipelineStage):
     """
 
     name='BBrEstimation'
-    inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim', FitsFile)]
+    inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
     outputs=[('estimated_cosmo_params'), TextFile]
 
     def run(self):
@@ -66,8 +66,10 @@ class BBrEstimation(PipelineStage):
 
         print('cosmological analysis now ... ')
         # assuming input r=0.000
+        lmin = self.config['lmin']
+        lmax = self.config['lmax']
         Cl_BB_lens = _get_Cl_cmb(1.,0.)[2][self.config.lmin:self.config.lmax]
-        Cl_BB_prim = _get_Cl_cmb(0.0,r_input)[2][self.config.lmin:self.config.lmax]
+        Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2][self.config.lmin:self.config.lmax]
         ClBB_obs = Cl_clean[0]
         ell_v = np.arange(self.config.lmin,self.config.lmax)
         ClBB_model_other_than_prim = Cl_BB_lens + Cl_cov_clean[0]
@@ -75,7 +77,7 @@ class BBrEstimation(PipelineStage):
         r_v = np.linspace(-0.001,0.1,num=1000)
 
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_tot,
-                            ell_v, fsky, _get_Cl_cmb(0.,1.)[2][lmin:lmax],
+                            ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2][lmin:lmax],
                                    ClBB_model_other_than_prim, r_v) 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
