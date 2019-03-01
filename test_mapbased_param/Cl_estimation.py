@@ -65,16 +65,12 @@ class BBClEstimation(PipelineStage):
                 f_clean_map_i = nmt.NmtField(mask,[mask*clean_map[2*comp_i],mask*clean_map[2*comp_i+1]], purify_b=self.config['purify_b'])
                 f_clean_map_j = nmt.NmtField(mask,[mask*clean_map[2*comp_j],mask*clean_map[2*comp_j+1]], purify_b=self.config['purify_b'])
                 f_cov_map_i = nmt.NmtField(mask,[mask*cov_map[2*comp_i,2*comp_i],mask*cov_map[2*comp_i+1,2*comp_i+1]], purify_b=self.config['purify_b'])
+                f_cov_map_i = nmt.NmtField(mask,[mask*cov_map[2*comp_j,2*comp_j],mask*cov_map[2*comp_j+1,2*comp_j+1]], purify_b=self.config['purify_b'])
 
                 print('computing Cl_NaMaster ... ')
                 components.append(str((comp_i,comp_j))) 
                 Cl_clean.append(compute_master(f_clean_map_i,f_clean_map_j))
-                if comp_i == comp_j:
-                    Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_i))
-                else:
-                    f_cov_map_ij = nmt.NmtField(mask,[mask*cov_map[2*comp_i,2*comp_j,:],
-                                        mask*cov_map[2*comp_i+1,2*comp_j+1,:]], purify_b=self.config['purify_b'])
-                    Cl_cov_clean.append(compute_master(f_cov_map_ij,f_cov_map_ij))
+                Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_j))
 
         print('saving to disk ... ')
         print(components)
