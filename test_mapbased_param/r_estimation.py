@@ -67,10 +67,10 @@ class BBrEstimation(PipelineStage):
         # assuming input r=0.000
         lmin = self.config['lmin']
         lmax = self.config['lmax']
-        Cl_BB_lens = _get_Cl_cmb(1.,0.)[2][self.config.lmin:self.config.lmax]
-        Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2][self.config.lmin:self.config.lmax]
+        Cl_BB_lens = _get_Cl_cmb(1.,0.)[2][lmin:lmax]
+        Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2][lmin:lmax]
         ClBB_obs = Cl_clean[1]
-        ell_v = np.arange(self.config.lmin,self.config.lmax)
+        ell_v = np.arange(lmin,lmax)
         ClBB_model_other_than_prim = Cl_BB_lens + Cl_cov_clean[0]
 
         r_v = np.linspace(-0.001,0.1,num=1000)
