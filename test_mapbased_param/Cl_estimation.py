@@ -43,8 +43,8 @@ class BBClEstimation(PipelineStage):
             return cell
 
         ncomp = int(len(clean_map)/2)
-        Cl_clean = [] 
-        Cl_cov_clean = []
+        Cl_clean = [ell_eff] 
+        Cl_cov_clean = [ell_eff]
         components = []
         print('n_comp = ', ncomp)
         for comp_i in range(ncomp):
@@ -78,6 +78,5 @@ class BBClEstimation(PipelineStage):
         print(np.array(Cl_cov_clean).shape)
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=False)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=False)
-
 
     

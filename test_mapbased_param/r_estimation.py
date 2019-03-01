@@ -23,12 +23,12 @@ class BBREstimation(PipelineStage):
 
     def run(self):
 
-        print(self.config)
 
         Cl_clean = hp.read_cl(sel.get_input('Cl_clean'))
         Cl_cov_clean = hp.read_cl(sel.get_input('Cl_cov_clean'))
 
-	   
+        ell_v = Cl_clean[0]        
+        
         def from_Cl_to_r_estimate(ClBB_tot, ell_v, fsky, Cl_BB_prim, ClBB_model_other_than_prim, r_v, **minimize_kwargs):
 
             def likelihood_on_r_computation( r_loc, make_figure=False ):
@@ -39,7 +39,7 @@ class BBREstimation(PipelineStage):
                 Cov_model = Cl_BB_prim*r_loc + ClBB_model_other_than_prim
                 logL = np.sum( (2*ell_v+1)*fsky*( np.log( Cov_model ) + ClBB_tot/Cov_model ))
                 return logL
-	        # gridding -2log(L)
+            # gridding -2log(L)
             logL = r_v*0.0
             for ir in range(len(r_v)):
                 logL[ir] = likelihood_on_r_computation( r_v[ir] )
