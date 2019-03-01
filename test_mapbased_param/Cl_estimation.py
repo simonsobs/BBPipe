@@ -69,8 +69,8 @@ class BBClEstimation(PipelineStage):
 
                 print('computing Cl_NaMaster ... ')
                 components.append(str((comp_i,comp_j))) 
-                Cl_clean.append(compute_master(f_clean_map_i,f_clean_map_j))
-                Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_j))
+                Cl_clean.append(compute_master(f_clean_map_i,f_clean_map_j)[3] )
+                Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_j)[3] )
 
         print('saving to disk ... ')
         print(components)
@@ -79,5 +79,5 @@ class BBClEstimation(PipelineStage):
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=False)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=False)
 
-        
+
     
