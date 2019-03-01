@@ -25,7 +25,6 @@ class BBClEstimation(PipelineStage):
         w=nmt.NmtWorkspace()
         b=nmt.NmtBin(nside_map, nlb=10) ### nlb to be defined
 
-
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask'))
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
@@ -46,23 +45,29 @@ class BBClEstimation(PipelineStage):
         Cl_clean = [] 
         Cl_cov_clean = []
         components = []
-        for (comp_i) in range(ncomp):
+        for comp_i in range(ncomp):
             for comp_j in range(ncomp)[comp_i:]:
 
                 print('building f ... ')
-                f=nmt.NmtField(mask_apo,[mask*Q_patch_map,mask*U_patch_map],purify_b=False)
+                f=nmt.NmtField(mask_apo,[mask*clean_map[2*comp_i,:],mask*clean_map[2*comp_i+1,:]],purify_b=False)
 
                 print('building w ... ')
                 w.compute_coupling_matrix(f,f,b)
 
                 print('building f ... ')
-                f_clean_map = nmt.NmtField(mask,[mask*clean_map,mask*clean_map],purify_b=False)
-                f_cov_map = nmt.NmtField(mask,[mask*cov_map,mask*cov_map],purify_b=False)
+                f_clean_map_i = nmt.NmtField(mask,[mask*clean_map[2*comp_i,:],mask*clean_map[2*comp_i+1,:]],purify_b=False)
+                f_clean_map_j = nmt.NmtField(mask,[mask*clean_map[2*comp_j,:],mask*clean_map[2*comp_j+1,:]],purify_b=False)
+                f_cov_map_i = nmt.NmtField(mask,[mask*cov_map[2*comp_i,2*comp_i,:],mask*cov_map[2*comp_i+1,2*comp_i+1,:]],purify_b=False)
+
 
                 print('computing Cl_NaMaster ... ')
                 components.append(str((comp_i,comp_j))) 
-                Cl_clean.append(compute_master(f_cov_map,f_cov_map))
-                Cl_cov_clean.append(compute_master(f_cov_map,f_cov_map))
+                Cl_clean.append(compute_master(f_cov_map_i,f_cov_map_j))
+                if comp_i == comp_j:
+                    Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_i))
+                else:
+                    f_cov_map_ij = nmt.NmtField(mask,[mask*cov_map[2*comp_i,2*comp_j,:],mask*cov_map[2*comp_i+1,2*comp_j+1,:]],purify_b=False)
+                    Cl_cov_clean.append(compute_master(f_cov_map_ij,f_cov_map_ij))
 
         print('saving to disk ... ')
         print(components)
