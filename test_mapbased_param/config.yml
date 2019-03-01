@@ -11,8 +11,7 @@ BBClEstimation:
     purify_b: True
     nlb: 10
 
-
-BBREstimation:
+BBrEstimation:
     lmin: 30
     lmax: 200
     r_input: 0.000
