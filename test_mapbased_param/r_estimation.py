@@ -6,7 +6,7 @@ import fgbuster
 from fgbuster.xForecast import _get_Cl_cmb, _get_Cl_noise
 
 
-class BBREstimation(PipelineStage):
+class BBrEstimation(PipelineStage):
     """
     Stage that estimates the tensor-to-scalar ratio
     (from the power spectrum of the clean CMB map)
@@ -17,7 +17,7 @@ class BBREstimation(PipelineStage):
     provided template of foregrounds residuals (e.g. dust)
     """
 
-    name='BBREstimation'
+    name='BBrEstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim', FitsFile)]
     outputs=[('estimated_cosmo_params'), TextFile]
 
