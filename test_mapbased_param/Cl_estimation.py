@@ -18,8 +18,8 @@ class BBClEstimation(PipelineStage):
 
     def run(self):
 
-        clean_map = hp.read_map(self.get_input('post_compsep_maps'),verbose=False, field=None, h=True)
-        cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=True)
+        clean_map = hp.read_map(self.get_input('post_compsep_maps'),verbose=False, field=None, h=False)
+        cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=False)
 
         nside_map = hp.nside2npix(hp.get_nside(clean_map[0]))
         w=nmt.NmtWorkspace()
@@ -53,7 +53,7 @@ class BBClEstimation(PipelineStage):
                 print('comp_j = ', comp_j)
                 print('clean_map.shape = ', clean_map.shape)
                 print('cov_map.shape = ', cov_map.shape)
-                
+
                 print('building f ... ')
                 f=nmt.NmtField(mask_apo,[mask*clean_map[2*comp_i],mask*clean_map[2*comp_i+1]], purify_b=self.config['purify_b'])
 
