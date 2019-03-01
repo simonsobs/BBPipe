@@ -14,7 +14,7 @@ class BBClEstimation(PipelineStage):
 
     name='BBClEstimation'
     inputs=[('binary_mask',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile)]
-    inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
+    outputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
 
     def run(self):
 
