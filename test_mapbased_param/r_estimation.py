@@ -23,8 +23,8 @@ class BBrEstimation(PipelineStage):
 
     def run(self):
 
-        Cl_clean = hp.read_cl(sel.get_input('Cl_clean'), field=None)
-        Cl_cov_clean = hp.read_cl(sel.get_input('Cl_cov_clean'), field=None)
+        Cl_clean = hp.read_cl(self.get_input('Cl_clean'))
+        Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
 
         ell_v = Cl_clean[0]        
         
@@ -69,7 +69,7 @@ class BBrEstimation(PipelineStage):
         lmax = self.config['lmax']
         Cl_BB_lens = _get_Cl_cmb(1.,0.)[2][self.config.lmin:self.config.lmax]
         Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2][self.config.lmin:self.config.lmax]
-        ClBB_obs = Cl_clean[0]
+        ClBB_obs = Cl_clean[1]
         ell_v = np.arange(self.config.lmin,self.config.lmax)
         ClBB_model_other_than_prim = Cl_BB_lens + Cl_cov_clean[0]
 
