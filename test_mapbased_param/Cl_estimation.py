@@ -73,9 +73,6 @@ class BBClEstimation(PipelineStage):
                 Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_j)[3] )
 
         print('saving to disk ... ')
-        print(components)
-        print(np.array(Cl_clean).shape)
-        print(np.array(Cl_cov_clean).shape)
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
 
