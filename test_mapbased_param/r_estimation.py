@@ -3,7 +3,7 @@ from .types import FitsFile, TextFile
 import numpy as np
 import pylab as pl
 import fgbuster
-from fgbuster.xForecast import _get_Cl_cmb, _get_Cl_noise
+from fgbuster.cosmology import _get_Cl_cmb, _get_Cl_noise
 
 
 class BBrEstimation(PipelineStage):
