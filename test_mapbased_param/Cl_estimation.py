@@ -68,7 +68,7 @@ class BBClEstimation(PipelineStage):
 
                 print('computing Cl_NaMaster ... ')
                 components.append(str((comp_i,comp_j))) 
-                Cl_clean.append(compute_master(f_cov_map_i,f_cov_map_j))
+                Cl_clean.append(compute_master(f_clean_map_i,f_clean_map_j))
                 if comp_i == comp_j:
                     Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_i))
                 else:
