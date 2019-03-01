@@ -8,7 +8,8 @@ BBClEstimation:
     aposize: 5.0
     apotype: 'C2'
     purify_b: True
-
+    nlb: 10
+    
 BBREstimation:
     fsky: 0.1
     lmin: 30
