@@ -57,8 +57,8 @@ class BBREstimation(PipelineStage):
             # and the 1-sigma error bar by (numerical recipies)
             ind_sigma = np.argmin(np.abs( (logL[np.argmin(logL):] - logL[np.argmin(logL)]) - 1.00 ))    
             sigma_r_fit =  r_v[ind_sigma+np.argmin(logL)] - r_fit
-            print 'NB: sigma(r) is ', sigma_r_fit, ' ( +/- ', r_v[ind_sigma+np.argmin(logL)-1] - r_fit, ' , ', r_v[ind_sigma+np.argmin(logL)+1] - r_fit, ' ) '
-            print '-----'
+            print('NB: sigma(r) is ', sigma_r_fit, ' ( +/- ', r_v[ind_sigma+np.argmin(logL)-1] - r_fit, ' , ', r_v[ind_sigma+np.argmin(logL)+1] - r_fit, ' ) ')
+            print('-----')
 
             return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
