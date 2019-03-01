@@ -64,7 +64,7 @@ class BBrEstimation(PipelineStage):
 
 
 
-        print 'cosmological analysis now ... '
+        print('cosmological analysis now ... ')
         # assuming input r=0.000
         Cl_BB_lens = _get_Cl_cmb(1.,0.)[2][self.config.lmin:self.config.lmax]
         Cl_BB_prim = _get_Cl_cmb(0.0,r_input)[2][self.config.lmin:self.config.lmax]
