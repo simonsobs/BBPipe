@@ -23,9 +23,8 @@ class BBrEstimation(PipelineStage):
 
     def run(self):
 
-
-        Cl_clean = hp.read_cl(sel.get_input('Cl_clean'))
-        Cl_cov_clean = hp.read_cl(sel.get_input('Cl_cov_clean'))
+        Cl_clean = hp.read_cl(sel.get_input('Cl_clean'), field=None)
+        Cl_cov_clean = hp.read_cl(sel.get_input('Cl_cov_clean'), field=None)
 
         ell_v = Cl_clean[0]        
         
