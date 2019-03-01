@@ -5,8 +5,8 @@ BBMapParamCompSep:
     nside: 0
 
 BBClEstimation:
-    aposize_srcs: 0.1
-    apotype_edges: 'C1'
+    aposize: 0.1
+    apotype: 'C1'
 
 BBREstimation:
     fsky: 0.1
