@@ -27,7 +27,9 @@ class BBClEstimation(PipelineStage):
 
         print('building mask ... ')
         mask = self.get_input('binary_mask')
-        mask_apo=nmt.mask_apodization(mask, 0.2, apotype='C1') ### change apodization scale and type of apodization
+        print mask
+        print mask.shape
+        mask_apo = nmt.mask_apodization(mask, 0.2, apotype='C1') ### change apodization scale and type of apodization
 
         print('building ell_eff ... ')
         ell_eff = b.get_effective_ells()
