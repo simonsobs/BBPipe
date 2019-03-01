@@ -26,6 +26,7 @@ class BBClEstimation(PipelineStage):
         b=nmt.NmtBin(nside_map, nlb=10) ### nlb to be defined
 
         print(self.config)
+        """
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask'))
@@ -69,3 +70,5 @@ class BBClEstimation(PipelineStage):
         print(components)
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), Cl_clean, overwrite=False)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), Cl_cov_clean, overwrite=False)
+        """
+    
