@@ -3,6 +3,7 @@ from .types import FitsFile, TextFile
 import numpy as np
 import pylab as pl
 import pymaster as nmt
+import healpy as hp
 
 class BBClEstimation(PipelineStage):
     """
