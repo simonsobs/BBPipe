@@ -53,8 +53,11 @@ class BBCompSep(PipelineStage):
         """
         Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
         """
-        self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
+        #Decide if you're using H&L
         self.use_handl = self.config['likelihood_type'] == 'h&l'
+
+        #Read data
+        self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
         if self.use_handl:
             s_fid = SACC.loadFromHDF(self.get_input('cells_fiducial'), \
                                      precision_filename=self.get_input('cells_coadded'))
@@ -205,7 +208,6 @@ class BBCompSep(PipelineStage):
         fg_p_spectra = self.evaluate_power_spectra(params)
         
         cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
-        #bmodes_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
         for t1 in range(self.nfreqs) :
             for t2 in range(t1, self.nfreqs) :
                 windows = self.windows[self.vector_indices[t1, t2]]
@@ -232,11 +234,8 @@ class BBCompSep(PipelineStage):
                 model = np.dot(windows, model)
                 cls_array_list[:, t1, t2] = model
 
-                #bmodes_int = np.dot(windows, self.cmb_bblensing)        
-                #bmodes_list[:, t1, t2] = bmodes_int
                 if t1 != t2:
                     cls_array_list[:, t2, t1] = model
-        #self.cmb_save = bmodes_list
         return cls_array_list
 
     def lnpriors(self, params):
@@ -259,23 +258,20 @@ class BBCompSep(PipelineStage):
                     return -np.inf 
         return total_prior
 
-    def chi_sq_lnlike(self, params):
+    def chi_sq_dx(self, params):
         """
         Chi^2 likelihood. 
         """
         model_cls = self.model(params)
-        dx = self.matrix_to_vector(self.bbdata - model_cls).flatten()
-        return -0.5*np.einsum('i, ij, j', dx, self.invcov, dx)
+        return self.matrix_to_vector(self.bbdata - model_cls).flatten()
 
     def prepare_h_and_l(self):
         fiducial_noise = self.bbfiducial + self.bbnoise
-        self.Cfl_sqrt = np.zeros_like(fiducial_noise)
-        for k in range(fiducial_noise.shape[0]):
-            self.Cfl_sqrt[k] = sqrtm(fiducial_noise[k])
+        self.Cfl_sqrt = np.array([sqrtm(f) for f in fiducial_noise])
         self.observed_cls = self.bbdata + self.bbnoise
         return 
 
-    def h_and_l_lnlike(self, params):
+    def h_and_l_dx(self, params):
         """
         Hamimeche and Lewis likelihood. 
         Taken from Cobaya written by H, L and Torrado
@@ -288,7 +284,7 @@ class BBCompSep(PipelineStage):
             X = self.h_and_l(C, self.observed_cls[k], self.Cfl_sqrt[k])
             dx = self.matrix_to_vector(X).flatten()
             dx_vec = np.concatenate([dx_vec, dx])
-        return -0.5 * np.einsum('i, ij, j', dx_vec, self.invcov, dx_vec)
+        return dx_vec
 
     def h_and_l(self, C, Chat, Cfl_sqrt):
         diag, U = np.linalg.eigh(C)
@@ -313,10 +309,11 @@ class BBCompSep(PipelineStage):
         if not np.isfinite(prior):
             return -np.inf
         if self.use_handl:
-            lnprob = self.h_and_l_lnlike(params)
+            dx = self.h_and_l_dx(params)
         else:
-            lnprob = self.chi_sq_lnlike(params)
-        return prior + lnprob
+            dx = self.chi_sq_dx(params)
+        like = -0.5 * np.einsum('i, ij, j',dx,self.invcov,dx)
+        return prior + like
 
     def emcee_sampler(self):
         """
@@ -329,9 +326,10 @@ class BBCompSep(PipelineStage):
         n_iters = self.config['n_iters']
         ndim = len(self.parameters.param_init)
         pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
-
+        
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
+
         return sampler
 
     def make_output_dir(self):
@@ -361,4 +359,3 @@ class BBCompSep(PipelineStage):
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
-
