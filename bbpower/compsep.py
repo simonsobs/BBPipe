@@ -340,13 +340,13 @@ class BBCompSep(PipelineStage):
         from shutil import copyfile
         fmt='%Y-%m-%d-%H-%M'
         date = datetime.now().strftime(fmt)
-        output_dir = './test_bbpower_minimal/outputs/'+self.config['save_prefix']+'_'+date
+        output_dir = self.config['save_prefix']+'_'+date
         try:
             os.makedirs(output_dir)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-        copyfile('./test_bbpower_minimal/local_config.yml', output_dir+'/config.yml') 
+        copyfile(self.get_input('config'), output_dir+'/config.yml') 
         return output_dir + '/'
 
     def run(self):

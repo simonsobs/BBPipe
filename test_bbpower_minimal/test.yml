@@ -24,7 +24,7 @@ inputs:
     cells_noise: ./test_bbpower_minimal/data/BK15_noise.sacc
 
 # Overall configuration file 
-config: ./test_bbpower_minimal/local_config.yml
+config: ./test_bbpower_minimal/config.yml
 
 # If all the outputs for a stage already exist then do not re-run that stage
 resume: False

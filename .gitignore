@@ -9,4 +9,4 @@ log.txt
 runinfo
 *.npy
 *.sacc
-*local_config.yml
+*.yml

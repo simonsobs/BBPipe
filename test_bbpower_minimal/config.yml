@@ -6,7 +6,7 @@ BBCompSep:
     n_iters: 5000
     nwalkers: 128
     likelihood_type: 'h&l'
-    save_prefix: 'test'
+    save_prefix: './test_bbpower_minimal/test'
     cmb_files: ["./test_bbpower_minimal/data/camb_lens_nobb.dat", 
                 "./test_bbpower_minimal/data/camb_lens_r1.dat"]
     r_init: 0.001
