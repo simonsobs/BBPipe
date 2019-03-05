@@ -6,9 +6,9 @@ BBCompSep:
     n_iters: 5000
     nwalkers: 128
     likelihood_type: 'h&l'
-    save_prefix: './test_bbpower_minimal/test'
-    cmb_files: ["./test_bbpower_minimal/data/camb_lens_nobb.dat", 
-                "./test_bbpower_minimal/data/camb_lens_r1.dat"]
+    save_prefix: 'bbpower_minimal_outputs/testt'
+    cmb_files: ["/global/cscratch1/sd/damonge/SO/BBPipe_data/bbpower_minimal/camb_lens_nobb.dat", 
+                "/global/cscratch1/sd/damonge/SO/BBPipe_data/bbpower_minimal/camb_lens_r1.dat"]
     r_init: 0.001
     fg_model:
         component_1:
