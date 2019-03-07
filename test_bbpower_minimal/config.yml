@@ -1,6 +1,0 @@
-global:
-    bpw_edges: [2,30,50]
-    beam_correct: True
-
-BBCompSep:
-    foreground_model: 'test/inputs/fg_model.yml'
