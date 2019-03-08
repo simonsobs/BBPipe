@@ -3,14 +3,17 @@ import numpy as np
 import fgbuster.component_model as fgc
 
 class FGModel:
+        """
+        FGModel loads the foreground models and prepares the unit conversions to K_CMB units. 
+        This creates a class that has an components attribute. The components attribute is a dictionary
+        of foreground models. Each foreground model is also a dictionary containing the SED function, 
+        SED parameters, SED nu0, CMB nu0 normalization, and the foreground power spectrum parameters. 
+        """
     def __init__(self, config):
         self.load_foregrounds(config)
         return 
 
     def load_foregrounds(self, config):
-        """
-        Loads the foreground models and prepares the unit conversions to K_CMB units. 
-        """
         self.components = {}
         for key, component in config['fg_model'].items(): 
             self.components[key] = {}
@@ -24,6 +27,15 @@ class FGModel:
     
 
 class FGParameters: 
+    """
+    FGParameters loads all the parameters in the model with information about the ordering and priors. 
+    FGParameters is a class with attributes to store the parameter initial values, parameter indexing,
+    indices of the amplitudes in the model, and the parameter priors. All of this is set in the config
+    file. The ordering of parameter will be in the same order as they are listed in the config file
+    but this doesn't matter as the indices are kept track of. At any point you can get the index
+    of a parameter by calling the attribute param_index['param name']. The ordering is important
+    because the sampler just takes an array for the parameters. 
+    """
     def __init__(self, config):
         self.define_parameters(config)
         return 
