@@ -23,8 +23,16 @@ dv=np.loadtxt("BK15_cosmomc/data/BK15/BK15_cl_hat.dat",unpack=True)[1:]
 ncls,nells=dv.shape
 meanvec=sacc.MeanVec(dv.flatten())
 
+#Mean fiducial
+dv_f=np.loadtxt("BK15_cosmomc/data/BK15/BK15_fiducial_dust.dat",unpack=True)[1:]
+meanvec_f=sacc.MeanVec(dv_f.flatten())
+
+#Mean noise
+dv_n=np.loadtxt("BK15_cosmomc/data/BK15/BK15_noise.dat",unpack=True)[1:]
+meanvec_n=sacc.MeanVec(dv_n.flatten())
+
 #Precision matrix
-precis=sacc.Precision(np.transpose(np.loadtxt("BK15_cosmomc/data/BK15/BK15_covmat_dust.dat",unpack=True).reshape([nells,ncls,nells,ncls]),axes=[1,0,3,2]))
+precis=sacc.Precision(np.transpose(np.loadtxt("BK15_cosmomc/data/BK15/BK15_covmat_dust.dat",unpack=True).reshape([nells,ncls,nells,ncls]),axes=[1,0,3,2]).reshape([nells*ncls,nells*ncls]))
 
 #Binning
 ls=np.loadtxt("BK15_cosmomc/data/BK15/windows/BK15_bpwf_bin1.txt",unpack=True)[0]
@@ -59,9 +67,17 @@ for ic,c in enumerate(corr_ordering) :
     typ_arr+=nells*[typ]
 bins=sacc.Binning(typ_arr,ls_arr,t1_arr,q1_arr,t2_arr,q2_arr,windows=w_arr)
 
-#SACC file
+#SACC files
 s=sacc.SACC(tracers,bins,mean=meanvec,precision=precis,meta={'data_name':'BK15_bmode_analysis'})
+s_f=sacc.SACC(tracers,bins,mean=meanvec_f,meta={'data_name':'BK15_bmode_analysis_fiducial'})
+s_n=sacc.SACC(tracers,bins,mean=meanvec_n,meta={'data_name':'BK15_bmode_analysis_noise'})
 
 #Save SACC file
 s.saveToHDF("BK15.sacc")
 s.printInfo()
+s_n.saveToHDF("BK15_noise.sacc")
+s_n.printInfo()
+s_f.saveToHDF("BK15_fiducial.sacc")
+s_f.printInfo()
+
+print(s.precision.getCovarianceMatrix().shape)
