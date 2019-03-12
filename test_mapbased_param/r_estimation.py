@@ -6,7 +6,7 @@ import fgbuster
 from fgbuster.cosmology import _get_Cl_cmb, _get_Cl_noise
 import healpy as hp
 
-class BBrEstimation(PipelineStage):
+class BBREstimation(PipelineStage):
     """
     Stage that estimates the tensor-to-scalar ratio
     (from the power spectrum of the clean CMB map)
@@ -17,7 +17,7 @@ class BBrEstimation(PipelineStage):
     provided template of foregrounds residuals (e.g. dust)
     """
 
-    name='BBrEstimation'
+    name='BBREstimation'
     inputs=[('Cl_clean', FitsFile)]#,('Cl_cov_clean', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile)]
 
