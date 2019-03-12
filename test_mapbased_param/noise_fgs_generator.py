@@ -38,6 +38,9 @@ def grabargs():
 	parser.add_argument('--white_noise', dest='white_noise', action='store_true', \
 					help='add white_noise',\
 					default=False)
+	parser.add_argument('--no_noise', dest='no_noise', action='store_true', \
+					help='do not add any noise',\
+					default=False)
 	args = parser.parse_args()
 	return args
 
@@ -90,25 +93,29 @@ def main():
 		nlev_map /= hp.nside2resol(args.nside, arcmin=True)
 		noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)*binary_mask
 		freq_maps += noise_maps
+	elif args.no_noise:
+		continue
 	else:
 		freq_maps += noise_maps*binary_mask
 	# freq_maps *= binary_mask
 	# noise_maps *= binary_mask
 	freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 	noise_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
-
-
-	# for i in range(len(instrument_config['frequencies'])):
-	#     hp.mollview( freq_maps[3*i,:], sub=(len(instrument_config['frequencies']),3,3*i+1))
-	#     hp.mollview( freq_maps[3*i+1,:], sub=(len(instrument_config['frequencies']),3,3*i+2))
-	#     hp.mollview( freq_maps[3*i+2,:], sub=(len(instrument_config['frequencies']),3,3*i+3))
+	'''
+	pl.figure()
+	for i in range(len(instrument_config['frequencies'])):
+	    hp.mollview( freq_maps[3*i,:], sub=(len(instrument_config['frequencies']),3,3*i+1), title='I '+str(instrument_config['frequencies'][i])+'GHz')
+	    hp.mollview( freq_maps[3*i+1,:], sub=(len(instrument_config['frequencies']),3,3*i+2), title='Q '+str(instrument_config['frequencies'][i])+'GHz')
+	    hp.mollview( freq_maps[3*i+2,:], sub=(len(instrument_config['frequencies']),3,3*i+3), title='U '+str(instrument_config['frequencies'][i])+'GHz')
 	# pl.figure()
 	# for i in range(len(instrument_config['frequencies'])):
 	#     hp.mollview( noise_maps[3*i,:], sub=(len(instrument_config['frequencies']),3,3*i+1))
 	#     hp.mollview( noise_maps[3*i+1,:], sub=(len(instrument_config['frequencies']),3,3*i+2))
 	#     hp.mollview( noise_maps[3*i+2,:], sub=(len(instrument_config['frequencies']),3,3*i+3))
-	# pl.show()
-	# exit()
+	pl.savefig('/Users/josquin1/Documents/Dropbox/CNRS-CR2/Simons_Observatory/BBPipe/test_mapbased_param/example_frequency_maps.pdf')
+	pl.show()
+	exit()
+	'''
 
 	# noise covariance 
 	noise_cov = freq_maps*0.0
