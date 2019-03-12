@@ -121,7 +121,8 @@ def main():
 	noise_cov[1::3,:] = nlev[:,np.newaxis]
 	noise_cov[2::3,:] = nlev[:,np.newaxis]
 	noise_cov *= binary_mask
-	noise_cov /= np.sqrt(nhits/np.amax(nhits))
+	if not args.white_noise and not args.no_noise:
+		noise_cov /= np.sqrt(nhits/np.amax(nhits))
 	# we put it to square !
 	noise_cov *= noise_cov
 	# noise_cov *= binary_mask
