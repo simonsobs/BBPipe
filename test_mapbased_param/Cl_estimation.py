@@ -86,7 +86,7 @@ class BBClEstimation(PipelineStage):
                 # fyp_cov_i=get_field(cov_map[2*comp_i,2*comp_i], cov_map[2*comp_i+1,2*comp_i+1])
                 # fyp_cov_j=get_field(cov_map[2*comp_j,2*comp_j], cov_map[2*comp_j+1,2*comp_j+1])
 
-                Cl_clean.append(compute_master(fyp_i,fyp_j)[3] )
+                Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
                 # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j)[3] )
 
         print('saving to disk ... ')
