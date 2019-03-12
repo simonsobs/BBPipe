@@ -38,11 +38,6 @@ class BBClEstimation(PipelineStage):
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
 
-        hp.mollview(mp_q_sim)
-        pl.figure()
-        hp.mollview(clean_map[0])
-        pl.show()
-
         def get_field(mp_q,mp_u) :
             #This creates a spin-2 field with both pure E and B.
             f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=False,purify_b=True)
@@ -80,10 +75,10 @@ class BBClEstimation(PipelineStage):
                 f_cov_map_j = nmt.NmtField(mask,[mask*cov_map[2*comp_j,2*comp_j],mask*cov_map[2*comp_j+1,2*comp_j+1]], purify_b=self.config['purify_b'])
 
                 print('computing Cl_NaMaster ... ')
-                components.append(str((comp_i,comp_j))) 
                 Cl_clean.append(compute_master(f_clean_map_i,f_clean_map_j)[3] )
                 Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_j)[3] )
                 """
+                components.append(str((comp_i,comp_j))) 
 
                 fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1])
                 fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1])
@@ -93,7 +88,7 @@ class BBClEstimation(PipelineStage):
 
                 Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
                 # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j)[3] )
-
+        print('all components = ', components)
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
         # hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
