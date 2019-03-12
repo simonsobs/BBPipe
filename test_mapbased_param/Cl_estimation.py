@@ -44,7 +44,7 @@ class BBClEstimation(PipelineStage):
             return f2y
 
         #We initialize two workspaces for the non-pure and pure fields:
-        f2y0=get_field(mp_q_sim,mp_u_sim)
+        f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim)
         w.compute_coupling_matrix(f2y0,f2y0,b)
 
         #This wraps up the two steps needed to compute the power spectrum
