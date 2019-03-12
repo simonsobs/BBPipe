@@ -93,10 +93,8 @@ def main():
 		nlev_map /= hp.nside2resol(args.nside, arcmin=True)
 		noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)*binary_mask
 		freq_maps += noise_maps
-	elif args.no_noise:
-		continue
-	else:
-		freq_maps += noise_maps*binary_mask
+	elif args.no_noise: pass
+	else: freq_maps += noise_maps*binary_mask
 	# freq_maps *= binary_mask
 	# noise_maps *= binary_mask
 	freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
