@@ -40,8 +40,8 @@ class BBClEstimation(PipelineStage):
 
         def get_field(mp_q,mp_u) :
             #This creates a spin-2 field with both pure E and B.
-            f2_y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=False,purify_b=True)
-            return f2y0
+            f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=False,purify_b=True)
+            return f2y
 
         #We initialize two workspaces for the non-pure and pure fields:
         f2y0=get_field(mp_q_sim,mp_u_sim)
