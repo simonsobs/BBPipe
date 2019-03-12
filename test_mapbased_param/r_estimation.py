@@ -18,13 +18,13 @@ class BBrEstimation(PipelineStage):
     """
 
     name='BBrEstimation'
-    inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
+    inputs=[('Cl_clean', FitsFile)]#,('Cl_cov_clean', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile)]
 
     def run(self):
 
         Cl_clean = hp.read_cl(self.get_input('Cl_clean'))
-        Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
+        # Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
 
         ell_v = Cl_clean[0]        
         
@@ -71,7 +71,10 @@ class BBrEstimation(PipelineStage):
         Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2][lmin:lmax]
         ClBB_obs = Cl_clean[1]
         ell_v = np.arange(lmin,lmax)
-        ClBB_model_other_than_prim = Cl_BB_lens + Cl_cov_clean[0]
+
+        ### WE HAVE TO BIN THE THEORY SPECTRA!
+
+        ClBB_model_other_than_prim = Cl_BB_lens #+ Cl_cov_clean[0]
 
         r_v = np.linspace(-0.001,0.1,num=1000)
 

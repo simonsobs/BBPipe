@@ -15,7 +15,7 @@ class BBClEstimation(PipelineStage):
 
     name='BBClEstimation'
     inputs=[('binary_mask',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile)]
-    outputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
+    outputs=[('Cl_clean', FitsFile)]#,('Cl_cov_clean', FitsFile)]
 
     def run(self):
 
@@ -54,7 +54,6 @@ class BBClEstimation(PipelineStage):
             cl_decoupled=wsp.decouple_cell(cl_coupled)
             return cl_decoupled
 
-
         ncomp = int(len(clean_map)/2)
         Cl_clean = [ell_eff] 
         Cl_cov_clean = [ell_eff]
@@ -84,15 +83,15 @@ class BBClEstimation(PipelineStage):
                 fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1])
                 fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1])
 
-                fyp_cov_i=get_field(cov_map[2*comp_i,2*comp_i], cov_map[2*comp_i+1,2*comp_i+1])
-                fyp_cov_j=get_field(cov_map[2*comp_j,2*comp_j], cov_map[2*comp_j+1,2*comp_j+1])
+                # fyp_cov_i=get_field(cov_map[2*comp_i,2*comp_i], cov_map[2*comp_i+1,2*comp_i+1])
+                # fyp_cov_j=get_field(cov_map[2*comp_j,2*comp_j], cov_map[2*comp_j+1,2*comp_j+1])
 
                 Cl_clean.append(compute_master(fyp_i,fyp_j)[3] )
-                Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j)[3] )
+                # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j)[3] )
 
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
-        hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
+        # hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
