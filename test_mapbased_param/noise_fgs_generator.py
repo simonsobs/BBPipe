@@ -135,6 +135,7 @@ def main():
 	tag += '_knee'+str(args.knee_mode)
 	tag += '_nylf'+str(args.low_freq_year)
 	if args.white_noise: tag += '_WN'
+	if args.no_noise: tag += '_no_noise'
 
 	column_names = []
 	[ column_names.extend( ('I_'+str(ch)+'GHz','Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in freqs]
