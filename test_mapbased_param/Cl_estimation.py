@@ -34,6 +34,11 @@ class BBClEstimation(PipelineStage):
         print('building ell_eff ... ')
         ell_eff = b.get_effective_ells()
         
+        hp.mollview(mask)
+        pl.figure()
+        hp.mollview(mask_apo)
+        pl.show()
+
         #Read power spectrum and provide function to generate simulated skies
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
