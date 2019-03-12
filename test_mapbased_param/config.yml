@@ -10,7 +10,7 @@ BBClEstimation:
     apotype: 'C1'
     purify_b: True
     nlb: 10
-    Cls_fiducial: './Cls_Planck2018_lensed_scalar.fits'
+    Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
 
 BBrEstimation:
     lmin: 30
