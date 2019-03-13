@@ -24,9 +24,9 @@ stages:
 # a previous stage must be defined here.  They are listed by tag.
 inputs:
     binary_mask: /global/cscratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits
-    frequency_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0_no_noise.fits
-    noise_cov: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0_no_noise.fits
-    noise_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0_no_noise.fits
+    frequency_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside256_sens1_knee1_nylf1.0_no_noise.fits
+    noise_cov: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside256_sens1_knee1_nylf1.0_no_noise.fits
+    noise_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside256_sens1_knee1_nylf1.0_no_noise.fits
 
 # Overall configuration file 
 config: ./test/config_mapbased_param.yml
