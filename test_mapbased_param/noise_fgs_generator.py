@@ -89,11 +89,11 @@ def main():
 
 	instrument = pysm.Instrument(instrument_config)
 	instrument_config_150GHz = copy.deepcopy(instrument_config)
-	instrument_config_150GHz['frequencies'] = 150.0
-	instrument_config_150GHz['sens_I'] = 1.0
-	instrument_config_150GHz['sens_P'] = 1.0
+	instrument_config_150GHz['frequencies'] = np.array([150.0])
+	instrument_config_150GHz['sens_I'] = np.array([1.0])
+	instrument_config_150GHz['sens_P'] = np.array([1.0])
 	instrument_150GHz = pysm.Instrument(instrument_config_150GHz)
-	
+
 	# instrument.observe(sky)
 	freq_maps = instrument.observe(sky, write_outputs=False)[0]
 	CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0]
