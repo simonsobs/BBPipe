@@ -59,40 +59,31 @@ class BBClEstimation(PipelineStage):
         Cl_clean = [ell_eff] 
         Cl_cov_clean = [ell_eff]
         components = []
+
+        sqrt_cov_map = np.sqrt(cov_map)
+
         print('n_comp = ', ncomp)
         for comp_i in range(ncomp):
             for comp_j in range(ncomp)[comp_i:]:
 
                 print('comp_i = ', comp_i)
                 print('comp_j = ', comp_j)
-                # print('clean_map.shape = ', clean_map.shape)
-                # print('cov_map.shape = ', cov_map.shape)
 
-                """
-                print('building f ... ')
-                f_clean_map_i = nmt.NmtField(mask,[mask*clean_map[2*comp_i],mask*clean_map[2*comp_i+1]], purify_b=self.config['purify_b'])
-                f_clean_map_j = nmt.NmtField(mask,[mask*clean_map[2*comp_j],mask*clean_map[2*comp_j+1]], purify_b=self.config['purify_b'])
-                f_cov_map_i = nmt.NmtField(mask,[mask*cov_map[2*comp_i,2*comp_i],mask*cov_map[2*comp_i+1,2*comp_i+1]], purify_b=self.config['purify_b'])
-                f_cov_map_j = nmt.NmtField(mask,[mask*cov_map[2*comp_j,2*comp_j],mask*cov_map[2*comp_j+1,2*comp_j+1]], purify_b=self.config['purify_b'])
-
-                print('computing Cl_NaMaster ... ')
-                Cl_clean.append(compute_master(f_clean_map_i,f_clean_map_j)[3] )
-                Cl_cov_clean.append(compute_master(f_cov_map_i,f_cov_map_j)[3] )
-                """
                 components.append(str((comp_i,comp_j))) 
 
                 fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
                 fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
 
-                # fyp_cov_i=get_field(cov_map[2*comp_i,2*comp_i], cov_map[2*comp_i+1,2*comp_i+1])
-                # fyp_cov_j=get_field(cov_map[2*comp_j,2*comp_j], cov_map[2*comp_j+1,2*comp_j+1])
+                fyp_cov_i=get_field(mask*sqrt_cov_map[2*comp_i,2*comp_i], mask*sqrt_cov_map[2*comp_i+1,2*comp_i+1])
+                fyp_cov_j=get_field(mask*sqrt_cov_map[2*comp_j,2*comp_j], mask*sqrt_cov_map[2*comp_j+1,2*comp_j+1])
 
                 Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
-                # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j)[3] )
+                Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j)[3] )
+                
         print('all components = ', components)
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
-        # hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
+        hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
