@@ -66,7 +66,7 @@ class BBMapParamCompSep(PipelineStage):
             optQU = 1
 
         A = MixingMatrix(*components)
-        A_ev = A.evaluator(instrument.Frequencies)
+        A_ev = A.evaluator(instrument['frequencies'])
         A_maxL = A_ev(res.x)
         np.save('A_maxL', A_maxL)
 
