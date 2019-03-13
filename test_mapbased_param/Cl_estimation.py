@@ -65,8 +65,8 @@ class BBClEstimation(PipelineStage):
         components = []
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
-            fn=get_field(mask*noise_maps[3*f+1], mask*noise_maps[3*f+2])
-            Cl_cov_clean_loc.append(compute_master(fn,fn, w)[3] )
+            fn = get_field(mask*noise_maps[3*f+1], mask*noise_maps[3*f+2])
+            Cl_cov_clean_loc.append(1.0/compute_master(fn,fn, w)[3] )
 
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
         inv_AtNA = np.linalg.inv(AtNA)
