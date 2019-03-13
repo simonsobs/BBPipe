@@ -23,7 +23,6 @@ class BBClEstimation(PipelineStage):
 
         clean_map = hp.read_map(self.get_input('post_compsep_maps'),verbose=False, field=None, h=False)
         cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=False)
-        frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         A_maxL = np.loadtxt(self.get_input('A_maxL'))
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
 
