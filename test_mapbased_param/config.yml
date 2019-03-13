@@ -1,5 +1,5 @@
 global:
-    frequencies: [30.0, 40.0, 95.0, 150.0, 220.0, 270.0]
+    frequencies: [27,39,93,145,225,280]
     fsky: 0.1
 
 BBMapParamCompSep:
