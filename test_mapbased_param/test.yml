@@ -26,19 +26,20 @@ inputs:
     binary_mask: /global/cscratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits
     frequency_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside128_sens1_knee1_nylf1.0.fits
     noise_cov: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside128_sens1_knee1_nylf1.0.fits
+    noise_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside128_sens1_knee1_nylf1.0.fits
 
 # Overall configuration file 
-config: ./config.yml
+config: ./test/config_mapbased_param.yml
 
 # If all the outputs for a stage already exist then do not re-run that stage
 resume: False
 
 # Put all the output files in this directory:
-output_dir: ./outputs
+output_dir: ./outputs_no_noise
 
 # Put the logs from the individual stages in this directory:
 log_dir: ./logs
 
 # Put the log for the overall pipeline infrastructure in this file:
-pipeline_log: log.txt
+pipeline_log: log_no_noise.txt
 
