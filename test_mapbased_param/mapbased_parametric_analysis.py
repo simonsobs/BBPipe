@@ -49,7 +49,7 @@ class BBMapParamCompSep(PipelineStage):
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
         res = fg.separation_recipies.weighted_comp_sep(components, instrument,
-                     data=frequency_maps_, cov=noise_cov_, nside=nside_patch)
+                     data=frequency_maps_, cov=noise_cov_, nside=self.config['nside_patch'])
 
         # save results
         # fits for components maps

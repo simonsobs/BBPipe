@@ -3,7 +3,7 @@ global:
     fsky: 0.1
 
 BBMapParamCompSep:
-    nside: 0
+    nside_patch: 0
 
 BBClEstimation:
     aposize: 10.0
