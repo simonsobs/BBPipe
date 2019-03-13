@@ -162,9 +162,9 @@ def main():
 	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_frequency_maps'+tag+'.fits'), freq_maps, overwrite=True, column_names=column_names)
 	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_noise_cov'+tag+'.fits'), noise_cov, overwrite=True, column_names=column_names)
 	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_noise_maps'+tag+'.fits'), noise_maps, overwrite=True, column_names=column_names)
-	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_CMB_template_150GHz'+tag+'.fits'), CMB_template_150GHz, overwrite=True, column_names=column_names)
-	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_dust_template_150GHz'+tag+'.fits'), dust_template_150GHz, overwrite=True, column_names=column_names)
-	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_sync_template_150GHz'+tag+'.fits'), sync_template_150GHz, overwrite=True, column_names=column_names)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_CMB_template_150GHz'+tag+'.fits'), CMB_template_150GHz, overwrite=True)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_dust_template_150GHz'+tag+'.fits'), dust_template_150GHz, overwrite=True)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_sync_template_150GHz'+tag+'.fits'), sync_template_150GHz, overwrite=True)
 
 if __name__ == "__main__":
 
