@@ -81,8 +81,8 @@ class BBClEstimation(PipelineStage):
                 """
                 components.append(str((comp_i,comp_j))) 
 
-                fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1])
-                fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1])
+                fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
+                fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
 
                 # fyp_cov_i=get_field(cov_map[2*comp_i,2*comp_i], cov_map[2*comp_i+1,2*comp_i+1])
                 # fyp_cov_j=get_field(cov_map[2*comp_j,2*comp_j], cov_map[2*comp_j+1,2*comp_j+1])
