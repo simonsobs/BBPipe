@@ -15,7 +15,7 @@ class BBClEstimation(PipelineStage):
 
     name='BBClEstimation'
     inputs=[('binary_mask',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile)]
-    outputs=[('Cl_clean', FitsFile)]#,('Cl_cov_clean', FitsFile)]
+    outputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
 
     def run(self):
 
@@ -79,7 +79,7 @@ class BBClEstimation(PipelineStage):
 
                 Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
                 Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
-                
+
         print('all components = ', components)
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
