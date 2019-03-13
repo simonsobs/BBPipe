@@ -14,6 +14,7 @@ from pysm.nominal import models
 import mk_noise_map as mknm
 import V3calc as V3
 import os.path as op
+import copy 
 
 def grabargs():
 	parser = argparse.ArgumentParser()
@@ -60,6 +61,14 @@ def main():
 	c_config = models("c1", args.nside)
 	sky_config = {'cmb' : c_config, 'dust' : d_config, 'synchrotron' : s_config}
 	sky = pysm.Sky(sky_config)
+
+	sky_config_CMB = {'cmb' : c_config}
+	sky_CMB = pysm.Sky(sky_config_CMB)
+	sky_config_dust = {'dust' : d_config}
+	sky_dust = pysm.Sky(sky_config_dust)
+	sky_config_sync = {'synchrotron' : s_config}
+	sky_sync = pysm.Sky(sky_config_sync)
+
 	# DEFINE INSTRUMENT AND SCAN SKY
 	fwhm = V3.so_V3_SA_beams()
 	freqs = V3.so_V3_SA_bands()
@@ -79,9 +88,18 @@ def main():
 		}
 
 	instrument = pysm.Instrument(instrument_config)
+	instrument_config_150GHz = copy.deepcopy(instrument_config)
+	instrument_150GHz = pysm.Instrument(instrument_config_150GHz)
+	instrument_150GHz['frequencies'] = 150.0
+	instrument_150GHz['sens_I'] = 1.0
+	instrument_150GHz['sens_P'] = 1.0
 	
 	# instrument.observe(sky)
 	freq_maps = instrument.observe(sky, write_outputs=False)[0]
+	CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0]
+	dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0]
+	sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0]
+
 	# restructuration of the noise map
 	freq_maps = freq_maps.reshape(noise_maps.shape)
 	# adding noise
@@ -144,6 +162,9 @@ def main():
 	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_frequency_maps'+tag+'.fits'), freq_maps, overwrite=True, column_names=column_names)
 	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_noise_cov'+tag+'.fits'), noise_cov, overwrite=True, column_names=column_names)
 	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_noise_maps'+tag+'.fits'), noise_maps, overwrite=True, column_names=column_names)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_CMB_template_150GHz'+tag+'.fits'), CMB_template_150GHz, overwrite=True, column_names=column_names)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_dust_template_150GHz'+tag+'.fits'), dust_template_150GHz, overwrite=True, column_names=column_names)
+	hp.write_map( op.join(args.output_directory, instrument_config['output_prefix']+'_sync_template_150GHz'+tag+'.fits'), sync_template_150GHz, overwrite=True, column_names=column_names)
 
 if __name__ == "__main__":
 
