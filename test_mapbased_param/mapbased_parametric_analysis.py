@@ -16,7 +16,7 @@ class BBMapParamCompSep(PipelineStage):
     """
     name='BBMapParamCompSep'
     inputs= [('binary_mask',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile)]
-    outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile)]
+    outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile), ('A_maxL',TextFile)]
 
     def run(self) :
         #Read input mask
@@ -68,7 +68,7 @@ class BBMapParamCompSep(PipelineStage):
         A = MixingMatrix(*components)
         A_ev = A.evaluator(instrument['frequencies'])
         A_maxL = A_ev(res.x)
-        np.save('A_maxL', A_maxL)
+        np.savetxt(self.get_output('A_maxL'), A_maxL)
 
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]
