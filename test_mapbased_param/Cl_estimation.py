@@ -39,12 +39,6 @@ class BBClEstimation(PipelineStage):
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
 
 
-        ###########
-        ### TO BE REMOVED
-        # clean_map = np.vstack((mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim))
-        ########### 
-
-
         def get_field(mp_q,mp_u) :
             #This creates a spin-2 field with both pure E and B.
             f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=False,purify_b=True)
@@ -87,8 +81,8 @@ class BBClEstimation(PipelineStage):
                 """
                 components.append(str((comp_i,comp_j))) 
 
-                fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
-                fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
+                fyp_i=get_field(mask_apo*clean_map[2*comp_i], mask_apo*clean_map[2*comp_i+1])
+                fyp_j=get_field(mask_apo*clean_map[2*comp_j], mask_apo*clean_map[2*comp_j+1])
 
                 # fyp_cov_i=get_field(cov_map[2*comp_i,2*comp_i], cov_map[2*comp_i+1,2*comp_i+1])
                 # fyp_cov_j=get_field(cov_map[2*comp_j,2*comp_j], cov_map[2*comp_j+1,2*comp_j+1])
