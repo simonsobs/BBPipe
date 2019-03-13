@@ -5,7 +5,6 @@ import pylab as pl
 import fgbuster as fg
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
-from fgbuster.mixingmatrix import MixingMatrix
 from fgbuster.separation_recipies import weighted_comp_sep
 
 class BBMapParamCompSep(PipelineStage):
@@ -65,8 +64,12 @@ class BBMapParamCompSep(PipelineStage):
         else: 
             optI = 1
             optQU = 1
-        
+
         A = MixingMatrix(*components)
+        A_ev = A.evaluator(instrument.Frequencies)
+        A_maxL = A_ev(res.x)
+        np.save('A_maxL', A_maxL)
+
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]
         column_names = [x for x in column_names if x]
