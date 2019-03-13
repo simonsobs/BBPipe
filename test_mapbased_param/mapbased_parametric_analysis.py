@@ -29,7 +29,8 @@ class BBMapParamCompSep(PipelineStage):
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
 
         # reorganization of maps
-        instrument = {'frequencies':np.array([30.0, 40.0, 95.0, 150.0, 220.0, 270.0])}
+        print frequencies 
+        instrument = {'frequencies':np.array(frequencies)}
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
@@ -38,6 +39,7 @@ class BBMapParamCompSep(PipelineStage):
                 frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
                 noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
                 ind += 1
+        
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
         noise_cov_ = noise_cov_[:,1:,:]
@@ -47,19 +49,8 @@ class BBMapParamCompSep(PipelineStage):
 
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
-        # A = MixingMatrix(*components)
-        # A_ev = A.evaluator(instrument['frequencies'])
-        # print(*components)
-        # print(dir(A))
-        # print(A.n_param)
-        # print(A.params)
-        # print(A.components)
-        # print(A_ev(np.array([1.54, -3.0])))
-        # A_dB_ev = A.diff_evaluator(instrument['frequencies'])
-        # print(A_dB_ev(np.array([1.54, -3.0])))
-
         res = fg.separation_recipies.weighted_comp_sep(components, instrument,
-                     data=frequency_maps_, cov=noise_cov_, nside=0)
+                     data=frequency_maps_, cov=noise_cov_, nside=nside_patch)
 
         # save results
         # fits for components maps
@@ -80,9 +71,7 @@ class BBMapParamCompSep(PipelineStage):
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]
         column_names = [x for x in column_names if x]
-        print(column_names)
         maps_estimated=res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
-        print(maps_estimated.shape)
         hp.write_map(self.get_output('post_compsep_maps'), maps_estimated, overwrite=True, column_names=column_names)
 
         cov_estimated = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
