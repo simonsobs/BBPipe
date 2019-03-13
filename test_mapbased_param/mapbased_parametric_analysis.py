@@ -29,8 +29,7 @@ class BBMapParamCompSep(PipelineStage):
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
 
         # reorganization of maps
-        print(frequencies)
-        instrument = {'frequencies':np.array(frequencies)}
+        instrument = {'frequencies':np.array(self.config['frequencies'])}
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
