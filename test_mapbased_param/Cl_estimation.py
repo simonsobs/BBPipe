@@ -38,6 +38,13 @@ class BBClEstimation(PipelineStage):
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
 
+
+        ###########
+        ### TO BE REMOVED
+        clean_map = np.vstack((mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim))
+        ########### 
+
+
         def get_field(mp_q,mp_u) :
             #This creates a spin-2 field with both pure E and B.
             f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=False,purify_b=True)
