@@ -96,9 +96,9 @@ def main():
 
 	# instrument.observe(sky)
 	freq_maps = instrument.observe(sky, write_outputs=False)[0]
-	CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0]
-	dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0]
-	sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0]
+	CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape(noise_maps.shape)
+	dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0].reshape(noise_maps.shape)
+	sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0].reshape(noise_maps.shape)
 
 	# restructuration of the noise map
 	freq_maps = freq_maps.reshape(noise_maps.shape)
