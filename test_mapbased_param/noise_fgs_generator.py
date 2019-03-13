@@ -89,10 +89,10 @@ def main():
 
 	instrument = pysm.Instrument(instrument_config)
 	instrument_config_150GHz = copy.deepcopy(instrument_config)
+	instrument_config_150GHz['frequencies'] = 150.0
+	instrument_config_150GHz['sens_I'] = 1.0
+	instrument_config_150GHz['sens_P'] = 1.0
 	instrument_150GHz = pysm.Instrument(instrument_config_150GHz)
-	instrument_150GHz['frequencies'] = 150.0
-	instrument_150GHz['sens_I'] = 1.0
-	instrument_150GHz['sens_P'] = 1.0
 	
 	# instrument.observe(sky)
 	freq_maps = instrument.observe(sky, write_outputs=False)[0]
