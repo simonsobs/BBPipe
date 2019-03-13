@@ -41,7 +41,7 @@ class BBClEstimation(PipelineStage):
 
         ###########
         ### TO BE REMOVED
-        clean_map = np.vstack((mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim))
+        # clean_map = np.vstack((mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim,mp_q_sim,mp_u_sim))
         ########### 
 
 
