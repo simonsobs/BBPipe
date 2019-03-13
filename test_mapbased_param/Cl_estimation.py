@@ -5,6 +5,7 @@ import pylab as pl
 import pymaster as nmt
 import healpy as hp
 from fgbuster.cosmology import _get_Cl_cmb 
+from fgbuster.mixingmatrix import MixingMatrix
 
 class BBClEstimation(PipelineStage):
     """
@@ -14,18 +15,22 @@ class BBClEstimation(PipelineStage):
     """
 
     name='BBClEstimation'
-    inputs=[('binary_mask',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile)]
+    inputs=[('binary_mask',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
+            ('A_maxL',TextFile),('noise_maps',FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
 
     def run(self):
 
         clean_map = hp.read_map(self.get_input('post_compsep_maps'),verbose=False, field=None, h=False)
         cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=False)
+        frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
+        A_maxL = np.loadtxt(self.get_input('A_maxL'))
+        noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
 
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
         w=nmt.NmtWorkspace()
-        b=nmt.NmtBin(nside_map, nlb=int(1./self.config['fsky'])) 
+        b=nmt.NmtBin(nside_map, nlb=int(1./self.config['fsky']))
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask'))
@@ -59,8 +64,15 @@ class BBClEstimation(PipelineStage):
         Cl_clean = [ell_eff] 
         Cl_cov_clean = [ell_eff]
         components = []
+        Cl_cov_clean_loc = []
+        for f in range(self.config['frequencies']):
+            fn=get_field(mask*noise_maps[3*f+1], mask*noise_maps[3*f+2])
+            Cl_cov_clean_loc.append(compute_master(fn,fn, w)[3] )
 
-        sqrt_cov_map = np.sqrt(cov_map)
+        AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
+        inv_AtNA = np.linalg.inv(AtNA)
+        Cl_cov_clean = np.diagonal(inv_AtNA, axis=-2,axis=-1)
+        Cl_cov_clean = Cl_cov_clean.swapaxes(0,1)
 
         print('n_comp = ', ncomp)
         for comp_i in range(ncomp):
@@ -74,11 +86,11 @@ class BBClEstimation(PipelineStage):
                 fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
                 fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
 
-                fyp_cov_i=get_field(mask*sqrt_cov_map[2*comp_i,2*comp_i], mask*sqrt_cov_map[2*comp_i+1,2*comp_i+1])
-                fyp_cov_j=get_field(mask*sqrt_cov_map[2*comp_j,2*comp_j], mask*sqrt_cov_map[2*comp_j+1,2*comp_j+1])
+                # fyp_cov_i=get_field(mask*sqrt_cov_map[2*comp_i,2*comp_i], mask*sqrt_cov_map[2*comp_i+1,2*comp_i+1])
+                # fyp_cov_j=get_field(mask*sqrt_cov_map[2*comp_j,2*comp_j], mask*sqrt_cov_map[2*comp_j+1,2*comp_j+1])
 
                 Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
-                Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
+                # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
 
         print('all components = ', components)
         print('saving to disk ... ')
