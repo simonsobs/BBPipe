@@ -64,7 +64,7 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean = [ell_eff]
         components = []
         Cl_cov_clean_loc = []
-        for f in range(self.config['frequencies']):
+        for f in range(len(self.config['frequencies'])):
             fn=get_field(mask*noise_maps[3*f+1], mask*noise_maps[3*f+2])
             Cl_cov_clean_loc.append(compute_master(fn,fn, w)[3] )
 
