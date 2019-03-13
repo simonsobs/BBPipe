@@ -70,7 +70,7 @@ class BBClEstimation(PipelineStage):
 
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
         inv_AtNA = np.linalg.inv(AtNA)
-        Cl_cov_clean = np.diagonal(inv_AtNA, axis0=-2,axis1=-1)
+        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)
         Cl_cov_clean = Cl_cov_clean.swapaxes(0,1)
 
         print('n_comp = ', ncomp)
