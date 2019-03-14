@@ -98,6 +98,10 @@ class BBREstimation(PipelineStage):
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
                             ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
                                    ClBB_model_other_than_prim, r_v, bins) 
+        pl.figure()
+        pl.semilogx(r_v, gridded_likelihood)
+        pl.show()
+
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r_fit', 'sigma_r']
