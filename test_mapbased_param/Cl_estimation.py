@@ -42,7 +42,6 @@ class BBClEstimation(PipelineStage):
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
 
-
         def get_field(mp_q,mp_u) :
             #This creates a spin-2 field with both pure E and B.
             f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=False,purify_b=True)
@@ -59,9 +58,7 @@ class BBClEstimation(PipelineStage):
             cl_decoupled=wsp.decouple_cell(cl_coupled)
             return cl_decoupled
 
-        ncomp = int(len(clean_map)/2)
-        Cl_clean = [ell_eff] 
-        components = []
+        ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
             fn = get_field(mask*noise_maps[3*f+1], mask*noise_maps[3*f+2])
@@ -72,7 +69,12 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
 
+        ### compute power spectra of the cleaned sky maps
+        ncomp = int(len(clean_map)/2)
+        Cl_clean = [ell_eff] 
+        components = []
         print('n_comp = ', ncomp)
+        ind=0
         for comp_i in range(ncomp):
             for comp_j in range(ncomp)[comp_i:]:
 
@@ -89,7 +91,9 @@ class BBClEstimation(PipelineStage):
 
                 Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
                 # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
-
+                ind += 1
+        print('ind = ', ind)
+        print('shape(Cl_clean) = ', len(Cl_clean))
         print('all components = ', components)
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
