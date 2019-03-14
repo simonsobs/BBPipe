@@ -42,7 +42,7 @@ class BBREstimation(PipelineStage):
 
                 pl.figure()
                 pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                pl.loglog( bins.bin_cell(_get_Cl_cmb(1.,0.)[2][:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
+                pl.loglog( bins.bin_cell(_get_Cl_cmb(1.,0.)[2][:3*self.config['nside']])[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
                 pl.loglog( Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], label='noise post comp sep', linestyle=':')
                 pl.loglog( ClBB_obs, label='obs BB')
                 pl.legend()
