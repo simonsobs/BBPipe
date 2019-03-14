@@ -36,9 +36,9 @@ class BBREstimation(PipelineStage):
                 -2logL = sum_ell [ (2l+1)fsky * ( log(C) + C^-1.D  ) ]
                     cf. eg. Tegmark 1998
                 '''    
-                Cov_model = bins.bin_cell(Cl_BB_prim*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]
+                Cov_model = bins.bin_cell(Cl_BB_prim*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim
-                logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky
+                logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
                                     *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
                 return logL
 
