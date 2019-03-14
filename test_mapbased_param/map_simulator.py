@@ -15,7 +15,7 @@ class BBMapSim(PipelineStage):
     """
     name='BBMapSim'
     inputs= [('binary_mask',FitsFile),('norm_hits_map', FitsFile)]
-    outputs=[('binary_mask',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_maps',FitsFile),\
+    outputs=[('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_maps',FitsFile),\
             ('CMB_template_150GHz',FitsFile),('dust_template_150GHz',FitsFile),('sync_template_150GHz',FitsFile)]
 
     def run(self) :
