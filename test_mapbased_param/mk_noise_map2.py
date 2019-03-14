@@ -42,7 +42,7 @@ def get_mask(nside_out=512) :
     msk[not0]=nh[not0]
     return msk
 
-def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_map=[]) :
+def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_map=None) :
     """
     Generates noise simulation
     sensitivity : choice of sensitivity model for SAC's V3 
@@ -50,7 +50,7 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_ma
     ny_lf : number of years with an LF tube
     nside_out : output resolution
     """
-    if not norm_hits_map:
+    if norm_hits_map is None:
         nh=get_nhits(nside_out=nside_out)
     else:
         nh = hp.ud_grade(norm_hits_map,nside_out=nside_out)
