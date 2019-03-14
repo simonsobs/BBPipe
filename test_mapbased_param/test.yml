@@ -24,9 +24,9 @@ stages:
 # a previous stage must be defined here.  They are listed by tag.
 inputs:
     binary_mask: /global/cscratch1/sd/josquin/SO_sims/SO_sims_binary_mask.fits
-    frequency_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside256_sens1_knee1_nylf1.0_WN.fits
-    noise_cov: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside256_sens1_knee1_nylf1.0_WN.fits
-    noise_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside256_sens1_knee1_nylf1.0_WN.fits
+    frequency_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside512_sens1_knee1_nylf1.0_WN.fits
+    noise_cov: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside512_sens1_knee1_nylf1.0_WN.fits
+    noise_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside512_sens1_knee1_nylf1.0_WN.fits
     Cl_BB_lens: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_lensed_scalar.fits
     Cl_BB_prim_r1: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits
 
