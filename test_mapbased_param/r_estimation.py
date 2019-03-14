@@ -5,6 +5,7 @@ import pylab as pl
 import fgbuster
 from fgbuster.cosmology import _get_Cl_cmb, _get_Cl_noise
 import healpy as hp
+import pymaster as nmt
 
 class BBREstimation(PipelineStage):
     """
@@ -18,25 +19,25 @@ class BBREstimation(PipelineStage):
     """
 
     name='BBREstimation'
-    inputs=[('Cl_clean', FitsFile)]#,('Cl_cov_clean', FitsFile)]
+    inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile)]
 
     def run(self):
 
         Cl_clean = hp.read_cl(self.get_input('Cl_clean'))
-        # Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
+        Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
 
         ell_v = Cl_clean[0]        
         
-        def from_Cl_to_r_estimate(ClBB_tot, ell_v, fsky, Cl_BB_prim, ClBB_model_other_than_prim, r_v, **minimize_kwargs):
+        def from_Cl_to_r_estimate(ClBB_obs, ell_v, fsky, Cl_BB_prim, ClBB_model_other_than_prim, r_v, bins, **minimize_kwargs):
 
             def likelihood_on_r_computation( r_loc, make_figure=False ):
                 '''
                 -2logL = sum_ell [ (2l+1)fsky * ( log(C) + C^-1.D  ) ]
                     cf. eg. Tegmark 1998
                 '''    
-                Cov_model = Cl_BB_prim*r_loc + ClBB_model_other_than_prim
-                logL = np.sum( (2*ell_v+1)*fsky*( np.log( Cov_model ) + ClBB_tot/Cov_model ))
+                Cov_model = bins.bin_cell(Cl_BB_prim*r_loc) + ClBB_model_other_than_prim
+                logL = np.sum( (2*ell_v+1)*fsky*( np.log( Cov_model ) + ClBB_obs/Cov_model ))
                 return logL
 
             # gridding -2log(L)
@@ -64,28 +65,30 @@ class BBREstimation(PipelineStage):
 
 
         print('cosmological analysis now ... ')
-        # assuming input r=0.000
+        ## data first
         lmin = self.config['lmin']
         lmax = self.config['lmax']
+        ell_v = Cl_clean[0][(ell_v>=lmin)&(ell_v<=lmax)]
+        ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+
+        # model 
         Cl_BB_lens = _get_Cl_cmb(1.,0.)[2][lmin:lmax]
         Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2][lmin:lmax]
-        ClBB_obs = Cl_clean[1]
-        ell_v = np.arange(lmin,lmax)
+        bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
+        Cl_BB_lens_bin = bins.bin_cell(Cl_BB_lens)
 
-        ### WE HAVE TO BIN THE THEORY SPECTRA!
-
-        ClBB_model_other_than_prim = Cl_BB_lens #+ Cl_cov_clean[0]
+        ClBB_model_other_than_prim =  Cl_BB_lens_bin + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         r_v = np.linspace(-0.001,0.1,num=1000)
 
-        r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_tot,
-                            ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2][lmin:lmax],
-                                   ClBB_model_other_than_prim, r_v) 
+        r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
+                            ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
+                                   ClBB_model_other_than_prim, r_v, bins) 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r_fit', 'sigma_r']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
-
 
 if __name__ == '__main__':
     results = PipelineStage.main()

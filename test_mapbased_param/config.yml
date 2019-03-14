@@ -16,3 +16,4 @@ BBREstimation:
     lmin: 30
     lmax: 200
     r_input: 0.000
+    nside: 256
