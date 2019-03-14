@@ -11,6 +11,7 @@ BBClEstimation:
     purify_b: True
     nlb: 10
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
+    nside: 256
 
 BBREstimation:
     lmin: 30
