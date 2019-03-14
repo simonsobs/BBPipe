@@ -11,7 +11,7 @@ import pylab as pl
 import argparse
 import pysm
 from pysm.nominal import models
-import mk_noise_map as mknm
+import mk_noise_map2 as mknm
 import V3calc as V3
 import os.path as op
 import copy 
@@ -52,6 +52,7 @@ def main():
 	# GENERATE NOISE MAP
 	nhits,noise_maps,nlev = mknm.get_noise_sim(sensitivity=args.sensitivity_mode, 
 					knee_mode=args.knee_mode,ny_lf=args.low_freq_year,nside_out=args.nside)
+
 	binary_mask = hp.read_map('mask_04000.fits')
 	binary_mask = hp.ud_grade(binary_mask, nside_out=args.nside)
 	binary_mask[np.where(nhits<1e-6)[0]] = 0.0
