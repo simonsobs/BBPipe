@@ -106,12 +106,12 @@ class BBMapSim(PipelineStage):
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         # save on disk frequency maps, noise maps, noise_cov, binary_mask
-        tag = '_nside'+str(self.config['nside'])
-        tag += '_sens'+str(self.config['sensitivity_mode'])
-        tag += '_knee'+str(self.config['knee_mode'])
-        tag += '_nylf'+str(self.config['low_freq_year'])
-        if self.config['noise_option']=='white_noise': tag += '_white_noise'
-        if  self.config['noise_option']=='no_noise': tag += '_no_noise'
+        # tag = '_nside'+str(self.config['nside'])
+        # tag += '_sens'+str(self.config['sensitivity_mode'])
+        # tag += '_knee'+str(self.config['knee_mode'])
+        # tag += '_nylf'+str(self.config['low_freq_year'])
+        # if self.config['noise_option']=='white_noise': tag += '_white_noise'
+        # if  self.config['noise_option']=='no_noise': tag += '_no_noise'
 
         column_names = []
         [ column_names.extend( ('I_'+str(ch)+'GHz','Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in freqs]
