@@ -21,7 +21,7 @@ class BBMapParamCompSep(PipelineStage):
     def run(self) :
         #Read input mask
         import healpy as hp #We will want to be more general than assuming HEALPix
-        binary_mask=hp.read_map(self.get_input('binary_mask'),verbose=False)
+        binary_mask=hp.read_map(self.get_input('binary_mask_cut'),verbose=False)
 
         #Read frequency maps and noise covariance
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
