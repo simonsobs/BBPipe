@@ -4,8 +4,8 @@ global:
     nside: 512
 
 BBMapSim:
-    sensitivity_mode: 1.0
-    knee_mode: 1.0
+    sensitivity_mode: 1
+    knee_mode: 1
     ny_lf: 1.0
     cmb_model: 'c1'
     dust_model: 'd1'
