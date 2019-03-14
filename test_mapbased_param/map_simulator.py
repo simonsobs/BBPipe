@@ -20,7 +20,7 @@ class BBMapSim(PipelineStage):
     def run(self) :
 
         nhits, noise_maps, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
-                        knee_mode=self.config['knee_mode'],ny_lf=self.config['low_freq_year'],
+                        knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'])
 
         binary_mask = hp.read_map(self.get_input('binary_mask'))
