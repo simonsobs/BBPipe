@@ -58,6 +58,9 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_ma
 
     msk=get_mask(nh, nside_out=nside_out)
     fsky=np.mean(msk)
+
+    print(sensitivity,knee_mode,ny_lf,fsky,3*nside_out)
+
     ll,nll,nlev=v3.so_V3_SA_noise(sensitivity,knee_mode,ny_lf,fsky,3*nside_out,remove_kluge=True)
     zer0=1E-6
     id_cut=np.where(nh<zer0)[0]
