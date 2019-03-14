@@ -44,6 +44,7 @@ class BBREstimation(PipelineStage):
                 pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
                 pl.loglog( ClBB_model_other_than_prim, label='other than prim B' )
                 pl.loglog(ClBB_obs, label='obs BB')
+                pl.legend()
                 pl.show()
 
                 logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
@@ -92,7 +93,8 @@ class BBREstimation(PipelineStage):
         ClBB_model_other_than_prim =  Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)] + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         r_v = np.linspace(-0.001,0.1,num=1000)
-
+        r_v = [0.001,0.01]
+        
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
                             ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
                                    ClBB_model_other_than_prim, r_v, bins) 
