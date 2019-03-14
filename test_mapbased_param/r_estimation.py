@@ -92,8 +92,8 @@ class BBREstimation(PipelineStage):
         # Cl_BB_prim = hp.read_cl('./Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits')
         # Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2]#[lmin:lmax]
         # Cl_BB_lens = hp.read_cl('./Cls_Planck2018_lensed_scalar.fits')
-        Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))
-        Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))
+        Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
+        Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
 
         bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
