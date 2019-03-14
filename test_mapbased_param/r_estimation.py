@@ -92,7 +92,7 @@ class BBREstimation(PipelineStage):
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\
                              + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
-        r_v = np.linspace(-0.001,0.1,num=1000)
+        r_v = np.logspace(-4,0,num=1000)
         # r_v = np.array([0.001,0.01, 0.1])
 
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
