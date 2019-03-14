@@ -76,22 +76,22 @@ class BBClEstimation(PipelineStage):
         print('n_comp = ', ncomp)
         ind=0
         for comp_i in range(ncomp):
-            for comp_j in range(ncomp)[comp_i:]:
+            # for comp_j in range(ncomp)[comp_i:]:
+            comp_j = comp_i
+            print('comp_i = ', comp_i)
+            print('comp_j = ', comp_j)
 
-                print('comp_i = ', comp_i)
-                print('comp_j = ', comp_j)
+            components.append(str((comp_i,comp_j))) 
 
-                components.append(str((comp_i,comp_j))) 
+            fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
+            fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
 
-                fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
-                fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
+            # fyp_cov_i=get_field(mask*sqrt_cov_map[2*comp_i,2*comp_i], mask*sqrt_cov_map[2*comp_i+1,2*comp_i+1])
+            # fyp_cov_j=get_field(mask*sqrt_cov_map[2*comp_j,2*comp_j], mask*sqrt_cov_map[2*comp_j+1,2*comp_j+1])
 
-                # fyp_cov_i=get_field(mask*sqrt_cov_map[2*comp_i,2*comp_i], mask*sqrt_cov_map[2*comp_i+1,2*comp_i+1])
-                # fyp_cov_j=get_field(mask*sqrt_cov_map[2*comp_j,2*comp_j], mask*sqrt_cov_map[2*comp_j+1,2*comp_j+1])
-
-                Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
-                # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
-                ind += 1
+            Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
+            # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
+            ind += 1
         print('ind = ', ind)
         print('shape(Cl_clean) = ', len(Cl_clean))
         print('shape(array(Cl_clean)) = ', (np.array(Cl_clean)).shape)
