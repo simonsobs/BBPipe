@@ -26,7 +26,7 @@ stages:
 # a previous stage must be defined here.  They are listed by tag.
 inputs:
     binary_mask: /global/cscratch1/sd/josquin/SO_sims/mask_04000.fits
-    norm_hits_map: /global/homes/j/josquin/SIMONS_OBS/BBPipe/norm_nHits_SA_35FOV_G.fits
+    norm_hits_map: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/norm_nHits_SA_35FOV_G.fits
     # frequency_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_frequency_maps_nside512_sens1_knee1_nylf1.0_WN.fits
     # noise_cov: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside512_sens1_knee1_nylf1.0_WN.fits
     # noise_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside512_sens1_knee1_nylf1.0_WN.fits
