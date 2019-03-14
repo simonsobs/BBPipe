@@ -53,7 +53,7 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_ma
     if not norm_hits_map:
         nh=get_nhits(nside_out=nside_out)
     else:
-        nh = norm_hits_map
+        nh = hp.ud_grade(norm_hits_map,nside_out=nside_out)
 
     msk=get_mask(nside_out=nside_out)
     fsky=np.mean(msk)
