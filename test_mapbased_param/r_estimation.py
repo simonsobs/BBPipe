@@ -39,6 +39,13 @@ class BBREstimation(PipelineStage):
                 '''    
                 Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim
+
+                pl.figure()
+                pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
+                pl.loglog( ClBB_model_other_than_prim, label='other than prim B' )
+                pl.loglog(ClBB_obs, label='obs BB')
+                pl.show()
+
                 logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
                                     *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
                 return logL
@@ -79,7 +86,7 @@ class BBREstimation(PipelineStage):
         Cl_BB_lens = _get_Cl_cmb(1.,0.)[2]#[lmin:lmax]
         Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2]#[lmin:lmax]
         bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
-        print('shape(Cl_BB_lens)=',np.shape(Cl_BB_lens[:,np.newaxis].T))
+
         Cl_BB_lens_bin = bins.bin_cell(Cl_BB_lens[:3*self.config['nside']])
 
         ClBB_model_other_than_prim =  Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)] + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
