@@ -29,7 +29,7 @@ class BBClEstimation(PipelineStage):
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
         w=nmt.NmtWorkspace()
-        b=nmt.NmtBin(self.config['nside'], nlb=2*int(1./self.config['fsky']))
+        b=nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask'))
