@@ -39,15 +39,13 @@ class BBREstimation(PipelineStage):
                 '''    
                 Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim
-
-                pl.figure()
-                pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                pl.loglog( bins.bin_cell(_get_Cl_cmb(1.,0.)[2][:3*self.config['nside']])[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
-                pl.loglog( Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], label='noise post comp sep', linestyle=':')
-                pl.loglog( ClBB_obs, label='obs BB')
-                pl.legend()
-                pl.show()
-
+                # pl.figure()
+                # pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
+                # pl.loglog( bins.bin_cell(_get_Cl_cmb(1.,0.)[2][:3*self.config['nside']])[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
+                # pl.loglog( Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], label='noise post comp sep', linestyle=':')
+                # pl.loglog( ClBB_obs, label='obs BB')
+                # pl.legend()
+                # pl.show()
                 logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
                                     *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
                 return logL
@@ -95,7 +93,7 @@ class BBREstimation(PipelineStage):
                              + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         r_v = np.linspace(-0.001,0.1,num=1000)
-        r_v = np.array([0.001,0.01, 0.1])
+        # r_v = np.array([0.001,0.01, 0.1])
 
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
                             ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
