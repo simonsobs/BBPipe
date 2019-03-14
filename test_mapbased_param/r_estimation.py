@@ -20,7 +20,7 @@ class BBREstimation(PipelineStage):
     """
 
     name='BBREstimation'
-    inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
+    inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile)]
 
     def run(self):
@@ -89,9 +89,11 @@ class BBREstimation(PipelineStage):
 
         # model 
         # Cl_BB_lens = _get_Cl_cmb(1.,0.)[2]
-        Cl_BB_prim = hp.read_cl('./Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits')
+        # Cl_BB_prim = hp.read_cl('./Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits')
         # Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2]#[lmin:lmax]
-        Cl_BB_lens = hp.read_cl('./Cls_Planck2018_lensed_scalar.fits')
+        # Cl_BB_lens = hp.read_cl('./Cls_Planck2018_lensed_scalar.fits')
+        Cl_BB_prim = hp.read_cl(self.get_input('Cl_BB_prim'))
+        Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))
 
         bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
