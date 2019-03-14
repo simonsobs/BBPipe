@@ -4,8 +4,8 @@ import numpy as np
 import pylab as pl
 import pysm
 from pysm.nominal import models
-import mk_noise_map2 as mknm
-import V3calc as V3
+from . import mk_noise_map2 as mknm
+from . import V3calc as V3
 
 
 class BBMapSim(PipelineStage):
