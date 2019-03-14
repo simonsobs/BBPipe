@@ -68,7 +68,7 @@ class BBREstimation(PipelineStage):
         ## data first
         lmin = self.config['lmin']
         lmax = self.config['lmax']
-        ell_v = Cl_clean[0][(ell_v>=lmin)&(ell_v<=lmax)]
+        ell_v = Cl_clean[0]#[(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
@@ -83,7 +83,7 @@ class BBREstimation(PipelineStage):
         r_v = np.linspace(-0.001,0.1,num=1000)
 
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
-                            ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
+                            ell_v[(ell_v>=lmin)&(ell_v<=lmax)], self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
                                    ClBB_model_other_than_prim, r_v, bins) 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
