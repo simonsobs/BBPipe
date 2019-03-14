@@ -94,6 +94,7 @@ class BBClEstimation(PipelineStage):
                 ind += 1
         print('ind = ', ind)
         print('shape(Cl_clean) = ', len(Cl_clean))
+        print('shape(array(Cl_clean)) = ', (np.array(Cl_clean)).shape)
         print('all components = ', components)
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
