@@ -39,13 +39,15 @@ class BBREstimation(PipelineStage):
                 '''    
                 Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim
-                # pl.figure()
-                # pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                # pl.loglog( bins.bin_cell(_get_Cl_cmb(1.,0.)[2][:3*self.config['nside']])[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
-                # pl.loglog( Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], label='noise post comp sep', linestyle=':')
-                # pl.loglog( ClBB_obs, label='obs BB')
-                # pl.legend()
-                # pl.show()
+                if make_figure:
+                    pl.figure()
+                    pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
+                    pl.loglog( bins.bin_cell(_get_Cl_cmb(1.,0.)[2][:3*self.config['nside']])[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
+                    pl.loglog( Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], label='noise post comp sep', linestyle=':')
+                    pl.loglog( ClBB_obs, label='obs BB')
+                    pl.loglog( Cov_model, label='modeled BB')
+                    pl.legend()
+                    pl.show()
                 logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
                                     *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
                 return logL
@@ -64,10 +66,13 @@ class BBREstimation(PipelineStage):
             likelihood_on_r = np.exp( - chi2 )/np.max(np.exp( - chi2 ))
             # estimated r is given by:
             r_fit = r_v[np.argmin(logL)]
-            if r_fit ==1e-5: r_fit = 0.0
+            if r_fit == 1e-5: r_fit = 0.0
             # and the 1-sigma error bar by (numerical recipies)
             ind_sigma = np.argmin(np.abs( (logL[np.argmin(logL):] - logL[np.argmin(logL)]) - 1.00 ))    
             sigma_r_fit =  r_v[ind_sigma+np.argmin(logL)] - r_fit
+
+            likelihood_on_r_computation( r_fit, make_figure=True )
+
             print('NB: sigma(r) is ', sigma_r_fit, ' ( +/- ', r_v[ind_sigma+np.argmin(logL)-1] - r_fit, ' , ', r_v[ind_sigma+np.argmin(logL)+1] - r_fit, ' ) ')
             print('-----')
 
