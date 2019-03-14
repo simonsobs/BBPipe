@@ -92,7 +92,7 @@ class BBREstimation(PipelineStage):
         # Cl_BB_prim = hp.read_cl('./Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits')
         # Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2]#[lmin:lmax]
         # Cl_BB_lens = hp.read_cl('./Cls_Planck2018_lensed_scalar.fits')
-        Cl_BB_prim = hp.read_cl(self.get_input('Cl_BB_prim'))
+        Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))
         Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))
 
         bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
@@ -106,7 +106,7 @@ class BBREstimation(PipelineStage):
         # r_v = np.array([0.001,0.01, 0.1])
 
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
-                            ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
+                            ell_v, self.config['fsky'], Cl_BB_prim_r1,
                                    ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
         pl.figure()
         pl.semilogx(r_v, gridded_likelihood)

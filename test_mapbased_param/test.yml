@@ -28,7 +28,7 @@ inputs:
     noise_cov: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_cov_nside256_sens1_knee1_nylf1.0_WN.fits
     noise_maps: /global/cscratch1/sd/josquin/SO_sims/SO_sims_noise_maps_nside256_sens1_knee1_nylf1.0_WN.fits
     Cl_BB_lens: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_lensed_scalar.fits
-    Cl_BB_prim: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits
+    Cl_BB_prim_r1: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits
 
 # Overall configuration file 
 config: ./test/config_mapbased_param.yml
