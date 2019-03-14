@@ -118,9 +118,9 @@ class BBMapSim(PipelineStage):
         hp.write_map(self.get_output('frequency_maps'), freq_maps, overwrite=True, column_names=column_names)
         hp.write_map(self.get_output('noise_cov'), noise_cov, overwrite=True, column_names=column_names)
         hp.write_map(self.get_output('noise_maps'), noise_maps, overwrite=True, column_names=column_names)
-        hp.write_map(self.get_output('CMB_template_150GHz'), CMB_template_150GHz, overwrite=True, column_names=column_names)
-        hp.write_map(self.get_output('dust_template_150GHz'), dust_template_150GHz, overwrite=True, column_names=column_names)
-        hp.write_map(self.get_output('sync_template_150GHz'), sync_template_150GHz, overwrite=True, column_names=column_names)
+        hp.write_map(self.get_output('CMB_template_150GHz'), CMB_template_150GHz, overwrite=True)
+        hp.write_map(self.get_output('dust_template_150GHz'), dust_template_150GHz, overwrite=True)
+        hp.write_map(self.get_output('sync_template_150GHz'), sync_template_150GHz, overwrite=True)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
