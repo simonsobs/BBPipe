@@ -95,7 +95,7 @@ class BBREstimation(PipelineStage):
         Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
         Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
 
-        bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
+        bins = nmt.NmtBin(self.config['nside'], nlb=2*int(1./self.config['fsky']))
 
         Cl_BB_lens_bin = bins.bin_cell(Cl_BB_lens[:3*self.config['nside']])
 
@@ -103,7 +103,6 @@ class BBREstimation(PipelineStage):
                              + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         r_v = np.logspace(-5,0,num=1000)
-        # r_v = np.array([0.001,0.01, 0.1])
 
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
                             ell_v, self.config['fsky'], Cl_BB_prim_r1,
