@@ -80,7 +80,7 @@ class BBMapSim(PipelineStage):
             for i in range(len(instrument_config['frequencies'])):
                 nlev_map[3*i:3*i+3,:] = np.array([instrument_config['sens_I'][i], instrument_config['sens_P'][i], instrument_config['sens_P'][i]])[:,np.newaxis]*np.ones((3,freq_maps.shape[-1]))
             # nlev_map = np.vstack(([instrument_config['sens_I'], instrument_config['sens_P'], instrument_config['sens_P']]))
-            nlev_map /= hp.nside2resol(args.nside, arcmin=True)
+            nlev_map /= hp.nside2resol(self.config['nside'], arcmin=True)
             noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)*binary_mask
             freq_maps += noise_maps
         elif self.config['noise_option']=='no_noise': 
