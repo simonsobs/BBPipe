@@ -29,13 +29,13 @@ def get_nhits(nside_out=64) :
     return hp.ud_grade(hp.read_map(fname_out,verbose=False),
                        nside_out=nside_out)
 
-def get_mask(nside_out=512) :
+def get_mask(nh, nside_out=512) :
     """
     Generates inverse-variance mask from Nhits map
     nside_out : output resolution
     """
     zer0=1E-6
-    nh=get_nhits(nside_out=nside_out)
+    # nh=get_nhits(nside_out=nside_out)
     nh/=np.amax(nh)
     msk=np.zeros(len(nh))
     not0=np.where(nh>zer0)[0]
@@ -56,7 +56,7 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_ma
     else:
         nh = hp.ud_grade(norm_hits_map,nside_out=nside_out)
 
-    msk=get_mask(nside_out=nside_out)
+    msk=get_mask(nh, nside_out=nside_out)
     fsky=np.mean(msk)
     ll,nll,nlev=v3.so_V3_SA_noise(sensitivity,knee_mode,ny_lf,fsky,3*nside_out,remove_kluge=True)
     zer0=1E-6
