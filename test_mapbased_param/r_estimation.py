@@ -36,8 +36,10 @@ class BBREstimation(PipelineStage):
                 -2logL = sum_ell [ (2l+1)fsky * ( log(C) + C^-1.D  ) ]
                     cf. eg. Tegmark 1998
                 '''    
-                Cov_model = bins.bin_cell(Cl_BB_prim*r_loc) + ClBB_model_other_than_prim
-                logL = np.sum( (2*ell_v+1)*fsky*( np.log( Cov_model ) + ClBB_obs/Cov_model ))
+                Cov_model = bins.bin_cell(Cl_BB_prim*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]
+                                            + ClBB_model_other_than_prim
+                logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky
+                                    *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
                 return logL
 
             # gridding -2log(L)
@@ -79,12 +81,12 @@ class BBREstimation(PipelineStage):
         print('shape(Cl_BB_lens)=',np.shape(Cl_BB_lens[:,np.newaxis].T))
         Cl_BB_lens_bin = bins.bin_cell(Cl_BB_lens[:3*self.config['nside']])
 
-        ClBB_model_other_than_prim =  Cl_BB_lens_bin + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        ClBB_model_other_than_prim =  Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)] + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         r_v = np.linspace(-0.001,0.1,num=1000)
 
         r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
-                            ell_v[(ell_v>=lmin)&(ell_v<=lmax)], self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
+                            ell_v, self.config['fsky'], _get_Cl_cmb(0.,1.)[2],
                                    ClBB_model_other_than_prim, r_v, bins) 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
