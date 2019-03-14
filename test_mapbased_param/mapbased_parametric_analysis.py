@@ -15,7 +15,7 @@ class BBMapParamCompSep(PipelineStage):
         * estimate components' covariance
     """
     name='BBMapParamCompSep'
-    inputs= [('binary_mask',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile)]
+    inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile), ('A_maxL',TextFile)]
 
     def run(self) :

@@ -15,7 +15,7 @@ class BBClEstimation(PipelineStage):
     """
 
     name='BBClEstimation'
-    inputs=[('binary_mask',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
+    inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',TextFile),('noise_maps',FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
 
