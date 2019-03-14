@@ -88,8 +88,11 @@ class BBREstimation(PipelineStage):
         ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         # model 
-        Cl_BB_lens = _get_Cl_cmb(1.,0.)[2]
-        Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2]#[lmin:lmax]
+        # Cl_BB_lens = _get_Cl_cmb(1.,0.)[2]
+        Cl_BB_prim = hp.read_cl('./Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits')
+        # Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2]#[lmin:lmax]
+        Cl_BB_lens = hp.read_cl('./Cls_Planck2018_lensed_scalar.fits')
+
         bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
         Cl_BB_lens_bin = bins.bin_cell(Cl_BB_lens[:3*self.config['nside']])
