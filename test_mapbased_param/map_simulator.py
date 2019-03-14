@@ -7,6 +7,7 @@ from pysm.nominal import models
 from . import mk_noise_map2 as mknm
 from . import V3calc as V3
 import healpy as hp
+import copy
 
 class BBMapSim(PipelineStage):
     """
