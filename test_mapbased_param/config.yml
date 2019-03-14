@@ -1,6 +1,17 @@
 global:
     frequencies: [27,39,93,145,225,280]
     fsky: 0.1
+    nside: 512
+
+BBMapSim:
+    sensitivity_mode: 1.0
+    knee_mode: 1.0
+    ny_lf: 1.0
+    cmb_model: 'c1'
+    dust_model: 'd1'
+    sync_model: 's1'
+    tag: 'SO_sims'
+    noise_option: 'white_noise'
 
 BBMapParamCompSep:
     nside_patch: 0
@@ -11,10 +22,9 @@ BBClEstimation:
     purify_b: True
     nlb: 10
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
-    nside: 256
 
 BBREstimation:
     lmin: 30
     lmax: 200
     r_input: 0.000
-    nside: 256
+    A_lens: 1.0
