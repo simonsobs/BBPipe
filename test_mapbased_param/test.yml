@@ -40,10 +40,10 @@ config: ./test/config_mapbased_param.yml
 resume: False
 
 # Put all the output files in this directory:
-output_dir: ./outputs
+output_dir: /global/cscratch1/sd/josquin/SO_pipe/outputs
 
 # Put the logs from the individual stages in this directory:
-log_dir: ./logs
+log_dir: /global/cscratch1/sd/josquin/SO_pipe/logs
 
 # Put the log for the overall pipeline infrastructure in this file:
 pipeline_log: log.txt
