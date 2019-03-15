@@ -164,8 +164,9 @@ class BBREstimation(PipelineStage):
 
             g.triangle_plot(samps, filled=True)#,
                 # legend_labels=legend_labels, line_args=[{'lw':2,'color':color_loc[0],'alpha':0.7},{'lw':2,'color':color_loc[1],'alpha':0.7}])
-
+            pl.savefig('./test_sampling_r_Adust.pdf')
             pl.show()
+            exit()
 
         else:
 
