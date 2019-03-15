@@ -133,10 +133,9 @@ class BBREstimation(PipelineStage):
                     options={'disp':True, 'gtol': 1e-18, 'eps': 1e-6,\
                     'maxiter':1000, 'ftol': 1e-18})
 
-            print '#'*20
-            print '#'*20
-            print '################### result of the optimization ... '
-            print Astat_best_fit_with_stat_res['x']
+            print('#'*20)
+            print('################### result of the optimization ... ')
+            print(Astat_best_fit_with_stat_res['x'])
 
             ### sampling
             import emcee
