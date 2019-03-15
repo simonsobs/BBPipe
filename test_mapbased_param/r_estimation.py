@@ -157,7 +157,6 @@ class BBREstimation(PipelineStage):
             names = ["r", "\Lambda_d",]
             labels =  ["r", "\Lambda_d"]
             g = plots.getSubplotPlotter()
-            samples = ## ce qui sort du emcee
             samps = MCSamples(samples=samples, names=names, labels=labels)
 
             g.triangle_plot(samps, filled=True)#,
