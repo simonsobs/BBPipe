@@ -28,3 +28,6 @@ BBREstimation:
     lmax: 200
     r_input: 0.000
     A_lens: 1.0
+    dust_marginalization: False
+    ndim: 2
+    nwalkers: 500

@@ -48,6 +48,7 @@ class BBREstimation(PipelineStage):
                     pl.loglog( Cov_model, label='modeled BB')
                     pl.legend()
                     pl.show()
+
                 logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
                                     *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
                 return logL
@@ -85,31 +86,99 @@ class BBREstimation(PipelineStage):
         lmax = self.config['lmax']
         ell_v = Cl_clean[0]#[(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        Cl_dust_obs = Cl_clean[2][(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         # model 
-        # Cl_BB_lens = _get_Cl_cmb(1.,0.)[2]
-        # Cl_BB_prim = hp.read_cl('./Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits')
-        # Cl_BB_prim = _get_Cl_cmb(0.0,self.config['r_input'])[2]#[lmin:lmax]
-        # Cl_BB_lens = hp.read_cl('./Cls_Planck2018_lensed_scalar.fits')
         Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
         Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
 
         bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
-        Cl_BB_lens_bin = bins.bin_cell(Cl_BB_lens[:3*self.config['nside']])
+        Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
 
-        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\
-                             + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        if self.config['dust_marginalization']:
 
-        r_v = np.logspace(-5,0,num=1000)
+            #####################################
+            def likelihood_on_r_with_stat_and_sys_res( p_loc ):
+                r_loc, A_dust = p_loc 
+                Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                                            + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
 
-        r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
-                            ell_v, self.config['fsky'], Cl_BB_prim_r1,
-                                   ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
-        pl.figure()
-        pl.semilogx(r_v, gridded_likelihood)
-        pl.show()
+                logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
+                                    *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
+
+                if logL!=logL: 
+                    logL = 0.0
+                return logL
+            
+            def lnprior( p_loc ): 
+                r_loc, A_stat, A_dust, A_sync, A_dxs = p_loc 
+                if 0.0<=r_loc<=1.0 and 1.0<=A_stat<=10.0:
+                    return 0.0
+                return np.inf
+
+            def lnprob(p_loc):
+                lp = 0.0
+                return lp + likelihood_on_r_with_stat_and_sys_res(p_loc)
+
+            neg_likelihood_on_r_with_stat_and_sys_res = lambda *args: lnprob(*args)
+            pos_likelihood_on_r_with_stat_and_sys_res = lambda *args: -likelihood_on_r_with_stat_and_sys_res(*args)
+
+            ### optimization
+            Astat_best_fit_with_stat_res =  scipy.optimize.minimize( pos_likelihood_on_r_with_stat_and_sys_res, \
+                    [1.0,0.1],\
+                    tol=1e-18, method='TNC', \
+                    bounds=[(0.0, 1e2), (0.0, None)],\
+                    options={'disp':True, 'gtol': 1e-18, 'eps': 1e-6,\
+                    'maxiter':1000, 'ftol': 1e-18})
+
+            print '#'*20
+            print '#'*20
+            print '################### result of the optimization ... '
+            print Astat_best_fit_with_stat_res['x']
+
+            ### sampling
+            import emcee
+            ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
+            p0 = [np.random.rand(ndim) for i in range(nwalkers)]
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)
+            sampler.run_mcmc(p0, 10000)
+
+            samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
+            truths = []
+            for i in range(len(Astat_best_fit_with_stat_res['x'])):
+                truths.append(Astat_best_fit_with_stat_res['x'][i])
+
+            ### plotting 
+            import getdist
+            from getdist import plots, MCSamples
+            pl.rcParams['text.usetex']=False
+            # ci-dessous names et labels definient les parametres du corner plot
+            names = ["r", "\Lambda_d",]
+            labels =  ["r", "\Lambda_d"]
+            g = plots.getSubplotPlotter()
+            samples = ## ce qui sort du emcee
+            samps = MCSamples(samples=samples, names=names, labels=labels)
+
+            g.triangle_plot(samps, filled=True)#,
+                # legend_labels=legend_labels, line_args=[{'lw':2,'color':color_loc[0],'alpha':0.7},{'lw':2,'color':color_loc[1],'alpha':0.7}])
+
+            pl.show()
+
+        else:
+            #####################################
+            ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\
+                                 + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+
+            r_v = np.logspace(-5,0,num=1000)
+
+            r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
+                                ell_v, self.config['fsky'], Cl_BB_prim_r1,
+                                       ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
+            pl.figure()
+            pl.semilogx(r_v, gridded_likelihood)
+            pl.show()
 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
