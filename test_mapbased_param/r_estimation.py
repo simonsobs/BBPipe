@@ -97,13 +97,15 @@ class BBREstimation(PipelineStage):
         bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
+        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\
+                                 + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['dust_marginalization']:
 
             #####################################
             def likelihood_on_r_with_stat_and_sys_res( p_loc ):
                 r_loc, A_dust = p_loc 
-                Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
 
                 logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
@@ -114,8 +116,8 @@ class BBREstimation(PipelineStage):
                 return logL
             
             def lnprior( p_loc ): 
-                r_loc, A_stat, A_dust, A_sync, A_dxs = p_loc 
-                if 0.0<=r_loc<=1.0 and 1.0<=A_stat<=10.0:
+                r_loc, A_dust = p_loc 
+                if 0.0<=r_loc<=1.0 and 1.0<=A_dust<=10.0:
                     return 0.0
                 return np.inf
 
@@ -166,9 +168,6 @@ class BBREstimation(PipelineStage):
             pl.show()
 
         else:
-            #####################################
-            ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\
-                                 + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
             r_v = np.logspace(-5,0,num=1000)
 
