@@ -108,7 +108,7 @@ class BBREstimation(PipelineStage):
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
 
-                logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*self.config['fsky']\
+                logL = -np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*self.config['fsky']\
                                     *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
 
                 if logL!=logL: 
@@ -132,7 +132,7 @@ class BBREstimation(PipelineStage):
             Astat_best_fit_with_stat_res =  scipy.optimize.minimize( pos_likelihood_on_r_with_stat_and_sys_res, \
                     [1.0,0.1],\
                     tol=1e-18, method='TNC', \
-                    bounds=[(0.0, 1e2), (0.0, None)],\
+                    bounds=[(0.0, None), (0.0, None)],\
                     options={'disp':True, 'gtol': 1e-18, 'eps': 1e-6,\
                     'maxiter':1000, 'ftol': 1e-18})
 
