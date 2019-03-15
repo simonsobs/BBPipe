@@ -1,7 +1,9 @@
 from bbpipe import PipelineStage
 from .types import FitsFile, TextFile
 import numpy as np
-import pylab as pl
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as pl
 import fgbuster
 from fgbuster.cosmology import _get_Cl_cmb, _get_Cl_noise
 import healpy as hp
