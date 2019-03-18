@@ -14,7 +14,7 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
         bpws=-1+np.zeros_like(ells) #Array of bandpower indices
         i=0;
         while 10*(i+1)+lmin<lmax :
-            bpws[10*ilmin:10*(i+1)+lmin]=i
+            bpws[10*lmin:10*(i+1)+lmin]=i
             i+=1
         b=nmt.NmtBin(nside,bpws=bpws,ells=ells,weights=weights)
     else:
