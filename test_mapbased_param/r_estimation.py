@@ -176,8 +176,8 @@ class BBREstimation(PipelineStage):
 
             ##############
             print(samps.getInlineLatex('r',limit=1))
-            print(samps.get_Means())
-            print(samps.get_Vars())
+            print(samps.getMeans())
+            print(samps.getVars())
             # r_fit = r_v[np.argmin(logL)]
             # if r_fit == 1e-5: r_fit = 0.0
             # and the 1-sigma error bar by (numerical recipies)
