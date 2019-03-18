@@ -53,8 +53,13 @@ class BBREstimation(PipelineStage):
                     pl.legend()
                     pl.show()
 
-                logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
-                                    *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
+                # logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
+                                    # *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
+
+                logL = 0.0 
+                [[ logL += np.sum( (2*ell+1)*fsky\
+                                    *( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )) for ell in bins.get_ell_list(b)] for b in range(len(ClBB_obs)) ]
+
                 return logL
 
             # gridding -2log(L)
@@ -103,18 +108,18 @@ class BBREstimation(PipelineStage):
 
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\
-                                 + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                                        + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['dust_marginalization']:
 
             #####################################
-            def likelihood_on_r_with_stat_and_sys_res( p_loc ):
+            def likelihood_on_r_with_stat_and_sys_res( p_loc, bins=bins ):
                 r_loc, A_dust = p_loc 
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
-
-                logL = -np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*self.config['fsky']\
-                                    *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
+                logL = 0.0
+                [[ logL -= np.sum( (2*ell+1)*self.config['fsky']\
+                                    *( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )) for ell in bins.get_ell_list(b)] for b in range(len(ClBB_obs)) ]
 
                 if logL!=logL: 
                     logL = 0.0
