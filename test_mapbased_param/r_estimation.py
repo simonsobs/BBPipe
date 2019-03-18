@@ -157,7 +157,7 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)
-            sampler.run_mcmc(p0, 10000)
+            sampler.run_mcmc(p0, 5000)
 
             samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
             truths = []
