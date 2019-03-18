@@ -120,9 +120,9 @@ class BBREstimation(PipelineStage):
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
-                    factor = ( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
-                    for ell in bins.get_ell_list(b):
-                        logL -= (2*ell+1)*self.config['fsky']*factor
+                    # factor = 
+                    # for ell in bins.get_ell_list(b):
+                    logL -= np.sum((2*bins.get_ell_list(b)+1))*self.config['fsky']*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                 print('logL = ', logL)
                 if logL!=logL: 
                     logL = 0.0
@@ -178,6 +178,14 @@ class BBREstimation(PipelineStage):
             g.triangle_plot(samps, filled=True)#,
                 # legend_labels=legend_labels, line_args=[{'lw':2,'color':color_loc[0],'alpha':0.7},{'lw':2,'color':color_loc[1],'alpha':0.7}])
             pl.savefig('./test_sampling_r_Adust.pdf')
+
+            r_fit = r_v[np.argmin(logL)]
+            if r_fit == 1e-5: r_fit = 0.0
+            # and the 1-sigma error bar by (numerical recipies)
+            ind_sigma = np.argmin(np.abs( (logL[np.argmin(logL):] - logL[np.argmin(logL)]) - 1.00 ))    
+            sigma_r_fit =  r_v[ind_sigma+np.argmin(logL)] - r_fit
+
+
             pl.show()
             exit()
 
