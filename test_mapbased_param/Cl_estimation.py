@@ -44,8 +44,8 @@ class BBClEstimation(PipelineStage):
         print('nside_map = ', nside_map)
         
         w=nmt.NmtWorkspace()
-        b = binning_definition(self.config['nside'], lmin=self.conf['lmin'], lmax=self.conf['lmax'],\
-                                         nlb=self.conf['nlb'], custom_bins=self.conf['custom_bins'])
+        b = binning_definition(self.config['nside'], lmin=self.config['lmin'], lmax=self.config['lmax'],\
+                                         nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))

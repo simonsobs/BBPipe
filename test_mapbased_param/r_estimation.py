@@ -102,8 +102,8 @@ class BBREstimation(PipelineStage):
         Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
         Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
         
-        bins = binning_definition(self.config['nside'], lmin=self.conf['lmin'], lmax=self.conf['lmax'],\
-                             nlb=self.conf['nlb'], custom_bins=self.conf['custom_bins'])
+        bins = binning_definition(self.config['nside'], lmin=self.config['lmin'], lmax=self.config['lmax'],\
+                             nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
         # bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
