@@ -57,8 +57,7 @@ class BBREstimation(PipelineStage):
                                     # *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
 
                 logL = 0.0 
-                [[ logL += np.sum( (2*ell+1)*fsky\
-                                    *( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )) for ell in bins.get_ell_list(b)] for b in range(len(ClBB_obs)) ]
+                [[ logL +=  (2*ell+1)*fsky*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] ) for ell in bins.get_ell_list(b)] for b in range(len(ClBB_obs)) ]
 
                 return logL
 
@@ -118,8 +117,7 @@ class BBREstimation(PipelineStage):
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
                 logL = 0.0
-                [[ logL -= np.sum( (2*ell+1)*self.config['fsky']\
-                                    *( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )) for ell in bins.get_ell_list(b)] for b in range(len(ClBB_obs)) ]
+                [[ logL -=  (2*ell+1)*self.config['fsky']*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] ) for ell in bins.get_ell_list(b)] for b in range(len(ClBB_obs)) ]
 
                 if logL!=logL: 
                     logL = 0.0
