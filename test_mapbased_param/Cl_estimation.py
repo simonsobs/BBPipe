@@ -7,6 +7,20 @@ import healpy as hp
 from fgbuster.cosmology import _get_Cl_cmb 
 from fgbuster.mixingmatrix import MixingMatrix
 
+def binning_definition(nside, lmin=2, lmin=200, nlb=[], custom_bins=False):
+    if custom_bins:
+        ells=np.arange(3*nside,dtype='int32') #Array of multipoles
+        weights=(1.0/nlb)*np.ones_like(ells) #Array of weights
+        bpws=-1+np.zeros_like(ells) #Array of bandpower indices
+        i=0;
+        while 10*(i+1)+lmin<lmax :
+            bpws[10*ilmin:10*(i+1)+lmin]=i
+            i+=1
+        b=nmt.NmtBin(nside,bpws=bpws,ells=ells,weights=weights)
+    else:
+        b=nmt.NmtBin(nside, nlb=int(1./self.config['fsky']))
+    return b
+
 class BBClEstimation(PipelineStage):
     """
     Stage that performs estimate the angular power spectra of:
@@ -28,8 +42,10 @@ class BBClEstimation(PipelineStage):
 
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
+        
         w=nmt.NmtWorkspace()
-        b=nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
+        b = binning_definition(self.config['nside'], lmin=self.conf['lmin'], lmax=self.conf['lmax'],\
+                                         nlb=self.conf['nlb'], custom_bins=self.conf['custom_bins']):
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))

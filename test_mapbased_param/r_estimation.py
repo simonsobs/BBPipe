@@ -10,6 +10,7 @@ import healpy as hp
 import pymaster as nmt
 import sys
 import scipy 
+from Cl_estimation import binning_definition
 
 class BBREstimation(PipelineStage):
     """
@@ -95,8 +96,10 @@ class BBREstimation(PipelineStage):
         # model 
         Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
         Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
-
-        bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
+        
+        bins = binning_definition(self.config['nside'], lmin=self.conf['lmin'], lmax=self.conf['lmax'],\
+                             nlb=self.conf['nlb'], custom_bins=self.conf['custom_bins']):
+        # bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\

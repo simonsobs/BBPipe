@@ -2,6 +2,10 @@ global:
     frequencies: [27,39,93,145,225,280]
     fsky: 0.1
     nside: 512
+    lmin: 30
+    lmax: 200
+    nlb: 9
+    custom_bins: True
 
 BBMapSim:
     sensitivity_mode: 1
@@ -20,12 +24,9 @@ BBClEstimation:
     aposize: 10.0
     apotype: 'C1'
     purify_b: True
-    nlb: 10
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
 
 BBREstimation:
-    lmin: 30
-    lmax: 200
     r_input: 0.000
     A_lens: 1.0
     dust_marginalization: False
