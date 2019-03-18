@@ -7,7 +7,7 @@ import healpy as hp
 from fgbuster.cosmology import _get_Cl_cmb 
 from fgbuster.mixingmatrix import MixingMatrix
 
-def binning_definition(nside, lmin=2, lmin=200, nlb=[], custom_bins=False):
+def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     if custom_bins:
         ells=np.arange(3*nside,dtype='int32') #Array of multipoles
         weights=(1.0/nlb)*np.ones_like(ells) #Array of weights
