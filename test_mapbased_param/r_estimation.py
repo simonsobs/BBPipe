@@ -119,7 +119,6 @@ class BBREstimation(PipelineStage):
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
                     logL -= np.sum((2*bins.get_ell_list(b)+1))*self.config['fsky']*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
-                print('logL = ', logL)
                 if logL!=logL: 
                     logL = 0.0
                 return logL
