@@ -10,8 +10,7 @@ import healpy as hp
 import pymaster as nmt
 import sys
 import scipy 
-from . import Cl_estimation
-from Cl_estimation import binning_definition
+from .Cl_estimation import binning_definition
 
 class BBREstimation(PipelineStage):
     """
