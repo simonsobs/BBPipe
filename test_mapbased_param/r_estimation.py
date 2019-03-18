@@ -120,9 +120,10 @@ class BBREstimation(PipelineStage):
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
+                    factor = ( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                     for ell in bins.get_ell_list(b):
-                        logL -= (2*ell+1)*self.config['fsky']*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
-
+                        logL -= (2*ell+1)*self.config['fsky']*factor
+                print('logL = ', logL)
                 if logL!=logL: 
                     logL = 0.0
                 return logL
