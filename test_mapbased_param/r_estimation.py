@@ -175,9 +175,9 @@ class BBREstimation(PipelineStage):
             pl.savefig('./test_sampling_r_Adust.pdf')
 
             ##############
-            samps.getInlineLatex('r',limit=1)
-            samps.get_Means()
-            samps.get_Vars()
+            print(samps.getInlineLatex('r',limit=1))
+            print(samps.get_Means())
+            print(samps.get_Vars())
             # r_fit = r_v[np.argmin(logL)]
             # if r_fit == 1e-5: r_fit = 0.0
             # and the 1-sigma error bar by (numerical recipies)
