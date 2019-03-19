@@ -165,7 +165,7 @@ def main():
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
                 path_to_temp_files=args.path_to_temp_files)
 
-        subprocess.call(["bbpipe", os.path.join(path_to_temp_files, "test_"+id_tag+".yml")])
+        subprocess.call(["bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml")])
 
     ####################
     barrier()
