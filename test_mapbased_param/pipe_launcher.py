@@ -84,7 +84,7 @@ config: '''+os.path.join(path_to_temp_files,'config_'+id_tag+'.yml')+'''
 resume: False
 
 # Put all the output files in this directory:
-output_dir: '''+os.path.join(path_to_temp_files,'outputs_'+id_tag)'''
+output_dir: '''+os.path.join(path_to_temp_files,'outputs_'+id_tag)+'''
 
 # Put the logs from the individual stages in this directory:
 log_dir: '''+os.path.join(path_to_temp_files,'logs')+'''
