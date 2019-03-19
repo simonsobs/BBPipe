@@ -114,13 +114,13 @@ global:
 
 BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
-	knee_mode: '''+str(knee_mode)+'''
+    knee_mode: '''+str(knee_mode)+'''
     ny_lf: '''+str(ny_lf)+'''
     cmb_model: 'c1'
     dust_model: 'd1'
     sync_model: 's1'
     tag: 'SO_sims'
-    noise_option: '''+str(noise_option)+'''
+    noise_option: \''''+str(noise_option)+'''\'
 
 BBMapParamCompSep:
     nside_patch: 0
