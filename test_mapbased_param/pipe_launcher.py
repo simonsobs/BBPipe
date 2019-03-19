@@ -5,7 +5,7 @@
 
 
 import argparse
-import mpi4py
+from mpi4py import MPI
 import os
 import subprocess
 
@@ -49,7 +49,7 @@ def chunkIt(seq, num):
 ######################################
 #### TEST.YML
 def generate_pipe_yml(id_tag, path_to_temp_files='./'):
-	global_string = '''
+    global_string = '''
 modules: test_mapbased_param
 
 # The launcher to use
@@ -91,7 +91,7 @@ log_dir: '''+os.path.join(path_to_temp_files,'logs')+'''
 
 # Put the log for the overall pipeline infrastructure in this file:
 pipeline_log: log'''+id_tag+'''.txt
-'''
+    '''
 
     text_file = open(os.path.join(path_to_temp_files, "test_"+id_tag+".yml"), "w")
     text_file.write( global_string )
@@ -102,7 +102,7 @@ pipeline_log: log'''+id_tag+'''.txt
 ######################################
 #### CONFIG.YML
 def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, noise_option='white_noise', dust_marginalization=True, path_to_temp_files='./'):
-	global_string = '''
+    global_string = '''
 global:
     frequencies: [27,39,93,145,225,280]
     fsky: 0.1
