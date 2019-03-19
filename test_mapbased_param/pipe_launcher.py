@@ -137,7 +137,7 @@ BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
     ndim: 2
     nwalkers: 500
-	'''
+    '''
 
     text_file = open(os.path.join(path_to_temp_files, "config_"+id_tag+".yml"), "w")
     text_file.write( global_string )
