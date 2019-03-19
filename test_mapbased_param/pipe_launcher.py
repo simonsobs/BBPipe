@@ -120,7 +120,7 @@ BBMapSim:
     dust_model: 'd1'
     sync_model: 's1'
     tag: 'SO_sims'
-    noise_option: '''+noise_option+'''
+    noise_option: '''+str(noise_option)+'''
 
 BBMapParamCompSep:
     nside_patch: 0
