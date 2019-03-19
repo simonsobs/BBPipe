@@ -10,6 +10,7 @@ import os
 import subprocess
 import random
 import string
+import glob
 
 ######################################################################################################
 # MPI VARIABLES
@@ -37,6 +38,7 @@ def grabargs():
     parser.add_argument("--dust_marginalization", type=bool, help = "marginalization of the cosmo likelihood over a dust template", default=True)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
     parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
+    parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
 
     args = parser.parse_args()
 
@@ -108,7 +110,9 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
 
 ######################################
 #### CONFIG.YML
-def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, noise_option='white_noise', dust_marginalization=True, path_to_temp_files='./'):
+def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
+				noise_option='white_noise', dust_marginalization=True, path_to_temp_files='./',\
+					r_input=0.000):
     global_string = '''
 global:
     frequencies: [27,39,93,145,225,280]
@@ -139,7 +143,7 @@ BBClEstimation:
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
 
 BBREstimation:
-    r_input: 0.000
+    r_input: '''+str(r_input)+'''
     A_lens: 1.0
     dust_marginalization: '''+str(dust_marginalization)+'''
     ndim: 2
@@ -158,6 +162,11 @@ def main():
 
     args = grabargs()
 
+    if args.r_input!=0.0:
+    	print('you should be careful with r!=0')
+    	print('have you changed the CMB simulator accordingly?')
+    	exit()
+
     simulations_split = chunkIt(range(args.Nsims), size)
 
     ####################
@@ -170,14 +179,35 @@ def main():
         # create config.yml
         generate_config_yml(id_tag, sensitivity_mode=args.sensitivity_mode, knee_mode=args.knee_mode,\
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
-                path_to_temp_files=args.path_to_temp_files)
+                path_to_temp_files=args.path_to_temp_files, r_input=args.r_input)
 
         subprocess.call(["/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml")])
 
     ####################
     barrier()
     # grab all results and analyze them
+    if rank ==0 :
+        # list all the output directories
+        list_output_dir = glob.glob(os.path.join(path_to_temp_files,'outputs_*'))
+        # read the estimated_cosmo_params.txt in each directory 
+        r_all = []
+        sigma_all = []
+        for dir_ in list_output_dir:
+            r_, sigma_ = np.loadtxt(os.path.join(path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+            r_all.append(r_)
+            sigma_all.append(sigma_)
 
+        pl.figure()
+        pl.hist( r_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
+        pl.hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
+        legend=pl.legend()
+        frame = legend.get_frame()
+        frame.set_edgecolor('white')
+        legend.get_frame().set_alpha(0.3)
+        pl.xlabel('tensor-to-scalar ratio', fontsize=16)
+        pl.xlabel('number of simulations', fontsize=16)
+        pl.savefig(os.path.join(path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
+        pl.close()
 
 ######################################################
 ## MAIN CALL
