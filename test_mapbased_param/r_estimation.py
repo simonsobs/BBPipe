@@ -180,7 +180,7 @@ class BBREstimation(PipelineStage):
             print(samps.getVars())
             ##############
             r_fit = samps.getMeans()[names.index("r")]
-            sigma_r_fit = samps.getVars()[names.index("r")]
+            sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
 
             # pl.show()
             # exit()
