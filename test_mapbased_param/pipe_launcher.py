@@ -8,6 +8,8 @@ import argparse
 from mpi4py import MPI
 import os
 import subprocess
+import random
+import string
 
 ######################################################################################################
 # MPI VARIABLES
@@ -16,6 +18,10 @@ size=comm.Get_size()
 rank=comm.rank
 barrier = comm.barrier
 root = 0
+
+######################################################################################################
+## JUST GENERATING A RANDOM STRING ;) 
+rand_string = ''.join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10) )
 
 ######################################################################################################
 ## INPUT ARGUMENTS
@@ -30,6 +36,7 @@ def grabargs():
     parser.add_argument("--noise_option", type=str, help = "option for the noise generator", default='white_noise')
     parser.add_argument("--dust_marginalization", type=bool, help = "marginalization of the cosmo likelihood over a dust template", default=True)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
+    parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
 
     args = parser.parse_args()
 
@@ -90,7 +97,7 @@ output_dir: '''+os.path.join(path_to_temp_files,'outputs_'+id_tag)+'''
 log_dir: '''+os.path.join(path_to_temp_files,'logs')+'''
 
 # Put the log for the overall pipeline infrastructure in this file:
-pipeline_log: log'''+id_tag+'''.txt
+pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
     '''
 
     text_file = open(os.path.join(path_to_temp_files, "test_"+id_tag+".yml"), "w")
@@ -157,7 +164,7 @@ def main():
     for sim in simulations_split[rank]:
         id_tag_rank = format(rank, '05d')
         id_tag_sim = format(sim, '05d')
-        id_tag = id_tag_rank+'_'+id_tag_sim
+        id_tag = args.tag+'_'+id_tag_rank+'_'+id_tag_sim
         # create test.yml
         generate_pipe_yml(id_tag, path_to_temp_files=args.path_to_temp_files)
         # create config.yml
