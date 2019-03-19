@@ -66,6 +66,12 @@ class TextFile(DataFile):
     """
     suffix = 'txt'
 
+class PdfFile(DataFile):
+    """
+    A data file in PDF format.
+    """
+    suffix = 'pdf'
+
 class YamlFile(DataFile):
     """
     A data file in yaml format.
