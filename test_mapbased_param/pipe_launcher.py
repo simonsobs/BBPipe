@@ -175,6 +175,7 @@ def main():
 
     simulations_split = chunkIt(range(args.Nsims), size)
 
+    print('simulations_split = ', simulations_split)
     ####################
     for sim in simulations_split[rank]:
         id_tag_rank = format(rank, '05d')
