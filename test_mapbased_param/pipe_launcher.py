@@ -17,12 +17,16 @@ import glob
 comm=MPI.COMM_WORLD
 size=comm.Get_size()
 rank=comm.rank
-barrier = comm.barrier
-root = 0
+barrier=comm.barrier
+root=0
 
 ######################################################################################################
 ## JUST GENERATING A RANDOM STRING ;) 
-rand_string = ''.join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10) )
+rand_string = ''*10
+if rank==0:
+	rand_string = ''.join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10) )
+barrier()
+rand_string = comm.bcast( rand_string, root=0 )
 
 ######################################################################################################
 ## INPUT ARGUMENTS
@@ -180,7 +184,8 @@ def main():
         generate_config_yml(id_tag, sensitivity_mode=args.sensitivity_mode, knee_mode=args.knee_mode,\
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
                 path_to_temp_files=args.path_to_temp_files, r_input=args.r_input)
-
+        # submit call 
+        print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
         subprocess.call(["/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml")])
 
     ####################
