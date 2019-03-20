@@ -189,7 +189,7 @@ def main():
         # submit call 
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
         subprocess.Popen(["/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml")])
-
+        
     ####################
     barrier()
     # grab all results and analyze them
