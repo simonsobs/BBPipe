@@ -180,9 +180,10 @@ def main():
         print('size = ', size)
         simulations_split = chunkIt(range(args.Nsims), size)
         print('simulations_split = ', simulations_split)
+        print(simulations_split)
     barrier()
 	simulations_split = comm.bcast( simulations_split, root=0 )
-    
+
     ####################
     for sim in simulations_split[rank]:
         id_tag_rank = format(rank, '05d')
