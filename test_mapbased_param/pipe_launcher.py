@@ -217,6 +217,10 @@ def main():
         pl.xlabel('number of simulations', fontsize=16)
         pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         pl.close()
+    
+    barrier()
+    
+    exit()
 
 ######################################################
 ## MAIN CALL
