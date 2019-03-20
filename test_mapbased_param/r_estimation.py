@@ -25,7 +25,7 @@ class BBREstimation(PipelineStage):
 
     name='BBREstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile)]
-    outputs=[('estimated_cosmo_params', TextFile)]
+    outputs=[('estimated_cosmo_params', TextFile), ('test_sampling_r_Adust', PdfFile)]
 
     def run(self):
 
@@ -172,7 +172,8 @@ class BBREstimation(PipelineStage):
 
             g.triangle_plot(samps, filled=True)#,
                 # legend_labels=legend_labels, line_args=[{'lw':2,'color':color_loc[0],'alpha':0.7},{'lw':2,'color':color_loc[1],'alpha':0.7}])
-            pl.savefig('./test_sampling_r_Adust.pdf')
+            # pl.savefig('./test_sampling_r_Adust.pdf')
+            pl.savefig(self.get_output('test_sampling_r_Adust'))
 
             ##############
             print(samps.getInlineLatex('r',limit=1))
