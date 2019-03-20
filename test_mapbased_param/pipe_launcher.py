@@ -195,7 +195,7 @@ def main():
     # grab all results and analyze them
     if rank ==0 :
         # list all the output directories
-        list_output_dir = glob.glob(os.path.join(args.path_to_temp_files,'outputs_*'))
+        list_output_dir = glob.glob(os.path.join(args.path_to_temp_files,'outputs_'+args.tag+'*'))
         # read the estimated_cosmo_params.txt in each directory 
         r_all = []
         sigma_all = []
