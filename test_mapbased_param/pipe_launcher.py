@@ -141,6 +141,7 @@ BBMapSim:
 
 BBMapParamCompSep:
     nside_patch: 0
+    smart_multipatch: False
 
 BBClEstimation:
     aposize: 10.0
@@ -173,12 +174,15 @@ def main():
     	print('have you changed the CMB simulator accordingly?')
     	exit()
 
-
-    print('Nsims = ', args.Nsims)
-    print('size = ', size)
-    simulations_split = chunkIt(range(args.Nsims), size)
-    print('simulations_split = ', simulations_split)
-
+    simulations_split = []
+    if rank == 0 :
+        print('Nsims = ', args.Nsims)
+        print('size = ', size)
+        simulations_split = chunkIt(range(args.Nsims), size)
+        print('simulations_split = ', simulations_split)
+    barrier()
+	simulations_split = comm.bcast( simulations_split, root=0 )
+    
     ####################
     for sim in simulations_split[rank]:
         id_tag_rank = format(rank, '05d')
