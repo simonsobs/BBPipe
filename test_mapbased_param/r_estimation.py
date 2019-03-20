@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import FitsFile, TextFile
+from .types import FitsFile, TextFile, PdfFile
 import numpy as np
 import matplotlib
 matplotlib.use('agg')
