@@ -193,12 +193,12 @@ def main():
     # grab all results and analyze them
     if rank ==0 :
         # list all the output directories
-        list_output_dir = glob.glob(os.path.join(path_to_temp_files,'outputs_*'))
+        list_output_dir = glob.glob(os.path.join(args.path_to_temp_files,'outputs_*'))
         # read the estimated_cosmo_params.txt in each directory 
         r_all = []
         sigma_all = []
         for dir_ in list_output_dir:
-            r_, sigma_ = np.loadtxt(os.path.join(path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+            r_, sigma_ = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
             r_all.append(r_)
             sigma_all.append(sigma_)
 
@@ -211,7 +211,7 @@ def main():
         legend.get_frame().set_alpha(0.3)
         pl.xlabel('tensor-to-scalar ratio', fontsize=16)
         pl.xlabel('number of simulations', fontsize=16)
-        pl.savefig(os.path.join(path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
+        pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         pl.close()
 
 ######################################################
