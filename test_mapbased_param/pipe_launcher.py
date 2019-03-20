@@ -178,7 +178,7 @@ def main():
     if rank == 0 :
         print('Nsims = ', args.Nsims)
         print('size = ', size)
-        simulations_split = chunkIt(range(args.Nsims), size)
+        simulations_split = chunkIt(list(range(args.Nsims)), size)
         print('simulations_split = ', simulations_split)
         print(simulations_split)
     barrier()
