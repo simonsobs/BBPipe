@@ -11,6 +11,8 @@ import subprocess
 import random
 import string
 import glob
+import numpy as np
+import pylab as pl
 
 ######################################################################################################
 # MPI VARIABLES
