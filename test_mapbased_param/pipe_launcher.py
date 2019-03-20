@@ -182,7 +182,7 @@ def main():
         print('simulations_split = ', simulations_split)
         print(simulations_split)
     barrier()
-	simulations_split = comm.bcast( simulations_split, root=0 )
+    simulations_split = comm.bcast( simulations_split, root=0 )
 
     ####################
     for sim in simulations_split[rank]:
