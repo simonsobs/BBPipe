@@ -25,7 +25,7 @@ class BBREstimation(PipelineStage):
 
     name='BBREstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile)]
-    outputs=[('estimated_cosmo_params', TextFile), ('test_sampling_r_Adust', PdfFile)]
+    outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile)]
 
     def run(self):
 
@@ -173,12 +173,12 @@ class BBREstimation(PipelineStage):
             g.triangle_plot(samps, filled=True)#,
                 # legend_labels=legend_labels, line_args=[{'lw':2,'color':color_loc[0],'alpha':0.7},{'lw':2,'color':color_loc[1],'alpha':0.7}])
             # pl.savefig('./test_sampling_r_Adust.pdf')
-            pl.savefig(self.get_output('test_sampling_r_Adust'))
-
+            pl.savefig(self.get_output('likelihood_on_r'))
+            pl.close()
             ##############
-            print(samps.getInlineLatex('r',limit=1))
-            print(samps.getMeans())
-            print(samps.getVars())
+            # print(samps.getInlineLatex('r',limit=1))
+            # print(samps.getMeans())
+            # print(samps.getVars())
             ##############
             r_fit = samps.getMeans()[names.index("r")]
             sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
@@ -195,7 +195,8 @@ class BBREstimation(PipelineStage):
                                        ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
             pl.figure()
             pl.semilogx(r_v, gridded_likelihood)
-            pl.show()
+            pl.savefig(self.get_output('likelihood_on_r'))
+            # pl.show()
 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
