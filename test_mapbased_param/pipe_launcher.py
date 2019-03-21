@@ -102,7 +102,7 @@ resume: False
 output_dir: '''+os.path.join(path_to_temp_files,'outputs_'+id_tag)+'''
 
 # Put the logs from the individual stages in this directory:
-log_dir: '''+os.path.join(path_to_temp_files,'logs')+'''
+log_dir: '''+os.path.join(path_to_temp_files,'logs'+id_tag)+'''
 
 # Put the log for the overall pipeline infrastructure in this file:
 pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
