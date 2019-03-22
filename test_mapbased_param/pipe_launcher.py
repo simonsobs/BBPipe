@@ -96,7 +96,7 @@ inputs:
 config: '''+os.path.join(path_to_temp_files,'config_'+id_tag+'.yml')+'''
 
 # If all the outputs for a stage already exist then do not re-run that stage
-resume: False
+resume: True
 
 # Put all the output files in this directory:
 output_dir: '''+os.path.join(path_to_temp_files,'outputs_'+id_tag)+'''
