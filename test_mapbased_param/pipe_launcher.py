@@ -113,7 +113,7 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
     text_file.write( global_string )
     text_file.close()
 
-    return global_string
+    return
 
 ######################################
 #### CONFIG.YML
