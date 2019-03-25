@@ -170,10 +170,14 @@ def main():
 
     args = grabargs()
 
+    # check for output directory
+    if not os.path.exists(args.path_to_temp_files):
+        os.makedirs(args.path_to_temp_files)
+
     if args.r_input!=0.0:
-    	print('you should be careful with r!=0')
-    	print('have you changed the CMB simulator accordingly?')
-    	exit()
+        print('you should be careful with r!=0')
+        print('have you changed the CMB simulator accordingly?')
+        exit()
 
     simulations_split = []
     if rank == 0 :
