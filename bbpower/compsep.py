@@ -7,8 +7,6 @@ from .foreground_loading import FGModel, FGParameters, normed_plaw
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
-import emcee
-
 class BBCompSep(PipelineStage):
     """
     Component separation stage
@@ -18,7 +16,8 @@ class BBCompSep(PipelineStage):
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
     outputs = [('param_chains', NpzFile)]
-    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3}
+    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
+                    'sampler':'emcee'}
 
     def setup_compsep(self):
         """
@@ -89,7 +88,9 @@ class BBCompSep(PipelineStage):
             self.meannu.append(np.sum(dnu*nu*bnu) / np.sum(dnu*bnu))
 
         #Get ell sampling
-        self.bpw_l = self.s.binning.windows[0].ls
+        #Avoid l<2
+        mask_w = self.s.binning.windows[0].ls > 1
+        self.bpw_l = self.s.binning.windows[0].ls[mask_w]
         _,_,_,self.ell_b,_ = self.order[0]
         self.n_bpws = len(self.ell_b)
         self.windows = np.zeros([self.ncross, self.n_bpws, len(self.bpw_l)])
@@ -110,7 +111,7 @@ class BBCompSep(PipelineStage):
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
             for b,i in enumerate(ndx):
-                self.windows[self.vector_indices[t1, t2], b, :] = self.s.binning.windows[i].w
+                self.windows[self.vector_indices[t1, t2], b, :] = self.s.binning.windows[i].w[mask_w]
             v2d[:,self.vector_indices[t1, t2]] = v[ndx]
             if self.use_handl:
                 v2d_noi[:, self.vector_indices[t1, t2]] = s_noi.mean.vector[ndx]
@@ -137,7 +138,7 @@ class BBCompSep(PipelineStage):
         cmb_bbfile = np.loadtxt(self.config['cmb_files'][1])
         
         self.cmb_ells = cmb_bbfile[:, 0]
-        mask = self.cmb_ells <= self.bpw_l.max()
+        mask = (self.cmb_ells <= self.bpw_l.max()) & (self.cmb_ells > 1)
         self.cmb_ells = self.cmb_ells[mask] 
         self.cmb_bbr = cmb_bbfile[:, 3][mask]
         self.cmb_bblensing = cmb_lensingfile[:, 3][mask]
@@ -319,6 +320,8 @@ class BBCompSep(PipelineStage):
         """
         Sample the model with MCMC. 
         """
+        import emcee
+
         zmask = self.parameters.param_init == 0
         self.parameters.param_init[zmask] += 1.e-3 * np.ones_like(zmask)
         
@@ -347,14 +350,30 @@ class BBCompSep(PipelineStage):
         copyfile(self.get_input('config'), output_dir+'/config.yml') 
         return output_dir + '/'
 
+    def minimizer(self):
+        """
+        Find maximum likelihood
+        """
+        from scipy.optimize import minimize
+        def chi2(par):
+            return -2*self.lnprob(par)
+        res=minimize(chi2, self.parameters.param_init, method="Powell")
+        return res.x
+
     def run(self):
         self.setup_compsep()
-        sampler = self.emcee_sampler()
+        if self.config.get('sampler')=='emcee':
+            sampler = self.emcee_sampler()
+            # TODO: save things correctly
+            output_dir = self.make_output_dir()
+            np.save(output_dir + 'chains', sampler.chain)
+            np.savez(self.get_output('param_chains'), sampler.chain)
+        elif self.config.get('sampler')=='maximum_likelihood':
+            sampler = self.minimizer()
+            print("Best fit:",sampler)
+        else:
+            raise ValueError("Unknown sampler")
 
-        # TODO: save things correctly
-        output_dir = self.make_output_dir()
-        np.save(output_dir + 'chains', sampler.chain)
-        np.savez(self.get_output('param_chains'), sampler.chain)
         return
 
 if __name__ == '__main__':

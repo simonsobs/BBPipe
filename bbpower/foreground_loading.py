@@ -3,12 +3,12 @@ import numpy as np
 import fgbuster.component_model as fgc
 
 class FGModel:
-        """
-        FGModel loads the foreground models and prepares the unit conversions to K_CMB units. 
-        This creates a class that has an components attribute. The components attribute is a dictionary
-        of foreground models. Each foreground model is also a dictionary containing the SED function, 
-        SED parameters, SED nu0, CMB nu0 normalization, and the foreground power spectrum parameters. 
-        """
+    """
+    FGModel loads the foreground models and prepares the unit conversions to K_CMB units. 
+    This creates a class that has an components attribute. The components attribute is a dictionary
+    of foreground models. Each foreground model is also a dictionary containing the SED function, 
+    SED parameters, SED nu0, CMB nu0 normalization, and the foreground power spectrum parameters. 
+    """
     def __init__(self, config):
         self.load_foregrounds(config)
         return 
