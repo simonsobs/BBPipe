@@ -126,11 +126,12 @@ class BBREstimation(PipelineStage):
 
                 if make_figure:
                     pl.figure()
-                    pl.loglog( bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                    pl.loglog( Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
-                    pl.loglog( Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='noise post comp sep', linestyle=':')
-                    pl.loglog( ClBB_obs, label='obs BB')
-                    pl.loglog( Cov_model, label='modeled BB')
+                    pl.loglog( ell_v, bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
+                    pl.loglog( ell_v, Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
+                    pl.loglog( ell_v, Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='noise post comp sep', linestyle=':')
+                    pl.loglog( ell_v, A_dust*Cl_dust_obs, label='dust template', linestyle='--')
+                    pl.loglog( ell_v, ClBB_obs, label='obs BB')
+                    pl.loglog( ell_v, Cov_model, label='modeled BB')
                     pl.legend()
                     pl.show()
 
