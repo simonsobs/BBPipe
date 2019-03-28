@@ -13,8 +13,8 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
         weights=(1.0/nlb)*np.ones_like(ells) #Array of weights
         bpws=-1+np.zeros_like(ells) #Array of bandpower indices
         i=0;
-        while 10*(i+1)+lmin<lmax :
-            bpws[10*i+lmin:10*(i+1)+lmin]=i
+        while (nlb+1)*(i+1)+lmin<lmax :
+            bpws[(nlb+1)*i+lmin:(nlb+1)*(i+1)+lmin]=i
             i+=1 
         b=nmt.NmtBin(nside,bpws=bpws,ells=ells,weights=weights)
     else:
