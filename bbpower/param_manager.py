@@ -49,6 +49,17 @@ class ParameterManager(object):
                 if d:
                     self._add_parameters(d)
 
+        # Loop through different systematics
+        if 'systematics' in config.keys():
+            cnf_sys = config['systematics']
+            # Bandpasses
+            if 'bandpasses' in cnf_sys.keys():
+                cnf_bps = cnf_sys['bandpasses']
+                i_bps = 1
+                while 'bandpass_%d' % i_bps in cnf_bps:
+                    self._add_parameters(cnf_bps['bandpass_%d' % i_bps])
+                    i_bps += 1
+
     def build_params(self, par):
         params = dict(self.p_fixed)
         params.update(dict(zip(self.p_free_names, par)))

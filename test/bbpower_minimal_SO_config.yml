@@ -43,3 +43,12 @@ BBCompSep:
                 amp_s: ['amp', 'tophat', [0., 2., "inf"]]
                 alpha_s: ['alpha', 'tophat', [-1., -0.6, 0.]]
                 l0_s: ['ell0', 'fixed', [80.]]
+
+    systematics:
+        bandpasses:
+            bandpass_1:
+                shift_1: ['shift', 'Gaussian', [0, 0.01]]
+                gain_1: ['gain', 'Gaussian', [1, 0.01]]
+            bandpass_2:
+                shift_2: ['shift', 'fixed', [0, 0.01]]
+                gain_2: ['gain', 'fixed', [1, 0.01]]

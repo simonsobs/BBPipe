@@ -5,6 +5,7 @@ from bbpipe import PipelineStage
 from .types import NpzFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
+from .bandpasses import Bandpass
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
@@ -77,17 +78,15 @@ class BBCompSep(PipelineStage):
         self.order = self.s.sortTracers()
 
         #Collect bandpasses
-        self.bpasses = []
-        self.meannu = []
-        for t in self.s.tracers:
+        self.bpss = []
+        for i_t, t in enumerate(self.s.tracers):
             nu = t.z
             dnu = np.zeros_like(nu);
             dnu[1:-1] = 0.5 * (nu[2:] - nu[:-2])
             dnu[0] = nu[1] - nu[0]
             dnu[-1] = nu[-1] - nu[-2]
             bnu = t.Nz
-            self.bpasses.append([nu, dnu, bnu])
-            self.meannu.append(np.sum(dnu*nu*bnu) / np.sum(dnu*bnu))
+            self.bpss.append(Bandpass(nu, dnu, bnu, i_t+1, self.config))
 
         #Get ell sampling
         #Avoid l<2
@@ -145,43 +144,21 @@ class BBCompSep(PipelineStage):
         self.cmb_bbr = cmb_bbfile[:, 3][mask]
         self.cmb_bblensing = cmb_lensingfile[:, 3][mask]
         self.cmb_bbr -= self.cmb_bblensing
-        self.get_cmb_norms()
         return
 
-    def get_cmb_norms(self):
-        """
-        Evaulates the CMB unit conversion over the bandpasses. 
-        """
-        cmb_norms = [] 
-        for tn in range(self.nfreqs):
-            nus = self.bpasses[tn][0]
-            bpass = self.bpasses[tn][1]
-            dnu = self.bpasses[tn][2]
-            bpass_integration = bpass * dnu
-
-            cmb_thermo_units = CMB('K_RJ').eval(nus) * nus**2 
-            cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
-        self.cmb_norm = np.asarray(cmb_norms)
-        return
-    
     def integrate_seds(self, params):
         fg_scaling = {}
-        for key in self.fg_model.components:
+        for key, component in self.fg_model.components.items(): 
             fg_scaling[key] = []
+            units = component['cmb_n0_norm'] 
+            sed_params = [params[component['names_sed_dict'][k]] 
+                          for k in component['sed'].params]
+            def sed(nu):
+                return component['sed'].eval(nu, *sed_params)
 
-        for tn in range(self.nfreqs):
-            nus = self.bpasses[tn][0]
-            bpass = self.bpasses[tn][1]
-            dnu = self.bpasses[tn][2]
-            bpass_integration = bpass * dnu
+            for tn in range(self.nfreqs):
+                fg_scaling[key].append(self.bpss[tn].convolve_sed(sed, params) * units)
 
-            for key, component in self.fg_model.components.items(): 
-                sed_params = [params[component['names_sed_dict'][k]] 
-                              for k in component['sed'].params] 
-                fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
-                fg_sed_eval = component['sed'].eval(nus, *sed_params) * nus**2
-                fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
-                fg_scaling[key].append(fg_sed_int)
         return fg_scaling
 
     def evaluate_power_spectra(self, params):
