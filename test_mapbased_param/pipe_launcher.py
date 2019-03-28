@@ -122,6 +122,10 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000):
 
+    ndim = 1
+    if dust_marginalization: ndim += 1
+    if sync_marginalization: ndim += 1
+
     global_string = '''
 global:
     frequencies: [27,39,93,145,225,280]
@@ -157,7 +161,7 @@ BBREstimation:
     A_lens: 1.0
     dust_marginalization: '''+str(dust_marginalization)+'''
     sync_marginalization: '''+str(sync_marginalization)+'''
-    ndim: 2
+    ndim: 3
     nwalkers: 500
     '''
 
