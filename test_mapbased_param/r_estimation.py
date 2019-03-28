@@ -130,6 +130,7 @@ class BBREstimation(PipelineStage):
                     pl.loglog( ell_v, Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
                     pl.loglog( ell_v, Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='noise post comp sep', linestyle=':')
                     pl.loglog( ell_v, A_dust*Cl_dust_obs, label='dust template', linestyle='--')
+                    pl.loglog( ell_v, A_sync*Cl_sync_obs, label='sync template', linestyle='-.')
                     pl.loglog( ell_v, ClBB_obs, label='obs BB')
                     pl.loglog( ell_v, Cov_model, label='modeled BB')
                     pl.legend()
