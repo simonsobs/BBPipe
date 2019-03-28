@@ -152,7 +152,7 @@ BBMapParamCompSep:
 
 BBClEstimation:
     aposize: 10.0
-    apotype: 'C1'
+    apotype: 'C2'
     purify_b: True
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
 
