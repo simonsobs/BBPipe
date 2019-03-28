@@ -3,7 +3,8 @@ from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
 from .types import NpzFile
-from .foreground_loading import FGModel, FGParameters, normed_plaw
+from .fg_model import FGModel
+from .param_manager import ParameterManager
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
@@ -26,7 +27,8 @@ class BBCompSep(PipelineStage):
         self.parse_sacc_file()
         self.load_cmb()
         self.fg_model = FGModel(self.config)
-        self.parameters = FGParameters(self.config)
+        self.params = ParameterManager(self.config)
+        #self.parameters = FGParameters(self.config)
         if self.use_handl:
             self.prepare_h_and_l()
         return
@@ -134,8 +136,8 @@ class BBCompSep(PipelineStage):
         """
         Loads the CMB BB spectrum as defined in the config file. 
         """
-        cmb_lensingfile = np.loadtxt(self.config['cmb_files'][0])
-        cmb_bbfile = np.loadtxt(self.config['cmb_files'][1])
+        cmb_lensingfile = np.loadtxt(self.config['cmb_model']['cmb_templates'][0])
+        cmb_bbfile = np.loadtxt(self.config['cmb_model']['cmb_templates'][1])
         
         self.cmb_ells = cmb_bbfile[:, 0]
         mask = (self.cmb_ells <= self.bpw_l.max()) & (self.cmb_ells > 1)
@@ -174,15 +176,10 @@ class BBCompSep(PipelineStage):
             bpass_integration = bpass * dnu
 
             for key, component in self.fg_model.components.items(): 
-                conv_rj = (nus / component['nu0'])**2
-
-                sed_params = [] 
-                for param in component['sed'].params:
-                    pindx = self.parameters.param_index[param]
-                    sed_params.append(params[pindx])
-                
+                sed_params = [params[component['names_sed_dict'][k]] 
+                              for k in component['sed'].params] 
                 fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
-                fg_sed_eval = component['sed'].eval(nus, *sed_params) * conv_rj
+                fg_sed_eval = component['sed'].eval(nus, *sed_params) * nus**2
                 fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
                 fg_scaling[key].append(fg_sed_int)
         return fg_scaling
@@ -190,21 +187,16 @@ class BBCompSep(PipelineStage):
     def evaluate_power_spectra(self, params):
         fg_pspectra = {}
         for key, component in self.fg_model.components.items():
-            pspec_params = []
-            # TODO: generalize for different power spectrum models
-            # should look like:
-            # for param in power_spectrum_model: get param index (same as the SEDs)
-            for param in component['spectrum_params']:
-                pindx = self.parameters.param_index[param]
-                pspec_params.append(params[pindx])
-            fg_pspectra[key] = normed_plaw(self.bpw_l, *pspec_params)
+            pspec_params = [params[component['names_cl_dict'][k]]
+                            for k in component['cl'].params]
+            fg_pspectra[key] = component['cl'].eval(self.bpw_l, *pspec_params)
         return fg_pspectra
     
     def model(self, params):
         """
         Defines the total model and integrates over the bandpasses and windows. 
         """
-        cmb_bmodes = params[0] * self.cmb_bbr + self.cmb_bblensing
+        cmb_bmodes = params['r_tensor'] * self.cmb_bbr + self.cmb_bblensing
         fg_scaling = self.integrate_seds(params)
         fg_p_spectra = self.evaluate_power_spectra(params)
         
@@ -215,49 +207,23 @@ class BBCompSep(PipelineStage):
 
                 model = cmb_bmodes.copy()
                 for component in self.fg_model.components:
-                    sed_power_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
-                    p_amp = params[self.parameters.amp_index[component]]
-                    model += p_amp * sed_power_scaling * fg_p_spectra[component]
+                    model += fg_scaling[component][t1] * fg_scaling[component][t2] * \
+                             fg_p_spectra[component]
                 
-                    config_component = self.config['fg_model'][component]
-                    if 'cross' in config_component.keys():
-                        epsilon = config_component['cross']['param']
-                        epsilon_index = self.parameters.param_index[epsilon]
-                        cross_name = config_component['cross']['name']
-
-                        cross_scaling = fg_scaling[component][t1] * fg_scaling[cross_name][t2] + \
-                                        fg_scaling[cross_name][t1] * fg_scaling[component][t2]
-                        cross_spectrum = np.sqrt(fg_p_spectra[component] * fg_p_spectra[cross_name])
-                        cross_amp = np.sqrt(p_amp * params[self.parameters.amp_index[cross_name]])
-
-                        model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
+                    for comp2, epsname in self.fg_model.components[component]['names_x_dict'].items():
+                        epsilon = params[epsname]
+                        cross_scaling = fg_scaling[component][t1] * fg_scaling[comp2][t2] + \
+                                        fg_scaling[comp2][t1] * fg_scaling[component][t2]
+                        cross_spectrum = np.sqrt(fg_p_spectra[component] * fg_p_spectra[comp2])
+                        model += epsilon * cross_scaling * cross_spectrum
                         
                 model = np.dot(windows, model)
                 cls_array_list[:, t1, t2] = model
 
                 if t1 != t2:
                     cls_array_list[:, t2, t1] = model
+
         return cls_array_list
-
-    def lnpriors(self, params):
-        """
-        Assign priors for emcee. 
-        """
-        total_prior = 0
-        if params[0] < 0:
-            return -np.inf
-        
-        for key, prior in self.parameters.priors.items():
-            pval = params[self.parameters.param_index[key]]
-
-            if prior[0].lower() == 'gaussian':
-                mu = prior[1][0]
-                sigma = prior[1][1]
-                total_prior += -0.5 * (pval - mu)**2 / sigma**2
-            elif prior[0].lower() == 'tophat': 
-                if pval < float(prior[1][0]) or pval > float(prior[1][2]):
-                    return -np.inf 
-        return total_prior
 
     def chi_sq_dx(self, params):
         """
@@ -302,13 +268,15 @@ class BBCompSep(PipelineStage):
             rot[:, i] = U[:, i] * d
         return rot.dot(U.T)
 
-    def lnprob(self, params):
+    def lnprob(self, par):
         """
         Likelihood with priors. 
         """
-        prior = self.lnpriors(params)
+        prior = self.params.lnprior(par)
         if not np.isfinite(prior):
             return -np.inf
+
+        params = self.params.build_params(par)
         if self.use_handl:
             dx = self.h_and_l_dx(params)
         else:
@@ -356,9 +324,17 @@ class BBCompSep(PipelineStage):
         """
         from scipy.optimize import minimize
         def chi2(par):
-            return -2*self.lnprob(par)
+            c2=-2*self.lnprob(par)
+            return c2
         res=minimize(chi2, self.parameters.param_init, method="Powell")
         return res.x
+
+    def singlepoint(self):
+        """
+        Evaluate at a single point
+        """
+        chi2 = -2*self.lnprob(self.params.p0)
+        return chi2
 
     def run(self):
         self.setup_compsep()
@@ -368,9 +344,13 @@ class BBCompSep(PipelineStage):
             output_dir = self.make_output_dir()
             np.save(output_dir + 'chains', sampler.chain)
             np.savez(self.get_output('param_chains'), sampler.chain)
+            print("Finished sampling")
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
             print("Best fit:",sampler)
+        elif self.config.get('sampler')=='single_point':
+            sampler = self.singlepoint()
+            print("Chi^2:",sampler)
         else:
             raise ValueError("Unknown sampler")
 
