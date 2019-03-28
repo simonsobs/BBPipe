@@ -160,7 +160,7 @@ class BBREstimation(PipelineStage):
             print(Astat_best_fit_with_stat_res['x'])
 
             ### making plot after optimization
-            likelihood_on_r_with_stat_and_sys_res( Astat_best_fit_with_stat_res['x'], make_figure=False )
+            likelihood_on_r_with_stat_and_sys_res( Astat_best_fit_with_stat_res['x'], make_figure=True )
 
             ### sampling
             import emcee
