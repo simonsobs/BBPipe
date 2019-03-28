@@ -43,6 +43,7 @@ def grabargs():
     parser.add_argument("--ny_lf", type=float, help = "SO V3 low frequency integration time", default=1.0)
     parser.add_argument("--noise_option", type=str, help = "option for the noise generator", default='white_noise')
     parser.add_argument("--dust_marginalization", type=bool, help = "marginalization of the cosmo likelihood over a dust template", default=True)
+    parser.add_argument("--sync_marginalization", type=bool, help = "marginalization of the cosmo likelihood over a sync template", default=True)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
     parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
     parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
@@ -118,8 +119,9 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
 ######################################
 #### CONFIG.YML
 def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
-				noise_option='white_noise', dust_marginalization=True, path_to_temp_files='./',\
-					r_input=0.000):
+				noise_option='white_noise', dust_marginalization=True, 
+                sync_marginalization=True, path_to_temp_files='./', r_input=0.000):
+
     global_string = '''
 global:
     frequencies: [27,39,93,145,225,280]
@@ -154,6 +156,7 @@ BBREstimation:
     r_input: '''+str(r_input)+'''
     A_lens: 1.0
     dust_marginalization: '''+str(dust_marginalization)+'''
+    sync_marginalization: '''+str(sync_marginalization)+'''
     ndim: 2
     nwalkers: 500
     '''
@@ -199,6 +202,7 @@ def main():
         # create config.yml
         generate_config_yml(id_tag, sensitivity_mode=args.sensitivity_mode, knee_mode=args.knee_mode,\
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
+                sync_marginalization=args.sync_marginalization,\
                 path_to_temp_files=args.path_to_temp_files, r_input=args.r_input)
         # submit call 
         # time.sleep(10*rank)

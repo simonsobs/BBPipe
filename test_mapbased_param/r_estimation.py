@@ -95,6 +95,7 @@ class BBREstimation(PipelineStage):
         ell_v = Cl_clean[0]#[(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
         Cl_dust_obs = Cl_clean[2][(ell_v>=lmin)&(ell_v<=lmax)]
+        Cl_sync_obs = Cl_clean[3][(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         # model 
@@ -113,10 +114,16 @@ class BBREstimation(PipelineStage):
 
             #####################################
             def likelihood_on_r_with_stat_and_sys_res( p_loc, bins=bins, make_figure=False ):
-                r_loc, A_dust = p_loc 
+                if self.config['sync_marginalization']:
+                    r_loc, A_dust, A_sync = p_loc 
+                else:
+                    r_loc, A_dust = p_loc 
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
-                
+
+                if self.config['sync_marginalization']: 
+                    Cov_model += A_sync*Cl_sync_obs
+
                 if make_figure:
                     pl.figure()
                     pl.loglog( bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
@@ -148,10 +155,21 @@ class BBREstimation(PipelineStage):
             pos_likelihood_on_r_with_stat_and_sys_res = lambda *args: -likelihood_on_r_with_stat_and_sys_res(*args)
 
             ### optimization
+            if self.config['sync_marginalization']:
+                bounds = [(0.0, None), (0.0, None), (0.0, None)]
+                p0 = [1.0,0.1,0.1]
+                names = ["r", "\Lambda_d", "\Lambda_s"]
+                labels =  ["r", "\Lambda_d", "\Lambda_s"]
+            else:
+                bounds = [(0.0, None), (0.0, None)]
+                p0 = [1.0,0.1]
+                names = ["r", "\Lambda_d",]
+                labels =  ["r", "\Lambda_d"]
+
             Astat_best_fit_with_stat_res =  scipy.optimize.minimize( pos_likelihood_on_r_with_stat_and_sys_res, \
-                    [1.0,0.1],\
+                    p0,\
                     tol=1e-18, method='TNC', \
-                    bounds=[(0.0, None), (0.0, None)],\
+                    bounds=bounds,\
                     options={'disp':True, 'gtol': 1e-18, 'eps': 1e-6,\
                     'maxiter':1000, 'ftol': 1e-18})
 
@@ -179,8 +197,7 @@ class BBREstimation(PipelineStage):
             from getdist import plots, MCSamples
             pl.rcParams['text.usetex']=False
             # ci-dessous names et labels definient les parametres du corner plot
-            names = ["r", "\Lambda_d",]
-            labels =  ["r", "\Lambda_d"]
+
             g = plots.getSubplotPlotter()
             samps = MCSamples(samples=samples, names=names, labels=labels)
 
