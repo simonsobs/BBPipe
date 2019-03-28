@@ -161,7 +161,7 @@ BBREstimation:
     A_lens: 1.0
     dust_marginalization: '''+str(dust_marginalization)+'''
     sync_marginalization: '''+str(sync_marginalization)+'''
-    ndim: 3
+    ndim: '''+str(ndim)+'''
     nwalkers: 500
     '''
 
