@@ -127,7 +127,7 @@ global:
     nside: 512
     lmin: 30
     lmax: 200
-    nlb: 5
+    nlb: 9
     custom_bins: True
 
 BBMapSim:
