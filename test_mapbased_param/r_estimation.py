@@ -112,10 +112,21 @@ class BBREstimation(PipelineStage):
         if self.config['dust_marginalization']:
 
             #####################################
-            def likelihood_on_r_with_stat_and_sys_res( p_loc, bins=bins ):
+            def likelihood_on_r_with_stat_and_sys_res( p_loc, bins=bins, make_figure=False ):
                 r_loc, A_dust = p_loc 
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
+                
+                if make_figure:
+                    pl.figure()
+                    pl.loglog( bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
+                    pl.loglog( Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
+                    pl.loglog( Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='noise post comp sep', linestyle=':')
+                    pl.loglog( ClBB_obs, label='obs BB')
+                    pl.loglog( Cov_model, label='modeled BB')
+                    pl.legend()
+                    pl.show()
+
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
                     logL -= np.sum((2*bins.get_ell_list(b)+1))*self.config['fsky']*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
@@ -147,6 +158,9 @@ class BBREstimation(PipelineStage):
             print('#'*20)
             print('################### result of the optimization ... ')
             print(Astat_best_fit_with_stat_res['x'])
+
+            ### making plot after optimization
+            likelihood_on_r_with_stat_and_sys_res( Astat_best_fit_with_stat_res['x'], make_figure=False )
 
             ### sampling
             import emcee
