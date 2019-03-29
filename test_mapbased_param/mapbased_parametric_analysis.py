@@ -110,7 +110,7 @@ class BBMapParamCompSep(PipelineStage):
         # pl.show()
 
         for p in obs_pix:
-            noise_cov_inv = np.diagonal(1.0/np.diag(noise_cov_diag[:,:,p]))
+            noise_cov_inv = np.diag(1.0/np.diag(noise_cov_diag[:,:,p]))
             print('1.0/noise_cov_diag[:,:,p]=', noise_cov_inv)
             inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
             # print('shape(inv_AtNA) = ',np.shape(inv_AtNA))
