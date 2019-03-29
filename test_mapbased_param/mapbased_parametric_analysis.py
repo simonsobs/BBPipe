@@ -92,15 +92,16 @@ class BBMapParamCompSep(PipelineStage):
 
         print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
         print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
+        print('shape(noise_maps_) = ',np.shape(noise_maps_))
         # define masking
-        mask = noise_maps == hp.UNSEEN
-        mask = ~(np.any(mask, axis=tuple(range(noise_maps.ndim-1))))
+        mask = noise_maps_ == hp.UNSEEN
+        mask = ~(np.any(mask, axis=tuple(range(noise_maps_.ndim-1))))
 
         noise_after_comp_sep = res.s*0.0
         obs_pix = np.where(mask!=0.0)[0]
         for p in obs_pix:
             inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(A_maxL_loc))
-            noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_diag[:,:,p]).dot(noise_maps)
+            noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_diag[:,:,p]).dot(noise_maps_)
 
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep, overwrite=True)
 
