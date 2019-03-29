@@ -107,8 +107,10 @@ class BBREstimation(PipelineStage):
         # bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
-        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]\
-                                        + Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
+
+        if self.config['noise_option']!='no_noise': 
+            ClBB_model_other_than_prim += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['dust_marginalization']:
 

@@ -135,6 +135,7 @@ global:
     lmax: 200
     nlb: 9
     custom_bins: True
+    noise_option: \''''+str(noise_option)+'''\'
 
 BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
@@ -144,7 +145,6 @@ BBMapSim:
     dust_model: 'd1'
     sync_model: 's1'
     tag: 'SO_sims'
-    noise_option: \''''+str(noise_option)+'''\'
 
 BBMapParamCompSep:
     nside_patch: 0
