@@ -81,7 +81,7 @@ class BBMapParamCompSep(PipelineStage):
         np.savetxt(self.get_output('A_maxL'), A_maxL)
 
         A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
-        print('shape(A_maxL) = ',np.shape(A_maxL))
+        # print('shape(A_maxL) = ',np.shape(A_maxL))
         noise_cov_diag = np.zeros((2*len(instrument['frequencies']), 2*len(instrument['frequencies']), noise_cov.shape[1]))
         noise_maps__ = np.zeros((2*len(instrument['frequencies']), noise_cov.shape[1]))
         for f in range(len(instrument['frequencies'])):
@@ -93,13 +93,13 @@ class BBMapParamCompSep(PipelineStage):
             noise_maps__[2*f,:] = noise_maps_[f,0,:]*1.0
             noise_maps__[2*f+1,:] = noise_maps_[f,1,:]*1.0
 
-        print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
-        print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
-        print('shape(noise_maps__) = ',np.shape(noise_maps__))
+        # print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
+        # print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
+        # print('shape(noise_maps__) = ',np.shape(noise_maps__))
         # define masking
         mask = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
         # mask = ~(np.any(mask, axis=tuple(range(noise_maps__.ndim-1))))
-        print('mask = ', mask)
+        # print('mask = ', mask)
         noise_after_comp_sep = np.zeros((res.s.shape[0]*res.s.shape[1], noise_cov.shape[1]))
         obs_pix = np.where(mask==False)[0]
         test_map = np.zeros(noise_cov.shape[1])
@@ -110,10 +110,10 @@ class BBMapParamCompSep(PipelineStage):
 
         for p in obs_pix:
             inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(A_maxL_loc))
-            print('shape(inv_AtNA) = ',np.shape(inv_AtNA))
-            print('ATNd = ',  np.shape(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
-            print('inv_AtNA.ATNd = ', np.shape(inv_AtNA.dot( A_maxL_loc.T ).dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
-            print('noise_after_comp_sep[:,p] = ', np.shape(noise_after_comp_sep[:,p]))
+            # print('shape(inv_AtNA) = ',np.shape(inv_AtNA))
+            # print('ATNd = ',  np.shape(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
+            # print('inv_AtNA.ATNd = ', np.shape(inv_AtNA.dot( A_maxL_loc.T ).dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
+            # print('noise_after_comp_sep[:,p] = ', np.shape(noise_after_comp_sep[:,p]))
             noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])
 
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep, overwrite=True)
