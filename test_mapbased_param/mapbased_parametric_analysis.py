@@ -6,6 +6,7 @@ import fgbuster as fg
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
 from fgbuster.separation_recipies import weighted_comp_sep
+from fgbuster.algebra import Wd
 
 class BBMapParamCompSep(PipelineStage):
     """
@@ -88,11 +89,14 @@ class BBMapParamCompSep(PipelineStage):
 
         print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
         print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
+        # define masking
+        mask = noise_maps == hp.UNSEEN
+        mask = ~(np.any(mask, axis=tuple(range(noise_maps.ndim-1))))
 
         noise_after_comp_sep = res.s*0.0
-        for p in range(noise_after_comp_sep.shape[1]):
-            inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_diag[:,:,p]).dot(A_maxL_loc))
-
+        obs_pix = np.where(mask!=0.0)[0]
+        for p in obs_pix:
+            inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(A_maxL_loc))
             noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_diag[:,:,p]).dot(noise_maps)
 
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep, overwrite=True)
