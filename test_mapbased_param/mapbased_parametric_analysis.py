@@ -110,13 +110,14 @@ class BBMapParamCompSep(PipelineStage):
         pl.show()
 
         for p in obs_pix:
-            print('1.0/noise_cov_diag[:,:,p]=', 1.0/noise_cov_diag[:,:,p])
-            inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(A_maxL_loc))
+            noise_cov_inv = np.diagonal(1.0/np.diag(noise_cov_diag[:,:,p]))
+            print('1.0/noise_cov_diag[:,:,p]=', noise_cov_inv)
+            inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
             # print('shape(inv_AtNA) = ',np.shape(inv_AtNA))
             # print('ATNd = ',  np.shape(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
             # print('inv_AtNA.ATNd = ', np.shape(inv_AtNA.dot( A_maxL_loc.T ).dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
             # print('noise_after_comp_sep[:,p] = ', np.shape(noise_after_comp_sep[:,p]))
-            noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])
+            noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_inv).dot(noise_maps__[:,p])
         
         hp.mollview(noise_after_comp_sep[0])
         pl.show()
