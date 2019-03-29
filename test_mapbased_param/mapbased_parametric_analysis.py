@@ -83,25 +83,28 @@ class BBMapParamCompSep(PipelineStage):
         A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
         print('shape(A_maxL) = ',np.shape(A_maxL))
         noise_cov_diag = np.zeros((2*len(instrument['frequencies']), 2*len(instrument['frequencies']), noise_cov.shape[1]))
+        noise_maps__ = np.zeros((2*len(instrument['frequencies']), noise_cov.shape[1]))
         for f in range(len(instrument['frequencies'])):
             A_maxL_loc[2*f,:2] = A_maxL[f,0]
             A_maxL_loc[2*f,2:4] = A_maxL[f,1]
             A_maxL_loc[2*f,4:] = A_maxL[f,2]
             noise_cov_diag[2*f,2*f,:] = noise_cov_[f,0,:]*1.0
             noise_cov_diag[2*f+1,2*f+1,:] = noise_cov_[f,1,:]*1.0
+            noise_maps__[2*f,:] = noise_maps_[f,0,:]*1.0
+            noise_maps__[2*f+1,:] = noise_maps_[f,1,:]*1.0
 
         print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
         print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
-        print('shape(noise_maps_) = ',np.shape(noise_maps_))
+        print('shape(noise_maps_) = ',np.shape(noise_maps__))
         # define masking
-        mask = noise_maps_ == hp.UNSEEN
-        mask = ~(np.any(mask, axis=tuple(range(noise_maps_.ndim-1))))
+        mask = noise_maps__ == hp.UNSEEN
+        mask = ~(np.any(mask, axis=tuple(range(noise_maps__.ndim-1))))
 
         noise_after_comp_sep = res.s*0.0
         obs_pix = np.where(mask!=0.0)[0]
         for p in obs_pix:
             inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(A_maxL_loc))
-            noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_diag[:,:,p]).dot(noise_maps_)
+            noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_diag[:,:,p]).dot(noise_maps__)
 
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep, overwrite=True)
 
