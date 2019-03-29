@@ -33,15 +33,18 @@ class BBMapParamCompSep(PipelineStage):
         instrument = {'frequencies':np.array(self.config['frequencies'])}
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
+        noise_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         for f in range(len(instrument['frequencies'])) : 
             for i in range(3): 
                 frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
+                noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
                 noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
                 ind += 1
         
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
+        noise_maps_ = noise_maps_[:,1:,:]
         noise_cov_ = noise_cov_[:,1:,:]
 
         # perform component separation
