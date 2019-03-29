@@ -26,6 +26,7 @@ class BBMapParamCompSep(PipelineStage):
         #Read frequency maps and noise covariance
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
+        noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
 
         # reorganization of maps
         instrument = {'frequencies':np.array(self.config['frequencies'])}
