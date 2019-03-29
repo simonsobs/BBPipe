@@ -97,9 +97,9 @@ class BBMapParamCompSep(PipelineStage):
         print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
         print('shape(noise_maps__) = ',np.shape(noise_maps__))
         # define masking
-        mask = noise_maps__ == hp.UNSEEN
+        mask = (noise_maps__[0] == hp.UNSEEN | noise_maps__[0] == 0.0)
         # mask = ~(np.any(mask, axis=tuple(range(noise_maps__.ndim-1))))
-
+        print('mask = ', mask)
         noise_after_comp_sep = np.zeros((res.s.shape[0]*res.s.shape[1], noise_cov.shape[1]))
         obs_pix = np.where(mask!=0.0)[0]
         test_map = np.zeros(noise_cov.shape[1])
