@@ -104,10 +104,10 @@ class BBMapParamCompSep(PipelineStage):
         obs_pix = np.where(mask==False)[0]
         test_map = np.zeros(noise_cov.shape[1])
         test_map[obs_pix] = 1.0
-        hp.mollview(test_map, title='test')
-        hp.mollview(noise_maps__[0], title='noise')
-        hp.mollview(noise_cov_diag[0,0], title='cov')
-        pl.show()
+        # hp.mollview(test_map, title='test')
+        # hp.mollview(noise_maps__[0], title='noise')
+        # hp.mollview(noise_cov_diag[0,0], title='cov')
+        # pl.show()
 
         for p in obs_pix:
             noise_cov_inv = np.diagonal(1.0/np.diag(noise_cov_diag[:,:,p]))
