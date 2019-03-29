@@ -102,11 +102,11 @@ class BBMapParamCompSep(PipelineStage):
         # print('mask = ', mask)
         noise_after_comp_sep = np.zeros((res.s.shape[0]*res.s.shape[1], noise_cov.shape[1]))
         obs_pix = np.where(mask==False)[0]
-        test_map = np.zeros(noise_cov.shape[1])
-        test_map[obs_pix] = 1.0
-        hp.mollview(test_map)
-        hp.mollview(noise_maps__[0])
-        pl.show()
+        # test_map = np.zeros(noise_cov.shape[1])
+        # test_map[obs_pix] = 1.0
+        # hp.mollview(test_map)
+        # hp.mollview(noise_maps__[0])
+        # pl.show()
 
         for p in obs_pix:
             inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(A_maxL_loc))
