@@ -96,6 +96,7 @@ class BBMapParamCompSep(PipelineStage):
             noise_maps__[2*f,:] = noise_maps_[f,0,:]*1.0
             noise_maps__[2*f+1,:] = noise_maps_[f,1,:]*1.0
 
+        print('A_maxL_loc = ', A_maxL_loc)
         # print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
         # print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
         # print('shape(noise_maps__) = ',np.shape(noise_maps__))
