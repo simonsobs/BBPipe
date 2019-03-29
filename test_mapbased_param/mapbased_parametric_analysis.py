@@ -15,8 +15,8 @@ class BBMapParamCompSep(PipelineStage):
         * estimate components' covariance
     """
     name='BBMapParamCompSep'
-    inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile)]
-    outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile), ('A_maxL',TextFile)]
+    inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_maps',FitsFile)]
+    outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile), ('A_maxL',TextFile),('post_compsep_noise',FitsFile)]
 
     def run(self) :
         #Read input mask
@@ -74,6 +74,16 @@ class BBMapParamCompSep(PipelineStage):
         A_ev = A.evaluator(instrument['frequencies'])
         A_maxL = A_ev(res.x)
         np.savetxt(self.get_output('A_maxL'), A_maxL)
+
+        A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 2))
+        ind = 0
+        for f in range(len(instrument['frequencies'])) : 
+            A_maxL_loc[2*f,:] = A_maxL[3*f+1,1:]
+            A_maxL_loc[2*f+1,:] = A_maxL[3*f+2,1:]
+
+        inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_).dot(A_maxL_loc))
+        noise_after_comp_sep = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_).dot(noise_maps)
+        hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep, overwrite=True)
 
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]

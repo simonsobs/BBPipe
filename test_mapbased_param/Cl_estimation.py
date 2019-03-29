@@ -30,8 +30,8 @@ class BBClEstimation(PipelineStage):
 
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
-            ('A_maxL',TextFile),('noise_maps',FitsFile)]
-    outputs=[('Cl_clean', FitsFile),('Cl_cov_clean', FitsFile)]
+            ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile)]
+    outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile)]
 
     def run(self):
 
@@ -39,6 +39,7 @@ class BBClEstimation(PipelineStage):
         cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=False)
         A_maxL = np.loadtxt(self.get_input('A_maxL'))
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
+        post_compsep_noise=hp.read_map(self.get_input('post_compsep_noise'),verbose=False, field=None)
 
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
@@ -85,9 +86,12 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
 
+        ### for comparison, compute the power spectrum of the noise after comp sep
+
         ### compute power spectra of the cleaned sky maps
         ncomp = int(len(clean_map)/2)
         Cl_clean = [ell_eff] 
+        Cl_noise = [ell_eff] 
         components = []
         print('n_comp = ', ncomp)
         ind=0
@@ -106,6 +110,12 @@ class BBClEstimation(PipelineStage):
             # fyp_cov_j=get_field(mask*sqrt_cov_map[2*comp_j,2*comp_j], mask*sqrt_cov_map[2*comp_j+1,2*comp_j+1])
 
             Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
+
+            fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1])
+            fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1])
+
+            Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
+
             # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
             ind += 1
         print('ind = ', ind)
@@ -114,6 +124,7 @@ class BBClEstimation(PipelineStage):
         print('all components = ', components)
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
+        hp.fitsfunc.write_cl(self.get_output('Cl_noise'), np.array(Cl_noise), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
 
 if __name__ == '__main__':
