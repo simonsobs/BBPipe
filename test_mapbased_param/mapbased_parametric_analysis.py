@@ -80,9 +80,9 @@ class BBMapParamCompSep(PipelineStage):
         print('shape(A_maxL) = ',np.shape(A_maxL))
         noise_cov_diag = np.zeros((2*len(instrument['frequencies']), 2*len(instrument['frequencies']), noise_cov.shape[1]))
         for f in range(len(instrument['frequencies'])):
-            for s in range(3):
-                A_maxL_loc[2*f,2*s] = A_maxL[f,2*s+1]
-                A_maxL_loc[2*f+1,2*s+1] = A_maxL[f,2*s+2]
+            A_maxL_loc[2*f,:2] = A_maxL[f,0]
+            A_maxL_loc[2*f,2:4] = A_maxL[f,1]
+            A_maxL_loc[2*f,4:] = A_maxL[f,2]
             noise_cov_diag[2*f,2*f,:] = noise_cov_[f,0,:]*1.0
             noise_cov_diag[2*f+1,2*f+1,:] = noise_cov_[f,1,:]*1.0
 
