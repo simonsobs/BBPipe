@@ -63,9 +63,9 @@ class BBClEstimation(PipelineStage):
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
 
-        def get_field(mp_q,mp_u) :
+        def get_field(mp_q,mp_u,purify_e=False,purify_b=True) :
             #This creates a spin-2 field with both pure E and B.
-            f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=False,purify_b=True)
+            f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=purify_e,purify_b=purify_b)
             return f2y
 
         #We initialize two workspaces for the non-pure and pure fields:
@@ -107,13 +107,15 @@ class BBClEstimation(PipelineStage):
 
             components.append(str((comp_i,comp_j))) 
 
-            fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
-            fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
+            if comp_i > 1: purify_b_=False
+            else:purify_b_=True
+            fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], purify_b=purify_b_)
+            fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], purify_b=purify_b_)
 
             Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
 
-            fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1])
-            fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1])
+            fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=False)
+            fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=False)
 
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
 
