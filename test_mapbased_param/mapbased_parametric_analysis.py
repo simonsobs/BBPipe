@@ -104,7 +104,7 @@ class BBMapParamCompSep(PipelineStage):
         mask = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
         # mask = ~(np.any(mask, axis=tuple(range(noise_maps__.ndim-1))))
         # print('mask = ', mask)
-        noise_after_comp_sep = np.ones((res.s.shape[0]*res.s.shape[1], noise_cov.shape[1]))*hp.UNSEEN
+        noise_after_comp_sep = np.ones((res.s.shape[0],res.s.shape[1], noise_cov.shape[1]))*hp.UNSEEN
         obs_pix = np.where(mask==False)[0]
         test_map = np.zeros(noise_cov.shape[1])
         test_map[obs_pix] = 1.0
@@ -123,17 +123,23 @@ class BBMapParamCompSep(PipelineStage):
                 print('shape of noise_cov_inv', np.shape(noise_cov_inv))
                 print('shape of A_maxL', np.shape(A_maxL))
                 inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
-                noise_after_comp_sep[s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
+                noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
             # print('shape(inv_AtNA) = ',np.shape(inv_AtNA))
             # print('ATNd = ',  np.shape(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
             # print('inv_AtNA.ATNd = ', np.shape(inv_AtNA.dot( A_maxL_loc.T ).dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
             # print('noise_after_comp_sep[:,p] = ', np.shape(noise_after_comp_sep[:,p]))
             # noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_inv).dot(noise_maps__[:,p])
+            
+        noise_after_comp_sep_ = np.zeros((2*len(instrument['frequencies']), noise_cov.shape[1]))
+        for f in range(noise_after_comp_sep.shape[0]):
+            noise_after_comp_sep_[2*f,:] = noise_after_comp_sep[f,0,:]*1.0
+            noise_after_comp_sep_[2*f+1,:] = noise_after_comp_sep[f,1,:]*1.0
         
-        hp.mollview(noise_after_comp_sep[0])
+
+        hp.mollview(noise_after_comp_sep_[0])
         pl.show()
 
-        hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep, overwrite=True)
+        hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
 
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]
