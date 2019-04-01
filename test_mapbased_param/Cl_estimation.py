@@ -16,7 +16,10 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
         while (nlb+1)*(i+1)+lmin<lmax :
             bpws[(nlb+1)*i+lmin:(nlb+1)*(i+1)+lmin]=i
             i+=1 
-        b=nmt.NmtBin(nside,bpws=bpws,ells=ells,weights=weights)
+        bpws[lmin:lmax+1] += 1
+        bpws[2:lmin] = 0
+        weights[2:lmin]= 1.0/(lmin-2-1)
+        b=nmt.NmtBin(nside,bpws=bpws, ells=ells, weights=weights)
     else:
         b=nmt.NmtBin(nside, nlb=int(1./self.config['fsky']))
     return b
@@ -106,9 +109,6 @@ class BBClEstimation(PipelineStage):
             fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1])
             fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1])
 
-            # fyp_cov_i=get_field(mask*sqrt_cov_map[2*comp_i,2*comp_i], mask*sqrt_cov_map[2*comp_i+1,2*comp_i+1])
-            # fyp_cov_j=get_field(mask*sqrt_cov_map[2*comp_j,2*comp_j], mask*sqrt_cov_map[2*comp_j+1,2*comp_j+1])
-
             Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
 
             fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1])
@@ -116,8 +116,8 @@ class BBClEstimation(PipelineStage):
 
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
 
-            # Cl_cov_clean.append(compute_master(fyp_cov_i,fyp_cov_j, w)[3] )
             ind += 1
+
         print('ind = ', ind)
         print('shape(Cl_clean) = ', len(Cl_clean))
         print('shape(array(Cl_clean)) = ', (np.array(Cl_clean)).shape)
