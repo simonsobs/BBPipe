@@ -16,17 +16,10 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
         while (nlb+1)*(i+1)+lmin<lmax :
             bpws[(nlb+1)*i+lmin:(nlb+1)*(i+1)+lmin]=i
             i+=1 
+        # adding a trash bin 2<=ell<=lmin
         bpws[lmin:(nlb+1)*i+lmin] += 1
         bpws[2:lmin] = 0
         weights[2:lmin]= 1.0/(lmin-2-1)
-
-        print('bpws = ', bpws)
-        print('weights = ', weights)
-        pl.figure()
-        pl.plot(bpws)
-        pl.show()
-        exit()
-
         b=nmt.NmtBin(nside,bpws=bpws, ells=ells, weights=weights)
     else:
         b=nmt.NmtBin(nside, nlb=int(1./self.config['fsky']))
