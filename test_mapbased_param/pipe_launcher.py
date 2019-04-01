@@ -132,7 +132,7 @@ global:
     fsky: 0.1
     nside: 512
     lmin: 30
-    lmax: 200
+    lmax: 500
     nlb: 9
     custom_bins: True
     noise_option: \''''+str(noise_option)+'''\'
