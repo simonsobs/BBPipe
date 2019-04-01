@@ -19,6 +19,14 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
         bpws[lmin:lmax+1] += 1
         bpws[2:lmin] = 0
         weights[2:lmin]= 1.0/(lmin-2-1)
+
+        print('bpws = ', bpws)
+        print('weights = ', weights)
+        pl.figure()
+        pl.plot(bpws)
+        pl.show()
+        exit()
+
         b=nmt.NmtBin(nside,bpws=bpws, ells=ells, weights=weights)
     else:
         b=nmt.NmtBin(nside, nlb=int(1./self.config['fsky']))
