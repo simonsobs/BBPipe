@@ -46,6 +46,8 @@ def grabargs():
     parser.add_argument("--sync_marginalization", action='store_true', help = "marginalization of the cosmo likelihood over a sync template", default=False)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
     parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
+    parser.add_argument("--apotype", type=str, help = "apodization type", default='C2')
+    parser.add_argument("--aposize", type=float, help = "apodization size", default=10.0)
     parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
 
     args = parser.parse_args()
@@ -120,7 +122,8 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
 #### CONFIG.YML
 def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
-                sync_marginalization=True, path_to_temp_files='./', r_input=0.000):
+                sync_marginalization=True, path_to_temp_files='./', r_input=0.000,\
+                apotype='C2', aposize=10.0):
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -151,8 +154,8 @@ BBMapParamCompSep:
     smart_multipatch: False
 
 BBClEstimation:
-    aposize: 10.0
-    apotype: 'C2'
+    aposize:  '''+str(aposize)+'''
+    apotype:  '''+str(apotype)+'''
     purify_b: True
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
 
@@ -207,7 +210,8 @@ def main():
         generate_config_yml(id_tag, sensitivity_mode=args.sensitivity_mode, knee_mode=args.knee_mode,\
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
                 sync_marginalization=args.sync_marginalization,\
-                path_to_temp_files=args.path_to_temp_files, r_input=args.r_input)
+                path_to_temp_files=args.path_to_temp_files, r_input=args.r_input,\
+                apotype=args.apotype, aposize=args.aposize)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
