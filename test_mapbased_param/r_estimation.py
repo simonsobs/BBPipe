@@ -129,18 +129,22 @@ class BBREstimation(PipelineStage):
 
                 if make_figure:
                     print('actual noise after comp sep = ', Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
+
                     pl.figure()
                     ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
-                    pl.loglog( ell_v_loc, bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                    pl.loglog( ell_v_loc, Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
-                    pl.loglog( ell_v_loc, Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='estimated noise post comp sep', linestyle=':')
-                    pl.loglog( ell_v_loc, Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='actual noise post comp sep', linestyle=':')
-                    pl.loglog( ell_v_loc, A_dust*Cl_dust_obs, label='dust template', linestyle='--')
-                    if self.config['sync_marginalization']: pl.loglog( ell_v_loc, A_sync*Cl_sync_obs, label='sync template', linestyle='-.')
-                    pl.loglog( ell_v_loc, ClBB_obs, label='obs BB')
-                    pl.loglog( ell_v_loc, Cov_model, label='modeled BB')
+                    norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
+                    pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
+                    pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
+                    pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='estimated noise post comp sep', linestyle=':')
+                    pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='actual noise post comp sep', linestyle=':')
+                    pl.loglog( ell_v_loc, norm*A_dust*Cl_dust_obs, label='dust template', linestyle='--')
+                    if self.config['sync_marginalization']: pl.loglog( ell_v_loc, norm*A_sync*Cl_sync_obs, label='sync template', linestyle='-.')
+                    pl.loglog( ell_v_loc, norm*ClBB_obs, label='obs BB')
+                    pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB')
                     pl.legend()
                     pl.show()
+
+                    continue
 
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
