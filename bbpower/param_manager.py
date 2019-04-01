@@ -60,6 +60,8 @@ class ParameterManager(object):
                     self._add_parameters(cnf_bps['bandpass_%d' % i_bps])
                     i_bps += 1
 
+        self.p0 = np.array(self.p0)
+
     def build_params(self, par):
         params = dict(self.p_fixed)
         params.update(dict(zip(self.p_free_names, par)))

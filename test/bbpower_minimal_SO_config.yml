@@ -3,11 +3,11 @@ global:
     beam_correct: True
 
 BBCompSep:
-    n_iters: 1000
+    n_iters: 5000
     nwalkers: 128
-    likelihood_type: 'chi2'
-    sampler: 'single_point'
-    save_prefix: 'bbpower_minimal_SO_outputs/testt'
+    likelihood_type: 'h&l'
+    sampler: 'emcee'
+    save_prefix: 'bbpower_SO_w_bpss_outputs/testt'
 
     cmb_model:
         cmb_templates: ["/global/cscratch1/sd/damonge/SO/BBPipe_data/bbpower_minimal/camb_lens_nobb.dat", 
@@ -30,12 +30,12 @@ BBCompSep:
                 alpha_d: ['alpha', 'tophat', [-1., -0.42, 0.]]
                 l0_d: ['ell0', 'fixed', [80.]]
             cross: 
-                epsilon_ds: ['component_2', 'tophat', [-1., -0.1, 1.]]
+                epsilon_ds: ['component_2', 'tophat', [-1., 0., 1.]]
 
         component_2:
             name: Synchrotron
             sed: Synchrotron
-            cl: ClPowerLaw 
+            cl: ClPowerLaw
             sed_parameters:
                 beta_s: ['beta_pl', 'Gaussian', [-3.0, 0.3]]
                 nu0_s: ['nu0', 'fixed', [23.]]
@@ -47,8 +47,20 @@ BBCompSep:
     systematics:
         bandpasses:
             bandpass_1:
-                shift_1: ['shift', 'Gaussian', [0, 0.01]]
-                gain_1: ['gain', 'Gaussian', [1, 0.01]]
+                shift_1: ['shift', 'Gaussian', [0., 0.01]]
+                gain_1: ['gain', 'Gaussian', [1., 0.01]]
             bandpass_2:
-                shift_2: ['shift', 'fixed', [0, 0.01]]
-                gain_2: ['gain', 'fixed', [1, 0.01]]
+                shift_2: ['shift', 'Gaussian', [0., 0.01]]
+                gain_2: ['gain', 'Gaussian', [1., 0.01]]
+            bandpass_3:
+                shift_3: ['shift', 'Gaussian', [0., 0.01]]
+                gain_3: ['gain', 'Gaussian', [1., 0.01]]
+            bandpass_4:
+                shift_4: ['shift', 'Gaussian', [0., 0.01]]
+                gain_4: ['gain', 'Gaussian', [1., 0.01]]
+            bandpass_5:
+                shift_5: ['shift', 'Gaussian', [0., 0.01]]
+                gain_5: ['gain', 'Gaussian', [1., 0.01]]
+            bandpass_6:
+                shift_6: ['shift', 'Gaussian', [0., 0.01]]
+                gain_6: ['gain', 'Gaussian', [1., 0.01]]

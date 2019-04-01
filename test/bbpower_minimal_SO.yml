@@ -30,11 +30,10 @@ config: ./test/bbpower_minimal_SO_config.yml
 resume: False
 
 # Put all the output files in this directory:
-output_dir: ./bbpower_minimal_SO_outputs
+output_dir: ./bbpower_SO_w_bpss_outputs
 
 # Put the logs from the individual stages in this directory:
-log_dir: ./bbpower_minimal_SO_outputs
+log_dir: ./bbpower_SO_w_bpss_outputs
 
 # Put the log for the overall pipeline infrastructure in this file:
-pipeline_log: ./bbpower_minimal_SO_outputs/log.txt
-
+pipeline_log: ./bbpower_SO_w_bpss_outputs/log.txt

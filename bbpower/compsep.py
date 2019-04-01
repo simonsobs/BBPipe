@@ -267,13 +267,10 @@ class BBCompSep(PipelineStage):
         """
         import emcee
 
-        zmask = self.parameters.param_init == 0
-        self.parameters.param_init[zmask] += 1.e-3 * np.ones_like(zmask)
-        
         nwalkers = self.config['nwalkers']
         n_iters = self.config['n_iters']
-        ndim = len(self.parameters.param_init)
-        pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
+        ndim = len(self.params.p0)
+        pos = [self.params.p0 + 1.e-3*np.random.randn(ndim) for i in range(nwalkers)]
         
         sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
         sampler.run_mcmc(pos, n_iters);
@@ -303,7 +300,7 @@ class BBCompSep(PipelineStage):
         def chi2(par):
             c2=-2*self.lnprob(par)
             return c2
-        res=minimize(chi2, self.parameters.param_init, method="Powell")
+        res=minimize(chi2, self.params.p0, method="Powell")
         return res.x
 
     def singlepoint(self):
@@ -320,13 +317,22 @@ class BBCompSep(PipelineStage):
             # TODO: save things correctly
             output_dir = self.make_output_dir()
             np.save(output_dir + 'chains', sampler.chain)
-            np.savez(self.get_output('param_chains'), sampler.chain)
+            np.savez(self.get_output('param_chains'),
+                     chain=sampler.chain,         
+                     names=self.params.p_free_names)
             print("Finished sampling")
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
+            np.savez(self.get_output('param_chains'),
+                     params=sampler,
+                     names=self.params.p_free_names)
             print("Best fit:",sampler)
+            print("params:", self.params.p_free_names)
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
+            np.savez(self.get_output('param_chains'),
+                     chi2=sampler,
+                     names=self.params.p_free_names)
             print("Chi^2:",sampler)
         else:
             raise ValueError("Unknown sampler")
