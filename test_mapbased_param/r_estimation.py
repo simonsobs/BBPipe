@@ -152,8 +152,6 @@ class BBREstimation(PipelineStage):
                     pl.savefig(self.get_output('power_spectrum_post_comp_sep.pdf'))
                     pl.close()
 
-                    continue
-
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
                     logL -= np.sum((2*bins.get_ell_list(b)+1))*self.config['fsky']*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
