@@ -45,14 +45,17 @@ class BBREstimation(PipelineStage):
                 Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim
                 if make_figure:
-                    pl.figure()
+                    pl.figure( figsize=(10,7), facecolor='w', edgecolor='k' )
                     ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
                     norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
-                    pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                    pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
-                    pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='noise post comp sep', linestyle=':')
-                    pl.loglog( ell_v_loc, norm*ClBB_obs, label='obs BB')
-                    pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB')
+                    pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                 label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
+                    pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
+                                label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
+                    pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
+                                label='noise post comp sep', linestyle=':', color='DarkBlue')
+                    pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                    pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
                     pl.legend()
                     pl.xlabel('$\ell$', fontsize=20)
                     pl.xlabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
@@ -135,17 +138,32 @@ class BBREstimation(PipelineStage):
                 if make_figure:
                     print('actual noise after comp sep = ', Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
 
+
+                    # pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                    #              label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
+                    # pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
+                    #             label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
+                    # pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
+                    #             label='noise post comp sep', linestyle=':', color='DarkBlue')
+                    # pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                    # pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+
                     pl.figure()
                     ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
                     norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
-                    pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                    pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
-                    pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='estimated noise post comp sep', linestyle=':')
-                    pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='actual noise post comp sep', linestyle=':')
-                    pl.loglog( ell_v_loc, norm*A_dust*Cl_dust_obs, label='dust template', linestyle='--')
-                    if self.config['sync_marginalization']: pl.loglog( ell_v_loc, norm*A_sync*Cl_sync_obs, label='sync template', linestyle='-.')
-                    pl.loglog( ell_v_loc, norm*ClBB_obs, label='obs BB')
-                    pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB')
+                    pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                  label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
+                    pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                 label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
+                    pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
+                    pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                 label='actual noise post comp sep', linestyle=':', color='Cyan')
+                    pl.loglog( ell_v_loc, norm*A_dust*Cl_dust_obs, label='estimated dust template', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
+                    if self.config['sync_marginalization']: pl.loglog( ell_v_loc, norm*A_sync*Cl_sync_obs,
+                                                 label='synchrotron template', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
+                    pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                    pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
                     pl.legend()
                     pl.xlabel('$\ell$', fontsize=20)
                     pl.xlabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
