@@ -119,7 +119,7 @@ class BBMapParamCompSep(PipelineStage):
             # print('A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc) = ', A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
             # inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
             for s in range(2):
-                noise_cov_inv = np.diag(1.0/np.diag(noise_cov_[:,s,p]))
+                noise_cov_inv = np.diag(1.0/noise_cov_[:,s,p])
                 print('shape of noise_cov_inv', np.shape(noise_cov_inv))
                 print('shape of A_maxL', np.shape(A_maxL))
                 inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
