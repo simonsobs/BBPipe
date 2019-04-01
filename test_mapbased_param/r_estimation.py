@@ -56,7 +56,7 @@ class BBREstimation(PipelineStage):
                     pl.legend()
                     pl.xlabel('$\ell$', fontsize=20)
                     pl.xlabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
-                    pl.savefig(self.get_output('power_spectrum_post_comp_sep.pdf'))
+                    pl.savefig(self.get_output('power_spectrum_post_comp_sep'))
                     pl.close()
 
                 # logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
@@ -149,7 +149,7 @@ class BBREstimation(PipelineStage):
                     pl.legend()
                     pl.xlabel('$\ell$', fontsize=20)
                     pl.xlabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
-                    pl.savefig(self.get_output('power_spectrum_post_comp_sep.pdf'))
+                    pl.savefig(self.get_output('power_spectrum_post_comp_sep'))
                     pl.close()
 
                 logL = 0.0
