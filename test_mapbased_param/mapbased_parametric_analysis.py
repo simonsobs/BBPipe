@@ -135,31 +135,12 @@ class BBMapParamCompSep(PipelineStage):
             noise_after_comp_sep_[2*f,:] = noise_after_comp_sep[f,0,:]*1.0
             noise_after_comp_sep_[2*f+1,:] = noise_after_comp_sep[f,1,:]*1.0
 
-            print('---------')
-            print(noise_after_comp_sep_[2*f,obs_pix])
-            print('---------')
-            print(noise_after_comp_sep_[2*f+1,obs_pix])
-            print('---------')
-            hp.mollview(noise_after_comp_sep_[2*f], title='Q')
-            hp.mollview(noise_after_comp_sep_[2*f+1], title ='U')
-            pl.show()
-
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
 
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]
         column_names = [x for x in column_names if x]
         maps_estimated=res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
-        for f in range(noise_after_comp_sep.shape[0]):
-            print('---------')
-            print(maps_estimated[2*f,obs_pix])
-            print('---------')
-            print(maps_estimated[2*f+1,obs_pix])
-            print('---------')
-            hp.mollview(maps_estimated[2*f], title='Q')
-            hp.mollview(maps_estimated[2*f+1], title ='U')
-            pl.show()
-
         hp.write_map(self.get_output('post_compsep_maps'), maps_estimated, overwrite=True, column_names=column_names)
 
         cov_estimated = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
