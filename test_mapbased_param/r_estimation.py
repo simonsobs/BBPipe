@@ -25,7 +25,7 @@ class BBREstimation(PipelineStage):
 
     name='BBREstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile)]
-    outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile)]
+    outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), ('power_spectrum_post_comp_sep', PdfFile)]
 
     def run(self):
 
@@ -46,13 +46,18 @@ class BBREstimation(PipelineStage):
                                             + ClBB_model_other_than_prim
                 if make_figure:
                     pl.figure()
-                    pl.loglog( bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
-                    pl.loglog( Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
-                    pl.loglog( Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='noise post comp sep', linestyle=':')
-                    pl.loglog( ClBB_obs, label='obs BB')
-                    pl.loglog( Cov_model, label='modeled BB')
+                    ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
+                    norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
+                    pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
+                    pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
+                    pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='noise post comp sep', linestyle=':')
+                    pl.loglog( ell_v_loc, norm*ClBB_obs, label='obs BB')
+                    pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB')
                     pl.legend()
-                    pl.show()
+                    pl.xlabel('$\ell$', fontsize=20)
+                    pl.xlabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
+                    pl.savefig(self.get_output('power_spectrum_post_comp_sep.pdf'))
+                    pl.close()
 
                 # logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
                                     # *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
@@ -142,7 +147,10 @@ class BBREstimation(PipelineStage):
                     pl.loglog( ell_v_loc, norm*ClBB_obs, label='obs BB')
                     pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB')
                     pl.legend()
-                    pl.show()
+                    pl.xlabel('$\ell$', fontsize=20)
+                    pl.xlabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
+                    pl.savefig(self.get_output('power_spectrum_post_comp_sep.pdf'))
+                    pl.close()
 
                     continue
 
