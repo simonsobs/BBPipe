@@ -16,7 +16,7 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
         while (nlb+1)*(i+1)+lmin<lmax :
             bpws[(nlb+1)*i+lmin:(nlb+1)*(i+1)+lmin]=i
             i+=1 
-        bpws[lmin:lmax+1] += 1
+        bpws[lmin:(nlb+1)*i+lmin] += 1
         bpws[2:lmin] = 0
         weights[2:lmin]= 1.0/(lmin-2-1)
 
