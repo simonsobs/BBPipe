@@ -96,7 +96,7 @@ class BBMapParamCompSep(PipelineStage):
             noise_maps__[2*f,:] = noise_maps_[f,0,:]*1.0
             noise_maps__[2*f+1,:] = noise_maps_[f,1,:]*1.0
 
-        print('A_maxL_loc = ', A_maxL_loc)
+        # print('A_maxL_loc = ', A_maxL_loc)
         # print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
         # print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
         # print('shape(noise_maps__) = ',np.shape(noise_maps__))
@@ -119,7 +119,9 @@ class BBMapParamCompSep(PipelineStage):
             # print('A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc) = ', A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
             # inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
             for s in range(2):
-                noise_cov_inv = np.diag(1.0/np.diag(noise_cov_[:,0,p]))
+                noise_cov_inv = np.diag(1.0/np.diag(noise_cov_[:,s,p]))
+                print('shape of noise_cov_inv', np.shape(noise_cov_inv))
+                print('shape of A_maxL', np.shape(A_maxL))
                 inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
                 noise_after_comp_sep[s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
             # print('shape(inv_AtNA) = ',np.shape(inv_AtNA))
