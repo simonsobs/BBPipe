@@ -128,6 +128,7 @@ class BBREstimation(PipelineStage):
                     Cov_model += A_sync*Cl_sync_obs
 
                 if make_figure:
+                    print('actual noise after comp sep = ', Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
                     pl.figure()
                     pl.loglog( ell_v, bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='prim B' )
                     pl.loglog( ell_v, Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], label='lensing', linestyle='--'  )
