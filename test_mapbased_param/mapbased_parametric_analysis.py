@@ -135,8 +135,8 @@ class BBMapParamCompSep(PipelineStage):
             noise_after_comp_sep_[2*f,:] = noise_after_comp_sep[f,0,:]*1.0
             noise_after_comp_sep_[2*f+1,:] = noise_after_comp_sep[f,1,:]*1.0
 
-            hp.mollview(noise_after_comp_sep_[2*f,:], title='Q', norm='log')
-            hp.mollview(noise_after_comp_sep_[2*f,:], title='U', norm='log')
+            hp.mollview(np.abs(noise_after_comp_sep_[2*f,:]), title='Q', norm='log')
+            hp.mollview(np.abs(noise_after_comp_sep_[2*f+1,:]), title='U', norm='log')
             pl.show()
         exit()
 
