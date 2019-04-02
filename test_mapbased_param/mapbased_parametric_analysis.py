@@ -106,8 +106,8 @@ class BBMapParamCompSep(PipelineStage):
         # print('mask = ', mask)
         noise_after_comp_sep = np.ones((res.s.shape[0],res.s.shape[1], noise_cov.shape[1]))*hp.UNSEEN
         obs_pix = np.where(mask==False)[0]
-        test_map = np.zeros(noise_cov.shape[1])
-        test_map[obs_pix] = 1.0
+        # test_map = np.zeros(noise_cov.shape[1])
+        # test_map[obs_pix] = 1.0
         # hp.mollview(test_map, title='test')
         # hp.mollview(noise_maps__[0], title='noise')
         # hp.mollview(noise_cov_diag[0,0], title='cov')
@@ -134,12 +134,6 @@ class BBMapParamCompSep(PipelineStage):
         for f in range(noise_after_comp_sep.shape[0]):
             noise_after_comp_sep_[2*f,:] = noise_after_comp_sep[f,0,:]*1.0
             noise_after_comp_sep_[2*f+1,:] = noise_after_comp_sep[f,1,:]*1.0
-
-            hp.mollview(np.abs(noise_after_comp_sep_[2*f,:]), title='Q', norm='log')
-            hp.mollview(np.abs(noise_after_comp_sep_[2*f+1,:]), title='U', norm='log')
-            pl.show()
-        exit()
-
 
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
 
