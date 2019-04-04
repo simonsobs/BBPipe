@@ -29,15 +29,15 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     return b
 
 def B(nu, T):
-    x = constants.h * nu * 1.e9 / constants.k / T
-    return 2. * constants.h * (nu * 1.e9) ** 3 / constants.c ** 2 / np.expm1(x)
+    x = constants.h * nu / constants.k / T
+    return 2. * constants.h * (nu) ** 3 / constants.c ** 2 / np.expm1(x)
 
 def dB(nu, T):
-    x = constants.h * nu * 1.e9 / constants.k / T
+    x = constants.h * nu / constants.k / T
     return B(nu, T) / T * x * np.exp(x) / np.expm1(x)
 
 def KCMB2RJ(nu):
-    return  dB(nu, Planck15.Tcmb(0).value) / 2. * (nu * 1.e9 / constants.c) ** 2 * constants.k
+    return  dB(nu, Planck15.Tcmb(0).value) / 2. * (nu / constants.c) ** 2 * constants.k
 
 
 class BBClEstimation(PipelineStage):
