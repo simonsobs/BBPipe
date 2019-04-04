@@ -37,8 +37,6 @@ def dB(nu, T):
     return B(nu, T) / T * x * np.exp(x) / np.expm1(x)
 
 def KCMB2RJ(nu):
-    print(dB(nu, Planck15.Tcmb(0).value))
-    print((2. * (nu *1e9 / constants.c) ** 2 * constants.k))
     return  dB(nu, Planck15.Tcmb(0).value) / (2. * (nu *1e9 / constants.c) ** 2 * constants.k)
 
 
@@ -100,7 +98,8 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
             print('conversion factor = ', KCMB2RJ(self.config['frequencies'][f]) )
-            fn = get_field(mask*noise_maps[3*f+1,:]*KCMB2RJ(self.config['frequencies'][f]), mask*noise_maps[3*f+2,:]*KCMB2RJ(self.config['frequencies'][f]))
+            fn = get_field(mask*noise_maps[3*f+1,:]/KCMB2RJ(self.config['frequencies'][f]), 
+                            mask*noise_maps[3*f+2,:]/KCMB2RJ(self.config['frequencies'][f]))
             # hp.mollview(noise_maps[3*f+1,:], title='Q', sub=121)
             # hp.mollview(noise_maps[3*f+2,:], title='U', sub=122)
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
