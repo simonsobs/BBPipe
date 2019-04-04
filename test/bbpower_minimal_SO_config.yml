@@ -6,7 +6,7 @@ BBCompSep:
     n_iters: 5000
     nwalkers: 128
     likelihood_type: 'chi2'
-    sampler: 'single_point'
+    sampler: 'timing'
     save_prefix: 'bbpower_SO_w_bpss_outputs/testt'
     pol_channels: ['E','B']
 

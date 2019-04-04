@@ -3,7 +3,7 @@ import numpy as np
 from fgbuster.component_model import CMB
 
 class Bandpass(object):
-    def __init__(self, nu, dnu, bnu, bp_number, config):
+    def __init__(self, nu, dnu, bnu, bp_number, config, phi_nu=None):
         self.number = bp_number
         self.nu = nu
         self.bnu_dnu = bnu * nu**2 * dnu
@@ -27,6 +27,14 @@ class Bandpass(object):
             if p[0] == 'gain':
                 self.do_gain = True
                 self.name_gain = n
+
+        if phi_nu:
+            from scipy.interpolate import interp1d
+            nu_phi,phi=phi_nu
+            phif=interp1d(nu_phi,phi,bounds_error=False,fill_value=0)
+            phi_arr=phif(self.nu)
+            self.phase = np.cos(phi_arr) + 1j * np.sin(phi_arr)
+            self.bnu_dnu *= self.phase
 
     def convolve_sed(self, sed, params):
         dnu = 0.

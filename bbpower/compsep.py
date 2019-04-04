@@ -347,6 +347,18 @@ class BBCompSep(PipelineStage):
         chi2 = -2*self.lnprob(self.params.p0)
         return chi2
 
+    def timing(self, n_eval=100):
+        """
+        Evaluate n times and benchmark
+        """
+        import time
+        start = time.time()
+        for i in range(n_eval):
+            lik = self.lnprob(self.params.p0)
+        end = time.time()
+
+        return end-start, (end-start)/n_eval
+
     def run(self):
         self.setup_compsep()
         if self.config.get('sampler')=='emcee':
@@ -371,6 +383,13 @@ class BBCompSep(PipelineStage):
                      chi2=sampler,
                      names=self.params.p_free_names)
             print("Chi^2:",sampler)
+        elif self.config.get('sampler')=='timing':
+            sampler = self.timing()
+            np.savez(self.get_output('param_chains'),
+                     timing=sampler[1],
+                     names=self.params.p_free_names)
+            print("Total time:",sampler[0])
+            print("Time per eval:",sampler[1])
         else:
             raise ValueError("Unknown sampler")
 

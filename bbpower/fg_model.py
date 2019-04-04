@@ -65,26 +65,32 @@ class FGModel:
             comp['names_cl_dict'] = {}
             params_fgl = {}
             for k,d in component['cl_parameters'].items():
-                comp['names_cl_dict'][k]={}
-                params_fgl[k]={}
-                for n,l in d.items():
-                    comp['names_cl_dict'][k][l[0]]=n
-                    if l[0]=='ell0':
-                        if l[1]!='fixed':
-                            raise ValueError("You can't vary reference scales!")
-                    if l[1]=='fixed':
-                        val = l[2][0]
-                    else:
-                        val = None
-                    params_fgl[k][l[0]]=val
+                p1,p2=k
+                # Add parameters only if we're using both polarization channels
+                if (p1 in config['pol_channels']) and (p2 in config['pol_channels']):
+                    comp['names_cl_dict'][k]={}
+                    params_fgl[k]={}
+                    for n,l in d.items():
+                        comp['names_cl_dict'][k][l[0]]=n
+                        if l[0]=='ell0':
+                            if l[1]!='fixed':
+                                raise ValueError("You can't vary reference scales!")
+                        if l[1]=='fixed':
+                            val = l[2][0]
+                        else:
+                            val = None
+                        params_fgl[k][l[0]]=val
 
             # Set Cl functions
             comp['cl'] = {}
             for k,c in component['cl'].items():
-                cl_fnc = get_function(fgl, c)
-                comp['cl'][k] = cl_fnc(**(params_fgl[k]))
+                p1,p2=k
+                # Add parameters only if we're using both polarization channels
+                if (p1 in config['pol_channels']) and (p2 in config['pol_channels']):
+                    cl_fnc = get_function(fgl, c)
+                    comp['cl'][k] = cl_fnc(**(params_fgl[k]))
             self.components[key] = comp
-        return 
+        return
 
 
 def get_function(mod,sed_name):
