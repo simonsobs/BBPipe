@@ -35,7 +35,7 @@ class BBClEstimation(PipelineStage):
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile)]
-    outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile)]
+    outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile),('Cl_cov_freq', FitsFile)]
 
     def run(self):
 
@@ -131,6 +131,7 @@ class BBClEstimation(PipelineStage):
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_noise'), np.array(Cl_noise), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
+        hp.fitsfunc.write_cl(self.get_output('Cl_cov_freq'), np.array(Cl_cov_clean_loc), overwrite=True)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
