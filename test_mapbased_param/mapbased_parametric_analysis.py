@@ -130,15 +130,11 @@ class BBMapParamCompSep(PipelineStage):
             # print('noise_after_comp_sep[:,p] = ', np.shape(noise_after_comp_sep[:,p]))
             # noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_inv).dot(noise_maps__[:,p])
 
-        noise_after_comp_sep_ = np.zeros((2*len(instrument['frequencies']), noise_cov.shape[1]))
+        noise_after_comp_sep_ = np.zeros((3, noise_cov.shape[1]))
         for f in range(noise_after_comp_sep.shape[0]):
             noise_after_comp_sep_[2*f,:] = noise_after_comp_sep[f,0,:]*1.0
             noise_after_comp_sep_[2*f+1,:] = noise_after_comp_sep[f,1,:]*1.0
-            hp.mollview(noise_after_comp_sep_[2*f,:], title='Q', norm='hist')
-            hp.mollview(noise_after_comp_sep_[2*f+1,:], title='U', norm='hist')
-            pl.show()
-        exit()
-
+            
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
 
         column_names = []
