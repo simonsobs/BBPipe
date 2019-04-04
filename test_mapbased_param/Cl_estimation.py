@@ -98,21 +98,17 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
             print('conversion factor = ', KCMB2RJ(self.config['frequencies'][f]) )
-            fn = get_field(mask*noise_maps[3*f+1,:]/KCMB2RJ(self.config['frequencies'][f]), 
-                            mask*noise_maps[3*f+2,:]/KCMB2RJ(self.config['frequencies'][f]))
-            # hp.mollview(noise_maps[3*f+1,:], title='Q', sub=121)
-            # hp.mollview(noise_maps[3*f+2,:], title='U', sub=122)
+            fn = get_field(mask*noise_maps[3*f+1,:]*KCMB2RJ(self.config['frequencies'][f]), 
+                            mask*noise_maps[3*f+2,:]*KCMB2RJ(self.config['frequencies'][f]))
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
-            # pl.figure()
-            # pl.loglog(1.0/compute_master(fn, fn, w)[3])
-            # pl.show()
+
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
         # print('shape of AtNA = ', AtNA.shape)
         # print('AtNA = ', AtNA)
         inv_AtNA = np.linalg.inv(AtNA)
         # print('shape of inv_AtNA = ', inv_AtNA.shape)
         # print('inv_AtNA = ', inv_AtNA)
-        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)
+        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)/KCMB2RJ(150.0)**2
         # print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
         # print('Cl_cov_clean = ', Cl_cov_clean)       
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
