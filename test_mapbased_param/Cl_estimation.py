@@ -6,6 +6,9 @@ import pymaster as nmt
 import healpy as hp
 from fgbuster.cosmology import _get_Cl_cmb 
 from fgbuster.mixingmatrix import MixingMatrix
+import scipy.constants as constants
+from astropy.cosmology import Planck15
+
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     if custom_bins:
@@ -24,6 +27,18 @@ def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     else:
         b=nmt.NmtBin(nside, nlb=int(1./self.config['fsky']))
     return b
+
+def B(nu, T):
+    x = constants.h * nu * 1.e9 / constants.k / T
+    return 2. * constants.h * (nu * 1.e9) ** 3 / constants.c ** 2 / np.expm1(x)
+
+def dB(nu, T):
+    x = constants.h * nu * 1.e9 / constants.k / T
+    return B(nu, T) / T * x * np.exp(x) / np.expm1(x)
+
+def KCMB2RJ(nu):
+    return  dB(nu, Planck15.Tcmb(0).value) / 2. * (nu * 1.e9 / constants.c) ** 2 * constants.k
+
 
 class BBClEstimation(PipelineStage):
     """
@@ -82,26 +97,26 @@ class BBClEstimation(PipelineStage):
         ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
-            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
-            hp.mollview(noise_maps[3*f+1,:], title='Q', sub=121)
-            hp.mollview(noise_maps[3*f+2,:], title='U', sub=122)
+            fn = get_field(mask*noise_maps[3*f+1,:]*KCMB2RJ(self.config['frequencies'][f]), mask*noise_maps[3*f+2,:]*KCMB2RJ(self.config['frequencies'][f]))
+            # hp.mollview(noise_maps[3*f+1,:], title='Q', sub=121)
+            # hp.mollview(noise_maps[3*f+2,:], title='U', sub=122)
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
-            pl.figure()
-            pl.loglog(1.0/compute_master(fn, fn, w)[3])
-            pl.show()
+            # pl.figure()
+            # pl.loglog(1.0/compute_master(fn, fn, w)[3])
+            # pl.show()
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
-        print('shape of AtNA = ', AtNA.shape)
-        print('AtNA = ', AtNA)
+        # print('shape of AtNA = ', AtNA.shape)
+        # print('AtNA = ', AtNA)
         inv_AtNA = np.linalg.inv(AtNA)
-        print('shape of inv_AtNA = ', inv_AtNA.shape)
-        print('inv_AtNA = ', inv_AtNA)
+        # print('shape of inv_AtNA = ', inv_AtNA.shape)
+        # print('inv_AtNA = ', inv_AtNA)
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)
-        print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
-        print('Cl_cov_clean = ', Cl_cov_clean)       
+        # print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
+        # print('Cl_cov_clean = ', Cl_cov_clean)       
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-        print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
-        print('Cl_cov_clean = ', Cl_cov_clean)          
-        exit()
+        # print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
+        # print('Cl_cov_clean = ', Cl_cov_clean)          
+        # exit()
         ### for comparison, compute the power spectrum of the noise after comp sep
 
         ### compute power spectra of the cleaned sky maps
