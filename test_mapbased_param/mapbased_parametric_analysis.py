@@ -104,7 +104,7 @@ class BBMapParamCompSep(PipelineStage):
         mask = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
         # mask = ~(np.any(mask, axis=tuple(range(noise_maps__.ndim-1))))
         # print('mask = ', mask)
-        noise_after_comp_sep = np.ones((res.s.shape[0],res.s.shape[1], noise_cov.shape[1]))*hp.UNSEEN
+        noise_after_comp_sep = np.ones((3,2, noise_cov.shape[1]))*hp.UNSEEN
         obs_pix = np.where(mask==False)[0]
         # test_map = np.zeros(noise_cov.shape[1])
         # test_map[obs_pix] = 1.0
