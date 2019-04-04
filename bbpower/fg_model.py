@@ -62,24 +62,27 @@ class FGModel:
             comp['sed'] = sed_fnc(**params_fgc, units='K_RJ')
 
             # Same thing for C_ell parameters
-            comp['cl_parameters'] = component['cl_parameters']
-            params_fgl = {}
             comp['names_cl_dict'] = {}
-            for k,l in comp['cl_parameters'].items():
-                comp['names_cl_dict'][l[0]]=k
-                if l[0]=='ell0':
-                    if l[1]!='fixed':
-                        raise ValueError("You can't vary reference scales!")
+            params_fgl = {}
+            for k,d in component['cl_parameters'].items():
+                comp['names_cl_dict'][k]={}
+                params_fgl[k]={}
+                for n,l in d.items():
+                    comp['names_cl_dict'][k][l[0]]=n
+                    if l[0]=='ell0':
+                        if l[1]!='fixed':
+                            raise ValueError("You can't vary reference scales!")
+                    if l[1]=='fixed':
+                        val = l[2][0]
+                    else:
+                        val = None
+                    params_fgl[k][l[0]]=val
 
-                if l[1]=='fixed':
-                    val = l[2][0]
-                else:
-                    val = None
-                params_fgl[l[0]]=val
-
-            #Set Cl function
-            cl_fnc = get_function(fgl, component['cl'])
-            comp['cl'] = cl_fnc(**params_fgl)
+            # Set Cl functions
+            comp['cl'] = {}
+            for k,c in component['cl'].items():
+                cl_fnc = get_function(fgl, c)
+                comp['cl'][k] = cl_fnc(**(params_fgl[k]))
             self.components[key] = comp
         return 
 

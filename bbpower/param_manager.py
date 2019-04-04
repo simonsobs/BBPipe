@@ -44,10 +44,17 @@ class ParameterManager(object):
         # Loop through FG components
         for c_name in sorted(config['fg_model'].keys()):
             c = config['fg_model'][c_name]
-            for tag in ['sed_parameters', 'cl_parameters', 'cross']:
+            for tag in ['sed_parameters', 'cross']:
                 d = c.get(tag)
                 if d:
                     self._add_parameters(d)
+            dc = c.get('cl_parameters')
+            if dc:  # Power spectra
+                for cl_name,d in dc.items():
+                    p1,p2=cl_name
+                    # Add parameters only if we're using both polarization channels
+                    if (p1 in config['pol_channels']) and (p2 in config['pol_channels']):
+                        self._add_parameters(d)
 
         # Loop through different systematics
         if 'systematics' in config.keys():

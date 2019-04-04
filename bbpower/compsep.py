@@ -29,7 +29,6 @@ class BBCompSep(PipelineStage):
         self.load_cmb()
         self.fg_model = FGModel(self.config)
         self.params = ParameterManager(self.config)
-        #self.parameters = FGParameters(self.config)
         if self.use_handl:
             self.prepare_h_and_l()
         return
@@ -67,15 +66,22 @@ class BBCompSep(PipelineStage):
                                      precision_filename=self.get_input('cells_coadded'))
 
         #Keep only BB measurements
-        self.s.cullType(b'BB') # TODO: Modify if we want to use E
+        correlations=[]
+        for m1 in self.config['pol_channels']:
+            for m2 in self.config['pol_channels']:
+                correlations.append((m1+m2).encode())
+
+        self.s.cullType(correlations)
         if self.use_handl:
-            s_fid.cullType(b'BB')
-            s_noi.cullType(b'BB')
+            s_fid.cullType(correlations)
+            s_noi.cullType(correlations)
         self.nfreqs = len(self.s.tracers)
-        self.nmaps = self.nfreqs # TODO: Modify if we want to use E
+        self.npol = len(self.config['pol_channels'])
+        self.nmaps = self.nfreqs * self.npol
         self.index_ut = np.triu_indices(self.nmaps)
         self.ncross = (self.nmaps * (self.nmaps + 1)) // 2
         self.order = self.s.sortTracers()
+        self.pol_order=dict(zip(self.config['pol_channels'],range(self.npol)))
 
         #Collect bandpasses
         self.bpss = []
@@ -92,9 +98,10 @@ class BBCompSep(PipelineStage):
         #Avoid l<2
         mask_w = self.s.binning.windows[0].ls > 1
         self.bpw_l = self.s.binning.windows[0].ls[mask_w]
+        self.n_ell = len(self.bpw_l)
         _,_,_,self.ell_b,_ = self.order[0]
         self.n_bpws = len(self.ell_b)
-        self.windows = np.zeros([self.ncross, self.n_bpws, len(self.bpw_l)])
+        self.windows = np.zeros([self.ncross, self.n_bpws, self.n_ell])
 
         #Get power spectra and covariances
         v = self.s.mean.vector
@@ -111,16 +118,25 @@ class BBCompSep(PipelineStage):
         self.vector_indices = self.vector_to_matrix(np.arange(self.ncross, dtype=int)).astype(int)
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
+            p1,p2=typ.decode()
+            ip1=self.pol_order[p1]
+            ip2=self.pol_order[p2]
+            # Ordering is such that polarization channel is the fastest varying index
+            ind_vec=self.vector_indices[t1*self.npol + ip1, t2*self.npol + ip2]
             for b,i in enumerate(ndx):
-                self.windows[self.vector_indices[t1, t2], b, :] = self.s.binning.windows[i].w[mask_w]
-            v2d[:,self.vector_indices[t1, t2]] = v[ndx]
+                self.windows[ind_vec, b, :] = self.s.binning.windows[i].w[mask_w]
+            v2d[:, ind_vec] = v[ndx]
             if self.use_handl:
-                v2d_noi[:, self.vector_indices[t1, t2]] = s_noi.mean.vector[ndx]
-                v2d_fid[:, self.vector_indices[t1, t2]] = s_fid.mean.vector[ndx]
+                v2d_noi[:, ind_vec] = s_noi.mean.vector[ndx]
+                v2d_fid[:, ind_vec] = s_fid.mean.vector[ndx]
             if len(ells) != self.n_bpws:
                 raise ValueError("All power spectra need to be sampled at the same ells")
             for t1b, t2b, typb, ellsb, ndxb in self.order:
-                cv2d[:, self.vector_indices[t1, t2], :, self.vector_indices[t1b, t2b]] = cv[ndx, :][:, ndxb]
+                p1b,p2b=typb.decode()
+                ip1b=self.pol_order[p1b]
+                ip2b=self.pol_order[p2b]
+                ind_vecb=self.vector_indices[t1b*self.npol + ip1b, t2b*self.npol + ip2b]
+                cv2d[:, ind_vec, :, ind_vecb] = cv[ndx, :][:, ndxb]
 
         #Store data
         self.bbdata = self.vector_to_matrix(v2d)
@@ -140,10 +156,21 @@ class BBCompSep(PipelineStage):
         
         self.cmb_ells = cmb_bbfile[:, 0]
         mask = (self.cmb_ells <= self.bpw_l.max()) & (self.cmb_ells > 1)
-        self.cmb_ells = self.cmb_ells[mask] 
-        self.cmb_bbr = cmb_bbfile[:, 3][mask]
-        self.cmb_bblensing = cmb_lensingfile[:, 3][mask]
-        self.cmb_bbr -= self.cmb_bblensing
+        self.cmb_ells = self.cmb_ells[mask]
+
+        # TODO: this is a patch
+        nell = len(self.cmb_ells)
+        self.cmb_tens = np.zeros([nell, self.npol, self.npol])
+        self.cmb_lens = np.zeros([nell, self.npol, self.npol])
+        self.cmb_scal = np.zeros([nell, self.npol, self.npol])
+        if 'B' in self.config['pol_channels']:
+            ind = self.pol_order['B']
+            self.cmb_tens[:, ind, ind] = cmb_bbfile[:, 3][mask] - cmb_lensingfile[:, 3][mask]
+            self.cmb_lens[:, ind, ind] = cmb_lensingfile[:, 3][mask]
+        if 'E' in self.config['pol_channels']:
+            ind = self.pol_order['E']
+            self.cmb_tens[:, ind, ind] = cmb_bbfile[:, 2][mask] - cmb_lensingfile[:, 2][mask]
+            self.cmb_scal[:, ind, ind] = cmb_lensingfile[:, 2][mask]
         return
 
     def integrate_seds(self, params):
@@ -164,42 +191,52 @@ class BBCompSep(PipelineStage):
     def evaluate_power_spectra(self, params):
         fg_pspectra = {}
         for key, component in self.fg_model.components.items():
-            pspec_params = [params[component['names_cl_dict'][k]]
-                            for k in component['cl'].params]
-            fg_pspectra[key] = component['cl'].eval(self.bpw_l, *pspec_params)
+            fg_pspectra[key] = np.zeros([self.n_ell, self.npol, self.npol])
+            for cl_comb,clfunc in component['cl'].items():
+                m1, m2 = cl_comb
+                ip1 = self.pol_order[m1]
+                ip2 = self.pol_order[m2]
+                pspec_params = [params[component['names_cl_dict'][cl_comb][k]]
+                                for k in clfunc.params]
+                fg_pspectra[key][:,ip1,ip2] = clfunc.eval(self.bpw_l, *pspec_params)
         return fg_pspectra
     
     def model(self, params):
         """
         Defines the total model and integrates over the bandpasses and windows. 
         """
-        cmb_bmodes = params['r_tensor'] * self.cmb_bbr + self.cmb_bblensing
+        cmb_cell = params['r_tensor'] * self.cmb_tens + \
+                   params['A_lens'] * self.cmb_lens + \
+                   self.cmb_scal  # [nell, npol, npol]
         fg_scaling = self.integrate_seds(params)
-        fg_p_spectra = self.evaluate_power_spectra(params)
+        fg_cell = self.evaluate_power_spectra(params)  # {'comp': [nell,npol,npol]}
         
         cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
-        for t1 in range(self.nfreqs) :
-            for t2 in range(t1, self.nfreqs) :
-                windows = self.windows[self.vector_indices[t1, t2]]
+        for t1 in range(self.nfreqs):
+            for t2 in range(t1, self.nfreqs):
 
-                model = cmb_bmodes.copy()
+                model = cmb_cell.copy()
                 for component in self.fg_model.components:
                     model += fg_scaling[component][t1] * fg_scaling[component][t2] * \
-                             fg_p_spectra[component]
+                             fg_cell[component]
                 
                     for comp2, epsname in self.fg_model.components[component]['names_x_dict'].items():
                         epsilon = params[epsname]
                         cross_scaling = fg_scaling[component][t1] * fg_scaling[comp2][t2] + \
                                         fg_scaling[comp2][t1] * fg_scaling[component][t2]
-                        cross_spectrum = np.sqrt(fg_p_spectra[component] * fg_p_spectra[comp2])
+                        cross_spectrum = np.sqrt(np.fabs(fg_cell[component] * fg_cell[comp2]))
                         model += epsilon * cross_scaling * cross_spectrum
-                        
-                model = np.dot(windows, model)
-                cls_array_list[:, t1, t2] = model
 
-                if t1 != t2:
-                    cls_array_list[:, t2, t1] = model
-
+                for p1 in range(self.npol):
+                    ind1 = t1 * self.npol + p1
+                    p0= p1 if t1==t2 else 0
+                    for p2 in range(p0,self.npol):
+                        ind2 = t2 * self.npol + p2
+                        windows = self.windows[self.vector_indices[ind1, ind2]]
+                        clband = np.dot(windows, model[:, p1, p2])
+                        cls_array_list[:, ind1, ind2] = clband
+                        if ind1!=ind2:
+                            cls_array_list[:, ind2, ind1] = clband
         return cls_array_list
 
     def chi_sq_dx(self, params):
