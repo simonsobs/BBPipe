@@ -97,6 +97,7 @@ class BBClEstimation(PipelineStage):
         ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
+            print('conversion factor = ', KCMB2RJ(self.config['frequencies'][f]) )
             fn = get_field(mask*noise_maps[3*f+1,:]/KCMB2RJ(self.config['frequencies'][f]), mask*noise_maps[3*f+2,:]/KCMB2RJ(self.config['frequencies'][f]))
             # hp.mollview(noise_maps[3*f+1,:], title='Q', sub=121)
             # hp.mollview(noise_maps[3*f+2,:], title='U', sub=122)
