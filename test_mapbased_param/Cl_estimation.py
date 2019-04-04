@@ -37,6 +37,8 @@ def dB(nu, T):
     return B(nu, T) / T * x * np.exp(x) / np.expm1(x)
 
 def KCMB2RJ(nu):
+    print(dB(nu, Planck15.Tcmb(0).value))
+    print((2. * (nu / constants.c) ** 2 * constants.k))
     return  dB(nu, Planck15.Tcmb(0).value) / (2. * (nu / constants.c) ** 2 * constants.k)
 
 
