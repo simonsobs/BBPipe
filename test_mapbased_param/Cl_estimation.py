@@ -119,6 +119,12 @@ class BBClEstimation(PipelineStage):
             fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=False)
             fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=False)
 
+            hp.mollview(mask*post_compsep_noise[2*comp_i], subs=221, title='Q comp_i', norm='hist')
+            hp.mollview(mask*post_compsep_noise[2*comp_i+1], subs=222, title='U comp_i', norm='hist')
+            hp.mollview(mask*post_compsep_noise[2*comp_j], subs=223, title='Q comp_j', norm='hist')
+            hp.mollview(mask*post_compsep_noise[2*comp_j+1], subs=224, title='U comp_j', norm='hist')
+            pl.show()
+            
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
 
             ind += 1
