@@ -106,7 +106,7 @@ class BBClEstimation(PipelineStage):
         inv_AtNA = np.linalg.inv(AtNA)
         # print('shape of inv_AtNA = ', inv_AtNA.shape)
         # print('inv_AtNA = ', inv_AtNA)
-        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)/KCMB2RJ(150.0)**2
+        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)*KCMB2RJ(150.0)**2
         # print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
         # print('Cl_cov_clean = ', Cl_cov_clean)       
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
