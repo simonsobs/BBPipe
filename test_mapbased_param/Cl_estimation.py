@@ -82,14 +82,26 @@ class BBClEstimation(PipelineStage):
         ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
-            fn = get_field(mask*noise_maps[3*f+1], mask*noise_maps[3*f+2])
-            Cl_cov_clean_loc.append(1.0/compute_master(fn,fn, w)[3] )
-
+            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
+            hp.mollview(noise_maps[3*f+1,:], title='Q', sub=121)
+            hp.mollview(noise_maps[3*f+2,:], title='U', sub=122)
+            Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
+            pl.figure()
+            pl.loglog(1.0/compute_master(fn, fn, w)[3])
+            pl.show()
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
+        print('shape of AtNA = ', AtNA.shape)
+        print('AtNA = ', AtNA)
         inv_AtNA = np.linalg.inv(AtNA)
+        print('shape of inv_AtNA = ', inv_AtNA.shape)
+        print('inv_AtNA = ', inv_AtNA)
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)
+        print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
+        print('Cl_cov_clean = ', Cl_cov_clean)       
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-
+        print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
+        print('Cl_cov_clean = ', Cl_cov_clean)          
+        exit()
         ### for comparison, compute the power spectrum of the noise after comp sep
 
         ### compute power spectra of the cleaned sky maps
@@ -118,12 +130,6 @@ class BBClEstimation(PipelineStage):
             ## noise spectra
             fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=True)
             fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=True)
-
-            # hp.mollview(post_compsep_noise[2*comp_i], sub=221, title='Q comp_i', norm='hist')
-            # hp.mollview(post_compsep_noise[2*comp_i+1], sub=222, title='U comp_i', norm='hist')
-            # hp.mollview(post_compsep_noise[2*comp_j], sub=223, title='Q comp_j', norm='hist')
-            # hp.mollview(post_compsep_noise[2*comp_j+1], sub=224, title='U comp_j', norm='hist')
-            # pl.show()
 
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
 
