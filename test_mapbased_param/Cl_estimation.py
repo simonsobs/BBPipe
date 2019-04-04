@@ -97,8 +97,8 @@ class BBClEstimation(PipelineStage):
         ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
-            fn = get_field(mask*noise_maps[3*f+1,:]*KCMB2RJ(self.config['frequencies'][f])/KCMB2RJ(150.0), 
-                            mask*noise_maps[3*f+2,:]*KCMB2RJ(self.config['frequencies'][f])/KCMB2RJ(150.0))
+            fn = get_field(mask*noise_maps[3*f+1,:]*KCMB2RJ(self.config['frequencies'][f]), 
+                            mask*noise_maps[3*f+2,:]*KCMB2RJ(self.config['frequencies'][f]))
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
 
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
