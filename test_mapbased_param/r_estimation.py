@@ -103,12 +103,12 @@ class BBREstimation(PipelineStage):
         lmax = self.config['lmax']
         ell_v = Cl_clean[0]
         ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
-        pl.figure()
-        pl.loglog(ClBB_obs)
-        pl.loglog(Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)], ':')
-        pl.loglog(Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], '--')
-        pl.show()
-        exit()
+        # pl.figure()
+        # pl.loglog(ClBB_obs)
+        # pl.loglog(Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)], ':')
+        # pl.loglog(Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], '--')
+        # pl.show()
+        # exit()
         Cl_dust_obs = Cl_clean[2][(ell_v>=lmin)&(ell_v<=lmax)]- Cl_noise[2][(ell_v>=lmin)&(ell_v<=lmax)]
         Cl_sync_obs = Cl_clean[3][(ell_v>=lmin)&(ell_v<=lmax)]- Cl_noise[3][(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
@@ -173,7 +173,9 @@ class BBREstimation(PipelineStage):
                     pl.legend()
                     pl.xlabel('$\ell$', fontsize=20)
                     pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
+                    pl.ylim([7e-4,2e-1])
                     pl.savefig(self.get_output('power_spectrum_post_comp_sep'))
+                    pl.show()
                     pl.close()
 
                 logL = 0.0
