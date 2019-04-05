@@ -105,7 +105,7 @@ class BBREstimation(PipelineStage):
         ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
         pl.figure()
         pl.loglog(ClBB_obs)
-        pl.loglog(Cl_noise[0][(ell_v>=lmin)&(ell_v<=lmax)], ':')
+        pl.loglog(Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)], ':')
         pl.loglog(Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)], '--')
         pl.show()
         exit()
