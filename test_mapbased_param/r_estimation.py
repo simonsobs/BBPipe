@@ -175,7 +175,7 @@ class BBREstimation(PipelineStage):
                     pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
                     pl.ylim([7e-5,2e-1])
                     pl.savefig(self.get_output('power_spectrum_post_comp_sep'))
-                    pl.show()
+                    # pl.show()
                     pl.close()
 
                 logL = 0.0
@@ -187,12 +187,13 @@ class BBREstimation(PipelineStage):
             
             def lnprior( p_loc ): 
                 r_loc, A_dust = p_loc 
-                if 0.0<=r_loc<=1.0 and 1.0<=A_dust<=10.0:
+                if 0.0<=r_loc and 0.0<=A_dust:
                     return 0.0
                 return np.inf
 
             def lnprob(p_loc):
-                lp = 0.0
+                # lp = 0.0
+                lp = lnprior( p_loc )
                 return lp + likelihood_on_r_with_stat_and_sys_res(p_loc)
 
             neg_likelihood_on_r_with_stat_and_sys_res = lambda *args: lnprob(*args)
