@@ -189,7 +189,7 @@ class BBREstimation(PipelineStage):
             
             def lnprior( p_loc ): 
                 r_loc, A_dust = p_loc 
-                if -1e-2<=r_loc<=0.1 and -1e-2<=A_dust<=0.05:
+                if -5e-3<=r_loc:#  and -1e-2<=A_dust:
                     return 0.0
                 return -np.inf
 
