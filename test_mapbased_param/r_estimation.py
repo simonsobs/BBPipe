@@ -103,7 +103,12 @@ class BBREstimation(PipelineStage):
         lmax = self.config['lmax']
         ell_v = Cl_clean[0]
         ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        pl.figure()
+        pl.loglog(Cl_clean[2][(ell_v>=lmin)&(ell_v<=lmax)])
         Cl_dust_obs = Cl_clean[2][(ell_v>=lmin)&(ell_v<=lmax)]- Cl_noise[2][(ell_v>=lmin)&(ell_v<=lmax)]
+        pl.loglog(Cl_dust_obs)
+        pl.loglog(Cl_noise[2][(ell_v>=lmin)&(ell_v<=lmax)], '--')
+        pl.show()
         Cl_sync_obs = Cl_clean[3][(ell_v>=lmin)&(ell_v<=lmax)]- Cl_noise[3][(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
