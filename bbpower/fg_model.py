@@ -15,8 +15,12 @@ class FGModel:
         return 
 
     def load_foregrounds(self, config):
+        self.component_names=[]
         self.components = {}
-        for key, component in config['fg_model'].items(): 
+        self.component_order = {}
+
+        i_comp = 0
+        for key, component in config['fg_model'].items():
             comp = {}
 
             comp['names_x_dict']={}
@@ -90,6 +94,10 @@ class FGModel:
                     cl_fnc = get_function(fgl, c)
                     comp['cl'][k] = cl_fnc(**(params_fgl[k]))
             self.components[key] = comp
+            self.component_names.append(key)
+            self.component_order[key] = i_comp
+            i_comp += 1
+        self.n_components=len(self.component_names)
         return
 
 

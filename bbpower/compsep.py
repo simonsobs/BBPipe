@@ -160,46 +160,61 @@ class BBCompSep(PipelineStage):
 
         # TODO: this is a patch
         nell = len(self.cmb_ells)
-        self.cmb_tens = np.zeros([nell, self.npol, self.npol])
-        self.cmb_lens = np.zeros([nell, self.npol, self.npol])
-        self.cmb_scal = np.zeros([nell, self.npol, self.npol])
+        self.cmb_tens = np.zeros([self.npol, self.npol, nell])
+        self.cmb_lens = np.zeros([self.npol, self.npol, nell])
+        self.cmb_scal = np.zeros([self.npol, self.npol, nell])
         if 'B' in self.config['pol_channels']:
             ind = self.pol_order['B']
-            self.cmb_tens[:, ind, ind] = cmb_bbfile[:, 3][mask] - cmb_lensingfile[:, 3][mask]
-            self.cmb_lens[:, ind, ind] = cmb_lensingfile[:, 3][mask]
+            self.cmb_tens[ind, ind] = cmb_bbfile[:, 3][mask] - cmb_lensingfile[:, 3][mask]
+            self.cmb_lens[ind, ind] = cmb_lensingfile[:, 3][mask]
         if 'E' in self.config['pol_channels']:
             ind = self.pol_order['E']
-            self.cmb_tens[:, ind, ind] = cmb_bbfile[:, 2][mask] - cmb_lensingfile[:, 2][mask]
-            self.cmb_scal[:, ind, ind] = cmb_lensingfile[:, 2][mask]
+            self.cmb_tens[ind, ind] = cmb_bbfile[:, 2][mask] - cmb_lensingfile[:, 2][mask]
+            self.cmb_scal[ind, ind] = cmb_lensingfile[:, 2][mask]
         return
 
     def integrate_seds(self, params):
-        fg_scaling = {}
-        for key, component in self.fg_model.components.items(): 
-            fg_scaling[key] = []
-            units = component['cmb_n0_norm'] 
-            sed_params = [params[component['names_sed_dict'][k]] 
-                          for k in component['sed'].params]
+        fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs])
+
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            units = comp['cmb_n0_norm']
+            sed_params = [params[comp['names_sed_dict'][k]] 
+                          for k in comp['sed'].params]
             def sed(nu):
-                return component['sed'].eval(nu, *sed_params)
+                return comp['sed'].eval(nu, *sed_params)
 
             for tn in range(self.nfreqs):
-                fg_scaling[key].append(self.bpss[tn].convolve_sed(sed, params) * units)
+                fg_scaling[i_c, tn] = self.bpss[tn].convolve_sed(sed, params) * units
 
-        return fg_scaling
+        return fg_scaling.T
 
     def evaluate_power_spectra(self, params):
-        fg_pspectra = {}
-        for key, component in self.fg_model.components.items():
-            fg_pspectra[key] = np.zeros([self.n_ell, self.npol, self.npol])
-            for cl_comb,clfunc in component['cl'].items():
+        fg_pspectra = np.zeros([self.fg_model.n_components,
+                                self.fg_model.n_components,
+                                self.npol, self.npol, self.n_ell])
+        
+        # Fill diagonal
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            for cl_comb,clfunc in comp['cl'].items():
                 m1, m2 = cl_comb
                 ip1 = self.pol_order[m1]
                 ip2 = self.pol_order[m2]
-                pspec_params = [params[component['names_cl_dict'][cl_comb][k]]
+                pspec_params = [params[comp['names_cl_dict'][cl_comb][k]]
                                 for k in clfunc.params]
-                fg_pspectra[key][:,ip1,ip2] = clfunc.eval(self.bpw_l, *pspec_params)
-        return fg_pspectra
+                fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params)
+
+        # Off diagonals
+        for i_c1, c_name1 in enumerate(self.fg_model.component_names):
+            for c_name2, epsname in self.fg_model.components[c_name1]['names_x_dict'].items():
+                i_c2 = self.fg_model.component_order[c_name2]
+                cl_x=np.sqrt(np.fabs(fg_pspectra[i_c1, i_c1]*
+                                     fg_pspectra[i_c2, i_c2])) * params[epsname]
+                fg_pspectra[i_c1, i_c2] = cl_x
+                fg_pspectra[i_c2, i_c1] = cl_x
+
+        return np.transpose(fg_pspectra,axes=[2,3,4,0,1])
     
     def model(self, params):
         """
@@ -207,36 +222,26 @@ class BBCompSep(PipelineStage):
         """
         cmb_cell = params['r_tensor'] * self.cmb_tens + \
                    params['A_lens'] * self.cmb_lens + \
-                   self.cmb_scal  # [nell, npol, npol]
-        fg_scaling = self.integrate_seds(params)
-        fg_cell = self.evaluate_power_spectra(params)  # {'comp': [nell,npol,npol]}
-        
-        cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
-        for t1 in range(self.nfreqs):
-            for t2 in range(t1, self.nfreqs):
+                   self.cmb_scal  # [npol,npol,nell]
+        fg_scaling = self.integrate_seds(params)  # [nfreq, ncomp]
+        fg_cell = self.evaluate_power_spectra(params)  # [npol,npol,nell,ncomp,ncomp]
 
-                model = cmb_cell.copy()
-                for component in self.fg_model.components:
-                    model += fg_scaling[component][t1] * fg_scaling[component][t2] * \
-                             fg_cell[component]
-                
-                    for comp2, epsname in self.fg_model.components[component]['names_x_dict'].items():
-                        epsilon = params[epsname]
-                        cross_scaling = fg_scaling[component][t1] * fg_scaling[comp2][t2] + \
-                                        fg_scaling[comp2][t1] * fg_scaling[component][t2]
-                        cross_spectrum = np.sqrt(np.fabs(fg_cell[component] * fg_cell[comp2]))
-                        model += epsilon * cross_scaling * cross_spectrum
+        # C(l,nu1,nu2) = C(l,c1,c2) F(nu1,c1) F(nu2,c2)
+        cls_array_fg = np.einsum('jlmpq,ip,kq',fg_cell,fg_scaling,fg_scaling)
+        # Add CMB (unit bandpass response)
+        cls_array_fg += cmb_cell[None,:,None,:]
+        # Collapse freq-pol
+        cls_array_fg = cls_array_fg.reshape([self.nmaps,self.nmaps,self.n_ell])
 
-                for p1 in range(self.npol):
-                    ind1 = t1 * self.npol + p1
-                    p0= p1 if t1==t2 else 0
-                    for p2 in range(p0,self.npol):
-                        ind2 = t2 * self.npol + p2
-                        windows = self.windows[self.vector_indices[ind1, ind2]]
-                        clband = np.dot(windows, model[:, p1, p2])
-                        cls_array_list[:, ind1, ind2] = clband
-                        if ind1!=ind2:
-                            cls_array_list[:, ind2, ind1] = clband
+        # Window convolution
+        cls_array_list = np.zeros([self.n_bpws, self.nmaps, self.nmaps])
+        for m1 in range(self.nmaps):
+            for m2 in range(m1,self.nmaps):
+                windows = self.windows[self.vector_indices[m1, m2]]
+                clband = np.dot(windows, cls_array_fg[m1,m2])
+                cls_array_list[:, m1, m2] = clband
+                if m1!=m2:
+                    cls_array_list[:, m2, m1] = clband
         return cls_array_list
 
     def chi_sq_dx(self, params):
@@ -347,7 +352,7 @@ class BBCompSep(PipelineStage):
         chi2 = -2*self.lnprob(self.params.p0)
         return chi2
 
-    def timing(self, n_eval=100):
+    def timing(self, n_eval=300):
         """
         Evaluate n times and benchmark
         """
