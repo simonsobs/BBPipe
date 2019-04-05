@@ -165,6 +165,8 @@ class BBREstimation(PipelineStage):
                                                  # label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
                     pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                  label='actual noise post comp sep', linestyle=':', color='Cyan')
+                    pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                 label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                     pl.loglog( ell_v_loc, norm*A_dust*Cl_dust_obs, label='estimated dust template', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
                     if self.config['sync_marginalization']: pl.loglog( ell_v_loc, norm*A_sync*Cl_sync_obs,
                                                  label='synchrotron template', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
@@ -187,7 +189,7 @@ class BBREstimation(PipelineStage):
             
             def lnprior( p_loc ): 
                 r_loc, A_dust = p_loc 
-                if -1e-2<=r_loc and -1e-2<=A_dust<=0.03:
+                if -1e-2<=r_loc and -1e-2<=A_dust<=0.05:
                     return 0.0
                 return -np.inf
 
