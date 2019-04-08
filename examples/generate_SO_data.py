@@ -4,7 +4,7 @@ from noise_calc import Simons_Observatory_V3_SA_noise
 
 #CMB spectrum
 def fcmb(nu):
-    x=0.017611907*nu
+    x=0.017608676067552197*nu
     ex=np.exp(x)
     return ex*(x/(ex-1))**2
 
@@ -13,8 +13,8 @@ def comp_sed(nu,nu0,beta,temp,typ):
     if typ=='cmb':
         return fcmb(nu)
     elif typ=='dust':
-        x_to=0.0479924466*nu/temp
-        x_from=0.0479924466*nu0/temp
+        x_to=0.04799244662211351*nu/temp
+        x_from=0.04799244662211351*nu0/temp
         return (nu/nu0)**(1+beta)*(np.exp(x_from)-1)/(np.exp(x_to)-1)*fcmb(nu0)
     elif typ=='sync':
         return (nu/nu0)**beta*fcmb(nu0)
@@ -22,21 +22,30 @@ def comp_sed(nu,nu0,beta,temp,typ):
 
 #Bandpasses 
 class Bpass(object):
-    def __init__(self,name,fname,angle=0):
+    def __init__(self,name,fname,angle=0,phase_nu=None):
         self.name=name
         self.nu,self.bnu=np.loadtxt(fname,unpack=True)
         self.dnu=np.zeros_like(self.nu)
         self.dnu[1:]=np.diff(self.nu)
         self.dnu[0]=self.dnu[1]
-        #CMB units
+        if phase_nu is not None:
+            from scipy.interpolate import interp1d
+            n,p=np.loadtxt(phase_nu,unpack=True)
+            p=np.radians(p)
+            pf=interp1d(n,p,bounds_error=False,fill_value=0)
+            phi=pf(self.nu)
+            self.phase=np.cos(2*phi)+1j*np.sin(2*phi)
+        # CMB units
         self.bnu/=np.sum(self.dnu*self.bnu*self.nu**2*fcmb(self.nu))
+        self.norm = 1./np.sum(self.dnu*self.bnu*self.phase*self.nu**2*fcmb(self.nu))
         self.angle=angle
+        print(self.angle)
         self.rot=np.array([[np.cos(2*self.angle),np.sin(2*self.angle)],
                            [-np.sin(2*self.angle),np.cos(2*self.angle)]])
-        print(self.angle)
 
     def convolve_sed(self,f):
-        return np.sum(self.dnu*self.bnu*self.nu**2*f(self.nu))
+        sed_b=np.sum(self.dnu*self.bnu*self.phase*self.nu**2*f(self.nu))*self.norm
+        return np.array([[sed_b.real,sed_b.imag],[-sed_b.imag,sed_b.real]])
 
     def rotate(self,cl,transpose=False):
         if transpose:
@@ -44,6 +53,8 @@ class Bpass(object):
         else:
             clrot=np.einsum('ij,jkl',self.rot,cl)
         return clrot
+
+
 
 #All frequencies and bandpasses
 tracer_names=np.array(['SO_LF1','SO_LF2','SO_MF1','SO_MF2','SO_UHF1','SO_UHF2'])
@@ -53,8 +64,15 @@ fnames=['/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/LF/LF1.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/MF/MF2.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF1.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF2.txt']
-angles=[0.,0.,0.,0.,0.,0.]
-bpss=[Bpass(n,f,angle=np.radians(a)) for f,n,a in zip(fnames,tracer_names,angles)]
+angles=[1.,-1.,1.,-1.,1.,-1.]
+phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
+          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
+          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
+          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
+          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt',
+          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt']
+bpss=[Bpass(n,f,angle=np.radians(a),phase_nu=p)
+      for f,n,a,p in zip(fnames,tracer_names,angles,phase_nu)]
 
 #Add E and B to tracer names to enumerate all possible maps
 map_names=[]
@@ -127,19 +145,27 @@ bpw_comp=np.sum(dls_comp[:,:,:,:,None,:]*windows[None,None,None,None,:,:],axis=5
 
 #Band-convolved SEDs
 nfreqs=len(bpss)
-seds=np.zeros([3,nfreqs]) #[ncomp,n_nu]
+seds=np.zeros([3,nfreqs,2,2]) #[ncomp,n_nu]
 for ib,b in enumerate(bpss):
     seds[0,ib]=b.convolve_sed(lambda nu : comp_sed(nu,None,None,None,'cmb'))
     seds[1,ib]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_sync,beta_sync,None,'sync'))
     seds[2,ib]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_dust,beta_dust,temp_dust,'dust'))
 
+def rotate_cells_mat(mat1, mat2, cls):
+    if mat1 is not None:
+        cls=np.einsum('ijk,lk',cls,mat1)
+    if mat2 is not None:
+        cls=np.einsum('jk,ikl',mat2,cls)
+    return cls
+
 #Compute multi-frequency spectra
-bpw_freq_sig=np.einsum('ij,km,ilkno',seds,seds,bpw_comp)
+#                       cfpp cfpp cpcpl
+bpw_freq_sig=np.einsum('imnk,jopl,ikjlq',seds,seds,bpw_comp)
 #Apply polarization angle
 for f1 in range(nfreqs):
     for f2 in range(nfreqs):
         cl=bpw_freq_sig[f1,:,f2,:,:]
-        clrot=bpss[f2].rotate(bpss[f1].rotate(cl,transpose=True))
+        clrot=bpss[f1].rotate(bpss[f2].rotate(cl,transpose=True))
         bpw_freq_sig[f1,:,f2,:,:]=clrot
 
 #Add noise

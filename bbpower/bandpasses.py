@@ -20,8 +20,8 @@ class Bandpass(object):
         if fname:
             from scipy.interpolate import interp1d
             nu_phi,phi=np.loadtxt(fname,unpack=True)
-            phi=np.radians(phi)
-            phif=interp1d(nu_phi,phi,bounds_error=False,fill_value=0)
+            phif=interp1d(nu_phi, np.radians(phi),
+                          bounds_error=False, fill_value=0)
             phi_arr=phif(self.nu)
             phase = np.cos(2*phi_arr) + 1j * np.sin(2*phi_arr)
             self.bnu_dnu = self.bnu_dnu * phase

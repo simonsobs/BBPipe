@@ -227,24 +227,15 @@ class BBCompSep(PipelineStage):
         cmb_cell = params['r_tensor'] * self.cmb_tens + \
                    params['A_lens'] * self.cmb_lens + \
                    self.cmb_scal  # [npol,npol,nell]
-        fg_scaling, rot_m = self.integrate_seds(params)  # [nfreq, ncomp], [ncomp,nfreq,[matrix])
+        fg_scaling, rot_m = self.integrate_seds(params)  # [nfreq, ncomp], [ncomp,nfreq,[matrix]]
         fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
-        
-        ## C(l,nu1,nu2) = C(l,c1,c2) F(nu1,c1) F(nu2,c2)
-        #fg_cell = np.transpose(fg_cell,axes=[2,3,4,0,1])  # Now order is [npol,npol,nell,ncomp,ncomp]
-        #cls_array_fg = np.einsum('jlmpq,ip,kq',fg_cell,fg_scaling,fg_scaling)  # [nfreq,npol,nfreq,npol,nell]
-        ## Add CMB (unit bandpass response)
-        #cls_array_fg += cmb_cell[None,:,None,:]
 
-        # First, rotate power spectra if necessary
+        # Add all components scaled in frequency (and HWP-rotated if needed)
         cls_array_fg = np.zeros([self.nfreqs,self.nfreqs,self.n_ell,self.npol,self.npol])
-
-        # Put ell first
-        fg_cell = np.transpose(fg_cell,axes=[0,1,4,2,3]) # [ncomp,ncomp,nell,npol,npol]
-        cmb_cell = np.transpose(cmb_cell,axes=[2,0,1]) # [nell,npol,npol]
-        # Loop over frequency pairs
+        fg_cell = np.transpose(fg_cell, axes = [0,1,4,2,3])  # [ncomp,ncomp,nell,npol,npol]
+        cmb_cell = np.transpose(cmb_cell, axes = [2,0,1]) # [nell,npol,npol]
         for f1 in range(self.nfreqs):
-            for f2 in range(f1,self.nfreqs):
+            for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
                 cls=cmb_cell.copy()
 
                 # Loop over component pairs
@@ -255,7 +246,7 @@ class BBCompSep(PipelineStage):
                         mat2=rot_m[c2][f2]
                         a2=fg_scaling[f2,c2]
                         # Rotate if needed
-                        clrot=rotate_cells_mat(mat1,mat2,fg_cell[c1,c2])
+                        clrot=rotate_cells_mat(mat2,mat1,fg_cell[c1,c2])
                         # Scale in frequency and add
                         cls += clrot*a1*a2
                 cls_array_fg[f1,f2]=cls
@@ -271,7 +262,6 @@ class BBCompSep(PipelineStage):
                         m2 = f2*self.npol+p2
                         windows = self.windows[self.vector_indices[m1, m2]]
                         clband = np.dot(windows, cls_array_fg[f1,f2,:,p1,p2])
-                        #clband = np.dot(windows, cls_array_fg[f1,p1,f2,p2,:])
                         cls_array_list[:, f1, p1, f2, p2] = clband
                         if m1!=m2:
                             cls_array_list[:, f2, p2, f1, p1] = clband
@@ -279,7 +269,7 @@ class BBCompSep(PipelineStage):
         # Polarization angle rotation
         for f1 in range(self.nfreqs):
             for f2 in range(self.nfreqs):
-                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f1], self.bpss[f2],
+                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
                                                            cls_array_list[:,f1,:,f2,:],
                                                            params)
 
@@ -421,9 +411,8 @@ class BBCompSep(PipelineStage):
             np.savez(self.get_output('param_chains'),
                      params=sampler,
                      names=self.params.p_free_names)
-            print("Best fit:")
-            for p,n in zip(sampler,self.params.p_free_names):
-                print(n + ' : ' + '%.6lf'%p)
+            print("Best fit:",sampler)
+            print("params:", self.params.p_free_names)
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
             np.savez(self.get_output('param_chains'),
