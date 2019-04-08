@@ -64,7 +64,8 @@ class ParameterManager(object):
                 cnf_bps = cnf_sys['bandpasses']
                 i_bps = 1
                 while 'bandpass_%d' % i_bps in cnf_bps:
-                    self._add_parameters(cnf_bps['bandpass_%d' % i_bps])
+                    if cnf_bps['bandpass_%d' % i_bps].get('parameters'):
+                        self._add_parameters(cnf_bps['bandpass_%d' % i_bps]['parameters'])
                     i_bps += 1
 
         self.p0 = np.array(self.p0)

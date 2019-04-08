@@ -5,7 +5,7 @@ from bbpipe import PipelineStage
 from .types import NpzFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
-from .bandpasses import Bandpass
+from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
@@ -175,19 +175,23 @@ class BBCompSep(PipelineStage):
 
     def integrate_seds(self, params):
         fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs])
+        rot_matrices = []
 
         for i_c, c_name in enumerate(self.fg_model.component_names):
             comp = self.fg_model.components[c_name]
             units = comp['cmb_n0_norm']
             sed_params = [params[comp['names_sed_dict'][k]] 
                           for k in comp['sed'].params]
+            rot_matrices.append([])
             def sed(nu):
                 return comp['sed'].eval(nu, *sed_params)
 
             for tn in range(self.nfreqs):
-                fg_scaling[i_c, tn] = self.bpss[tn].convolve_sed(sed, params) * units
+                sed_b, rot = self.bpss[tn].convolve_sed(sed, params)
+                fg_scaling[i_c, tn] = sed_b * units
+                rot_matrices[i_c].append(rot)
 
-        return fg_scaling.T
+        return fg_scaling.T,rot_matrices
 
     def evaluate_power_spectra(self, params):
         fg_pspectra = np.zeros([self.fg_model.n_components,
@@ -214,7 +218,7 @@ class BBCompSep(PipelineStage):
                 fg_pspectra[i_c1, i_c2] = cl_x
                 fg_pspectra[i_c2, i_c1] = cl_x
 
-        return np.transpose(fg_pspectra,axes=[2,3,4,0,1])
+        return fg_pspectra
     
     def model(self, params):
         """
@@ -223,26 +227,63 @@ class BBCompSep(PipelineStage):
         cmb_cell = params['r_tensor'] * self.cmb_tens + \
                    params['A_lens'] * self.cmb_lens + \
                    self.cmb_scal  # [npol,npol,nell]
-        fg_scaling = self.integrate_seds(params)  # [nfreq, ncomp]
-        fg_cell = self.evaluate_power_spectra(params)  # [npol,npol,nell,ncomp,ncomp]
+        fg_scaling, rot_m = self.integrate_seds(params)  # [nfreq, ncomp], [ncomp,nfreq,[matrix])
+        fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
+        
+        ## C(l,nu1,nu2) = C(l,c1,c2) F(nu1,c1) F(nu2,c2)
+        #fg_cell = np.transpose(fg_cell,axes=[2,3,4,0,1])  # Now order is [npol,npol,nell,ncomp,ncomp]
+        #cls_array_fg = np.einsum('jlmpq,ip,kq',fg_cell,fg_scaling,fg_scaling)  # [nfreq,npol,nfreq,npol,nell]
+        ## Add CMB (unit bandpass response)
+        #cls_array_fg += cmb_cell[None,:,None,:]
 
-        # C(l,nu1,nu2) = C(l,c1,c2) F(nu1,c1) F(nu2,c2)
-        cls_array_fg = np.einsum('jlmpq,ip,kq',fg_cell,fg_scaling,fg_scaling)
-        # Add CMB (unit bandpass response)
-        cls_array_fg += cmb_cell[None,:,None,:]
-        # Collapse freq-pol
-        cls_array_fg = cls_array_fg.reshape([self.nmaps,self.nmaps,self.n_ell])
+        # First, rotate power spectra if necessary
+        cls_array_fg = np.zeros([self.nfreqs,self.nfreqs,self.n_ell,self.npol,self.npol])
+
+        # Put ell first
+        fg_cell = np.transpose(fg_cell,axes=[0,1,4,2,3]) # [ncomp,ncomp,nell,npol,npol]
+        cmb_cell = np.transpose(cmb_cell,axes=[2,0,1]) # [nell,npol,npol]
+        # Loop over frequency pairs
+        for f1 in range(self.nfreqs):
+            for f2 in range(f1,self.nfreqs):
+                cls=cmb_cell.copy()
+
+                # Loop over component pairs
+                for c1 in range(self.fg_model.n_components):
+                    mat1=rot_m[c1][f1]
+                    a1=fg_scaling[f1,c1]
+                    for c2 in range(self.fg_model.n_components):
+                        mat2=rot_m[c2][f2]
+                        a2=fg_scaling[f2,c2]
+                        # Rotate if needed
+                        clrot=rotate_cells_mat(mat1,mat2,fg_cell[c1,c2])
+                        # Scale in frequency and add
+                        cls += clrot*a1*a2
+                cls_array_fg[f1,f2]=cls
 
         # Window convolution
-        cls_array_list = np.zeros([self.n_bpws, self.nmaps, self.nmaps])
-        for m1 in range(self.nmaps):
-            for m2 in range(m1,self.nmaps):
-                windows = self.windows[self.vector_indices[m1, m2]]
-                clband = np.dot(windows, cls_array_fg[m1,m2])
-                cls_array_list[:, m1, m2] = clband
-                if m1!=m2:
-                    cls_array_list[:, m2, m1] = clband
-        return cls_array_list
+        cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
+        for f1 in range(self.nfreqs):
+            for p1 in range(self.npol):
+                m1 = f1*self.npol+p1
+                for f2 in range(f1,self.nfreqs):
+                    p0 = p1 if f1==f2 else 0
+                    for p2 in range(p0,self.npol):
+                        m2 = f2*self.npol+p2
+                        windows = self.windows[self.vector_indices[m1, m2]]
+                        clband = np.dot(windows, cls_array_fg[f1,f2,:,p1,p2])
+                        #clband = np.dot(windows, cls_array_fg[f1,p1,f2,p2,:])
+                        cls_array_list[:, f1, p1, f2, p2] = clband
+                        if m1!=m2:
+                            cls_array_list[:, f2, p2, f1, p1] = clband
+
+        # Polarization angle rotation
+        for f1 in range(self.nfreqs):
+            for f2 in range(self.nfreqs):
+                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f1], self.bpss[f2],
+                                                           cls_array_list[:,f1,:,f2,:],
+                                                           params)
+
+        return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
 
     def chi_sq_dx(self, params):
         """
@@ -380,8 +421,9 @@ class BBCompSep(PipelineStage):
             np.savez(self.get_output('param_chains'),
                      params=sampler,
                      names=self.params.p_free_names)
-            print("Best fit:",sampler)
-            print("params:", self.params.p_free_names)
+            print("Best fit:")
+            for p,n in zip(sampler,self.params.p_free_names):
+                print(n + ' : ' + '%.6lf'%p)
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
             np.savez(self.get_output('param_chains'),

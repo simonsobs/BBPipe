@@ -22,7 +22,7 @@ def comp_sed(nu,nu0,beta,temp,typ):
 
 #Bandpasses 
 class Bpass(object):
-    def __init__(self,name,fname):
+    def __init__(self,name,fname,angle=0):
         self.name=name
         self.nu,self.bnu=np.loadtxt(fname,unpack=True)
         self.dnu=np.zeros_like(self.nu)
@@ -30,9 +30,20 @@ class Bpass(object):
         self.dnu[0]=self.dnu[1]
         #CMB units
         self.bnu/=np.sum(self.dnu*self.bnu*self.nu**2*fcmb(self.nu))
+        self.angle=angle
+        self.rot=np.array([[np.cos(2*self.angle),np.sin(2*self.angle)],
+                           [-np.sin(2*self.angle),np.cos(2*self.angle)]])
+        print(self.angle)
 
     def convolve_sed(self,f):
         return np.sum(self.dnu*self.bnu*self.nu**2*f(self.nu))
+
+    def rotate(self,cl,transpose=False):
+        if transpose:
+            clrot=np.einsum('ijl,kj',cl,self.rot)
+        else:
+            clrot=np.einsum('ij,jkl',self.rot,cl)
+        return clrot
 
 #All frequencies and bandpasses
 tracer_names=np.array(['SO_LF1','SO_LF2','SO_MF1','SO_MF2','SO_UHF1','SO_UHF2'])
@@ -42,7 +53,8 @@ fnames=['/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/LF/LF1.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/MF/MF2.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF1.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF2.txt']
-bpss=[Bpass(n,f) for f,n in zip(fnames,tracer_names)]
+angles=[0.,0.,0.,0.,0.,0.]
+bpss=[Bpass(n,f,angle=np.radians(a)) for f,n,a in zip(fnames,tracer_names,angles)]
 
 #Add E and B to tracer names to enumerate all possible maps
 map_names=[]
@@ -123,6 +135,12 @@ for ib,b in enumerate(bpss):
 
 #Compute multi-frequency spectra
 bpw_freq_sig=np.einsum('ij,km,ilkno',seds,seds,bpw_comp)
+#Apply polarization angle
+for f1 in range(nfreqs):
+    for f2 in range(nfreqs):
+        cl=bpw_freq_sig[f1,:,f2,:,:]
+        clrot=bpss[f2].rotate(bpss[f1].rotate(cl,transpose=True))
+        bpw_freq_sig[f1,:,f2,:,:]=clrot
 
 #Add noise
 sens=1
