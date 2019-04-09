@@ -72,10 +72,10 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_ma
         nl[2:]=n; nl[:2]=n[0]
         no_t,no_q,no_u=hp.synfast([nl/2.,nl,nl,0*nl,0*nl,0*nl],nside=nside_out,
                                   pol=True,new=True,verbose=False)
-        nv_t=nlev[i_n]*np.ones_like(no_t)/np.sqrt(2.);
-        nv_q=nlev[i_n]*np.ones_like(no_q); nv_u=nlev[i_n]*np.ones_like(no_u)
-        no_t/=np.sqrt(nh/np.amax(nh)); no_q/=np.sqrt(nh/np.amax(nh)); no_u/=np.sqrt(nh/np.amax(nh));
-        nv_t/=np.sqrt(nh/np.amax(nh)); nv_q/=np.sqrt(nh/np.amax(nh)); nv_u/=np.sqrt(nh/np.amax(nh));
+        # nv_t=nlev[i_n]*np.ones_like(no_t)/np.sqrt(2.);
+        # nv_q=nlev[i_n]*np.ones_like(no_q); nv_u=nlev[i_n]*np.ones_like(no_u)
+        # no_t/=np.sqrt(nh/np.amax(nh)); no_q/=np.sqrt(nh/np.amax(nh)); no_u/=np.sqrt(nh/np.amax(nh));
+        # nv_t/=np.sqrt(nh/np.amax(nh)); nv_q/=np.sqrt(nh/np.amax(nh)); nv_u/=np.sqrt(nh/np.amax(nh));
         # mps_no.append([no_t,no_q,no_u])
         mps_no.append(no_t)
         mps_no.append(no_q)
