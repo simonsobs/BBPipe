@@ -5,10 +5,10 @@ global:
 BBCompSep:
     n_iters: 5000
     nwalkers: 128
-    likelihood_type: 'chi2'
-    sampler: 'single_point'
-    save_prefix: 'bbpower_SO_w_bpss_outputs/testt'
-    pol_channels: ['E','B']
+    likelihood_type: 'h&l'
+    sampler: 'emcee'
+    save_prefix: './out_bp1_ph0_an0_B/test'
+    pol_channels: ['B']
     l_min: 30
     l_max: 500
 
@@ -24,17 +24,12 @@ BBCompSep:
             name: Dust
             sed: Dust
             cl:
-                EE: ClPowerLaw
                 BB: ClPowerLaw
             sed_parameters:
                 beta_d: ['beta_d', 'Gaussian', [1.59, 0.11]]
                 temp_d: ['temp', 'fixed', [19.6]]
                 nu0_d: ['nu0', 'fixed', [353.]]
             cl_parameters:
-                EE:
-                   amp_d_ee: ['amp', 'tophat', [0., 10., "inf"]]
-                   alpha_d_ee: ['alpha', 'tophat', [-1., -0.42, 0.]]
-                   l0_d_ee: ['ell0', 'fixed', [80.]]
                 BB:
                    amp_d_bb: ['amp', 'tophat', [0., 5., "inf"]]
                    alpha_d_bb: ['alpha', 'tophat', [-1., -0.42, 0.]]
@@ -46,16 +41,11 @@ BBCompSep:
             name: Synchrotron
             sed: Synchrotron
             cl:
-                EE: ClPowerLaw
                 BB: ClPowerLaw
             sed_parameters:
                 beta_s: ['beta_pl', 'Gaussian', [-3.0, 0.3]]
                 nu0_s: ['nu0', 'fixed', [23.]]
             cl_parameters:
-                EE:
-                    amp_s_ee: ['amp', 'tophat', [0., 2., "inf"]]
-                    alpha_s_ee: ['alpha', 'tophat', [-1., -0.6, 0.]]
-                    l0_s_ee: ['ell0', 'fixed', [80.]]
                 BB:
                     amp_s_bb: ['amp', 'tophat', [0., 2., "inf"]]
                     alpha_s_bb: ['alpha', 'tophat', [-1., -0.6, 0.]]
@@ -64,38 +54,26 @@ BBCompSep:
     systematics:
         bandpasses:
             bandpass_1:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt"
                 parameters:
                     shift_1: ['shift', 'Gaussian', [0., 0.01]]
                     gain_1: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_1: ['angle', 'Gaussian', [0.017453292519943295, 0.017]]
             bandpass_2:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt"
                 parameters:
                     shift_2: ['shift', 'Gaussian', [0., 0.01]]
                     gain_2: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_2: ['angle', 'Gaussian', [-0.017453292519943295, 0.017]]
             bandpass_3:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt"
                 parameters:
                     shift_3: ['shift', 'Gaussian', [0., 0.01]]
                     gain_3: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_3: ['angle', 'Gaussian', [0.017453292519943295, 0.017]]
             bandpass_4:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt"
                 parameters:
                     shift_4: ['shift', 'Gaussian', [0., 0.01]]
                     gain_4: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_4: ['angle', 'Gaussian', [-0.017453292519943295, 0.017]]
             bandpass_5:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt"
                 parameters:
                     shift_5: ['shift', 'Gaussian', [0., 0.01]]
                     gain_5: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_5: ['angle', 'Gaussian', [0.017453292519943295, 0.017]]
             bandpass_6:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt"
                 parameters:
                     shift_6: ['shift', 'Gaussian', [0., 0.01]]
                     gain_6: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_6: ['angle', 'Gaussian', [-0.017453292519943295, 0.017]]

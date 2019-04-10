@@ -5,9 +5,9 @@ global:
 BBCompSep:
     n_iters: 5000
     nwalkers: 128
-    likelihood_type: 'chi2'
-    sampler: 'single_point'
-    save_prefix: 'bbpower_SO_w_bpss_outputs/testt'
+    likelihood_type: 'h&l'
+    sampler: 'emcee'
+    save_prefix: './out_bp0_ph0_an0_EB/test'
     pol_channels: ['E','B']
     l_min: 30
     l_max: 500
@@ -64,38 +64,38 @@ BBCompSep:
     systematics:
         bandpasses:
             bandpass_1:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt"
+                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt"
                 parameters:
-                    shift_1: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_1: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_1: ['angle', 'Gaussian', [0.017453292519943295, 0.017]]
+                    shift_1: ['shift', 'fixed', [0., 0.01]]
+                    gain_1: ['gain', 'fixed', [1., 0.01]]
+                    angle_1: ['angle', 'fixed', [0., 0.017]]
             bandpass_2:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt"
+                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt"
                 parameters:
-                    shift_2: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_2: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_2: ['angle', 'Gaussian', [-0.017453292519943295, 0.017]]
+                    shift_2: ['shift', 'fixed', [0., 0.01]]
+                    gain_2: ['gain', 'fixed', [1., 0.01]]
+                    angle_2: ['angle', 'fixed', [0., 0.017]]
             bandpass_3:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt"
+                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt"
                 parameters:
-                    shift_3: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_3: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_3: ['angle', 'Gaussian', [0.017453292519943295, 0.017]]
+                    shift_3: ['shift', 'fixed', [0., 0.01]]
+                    gain_3: ['gain', 'fixed', [1., 0.01]]
+                    angle_3: ['angle', 'fixed', [0., 0.017]]
             bandpass_4:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt"
+                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt"
                 parameters:
-                    shift_4: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_4: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_4: ['angle', 'Gaussian', [-0.017453292519943295, 0.017]]
+                    shift_4: ['shift', 'fixed', [0., 0.01]]
+                    gain_4: ['gain', 'fixed', [1., 0.01]]
+                    angle_4: ['angle', 'fixed', [0., 0.017]]
             bandpass_5:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt"
+                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt"
                 parameters:
-                    shift_5: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_5: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_5: ['angle', 'Gaussian', [0.017453292519943295, 0.017]]
+                    shift_5: ['shift', 'fixed', [0., 0.01]]
+                    gain_5: ['gain', 'fixed', [1., 0.01]]
+                    angle_5: ['angle', 'fixed', [0., 0.017]]
             bandpass_6:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt"
+                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt"
                 parameters:
-                    shift_6: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_6: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_6: ['angle', 'Gaussian', [-0.017453292519943295, 0.017]]
+                    shift_6: ['shift', 'fixed', [0., 0.01]]
+                    gain_6: ['gain', 'fixed', [1., 0.01]]
+                    angle_6: ['angle', 'fixed', [0., 0.017]]
