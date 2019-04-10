@@ -72,9 +72,15 @@ class BBCompSep(PipelineStage):
                 correlations.append((m1+m2).encode())
 
         self.s.cullType(correlations)
+        self.s.cullLminLmax(self.config['l_min']*np.ones(len(self.s.tracers)),
+                            self.config['l_max']*np.ones(len(self.s.tracers)))
         if self.use_handl:
             s_fid.cullType(correlations)
+            s_fid.cullLminLmax(self.config['l_min']*np.ones(len(s_fid.tracers)),
+                               self.config['l_max']*np.ones(len(s_fid.tracers)))
             s_noi.cullType(correlations)
+            s_noi.cullLminLmax(self.config['l_min']*np.ones(len(s_noi.tracers)),
+                               self.config['l_max']*np.ones(len(s_noi.tracers)))
         self.nfreqs = len(self.s.tracers)
         self.npol = len(self.config['pol_channels'])
         self.nmaps = self.nfreqs * self.npol
@@ -408,11 +414,15 @@ class BBCompSep(PipelineStage):
             print("Finished sampling")
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
+            chi2 = -2*self.lnprob(sampler)
             np.savez(self.get_output('param_chains'),
                      params=sampler,
-                     names=self.params.p_free_names)
-            print("Best fit:",sampler)
-            print("params:", self.params.p_free_names)
+                     names=self.params.p_free_names,
+                     chi2=chi2)
+            print("Best fit:")
+            for n,p in zip(self.params.p_free_names,sampler):
+                print(n+" = %.3lE" % p)
+            print("Chi2: %.3lE" % chi2)
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
             np.savez(self.get_output('param_chains'),

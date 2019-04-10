@@ -64,6 +64,35 @@ fnames=['/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/LF/LF1.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/MF/MF2.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF1.txt',
         '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF2.txt']
+
+#prefix_out="SO_V3_Mock0_phase0_angle0"
+#angles=[0.,0.,0.,0.,0.,0.]
+#phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt']
+#
+#prefix_out="SO_V3_Mock0_phase0_angle1"
+#angles=[1.,-1.,1.,-1.,1.,-1.]
+#phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt']
+#
+#prefix_out="SO_V3_Mock0_phase1_angle0"
+#angles=[0.,0.,0.,0.,0.,0.]
+#phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt',
+#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt']
+#
+prefix_out="SO_V3_Mock0_phase1_angle1"
 angles=[1.,-1.,1.,-1.,1.,-1.]
 phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
           '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
@@ -102,7 +131,7 @@ Alens=0.5
 
 #Bandpowers
 dell=10
-nbands=30
+nbands=100
 lmax=2+nbands*dell
 larr_all=np.arange(lmax+1)
 lbands=np.linspace(2,lmax,nbands+1,dtype=int)
@@ -134,7 +163,7 @@ dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust,larr_all)
 _,dls_cmb_ee,dls_cmb_bb,_=read_camb("/global/cscratch1/sd/damonge/SO/BBPipe_data/bbpower_minimal/camb_lens_nobb.dat")
 dls_comp=np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
 dls_comp[0,0,0,0,:]=dls_cmb_ee
-dls_comp[0,1,0,1,:]=dls_cmb_bb
+dls_comp[0,1,0,1,:]=Alens*dls_cmb_bb
 dls_comp[1,0,1,0,:]=dls_sync_ee
 dls_comp[1,1,1,1,:]=dls_sync_bb
 dls_comp[2,0,2,0,:]=dls_dust_ee
@@ -265,9 +294,9 @@ s_f=sacc.SACC(tracers,bins,mean=v_signal,
 s_n=sacc.SACC(tracers,bins,mean=v_noise,
               meta={'data_name':'SO_V3_Mock_no_noise_noise'})
 
-s_d.saveToHDF("SO_V3_Mock0.sacc")
+s_d.saveToHDF(prefix_out+".sacc")
 s_d.printInfo()
-s_f.saveToHDF("SO_V3_Mock0_fiducial.sacc")
+s_f.saveToHDF(prefix_out+"_fiducial.sacc")
 s_f.printInfo()
-s_n.saveToHDF("SO_V3_Mock0_noise.sacc")
+s_n.saveToHDF(prefix_out+"_noise.sacc")
 s_n.printInfo()
