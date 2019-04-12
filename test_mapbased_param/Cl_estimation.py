@@ -8,6 +8,7 @@ from fgbuster.cosmology import _get_Cl_cmb
 from fgbuster.mixingmatrix import MixingMatrix
 import scipy.constants as constants
 from astropy.cosmology import Planck15
+from . import mk_noise_map2 as mknm
 
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
@@ -49,7 +50,7 @@ class BBClEstimation(PipelineStage):
 
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
-            ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile)]
+            ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile),('norm_hits_map', FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile),('Cl_cov_freq', FitsFile)]
 
     def run(self):
@@ -59,6 +60,10 @@ class BBClEstimation(PipelineStage):
         A_maxL = np.loadtxt(self.get_input('A_maxL'))
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
         post_compsep_noise=hp.read_map(self.get_input('post_compsep_noise'),verbose=False, field=None)
+        
+        nhits = hp.read_map(self.get_input('norm_hits_map'))
+        nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
+        nh = get_mask(nhits, nside_out=self.config['nside'])
 
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
@@ -69,6 +74,12 @@ class BBClEstimation(PipelineStage):
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))
+        if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
+            hp.mollview(mask)
+            mask *= np.sqrt(nh)
+            hp.mollview(mask)
+            pl.show()
+            exit()
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
 
         print('building ell_eff ... ')
