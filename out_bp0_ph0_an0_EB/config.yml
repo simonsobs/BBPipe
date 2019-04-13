@@ -3,18 +3,18 @@ global:
     beam_correct: True
 
 BBCompSep:
-    n_iters: 5000
+    n_iters: 1000
     nwalkers: 128
-    likelihood_type: 'h&l'
+    likelihood_type: 'chi2'
     sampler: 'emcee'
     save_prefix: './out_bp0_ph0_an0_EB/test'
     pol_channels: ['E','B']
     l_min: 30
-    l_max: 500
+    l_max: 300
 
     cmb_model:
-        cmb_templates: ["/global/cscratch1/sd/damonge/SO/BBPipe_data/bbpower_minimal/camb_lens_nobb.dat", 
-                        "/global/cscratch1/sd/damonge/SO/BBPipe_data/bbpower_minimal/camb_lens_r1.dat"]
+        cmb_templates: ["./examples/data/camb_lens_nobb.dat", 
+                        "./examples/data/camb_lens_r1.dat"]
         params:
             r_tensor: ['r_tensor', 'tophat', [0.00, 0.00, "inf"]]
             A_lens: ['A_lens', 'tophat', [0.00,0.5,2.00]]
@@ -64,37 +64,37 @@ BBCompSep:
     systematics:
         bandpasses:
             bandpass_1:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt"
+                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
                 parameters:
                     shift_1: ['shift', 'fixed', [0., 0.01]]
                     gain_1: ['gain', 'fixed', [1., 0.01]]
                     angle_1: ['angle', 'fixed', [0., 0.017]]
             bandpass_2:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt"
+                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
                 parameters:
                     shift_2: ['shift', 'fixed', [0., 0.01]]
                     gain_2: ['gain', 'fixed', [1., 0.01]]
                     angle_2: ['angle', 'fixed', [0., 0.017]]
             bandpass_3:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt"
+                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
                 parameters:
                     shift_3: ['shift', 'fixed', [0., 0.01]]
                     gain_3: ['gain', 'fixed', [1., 0.01]]
                     angle_3: ['angle', 'fixed', [0., 0.017]]
             bandpass_4:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt"
+                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
                 parameters:
                     shift_4: ['shift', 'fixed', [0., 0.01]]
                     gain_4: ['gain', 'fixed', [1., 0.01]]
                     angle_4: ['angle', 'fixed', [0., 0.017]]
             bandpass_5:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt"
+                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
                 parameters:
                     shift_5: ['shift', 'fixed', [0., 0.01]]
                     gain_5: ['gain', 'fixed', [1., 0.01]]
                     angle_5: ['angle', 'fixed', [0., 0.017]]
             bandpass_6:
-                phase_nu: "/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt"
+                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
                 parameters:
                     shift_6: ['shift', 'fixed', [0., 0.01]]
                     gain_6: ['gain', 'fixed', [1., 0.01]]

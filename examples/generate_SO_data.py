@@ -2,6 +2,34 @@ import numpy as np
 import matplotlib.pyplot as plt
 from noise_calc import Simons_Observatory_V3_SA_noise
 
+def get_output_params(do_phase=False,do_angle=False):
+    prefix_out="SO_V3_Mock0_phase%d_angle%d"%(int(do_phase),int(do_angle))
+    if do_angle:
+        angles=[1.,-1.,1.,-1.,1.,-1.]
+    else:
+        angles=[0.,0.,0.,0.,0.,0.]
+
+    phase_suffix=''
+    if do_phase:
+        phase_suffix=''
+    else:
+        phase_suffix='_0'
+
+    phase_nu=['./data/phase_3layer_lf'+phase_suffix+'.txt',
+              './data/phase_3layer_lf'+phase_suffix+'.txt',
+              './data/phase_3layer_mf'+phase_suffix+'.txt',
+              './data/phase_3layer_mf'+phase_suffix+'.txt',
+              './data/phase_3layer_uhf'+phase_suffix+'.txt',
+              './data/phase_3layer_uhf'+phase_suffix+'.txt']
+
+    return prefix_out,phase_nu,angles
+
+# Choose here whether to include the effects of
+#  - A frequency-dependent polarization angle (do_phase=True)
+#  - A non-zero constant polarization angle (do_angle=True)
+prefix_out,phase_nu,angles=get_output_params(do_phase=True,do_angle=True)
+
+
 #CMB spectrum
 def fcmb(nu):
     x=0.017608676067552197*nu
@@ -58,48 +86,12 @@ class Bpass(object):
 
 #All frequencies and bandpasses
 tracer_names=np.array(['SO_LF1','SO_LF2','SO_MF1','SO_MF2','SO_UHF1','SO_UHF2'])
-fnames=['/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/LF/LF1.txt',
-        '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/LF/LF2.txt',
-        '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/MF/MF1.txt',
-        '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/MF/MF2.txt',
-        '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF1.txt',
-        '/global/cscratch1/sd/damonge/SO/SO_Bandpasses_2019/UHF/UHF2.txt']
-
-#prefix_out="SO_V3_Mock0_phase0_angle0"
-#angles=[0.,0.,0.,0.,0.,0.]
-#phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt']
-#
-#prefix_out="SO_V3_Mock0_phase0_angle1"
-#angles=[1.,-1.,1.,-1.,1.,-1.]
-#phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf_0.txt']
-#
-#prefix_out="SO_V3_Mock0_phase1_angle0"
-#angles=[0.,0.,0.,0.,0.,0.]
-#phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt',
-#          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt']
-#
-prefix_out="SO_V3_Mock0_phase1_angle1"
-angles=[1.,-1.,1.,-1.,1.,-1.]
-phase_nu=['/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
-          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_lf.txt',
-          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
-          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_mf.txt',
-          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt',
-          '/global/homes/d/damonge/SO/pol_angle_hwp/phase_3layer_uhf.txt']
+fnames=['./data/LF/LF1.txt',
+        './data/LF/LF2.txt',
+        './data/MF/MF1.txt',
+        './data/MF/MF2.txt',
+        './data/UHF/UHF1.txt',
+        './data/UHF/UHF2.txt']
 bpss=[Bpass(n,f,angle=np.radians(a),phase_nu=p)
       for f,n,a,p in zip(fnames,tracer_names,angles,phase_nu)]
 
@@ -160,7 +152,7 @@ dls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync,larr_all)
 dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync,larr_all)
 dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust,larr_all)
 dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust,larr_all)
-_,dls_cmb_ee,dls_cmb_bb,_=read_camb("/global/cscratch1/sd/damonge/SO/BBPipe_data/bbpower_minimal/camb_lens_nobb.dat")
+_,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
 dls_comp=np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
 dls_comp[0,0,0,0,:]=dls_cmb_ee
 dls_comp[0,1,0,1,:]=Alens*dls_cmb_bb

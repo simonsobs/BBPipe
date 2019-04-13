@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
@@ -345,14 +346,30 @@ class BBCompSep(PipelineStage):
         Sample the model with MCMC. 
         """
         import emcee
+        from multiprocessing import Pool
+        
+        fname_temp = self.get_output('param_chains')+'.h5'
+
+        backend = emcee.backends.HDFBackend(fname_temp)
 
         nwalkers = self.config['nwalkers']
         n_iters = self.config['n_iters']
         ndim = len(self.params.p0)
-        pos = [self.params.p0 + 1.e-3*np.random.randn(ndim) for i in range(nwalkers)]
-        
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
-        sampler.run_mcmc(pos, n_iters);
+        found_file = os.path.isfile(fname_temp)
+
+        if not found_file:
+            backend.reset(nwalkers,ndim)
+            pos = [self.params.p0 + 1.e-3*np.random.randn(ndim) for i in range(nwalkers)]
+            nsteps_use = n_iters
+        else:
+            print("Restarting from previous run")
+            pos = None
+            nsteps_use = max(n_iters-len(backend.get_chain()), 0)
+                                    
+        with Pool() as pool:
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob,backend=backend)
+            if nsteps_use > 0:
+                sampler.run_mcmc(pos, nsteps_use, store=True, progress=True);
 
         return sampler
 
