@@ -75,11 +75,11 @@ class BBClEstimation(PipelineStage):
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))
         if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
-            hp.mollview(mask)
+            # hp.mollview(mask)
             mask *= np.sqrt(nh)
-            hp.mollview(mask)
-            pl.show()
-            exit()
+            # hp.mollview(mask)
+            # pl.show()
+            # exit()
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
 
         print('building ell_eff ... ')
