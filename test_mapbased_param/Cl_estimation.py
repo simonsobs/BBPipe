@@ -63,7 +63,7 @@ class BBClEstimation(PipelineStage):
         
         nhits = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
-        nh = get_mask(nhits, nside_out=self.config['nside'])
+        nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
 
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
