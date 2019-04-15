@@ -35,7 +35,6 @@ class BBREstimation(PipelineStage):
 
         ell_v = Cl_clean[0]        
         
-
         print('cosmological analysis now ... ')
         ## data first
         lmin = self.config['lmin']
@@ -273,15 +272,15 @@ class BBREstimation(PipelineStage):
                 return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
 
-                r_v = np.logspace(-5,0,num=1000)
+            r_v = np.logspace(-5,0,num=1000)
 
-                r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
-                                    ell_v, self.config['fsky'], Cl_BB_prim_r1,
-                                           ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
-                pl.figure()
-                pl.semilogx(r_v, gridded_likelihood)
-                pl.savefig(self.get_output('likelihood_on_r'))
-                # pl.show()
+            r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
+                                ell_v, self.config['fsky'], Cl_BB_prim_r1,
+                                       ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
+            pl.figure()
+            pl.semilogx(r_v, gridded_likelihood)
+            pl.savefig(self.get_output('likelihood_on_r'))
+            # pl.show()
 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
