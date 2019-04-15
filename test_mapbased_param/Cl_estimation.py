@@ -51,7 +51,7 @@ class BBClEstimation(PipelineStage):
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile),('norm_hits_map', FitsFile)]
-    outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile),('Cl_cov_freq', FitsFile)]
+    outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile),('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile)]
 
     def run(self):
 
@@ -75,12 +75,12 @@ class BBClEstimation(PipelineStage):
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))
         if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
-            # hp.mollview(mask)
             mask *= np.sqrt(nh)
-            # hp.mollview(mask)
-            # pl.show()
-            # exit()
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
+
+        fsky_eff = np.mean(mask_apo)
+        print('fsky_eff = ', fsky_eff)
+        np.savetxt(self.get_output('fsky_eff'), fsky_eff)
 
         print('building ell_eff ... ')
         ell_eff = b.get_effective_ells()

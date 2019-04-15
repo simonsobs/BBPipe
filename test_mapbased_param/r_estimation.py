@@ -24,7 +24,7 @@ class BBREstimation(PipelineStage):
     """
 
     name='BBREstimation'
-    inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile)]
+    inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), ('power_spectrum_post_comp_sep', PdfFile)]
 
     def run(self):
@@ -32,6 +32,7 @@ class BBREstimation(PipelineStage):
         Cl_clean = hp.read_cl(self.get_input('Cl_clean'))
         Cl_noise = hp.read_cl(self.get_input('Cl_noise'))
         Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
+        fsky_eff = np.loadtxt(self.get_input('fsky_eff'))
 
         ell_v = Cl_clean[0]        
         
@@ -120,7 +121,7 @@ class BBREstimation(PipelineStage):
 
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
-                    logL -= np.sum((2*bins.get_ell_list(b)+1))*self.config['fsky']*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
+                    logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                 if logL!=logL: 
                     logL = 0.0
                 return logL
@@ -205,7 +206,7 @@ class BBREstimation(PipelineStage):
 
         else:
 
-            def from_Cl_to_r_estimate(ClBB_obs, ell_v, fsky, Cl_BB_prim, ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin, **minimize_kwargs):
+            def from_Cl_to_r_estimate(ClBB_obs, ell_v, Cl_BB_prim, ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin, **minimize_kwargs):
 
                 def likelihood_on_r_computation( r_loc, make_figure=False ):
                     '''
@@ -242,7 +243,7 @@ class BBREstimation(PipelineStage):
 
                     logL = 0.0 
                     for b in range(len(ClBB_obs)):
-                        logL += np.sum((2* bins.get_ell_list(b)+1))*fsky*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
+                        logL += np.sum((2* bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                     return logL
 
                 # gridding -2log(L)
@@ -275,7 +276,7 @@ class BBREstimation(PipelineStage):
             r_v = np.logspace(-5,0,num=1000)
 
             r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
-                                ell_v, self.config['fsky'], Cl_BB_prim_r1,
+                                ell_v, Cl_BB_prim_r1,
                                        ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
             pl.figure()
             pl.semilogx(r_v, gridded_likelihood)
