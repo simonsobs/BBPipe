@@ -80,7 +80,7 @@ class BBClEstimation(PipelineStage):
 
         fsky_eff = np.mean(mask_apo)
         print('fsky_eff = ', fsky_eff)
-        np.savetxt(self.get_output('fsky_eff'), fsky_eff)
+        np.savetxt(self.get_output('fsky_eff'), [fsky_eff])
 
         print('building ell_eff ... ')
         ell_eff = b.get_effective_ells()
