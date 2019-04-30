@@ -250,10 +250,10 @@ class BBREstimation(PipelineStage):
                 logL = r_v*0.0
                 for ir in range(len(r_v)):
                     logL[ir] = likelihood_on_r_computation( r_v[ir] )
-                    ind = ir*100.0/len(r_v)
-                    sys.stdout.write("\r  .......... gridding the likelihood on tensor-to-scalar ratio >>>  %d %% " % ind )
-                    sys.stdout.flush()
-                sys.stdout.write("\n")
+                    # ind = ir*100.0/len(r_v)
+                    # sys.stdout.write("\r  .......... gridding the likelihood on tensor-to-scalar ratio >>>  %d %% " % ind )
+                    # sys.stdout.flush()
+                # sys.stdout.write("\n")
                 # renormalizing logL 
                 chi2 = (logL - np.min(logL))
                 # computing the likelihood itself, for plotting purposes
@@ -287,7 +287,7 @@ class BBREstimation(PipelineStage):
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r', 'L(r)']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
-        np.savetxt(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)), comments=column_names)
+        np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)), comments=column_names)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
