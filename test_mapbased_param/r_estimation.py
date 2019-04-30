@@ -287,7 +287,7 @@ class BBREstimation(PipelineStage):
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r', 'L(r)']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
-        np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)), comments=column_names)
+        np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
 
 if __name__ == '__main__':
     results = PipelineStage.main()
