@@ -121,7 +121,7 @@ class BBREstimation(PipelineStage):
 
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
-                    logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
+                    logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff/2*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                 if logL!=logL: 
                     logL = 0.0
                 return logL
@@ -243,7 +243,7 @@ class BBREstimation(PipelineStage):
 
                     logL = 0.0 
                     for b in range(len(ClBB_obs)):
-                        logL += np.sum((2* bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
+                        logL += np.sum((2* bins.get_ell_list(b)+1))*fsky_eff/2*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                     return logL
 
                 # gridding -2log(L)
