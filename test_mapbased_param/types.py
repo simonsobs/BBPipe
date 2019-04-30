@@ -72,6 +72,12 @@ class PdfFile(DataFile):
     """
     suffix = 'pdf'
 
+class NumpyFile(DataFile):
+    """
+    A data file in python's numpy format.
+    """
+    suffix = 'npy'
+
 class YamlFile(DataFile):
     """
     A data file in yaml format.

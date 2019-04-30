@@ -25,7 +25,7 @@ class BBREstimation(PipelineStage):
 
     name='BBREstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile)]
-    outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), ('power_spectrum_post_comp_sep', PdfFile)]
+    outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
     def run(self):
 
@@ -285,8 +285,9 @@ class BBREstimation(PipelineStage):
 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
-        column_names = ['r_fit', 'sigma_r']
+        column_names = ['r', 'L(r)']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
+        np.savetxt(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)), comments=column_names)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
