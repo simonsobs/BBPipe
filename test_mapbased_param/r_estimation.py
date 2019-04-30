@@ -265,7 +265,7 @@ class BBREstimation(PipelineStage):
                 ind_sigma = np.argmin(np.abs( (logL[np.argmin(logL):] - logL[np.argmin(logL)]) - 1.00 ))    
                 sigma_r_fit =  r_v[ind_sigma+np.argmin(logL)] - r_fit
 
-                likelihood_on_r_computation( r_fit, make_figure=False )
+                likelihood_on_r_computation( r_fit, make_figure=True )
 
                 print('NB: sigma(r) is ', sigma_r_fit, ' ( +/- ', r_v[ind_sigma+np.argmin(logL)-1] - r_fit, ' , ', r_v[ind_sigma+np.argmin(logL)+1] - r_fit, ' ) ')
                 print('-----')
