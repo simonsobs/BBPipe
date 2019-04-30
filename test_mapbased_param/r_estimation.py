@@ -225,7 +225,8 @@ class BBREstimation(PipelineStage):
                                     label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
                         pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
                                     label='noise post comp sep', linestyle=':', color='DarkBlue')
-                        
+                        pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                     label='actual CMB noise post comp sep', linestyle=':', color='Cyan')
                         pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                         pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
