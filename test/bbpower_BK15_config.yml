@@ -7,7 +7,6 @@ BBCompSep:
     nwalkers: 128
     likelihood_type: 'h&l'
     sampler: 'emcee'
-    save_prefix: 'bbpower_BK15_outputs/test'
     pol_channels: ['B']
     l_min: 0
     l_max: 1000

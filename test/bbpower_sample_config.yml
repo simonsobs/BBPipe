@@ -12,8 +12,6 @@ BBCompSep:
     n_iters: 1000
     # Likelihood type (choose 'chi2' or 'h&l')
     likelihood_type: 'h&l'
-    # Directory to store additional outputs
-    save_prefix: './test/sample_out/test'
     # Which polarization channels do you want to include?
     pol_channels: ['E','B']
     # Scale cuts (will apply to all frequencies)

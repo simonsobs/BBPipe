@@ -18,7 +18,7 @@ class BBCompSep(PipelineStage):
     """
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
-    outputs = [('param_chains', NpzFile)]
+    outputs = [('param_chains', NpzFile), ('config_copy', NpzFile)]
     config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
                     'sampler':'emcee'}
 
@@ -373,21 +373,6 @@ class BBCompSep(PipelineStage):
 
         return sampler
 
-    def make_output_dir(self):
-        from datetime import datetime
-        import os, errno
-        from shutil import copyfile
-        fmt='%Y-%m-%d-%H-%M'
-        date = datetime.now().strftime(fmt)
-        output_dir = self.config['save_prefix']+'_'+date
-        try:
-            os.makedirs(output_dir)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-        copyfile(self.get_input('config'), output_dir+'/config.yml') 
-        return output_dir + '/'
-
     def minimizer(self):
         """
         Find maximum likelihood
@@ -419,12 +404,11 @@ class BBCompSep(PipelineStage):
         return end-start, (end-start)/n_eval
 
     def run(self):
+        from shutil import copyfile
+        copyfile(self.get_input('config'), self.get_output('config_copy')) 
         self.setup_compsep()
         if self.config.get('sampler')=='emcee':
             sampler = self.emcee_sampler()
-            # TODO: save things correctly
-            output_dir = self.make_output_dir()
-            np.save(output_dir + 'chains', sampler.chain)
             np.savez(self.get_output('param_chains'),
                      chain=sampler.chain,         
                      names=self.params.p_free_names)
