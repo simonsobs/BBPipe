@@ -1,13 +1,14 @@
 import numpy as np
+import os
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
 from .types import NpzFile
-from .foreground_loading import FGModel, FGParameters, normed_plaw
+from .fg_model import FGModel
+from .param_manager import ParameterManager
+from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
-
-import emcee
 
 class BBCompSep(PipelineStage):
     """
@@ -17,8 +18,9 @@ class BBCompSep(PipelineStage):
     """
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
-    outputs = [('param_chains', NpzFile)]
-    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3}
+    outputs = [('param_chains', NpzFile), ('config_copy', NpzFile)]
+    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
+                    'sampler':'emcee'}
 
     def setup_compsep(self):
         """
@@ -27,7 +29,7 @@ class BBCompSep(PipelineStage):
         self.parse_sacc_file()
         self.load_cmb()
         self.fg_model = FGModel(self.config)
-        self.parameters = FGParameters(self.config)
+        self.params = ParameterManager(self.config)
         if self.use_handl:
             self.prepare_h_and_l()
         return
@@ -65,34 +67,48 @@ class BBCompSep(PipelineStage):
                                      precision_filename=self.get_input('cells_coadded'))
 
         #Keep only BB measurements
-        self.s.cullType(b'BB') # TODO: Modify if we want to use E
+        correlations=[]
+        for m1 in self.config['pol_channels']:
+            for m2 in self.config['pol_channels']:
+                correlations.append((m1+m2).encode())
+
+        self.s.cullType(correlations)
+        self.s.cullLminLmax(self.config['l_min']*np.ones(len(self.s.tracers)),
+                            self.config['l_max']*np.ones(len(self.s.tracers)))
         if self.use_handl:
-            s_fid.cullType(b'BB')
-            s_noi.cullType(b'BB')
+            s_fid.cullType(correlations)
+            s_fid.cullLminLmax(self.config['l_min']*np.ones(len(s_fid.tracers)),
+                               self.config['l_max']*np.ones(len(s_fid.tracers)))
+            s_noi.cullType(correlations)
+            s_noi.cullLminLmax(self.config['l_min']*np.ones(len(s_noi.tracers)),
+                               self.config['l_max']*np.ones(len(s_noi.tracers)))
         self.nfreqs = len(self.s.tracers)
-        self.nmaps = self.nfreqs # TODO: Modify if we want to use E
+        self.npol = len(self.config['pol_channels'])
+        self.nmaps = self.nfreqs * self.npol
         self.index_ut = np.triu_indices(self.nmaps)
         self.ncross = (self.nmaps * (self.nmaps + 1)) // 2
         self.order = self.s.sortTracers()
+        self.pol_order=dict(zip(self.config['pol_channels'],range(self.npol)))
 
         #Collect bandpasses
-        self.bpasses = []
-        self.meannu = []
-        for t in self.s.tracers:
+        self.bpss = []
+        for i_t, t in enumerate(self.s.tracers):
             nu = t.z
             dnu = np.zeros_like(nu);
             dnu[1:-1] = 0.5 * (nu[2:] - nu[:-2])
             dnu[0] = nu[1] - nu[0]
             dnu[-1] = nu[-1] - nu[-2]
             bnu = t.Nz
-            self.bpasses.append([nu, dnu, bnu])
-            self.meannu.append(np.sum(dnu*nu*bnu) / np.sum(dnu*bnu))
+            self.bpss.append(Bandpass(nu, dnu, bnu, i_t+1, self.config))
 
         #Get ell sampling
-        self.bpw_l = self.s.binning.windows[0].ls
+        #Avoid l<2
+        mask_w = self.s.binning.windows[0].ls > 1
+        self.bpw_l = self.s.binning.windows[0].ls[mask_w]
+        self.n_ell = len(self.bpw_l)
         _,_,_,self.ell_b,_ = self.order[0]
         self.n_bpws = len(self.ell_b)
-        self.windows = np.zeros([self.ncross, self.n_bpws, len(self.bpw_l)])
+        self.windows = np.zeros([self.ncross, self.n_bpws, self.n_ell])
 
         #Get power spectra and covariances
         v = self.s.mean.vector
@@ -109,16 +125,25 @@ class BBCompSep(PipelineStage):
         self.vector_indices = self.vector_to_matrix(np.arange(self.ncross, dtype=int)).astype(int)
         self.indx = []
         for t1,t2,typ,ells,ndx in self.order:
+            p1,p2=typ.decode()
+            ip1=self.pol_order[p1]
+            ip2=self.pol_order[p2]
+            # Ordering is such that polarization channel is the fastest varying index
+            ind_vec=self.vector_indices[t1*self.npol + ip1, t2*self.npol + ip2]
             for b,i in enumerate(ndx):
-                self.windows[self.vector_indices[t1, t2], b, :] = self.s.binning.windows[i].w
-            v2d[:,self.vector_indices[t1, t2]] = v[ndx]
+                self.windows[ind_vec, b, :] = self.s.binning.windows[i].w[mask_w]
+            v2d[:, ind_vec] = v[ndx]
             if self.use_handl:
-                v2d_noi[:, self.vector_indices[t1, t2]] = s_noi.mean.vector[ndx]
-                v2d_fid[:, self.vector_indices[t1, t2]] = s_fid.mean.vector[ndx]
+                v2d_noi[:, ind_vec] = s_noi.mean.vector[ndx]
+                v2d_fid[:, ind_vec] = s_fid.mean.vector[ndx]
             if len(ells) != self.n_bpws:
                 raise ValueError("All power spectra need to be sampled at the same ells")
             for t1b, t2b, typb, ellsb, ndxb in self.order:
-                cv2d[:, self.vector_indices[t1, t2], :, self.vector_indices[t1b, t2b]] = cv[ndx, :][:, ndxb]
+                p1b,p2b=typb.decode()
+                ip1b=self.pol_order[p1b]
+                ip2b=self.pol_order[p2b]
+                ind_vecb=self.vector_indices[t1b*self.npol + ip1b, t2b*self.npol + ip2b]
+                cv2d[:, ind_vec, :, ind_vecb] = cv[ndx, :][:, ndxb]
 
         #Store data
         self.bbdata = self.vector_to_matrix(v2d)
@@ -133,130 +158,129 @@ class BBCompSep(PipelineStage):
         """
         Loads the CMB BB spectrum as defined in the config file. 
         """
-        cmb_lensingfile = np.loadtxt(self.config['cmb_files'][0])
-        cmb_bbfile = np.loadtxt(self.config['cmb_files'][1])
+        cmb_lensingfile = np.loadtxt(self.config['cmb_model']['cmb_templates'][0])
+        cmb_bbfile = np.loadtxt(self.config['cmb_model']['cmb_templates'][1])
         
         self.cmb_ells = cmb_bbfile[:, 0]
-        mask = self.cmb_ells <= self.bpw_l.max()
-        self.cmb_ells = self.cmb_ells[mask] 
-        self.cmb_bbr = cmb_bbfile[:, 3][mask]
-        self.cmb_bblensing = cmb_lensingfile[:, 3][mask]
-        self.cmb_bbr -= self.cmb_bblensing
-        self.get_cmb_norms()
+        mask = (self.cmb_ells <= self.bpw_l.max()) & (self.cmb_ells > 1)
+        self.cmb_ells = self.cmb_ells[mask]
+
+        # TODO: this is a patch
+        nell = len(self.cmb_ells)
+        self.cmb_tens = np.zeros([self.npol, self.npol, nell])
+        self.cmb_lens = np.zeros([self.npol, self.npol, nell])
+        self.cmb_scal = np.zeros([self.npol, self.npol, nell])
+        if 'B' in self.config['pol_channels']:
+            ind = self.pol_order['B']
+            self.cmb_tens[ind, ind] = cmb_bbfile[:, 3][mask] - cmb_lensingfile[:, 3][mask]
+            self.cmb_lens[ind, ind] = cmb_lensingfile[:, 3][mask]
+        if 'E' in self.config['pol_channels']:
+            ind = self.pol_order['E']
+            self.cmb_tens[ind, ind] = cmb_bbfile[:, 2][mask] - cmb_lensingfile[:, 2][mask]
+            self.cmb_scal[ind, ind] = cmb_lensingfile[:, 2][mask]
         return
 
-    def get_cmb_norms(self):
-        """
-        Evaulates the CMB unit conversion over the bandpasses. 
-        """
-        cmb_norms = [] 
-        for tn in range(self.nfreqs):
-            nus = self.bpasses[tn][0]
-            bpass = self.bpasses[tn][1]
-            dnu = self.bpasses[tn][2]
-            bpass_integration = bpass * dnu
-
-            cmb_thermo_units = CMB('K_RJ').eval(nus) * nus**2 
-            cmb_norms.append(np.dot(bpass_integration, cmb_thermo_units))
-        self.cmb_norm = np.asarray(cmb_norms)
-        return
-    
     def integrate_seds(self, params):
-        fg_scaling = {}
-        for key in self.fg_model.components:
-            fg_scaling[key] = []
+        fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs])
+        rot_matrices = []
 
-        for tn in range(self.nfreqs):
-            nus = self.bpasses[tn][0]
-            bpass = self.bpasses[tn][1]
-            dnu = self.bpasses[tn][2]
-            bpass_integration = bpass * dnu
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            units = comp['cmb_n0_norm']
+            sed_params = [params[comp['names_sed_dict'][k]] 
+                          for k in comp['sed'].params]
+            rot_matrices.append([])
+            def sed(nu):
+                return comp['sed'].eval(nu, *sed_params)
 
-            for key, component in self.fg_model.components.items(): 
-                conv_rj = (nus / component['nu0'])**2
+            for tn in range(self.nfreqs):
+                sed_b, rot = self.bpss[tn].convolve_sed(sed, params)
+                fg_scaling[i_c, tn] = sed_b * units
+                rot_matrices[i_c].append(rot)
 
-                sed_params = [] 
-                for param in component['sed'].params:
-                    pindx = self.parameters.param_index[param]
-                    sed_params.append(params[pindx])
-                
-                fg_units = component['cmb_n0_norm'] / self.cmb_norm[tn]
-                fg_sed_eval = component['sed'].eval(nus, *sed_params) * conv_rj
-                fg_sed_int = np.dot(fg_sed_eval, bpass_integration) * fg_units
-                fg_scaling[key].append(fg_sed_int)
-        return fg_scaling
+        return fg_scaling.T,rot_matrices
 
     def evaluate_power_spectra(self, params):
-        fg_pspectra = {}
-        for key, component in self.fg_model.components.items():
-            pspec_params = []
-            # TODO: generalize for different power spectrum models
-            # should look like:
-            # for param in power_spectrum_model: get param index (same as the SEDs)
-            for param in component['spectrum_params']:
-                pindx = self.parameters.param_index[param]
-                pspec_params.append(params[pindx])
-            fg_pspectra[key] = normed_plaw(self.bpw_l, *pspec_params)
+        fg_pspectra = np.zeros([self.fg_model.n_components,
+                                self.fg_model.n_components,
+                                self.npol, self.npol, self.n_ell])
+        
+        # Fill diagonal
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            for cl_comb,clfunc in comp['cl'].items():
+                m1, m2 = cl_comb
+                ip1 = self.pol_order[m1]
+                ip2 = self.pol_order[m2]
+                pspec_params = [params[comp['names_cl_dict'][cl_comb][k]]
+                                for k in clfunc.params]
+                fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params)
+
+        # Off diagonals
+        for i_c1, c_name1 in enumerate(self.fg_model.component_names):
+            for c_name2, epsname in self.fg_model.components[c_name1]['names_x_dict'].items():
+                i_c2 = self.fg_model.component_order[c_name2]
+                cl_x=np.sqrt(np.fabs(fg_pspectra[i_c1, i_c1]*
+                                     fg_pspectra[i_c2, i_c2])) * params[epsname]
+                fg_pspectra[i_c1, i_c2] = cl_x
+                fg_pspectra[i_c2, i_c1] = cl_x
+
         return fg_pspectra
     
     def model(self, params):
         """
         Defines the total model and integrates over the bandpasses and windows. 
         """
-        cmb_bmodes = params[0] * self.cmb_bbr + self.cmb_bblensing
-        fg_scaling = self.integrate_seds(params)
-        fg_p_spectra = self.evaluate_power_spectra(params)
-        
-        cls_array_list = np.zeros([self.n_bpws,self.nmaps,self.nmaps])
-        for t1 in range(self.nfreqs) :
-            for t2 in range(t1, self.nfreqs) :
-                windows = self.windows[self.vector_indices[t1, t2]]
+        cmb_cell = params['r_tensor'] * self.cmb_tens + \
+                   params['A_lens'] * self.cmb_lens + \
+                   self.cmb_scal  # [npol,npol,nell]
+        fg_scaling, rot_m = self.integrate_seds(params)  # [nfreq, ncomp], [ncomp,nfreq,[matrix]]
+        fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
 
-                model = cmb_bmodes.copy()
-                for component in self.fg_model.components:
-                    sed_power_scaling = fg_scaling[component][t1] * fg_scaling[component][t2]
-                    p_amp = params[self.parameters.amp_index[component]]
-                    model += p_amp * sed_power_scaling * fg_p_spectra[component]
-                
-                    config_component = self.config['fg_model'][component]
-                    if 'cross' in config_component.keys():
-                        epsilon = config_component['cross']['param']
-                        epsilon_index = self.parameters.param_index[epsilon]
-                        cross_name = config_component['cross']['name']
+        # Add all components scaled in frequency (and HWP-rotated if needed)
+        cls_array_fg = np.zeros([self.nfreqs,self.nfreqs,self.n_ell,self.npol,self.npol])
+        fg_cell = np.transpose(fg_cell, axes = [0,1,4,2,3])  # [ncomp,ncomp,nell,npol,npol]
+        cmb_cell = np.transpose(cmb_cell, axes = [2,0,1]) # [nell,npol,npol]
+        for f1 in range(self.nfreqs):
+            for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
+                cls=cmb_cell.copy()
 
-                        cross_scaling = fg_scaling[component][t1] * fg_scaling[cross_name][t2] + \
-                                        fg_scaling[cross_name][t1] * fg_scaling[component][t2]
-                        cross_spectrum = np.sqrt(fg_p_spectra[component] * fg_p_spectra[cross_name])
-                        cross_amp = np.sqrt(p_amp * params[self.parameters.amp_index[cross_name]])
+                # Loop over component pairs
+                for c1 in range(self.fg_model.n_components):
+                    mat1=rot_m[c1][f1]
+                    a1=fg_scaling[f1,c1]
+                    for c2 in range(self.fg_model.n_components):
+                        mat2=rot_m[c2][f2]
+                        a2=fg_scaling[f2,c2]
+                        # Rotate if needed
+                        clrot=rotate_cells_mat(mat2,mat1,fg_cell[c1,c2])
+                        # Scale in frequency and add
+                        cls += clrot*a1*a2
+                cls_array_fg[f1,f2]=cls
 
-                        model += params[epsilon_index] * cross_amp * cross_scaling * cross_spectrum
-                        
-                model = np.dot(windows, model)
-                cls_array_list[:, t1, t2] = model
+        # Window convolution
+        cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
+        for f1 in range(self.nfreqs):
+            for p1 in range(self.npol):
+                m1 = f1*self.npol+p1
+                for f2 in range(f1,self.nfreqs):
+                    p0 = p1 if f1==f2 else 0
+                    for p2 in range(p0,self.npol):
+                        m2 = f2*self.npol+p2
+                        windows = self.windows[self.vector_indices[m1, m2]]
+                        clband = np.dot(windows, cls_array_fg[f1,f2,:,p1,p2])
+                        cls_array_list[:, f1, p1, f2, p2] = clband
+                        if m1!=m2:
+                            cls_array_list[:, f2, p2, f1, p1] = clband
 
-                if t1 != t2:
-                    cls_array_list[:, t2, t1] = model
-        return cls_array_list
+        # Polarization angle rotation
+        for f1 in range(self.nfreqs):
+            for f2 in range(self.nfreqs):
+                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
+                                                           cls_array_list[:,f1,:,f2,:],
+                                                           params)
 
-    def lnpriors(self, params):
-        """
-        Assign priors for emcee. 
-        """
-        total_prior = 0
-        if params[0] < 0:
-            return -np.inf
-        
-        for key, prior in self.parameters.priors.items():
-            pval = params[self.parameters.param_index[key]]
-
-            if prior[0].lower() == 'gaussian':
-                mu = prior[1][0]
-                sigma = prior[1][1]
-                total_prior += -0.5 * (pval - mu)**2 / sigma**2
-            elif prior[0].lower() == 'tophat': 
-                if pval < float(prior[1][0]) or pval > float(prior[1][2]):
-                    return -np.inf 
-        return total_prior
+        return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
 
     def chi_sq_dx(self, params):
         """
@@ -301,13 +325,15 @@ class BBCompSep(PipelineStage):
             rot[:, i] = U[:, i] * d
         return rot.dot(U.T)
 
-    def lnprob(self, params):
+    def lnprob(self, par):
         """
         Likelihood with priors. 
         """
-        prior = self.lnpriors(params)
+        prior = self.params.lnprior(par)
         if not np.isfinite(prior):
             return -np.inf
+
+        params = self.params.build_params(par)
         if self.use_handl:
             dx = self.h_and_l_dx(params)
         else:
@@ -319,42 +345,101 @@ class BBCompSep(PipelineStage):
         """
         Sample the model with MCMC. 
         """
-        zmask = self.parameters.param_init == 0
-        self.parameters.param_init[zmask] += 1.e-3 * np.ones_like(zmask)
+        import emcee
+        from multiprocessing import Pool
         
+        fname_temp = self.get_output('param_chains')+'.h5'
+
+        backend = emcee.backends.HDFBackend(fname_temp)
+
         nwalkers = self.config['nwalkers']
         n_iters = self.config['n_iters']
-        ndim = len(self.parameters.param_init)
-        pos = [self.parameters.param_init * (1. + 1.e-3*np.random.randn(ndim)) for i in range(nwalkers)]
-        
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob)
-        sampler.run_mcmc(pos, n_iters);
+        ndim = len(self.params.p0)
+        found_file = os.path.isfile(fname_temp)
+
+        if not found_file:
+            backend.reset(nwalkers,ndim)
+            pos = [self.params.p0 + 1.e-3*np.random.randn(ndim) for i in range(nwalkers)]
+            nsteps_use = n_iters
+        else:
+            print("Restarting from previous run")
+            pos = None
+            nsteps_use = max(n_iters-len(backend.get_chain()), 0)
+                                    
+        with Pool() as pool:
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob,backend=backend)
+            if nsteps_use > 0:
+                sampler.run_mcmc(pos, nsteps_use, store=True, progress=True);
 
         return sampler
 
-    def make_output_dir(self):
-        from datetime import datetime
-        import os, errno
-        from shutil import copyfile
-        fmt='%Y-%m-%d-%H-%M'
-        date = datetime.now().strftime(fmt)
-        output_dir = self.config['save_prefix']+'_'+date
-        try:
-            os.makedirs(output_dir)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-        copyfile(self.get_input('config'), output_dir+'/config.yml') 
-        return output_dir + '/'
+    def minimizer(self):
+        """
+        Find maximum likelihood
+        """
+        from scipy.optimize import minimize
+        def chi2(par):
+            c2=-2*self.lnprob(par)
+            return c2
+        res=minimize(chi2, self.params.p0, method="Powell")
+        return res.x
+
+    def singlepoint(self):
+        """
+        Evaluate at a single point
+        """
+        chi2 = -2*self.lnprob(self.params.p0)
+        return chi2
+
+    def timing(self, n_eval=300):
+        """
+        Evaluate n times and benchmark
+        """
+        import time
+        start = time.time()
+        for i in range(n_eval):
+            lik = self.lnprob(self.params.p0)
+        end = time.time()
+
+        return end-start, (end-start)/n_eval
 
     def run(self):
+        from shutil import copyfile
+        copyfile(self.get_input('config'), self.get_output('config_copy')) 
         self.setup_compsep()
-        sampler = self.emcee_sampler()
+        if self.config.get('sampler')=='emcee':
+            sampler = self.emcee_sampler()
+            np.savez(self.get_output('param_chains'),
+                     chain=sampler.chain,         
+                     names=self.params.p_free_names)
+            print("Finished sampling")
+        elif self.config.get('sampler')=='maximum_likelihood':
+            sampler = self.minimizer()
+            chi2 = -2*self.lnprob(sampler)
+            np.savez(self.get_output('param_chains'),
+                     params=sampler,
+                     names=self.params.p_free_names,
+                     chi2=chi2)
+            print("Best fit:")
+            for n,p in zip(self.params.p_free_names,sampler):
+                print(n+" = %.3lE" % p)
+            print("Chi2: %.3lE" % chi2)
+        elif self.config.get('sampler')=='single_point':
+            sampler = self.singlepoint()
+            np.savez(self.get_output('param_chains'),
+                     chi2=sampler,
+                     names=self.params.p_free_names)
+            print("Chi^2:",sampler)
+        elif self.config.get('sampler')=='timing':
+            sampler = self.timing()
+            np.savez(self.get_output('param_chains'),
+                     timing=sampler[1],
+                     names=self.params.p_free_names)
+            print("Total time:",sampler[0])
+            print("Time per eval:",sampler[1])
+        else:
+            raise ValueError("Unknown sampler")
 
-        # TODO: save things correctly
-        output_dir = self.make_output_dir()
-        np.save(output_dir + 'chains', sampler.chain)
-        np.savez(self.get_output('param_chains'), sampler.chain)
         return
 
 if __name__ == '__main__':
