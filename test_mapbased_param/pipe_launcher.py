@@ -46,8 +46,8 @@ def grabargs():
     parser.add_argument("--sync_marginalization", action='store_true', help = "marginalization of the cosmo likelihood over a sync template", default=False)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
     parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
-    parser.add_argument("--apotype", type=str, help = "apodization type", default='C2')
-    parser.add_argument("--aposize", type=float, help = "apodization size", default=10.0)
+    parser.add_argument("--apotype", type=str, help = "apodization type", default='C1')
+    parser.add_argument("--aposize", type=float, help = "apodization size", default=8.0)
     parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
 
     args = parser.parse_args()
