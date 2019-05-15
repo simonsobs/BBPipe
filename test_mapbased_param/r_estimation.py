@@ -181,9 +181,9 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)#, threads=4)
-            sampler.run_mcmc(p0, 2000)
+            sampler.run_mcmc(p0, 10000)
 
-            samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
@@ -296,7 +296,8 @@ class BBREstimation(PipelineStage):
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r', 'L(r)']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
-        np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
+        if self.config['dust_marginalization'] is False and self.config['sync_marginalization'] is False:
+            np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
 
 if __name__ == '__main__':
     results = PipelineStage.main()
