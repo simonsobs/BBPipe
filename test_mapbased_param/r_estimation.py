@@ -93,7 +93,7 @@ class BBREstimation(PipelineStage):
                     # pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                     # pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
 
-                    pl.figure()
+                    pl.figure(num=None, figsize=(14,10), facecolor='w', edgecolor='k')
                     ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
                     norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
                     pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
@@ -117,7 +117,7 @@ class BBREstimation(PipelineStage):
                     box = ax.get_position()
                     ax.set_position([box.x0-box.width*0.02, box.y0, box.width*0.8, box.height])
                     # ax.set_position([box.x0, box.y0, box.width*0.8, box.height])
-                    legend = ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':14}, ncol=1, labelspacing=1.0)
+                    legend = ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), prop={'size':10}, ncol=1, labelspacing=1.0)
                     frame = legend.get_frame()
                     frame.set_edgecolor('white')
                     # pl.legend()
