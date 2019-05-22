@@ -11,6 +11,35 @@ import pymaster as nmt
 import sys
 import scipy 
 from .Cl_estimation import binning_definition
+from fgbuster.algebra import W_dB, _mmm
+from fgbuster.component_model import CMB, Dust, Synchrotron
+from fgbuster.mixingmatrix import MixingMatrix
+
+def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN, i_cmb=0):
+    """
+    This function estimates the statistical foregrounds
+    residuals from the input frequency cross spectra, Cl_fgs, 
+    and the error bar covariance, Sigma
+    """
+    A = MixingMatrix(*components)
+    A_ev = A.evaluator(instrument['frequencies'])
+    # from the mixing matrix and its derivative at the peak
+    # of the likelihood, we build dW/dB
+    A_maxL = A_ev(beta_maxL[:,i_patch])
+    A_dB_maxL = A_dB_ev(beta_maxL[:,i_patch])
+    # patch_invN = _indexed_matrix(invN, d_spectra.T.shape, patch_mask)
+    comp_of_dB = A.comp_of_dB
+    W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
+    # and then Cl_YY, cf Stompor et al 2016
+    Cl_YY = _mmm(W_dB_maxL, Cl_fgs.T, W_dB_maxL.T)  
+    # and finally, using the covariance of error bars on spectral indices
+    # we compute the model for the statistical foregrounds residuals, 
+    # cf. Errard et al 2018
+    tr_SigmaYY = np.einsum('ij, lji -> l', Sigma, Cl_YY)
+    Cl_stat_res_model = tr_SigmaYY
+
+    return Cl_stat_res_model
+
 
 class BBREstimation(PipelineStage):
     """
@@ -24,8 +53,11 @@ class BBREstimation(PipelineStage):
     """
 
     name='BBREstimation'
-    inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile)]
-    outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
+    inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), 
+                ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile), 
+                    ('fitted_spectral_parameters', TextFile)]
+    outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
+                ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
     def run(self):
 
@@ -33,7 +65,6 @@ class BBREstimation(PipelineStage):
         Cl_noise = hp.read_cl(self.get_input('Cl_noise'))
         Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
         fsky_eff = np.loadtxt(self.get_input('fsky_eff'))
-
         ell_v = Cl_clean[0]        
         
         print('cosmological analysis now ... ')
@@ -52,6 +83,20 @@ class BBREstimation(PipelineStage):
         Cl_sync_obs = Cl_clean[3][(ell_v>=lmin)&(ell_v<=lmax)]- Cl_noise[3][(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_cov_obs = Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
+        ################ STATISTICAL FOREGROUNDS RESIDUALS MODELING
+        Cl_fgs = np.load(self.get_input('Cl_fgs'))
+        p = np.loadtxt(self.get_input('fitted_spectral_parameters'))
+        ## the length of p is always n_params  + (nparams*(nparams+1)/2)
+        ## = nparams + (nparams**2/2 + nparams/2)
+        ## = nparams**2 /2 + nparams*3/2
+        ## it would be nice to have this not hardcoded eventually 
+        beta_maxL = p[:2]
+        Sigma = np.array([[p[2],p[3]],[p[3],p[4]]])
+        instrument = {'frequencies':np.array(self.config['frequencies'])}
+        components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
+        Cl_stat_res_model = Cl_stat_model(Cl_fgs, components, instrument, beta_maxL, None, i_cmb=0)
+        ################
+
         # model 
         Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
         Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
@@ -66,6 +111,8 @@ class BBREstimation(PipelineStage):
         if self.config['noise_option']!='no_noise': 
             ClBB_model_other_than_prim += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
             # ClBB_model_other_than_prim += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        if self.config['include_stat_res']:
+            ClBB_model_other_than_prim += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['dust_marginalization']:
 
@@ -112,7 +159,9 @@ class BBREstimation(PipelineStage):
                                                  label='synchrotron template', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
                     pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - actual noise', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                     pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='modeled BB - modeled noise', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
-                    
+                    if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
+                                            &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
+                                                 linewidth=2.0, alpha=0.8)
                     ax = pl.gca()
                     box = ax.get_position()
                     ax.set_position([box.x0-box.width*0.02, box.y0, box.width*0.8, box.height])
