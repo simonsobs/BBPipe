@@ -140,7 +140,7 @@ global:
     nlb: 9
     custom_bins: True
     noise_option: \''''+str(noise_option)+'''\'
-    include_stat_res:\''''+str(include_stat_res)+'''\'
+    include_stat_res: \''''+str(include_stat_res)+'''\'
 
 BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
