@@ -175,6 +175,7 @@ class BBClEstimation(PipelineStage):
         # -> this is useful to estimate the statistical
         # foregrounds residuals
         ind = 0
+        instrument = {'frequencies':np.array(self.config['frequencies'])}
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         for f in range(len(instrument['frequencies'])) : 
             for i in range(3): 
