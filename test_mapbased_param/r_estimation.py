@@ -207,7 +207,7 @@ class BBREstimation(PipelineStage):
                 labels =  ["r", "\Lambda_d", "\Lambda_s"]
             else:
                 # bounds = [(0.0, None), (0.0, None)]
-                bounds = [(None, None), (None, None)]
+                bounds = [(None, None), (0.0, None)]
                 p0 = [1.0,0.1]
                 names = ["r", "\Lambda_d",]
                 labels =  ["r", "\Lambda_d"]
