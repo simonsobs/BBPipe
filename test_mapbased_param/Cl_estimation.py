@@ -188,7 +188,7 @@ class BBClEstimation(PipelineStage):
         for fi in range(Nfreq):
             for fj in range(Nfreq):
                 if fi > fj:
-                    Cl_fgs[f1, f2] = Cl_fgs[f2, f1]
+                    Cl_fgs[fi, fj] = Cl_fgs[fj, fi]
                 else:
                     fgs_i=get_field(mask*frequency_maps_[fi,0,:], mask*frequency_maps_[fi,1,:], purify_b=purify_b_)
                     fgs_j=get_field(mask*frequency_maps_[fj,0,:], mask*frequency_maps_[fj,1,:], purify_b=purify_b_)
