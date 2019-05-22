@@ -154,10 +154,10 @@ class BBREstimation(PipelineStage):
                                                  label='actual noise post comp sep', linestyle=':', color='Cyan')
                     pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                  label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
-                    pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
+                    pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
                     pl.loglog( ell_v_loc, norm*A_dust*Cl_dust_obs, label='bias-fitted dust template', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
                     if self.config['sync_marginalization']: pl.loglog( ell_v_loc, norm*A_sync*Cl_sync_obs,
-                                                 label='synchrotron template', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
+                                                 label='synchrotron template @ 150GHz', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
                     pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - actual noise', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                     pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='modeled BB - modeled noise', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
@@ -288,7 +288,7 @@ class BBREstimation(PipelineStage):
                                                      label='actual CMB noise post comp sep', linestyle=':', color='Cyan')
                         pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
-                        pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
+                        pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
                         
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
