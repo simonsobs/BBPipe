@@ -49,6 +49,7 @@ def grabargs():
     parser.add_argument("--apotype", type=str, help = "apodization type", default='C1')
     parser.add_argument("--aposize", type=float, help = "apodization size", default=8.0)
     parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
+    parser.add_argument("--include_stat_res", action='store_true', help = "estimating and including statistical residuals in the analysis", default=False)
 
     args = parser.parse_args()
 
@@ -123,7 +124,7 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
 def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000,\
-                apotype='C2', aposize=10.0):
+                apotype='C2', aposize=10.0, include_stat_res=False):
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -139,6 +140,7 @@ global:
     nlb: 9
     custom_bins: True
     noise_option: \''''+str(noise_option)+'''\'
+    include_stat_res:\''''+str(include_stat_res)+'''\'
 
 BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
@@ -212,7 +214,7 @@ def main():
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
                 sync_marginalization=args.sync_marginalization,\
                 path_to_temp_files=args.path_to_temp_files, r_input=args.r_input,\
-                apotype=args.apotype, aposize=args.aposize)
+                apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
