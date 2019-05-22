@@ -15,7 +15,7 @@ from fgbuster.algebra import W_dB, _mmm
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
 
-def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN, i_cmb=0):
+def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN=None, i_cmb=0):
     """
     This function estimates the statistical foregrounds
     residuals from the input frequency cross spectra, Cl_fgs, 
@@ -94,7 +94,7 @@ class BBREstimation(PipelineStage):
         Sigma = np.array([[p[2],p[3]],[p[3],p[4]]])
         instrument = {'frequencies':np.array(self.config['frequencies'])}
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
-        Cl_stat_res_model = Cl_stat_model(Cl_fgs, components, instrument, beta_maxL, None, i_cmb=0)
+        Cl_stat_res_model = Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, None, i_cmb=0)
         ################
 
         # model 
