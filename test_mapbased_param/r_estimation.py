@@ -23,6 +23,7 @@ def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN=None, i
     """
     A = MixingMatrix(*components)
     A_ev = A.evaluator(instrument['frequencies'])
+    A_dB_ev = A.diff_evaluator(instrument['frequencies'])
     # from the mixing matrix and its derivative at the peak
     # of the likelihood, we build dW/dB
     A_maxL = A_ev(beta_maxL)
