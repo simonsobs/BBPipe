@@ -25,8 +25,8 @@ def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN=None, i
     A_ev = A.evaluator(instrument['frequencies'])
     # from the mixing matrix and its derivative at the peak
     # of the likelihood, we build dW/dB
-    A_maxL = A_ev(beta_maxL[:,i_patch])
-    A_dB_maxL = A_dB_ev(beta_maxL[:,i_patch])
+    A_maxL = A_ev(beta_maxL)
+    A_dB_maxL = A_dB_ev(beta_maxL)
     # patch_invN = _indexed_matrix(invN, d_spectra.T.shape, patch_mask)
     comp_of_dB = A.comp_of_dB
     W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
