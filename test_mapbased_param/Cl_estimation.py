@@ -50,8 +50,10 @@ class BBClEstimation(PipelineStage):
 
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
-            ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile),('norm_hits_map', FitsFile)]
-    outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile),('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile)]
+            ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
+            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile)]
+    outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
+                ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile)]
 
     def run(self):
 
@@ -60,6 +62,7 @@ class BBClEstimation(PipelineStage):
         A_maxL = np.loadtxt(self.get_input('A_maxL'))
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
         post_compsep_noise=hp.read_map(self.get_input('post_compsep_noise'),verbose=False, field=None)
+        frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         
         nhits = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
@@ -143,7 +146,7 @@ class BBClEstimation(PipelineStage):
 
             ## signal spectra
             if comp_i > 1: purify_b_=False
-            else:purify_b_=True
+            else: purify_b_=True
             fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], purify_b=purify_b_)
             fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], purify_b=purify_b_)
 
@@ -166,6 +169,31 @@ class BBClEstimation(PipelineStage):
         hp.fitsfunc.write_cl(self.get_output('Cl_noise'), np.array(Cl_noise), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_freq'), np.array(Cl_cov_clean_loc), overwrite=True)
+
+        ###### 
+        # cross power spectra of the input frequency maps 
+        # -> this is useful to estimate the statistical
+        # foregrounds residuals
+        ind = 0
+        frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
+        for f in range(len(instrument['frequencies'])) : 
+            for i in range(3): 
+                frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
+                ind += 1
+        # removing I from all maps
+        frequency_maps_ = frequency_maps_[:,1:,:]
+        Nfreq = frequency_maps_.shape[0]
+        Cl_fgs = np.zeros((Nfreq, Nfreq, len(ell_eff) ))
+        for fi in range(Nfreq):
+            for fj in range(Nfreq):
+                if fi > fj:
+                    Cl_fgs[f1, f2] = Cl_fgs[f2, f1]
+                else:
+                    fgs_i=get_field(mask*frequency_maps_[fi,0,:], mask*frequency_maps_[fi,1,:], purify_b=purify_b_)
+                    fgs_j=get_field(mask*frequency_maps_[fj,0,:], mask*frequency_maps_[fj,1,:], purify_b=purify_b_)
+                    Cl_fgs[fi,fj,:] = compute_master(fgs_i, fgs_j, w)[3]
+
+        np.save(self.get_output('Cl_fgs'),  Cl_fgs)
 
 if __name__ == '__main__':
     results = PipelineStage.main()

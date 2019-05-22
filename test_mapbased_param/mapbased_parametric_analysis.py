@@ -16,8 +16,10 @@ class BBMapParamCompSep(PipelineStage):
         * estimate components' covariance
     """
     name='BBMapParamCompSep'
-    inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_maps',FitsFile)]
-    outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile), ('A_maxL',TextFile),('post_compsep_noise',FitsFile)]
+    inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),
+                ('noise_maps',FitsFile)]
+    outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
+                 ('A_maxL',TextFile),('post_compsep_noise',FitsFile)]
 
     def run(self) :
         #Read input mask
@@ -153,7 +155,6 @@ class BBMapParamCompSep(PipelineStage):
         [all_combinations.append(str(A.params[i])+' x '+str(A.params[j])) for i, j in zip(list(np.triu_indices(len(A.params))[0]),list(np.triu_indices(len(A.params))[1]) )]
         [column_names.append(all_combinations[i]) for i in range(len(all_combinations))]
         np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x,  list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
-
 
 
 if __name__ == '__main__':
