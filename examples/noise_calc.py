@@ -246,7 +246,8 @@ def Simons_Observatory_V3_SA_beams():
     beam_SAT_280 = 9.
     return(np.array([beam_SAT_27,beam_SAT_39,beam_SAT_93,beam_SAT_145,beam_SAT_225,beam_SAT_280]))
 
-def Simons_Observatory_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAT_yrs_LF,f_sky,ell_max,delta_ell):
+def Simons_Observatory_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAT_yrs_LF,f_sky,ell_max,delta_ell,
+                                   include_kludge=True):
     ## returns noise curves in polarization only, including the impact of the beam, for the SO small aperture telescopes
     ## noise curves are polarization only
     # sensitivity_mode
@@ -304,7 +305,8 @@ def Simons_Observatory_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAT_yrs_LF,f
     ## calculate the survey area and time
     t = 5* 365. * 24. * 3600    ## five years in seconds
     t = t * 0.2  ## retention after observing efficiency and cuts
-    t = t* 0.85  ## a kludge for the noise non-uniformity of the map edges
+    if include_kludge:
+        t = t* 0.85  ## a kludge for the noise non-uniformity of the map edges
     A_SR = 4 * np.pi * f_sky  ## sky area in steradians
     A_deg =  A_SR * (180/np.pi)**2  ## sky area in square degrees
     A_arcmin = A_deg * 3600.
