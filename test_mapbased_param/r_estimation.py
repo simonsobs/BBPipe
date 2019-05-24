@@ -108,23 +108,35 @@ class BBREstimation(PipelineStage):
 
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
+        ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
         if self.config['noise_option']!='no_noise': 
             ClBB_model_other_than_prim += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            ClBB_model_other_than_prim_and_lens += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
             # ClBB_model_other_than_prim += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
         if self.config['include_stat_res']:
             ClBB_model_other_than_prim += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
+            ClBB_model_other_than_prim_and_lens += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['dust_marginalization']:
 
             #####################################
             def likelihood_on_r_with_stat_and_sys_res( p_loc, bins=bins, make_figure=False ):
                 if self.config['sync_marginalization']:
-                    r_loc, A_dust, A_sync = p_loc 
+                    if self.config['AL_marginalization']:
+                        r_loc, A_dust, A_sync, AL = p_loc 
+                    else:
+                        r_loc, A_dust, A_sync = p_loc 
+                        AL = 1.0
                 else:
-                    r_loc, A_dust = p_loc 
+                    if self.config['AL_marginalization']:
+                        r_loc, A_dust, AL = p_loc
+                    else:
+                        r_loc, A_dust = p_loc
+                        AL = 1.0
+
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
-                                            + ClBB_model_other_than_prim + A_dust*Cl_dust_obs
+                                            + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
 
                 if self.config['sync_marginalization']: 
                     Cov_model += A_sync*Cl_sync_obs
@@ -186,11 +198,20 @@ class BBREstimation(PipelineStage):
                 return logL
             
             def lnprior( p_loc ): 
-                r_loc, A_dust = p_loc 
+                if self.config['sync_marginalization']:
+                    if self.config['AL_marginalization']:
+                        r_loc, A_dust, A_sync, AL = p_loc 
+                    else:
+                        r_loc, A_dust, A_sync = p_loc 
+                else:
+                    if self.config['AL_marginalization']:
+                        r_loc, A_dust, AL = p_loc 
+                    else:
+                        r_loc, A_dust = p_loc 
                 # if -1e-3<=r_loc  and 0.0<=A_dust:
                 # if -1e-3<=r_loc  and 
-                if 0.0<=A_dust:
-                    return 0.0
+                # if 0.0<=A_dust:
+                    # return 0.0
                 return -np.inf
 
             def lnprob(p_loc):
@@ -203,17 +224,29 @@ class BBREstimation(PipelineStage):
 
             ### optimization
             if self.config['sync_marginalization']:
-                bounds = [(0.0, None), (0.0, None), (0.0, None)]
-                p0 = [1.0,0.1,0.1]
-                names = ["r", "\Lambda_d", "\Lambda_s"]
-                labels =  ["r", "\Lambda_d", "\Lambda_s"]
+                if self.config['AL_marginalization']:
+                    bounds = [(0.0, None), (0.0, None), (0.0, None), (0.0, None)]
+                    p0 = [1.0,0.1,0.1, 1.0]
+                    names = ["r", "\Lambda_d", "\Lambda_s", "A_L"]
+                    labels =  ["r", "\Lambda_d", "\Lambda_s", "A_L"]
+                else:
+                    bounds = [(0.0, None), (0.0, None), (0.0, None)]
+                    p0 = [1.0,0.1,0.1]
+                    names = ["r", "\Lambda_d", "\Lambda_s"]
+                    labels =  ["r", "\Lambda_d", "\Lambda_s"]
             else:
-                bounds = [(0.0, None), (0.0, None)]
-                # bounds = [(-0.01, None), (0.0, None)]
-                # bounds = [(None, None), (None, None)]
-                p0 = [1.0,0.1]
-                names = ["r", "\Lambda_d",]
-                labels =  ["r", "\Lambda_d"]
+                if self.config['AL_marginalization']:
+                    bounds = [(0.0, None), (0.0, None), (0.0, None)]
+                    p0 = [1.0,0.1, 1.0]
+                    names = ["r", "\Lambda_d", "A_L"]
+                    labels =  ["r", "\Lambda_d", "A_L"]
+                else:
+                    bounds = [(0.0, None), (0.0, None)]
+                    # bounds = [(-0.01, None), (0.0, None)]
+                    # bounds = [(None, None), (None, None)]
+                    p0 = [1.0,0.1]
+                    names = ["r", "\Lambda_d",]
+                    labels =  ["r", "\Lambda_d"]
 
             Astat_best_fit_with_stat_res =  scipy.optimize.minimize( pos_likelihood_on_r_with_stat_and_sys_res, \
                     p0,\

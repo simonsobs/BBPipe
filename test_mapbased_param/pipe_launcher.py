@@ -50,6 +50,7 @@ def grabargs():
     parser.add_argument("--aposize", type=float, help = "apodization size", default=8.0)
     parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
     parser.add_argument("--include_stat_res", action='store_true', help = "estimating and including statistical residuals in the analysis", default=False)
+    parser.add_argument("--AL_marginalization", action='store_true',help = "marginalization of the cosmo likelihood over A_lens (lensing BB amplitude)", default=False)
 
     args = parser.parse_args()
 
@@ -124,7 +125,7 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
 def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000,\
-                apotype='C2', aposize=10.0, include_stat_res=False):
+                apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False):
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -166,6 +167,7 @@ BBREstimation:
     A_lens: 1.0
     dust_marginalization: '''+str(dust_marginalization)+'''
     sync_marginalization: '''+str(sync_marginalization)+'''
+    AL_marginalization: '''+str(AL_marginalization)+'''
     ndim: '''+str(ndim)+'''
     nwalkers: 500
     include_stat_res: True
