@@ -216,7 +216,8 @@ def main():
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
                 sync_marginalization=args.sync_marginalization,\
                 path_to_temp_files=args.path_to_temp_files, r_input=args.r_input,\
-                apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res)
+                apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res,\
+                AL_marginalization=args.AL_marginalization)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
