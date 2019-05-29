@@ -176,7 +176,7 @@ class BBREstimation(PipelineStage):
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
                                                  linewidth=2.0, alpha=0.8)
-                    pl.loglog(ell_v_locm norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
+                    pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
                     ax = pl.gca()
                     box = ax.get_position()
                     ax.set_position([box.x0-box.width*0.02, box.y0, box.width*0.8, box.height])
@@ -330,7 +330,7 @@ class BBREstimation(PipelineStage):
                         
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
-                        pl.loglog(ell_v_locm norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
+                        pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
                         pl.legend()
                         pl.xlabel('$\ell$', fontsize=20)
                         pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
