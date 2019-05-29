@@ -51,9 +51,10 @@ class BBClEstimation(PipelineStage):
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
-            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile)]
+            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
-                ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile)]
+                ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
+                    ('Cl_CMB_template_150GHz', NumpyFile)]
 
     def run(self):
 
@@ -63,6 +64,7 @@ class BBClEstimation(PipelineStage):
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
         post_compsep_noise=hp.read_map(self.get_input('post_compsep_noise'),verbose=False, field=None)
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
+        CMB_template_150GHz = hp.read_map(self.get_input('CMB_template_150GHz'), field=None)
         
         nhits = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
@@ -195,6 +197,13 @@ class BBClEstimation(PipelineStage):
                     Cl_fgs[fi,fj,:] = compute_master(fgs_i, fgs_j, w)[3]
 
         np.save(self.get_output('Cl_fgs'),  Cl_fgs)
+
+        ########
+        # estimation of the input CMB map cross spectrum
+        cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], purify_b=purify_b_)
+        Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
+        np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
+
 
 if __name__ == '__main__':
     results = PipelineStage.main()
