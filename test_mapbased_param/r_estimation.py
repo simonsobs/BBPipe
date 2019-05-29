@@ -56,7 +56,7 @@ class BBREstimation(PipelineStage):
     name='BBREstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), 
                 ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile), 
-                    ('fitted_spectral_parameters', TextFile)]
+                    ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
                 ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
@@ -86,6 +86,7 @@ class BBREstimation(PipelineStage):
 
         ################ STATISTICAL FOREGROUNDS RESIDUALS MODELING
         Cl_fgs = np.load(self.get_input('Cl_fgs'))
+        Cl_CMB_template_150GHz = np.load(self.get_input('Cl_CMB_template_150GHz'))
         p = np.loadtxt(self.get_input('fitted_spectral_parameters'))
         ## the length of p is always n_params  + (nparams*(nparams+1)/2)
         ## = nparams + (nparams**2/2 + nparams/2)
@@ -175,6 +176,7 @@ class BBREstimation(PipelineStage):
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
                                                  linewidth=2.0, alpha=0.8)
+                    pl.loglog(ell_v_locm norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
                     ax = pl.gca()
                     box = ax.get_position()
                     ax.set_position([box.x0-box.width*0.02, box.y0, box.width*0.8, box.height])
@@ -237,7 +239,7 @@ class BBREstimation(PipelineStage):
             else:
                 if self.config['AL_marginalization']:
                     bounds = [(0.0, None), (0.0, None), (0.0, None)]
-                    p0 = [1.0,0.1, 1.0]
+                    p0 = [1.0, 0.1, 1.0]
                     names = ["r", "\Lambda_d", "A_L"]
                     labels =  ["r", "\Lambda_d", "A_L"]
                 else:
@@ -328,6 +330,7 @@ class BBREstimation(PipelineStage):
                         
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+                        pl.loglog(ell_v_locm norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
                         pl.legend()
                         pl.xlabel('$\ell$', fontsize=20)
                         pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
