@@ -161,6 +161,8 @@ class BBREstimation(PipelineStage):
                                                   label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
                     pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                  label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
+                    pl.loglog( ell_v_loc, norm*AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                 label='fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
                     pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                  label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
                     pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
