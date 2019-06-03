@@ -130,6 +130,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
     ndim = 1
     if dust_marginalization: ndim += 1
     if sync_marginalization: ndim += 1
+    if AL_marginalization: ndim += 1
 
     global_string = '''
 global:
