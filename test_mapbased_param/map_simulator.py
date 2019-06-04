@@ -36,11 +36,12 @@ class BBMapSim(PipelineStage):
         # performing the CMB simulation with synfast
         if self.config['cmb_sim_no_pysm']:
             Cl_BB_prim = self.config['r_input']*hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
+            l_max_prim = len(Cl_BB_prim)
             Cl_lens = hp.read_cl(self.get_input('Cl_BB_lens'))
-            Cl_BB_lens = self.config['A_lens']*Cl_lens[2]
-            Cl_TT = Cl_lens[0]
-            Cl_EE = Cl_lens[1]
-            Cl_TE = Cl_lens[3]
+            Cl_BB_lens = self.config['A_lens']*Cl_lens[2][:l_max_prim]
+            Cl_TT = Cl_lens[0][:l_max_prim]
+            Cl_EE = Cl_lens[1][:l_max_prim]
+            Cl_TE = Cl_lens[3][:l_max_prim]
             sky_config = {'cmb' : '', 'dust' : d_config, 'synchrotron' : s_config}
             sky = pysm.Sky(sky_config)
             Cl_BB = Cl_BB_prim + Cl_BB_lens
