@@ -37,7 +37,7 @@ class BBMapSim(PipelineStage):
         if self.config['cmb_sim_no_pysm']:
             Cl_BB_prim = self.config['r_input']*hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
             Cl_lens = hp.read_cl(self.get_input('Cl_BB_lens'))
-            Cl_BB_lens = self.config['AL_input']*Cl_lens[2]
+            Cl_BB_lens = self.config['A_lens']*Cl_lens[2]
             Cl_TT = Cl_lens[0]
             Cl_EE = Cl_lens[1]
             Cl_TE = Cl_lens[3]
@@ -87,8 +87,9 @@ class BBMapSim(PipelineStage):
             # adding CMB in this case
             for i in range(freq_maps.shape[0]):
                 freq_maps[i,:,:] += cmb_sky[:,:]
-
-        CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
+            CMB_template_150GHz = cmb_sky
+        else:
+            CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
         dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
         sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
 
