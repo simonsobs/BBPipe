@@ -14,7 +14,7 @@ class BBMapSim(PipelineStage):
     Stage that performs the simulation 
     """
     name='BBMapSim'
-    inputs= [('binary_mask',FitsFile),('norm_hits_map', FitsFile)]
+    inputs= [('binary_mask',FitsFile),('norm_hits_map', FitsFile),('Cl_BB_prim_r1', FitsFile),('Cl_BB_lens', FitsFile)]
     outputs=[('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_maps',FitsFile),\
             ('CMB_template_150GHz',FitsFile),('dust_template_150GHz',FitsFile),('sync_template_150GHz',FitsFile)]
 
@@ -31,9 +31,24 @@ class BBMapSim(PipelineStage):
         d_config = models(self.config['dust_model'], self.config['nside'])
         s_config = models(self.config['sync_model'], self.config['nside'])
         c_config = models(self.config['cmb_model'], self.config['nside'])
-        sky_config = {'cmb' : c_config, 'dust' : d_config, 'synchrotron' : s_config}
-        sky = pysm.Sky(sky_config)
+       
 
+        # performing the CMB simulation with synfast
+        if self.config['cmb_sim_no_pysm']:
+            Cl_BB_prim = self.config['r_input']*hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
+            Cl_lens = self.config['AL_input']*hp.read_cl(self.get_input('Cl_BB_lens'))
+            Cl_BB_lens = self.config['AL_input']*Cl_lens[2]
+            Cl_TT = Cl_lens[0]
+            Cl_EE = Cl_lens[1]
+            Cl_TE = Cl_lens[3]
+            sky_config = {'cmb' : '', 'dust' : d_config, 'synchrotron' : s_config}
+            sky = pysm.Sky(sky_config)
+            Cl_BB = Cl_BB_prim + Cl_BB_lens
+            cmb_sky = hp.synfast([Cl_TT, Cl_EE, Cl_BB, Cl_EE, Cl_EE*0.0, Cl_EE*0.0], nside=self.config['nside'])
+        else:
+            sky_config = {'cmb' : c_config, 'dust' : d_config, 'synchrotron' : s_config}
+            sky = pysm.Sky(sky_config)
+      
         sky_config_CMB = {'cmb' : c_config}
         sky_CMB = pysm.Sky(sky_config_CMB)
         sky_config_dust = {'dust' : d_config}
@@ -68,6 +83,11 @@ class BBMapSim(PipelineStage):
 
         # instrument.observe(sky)
         freq_maps = instrument.observe(sky, write_outputs=False)[0]
+        if self.config['cmb_sim_no_pysm']:
+            # adding CMB in this case
+            for i in range(freq_maps.shape[0]):
+                freq_maps[i,:,:] += cmb_sky[:,:]
+
         CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
         dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
         sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))

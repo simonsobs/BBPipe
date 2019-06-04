@@ -49,8 +49,10 @@ def grabargs():
     parser.add_argument("--apotype", type=str, help = "apodization type", default='C1')
     parser.add_argument("--aposize", type=float, help = "apodization size", default=8.0)
     parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
+    parser.add_argument("--AL_input", type=float, help = "input r value to be assumed", default=1.000)
     parser.add_argument("--include_stat_res", action='store_true', help = "estimating and including statistical residuals in the analysis", default=False)
     parser.add_argument("--AL_marginalization", action='store_true',help = "marginalization of the cosmo likelihood over A_lens (lensing BB amplitude)", default=False)
+    parser.add_argument("--cmb_sim_no_pysm", action='store_true', help = "perform the CMB simulation with synfast, outside pysm", default=False)
 
     args = parser.parse_args()
 
@@ -124,8 +126,9 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
 #### CONFIG.YML
 def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
-                sync_marginalization=True, path_to_temp_files='./', r_input=0.000,\
-                apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False):
+                sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
+                apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
+                cmb_sim_no_pysm=False):
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -143,6 +146,8 @@ global:
     custom_bins: True
     noise_option: \''''+str(noise_option)+'''\'
     include_stat_res: \''''+str(include_stat_res)+'''\'
+    r_input: '''+str(r_input)+'''
+    A_lens:  '''+str(AL_input)+'''
 
 BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
@@ -152,6 +157,7 @@ BBMapSim:
     dust_model: 'd1'
     sync_model: 's1'
     tag: 'SO_sims'
+    cmb_sim_no_pysm: \''''+str(cmb_sim_no_pysm)+'''\'
 
 BBMapParamCompSep:
     nside_patch: 0
@@ -164,8 +170,6 @@ BBClEstimation:
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
 
 BBREstimation:
-    r_input: '''+str(r_input)+'''
-    A_lens: 1.0
     dust_marginalization: '''+str(dust_marginalization)+'''
     sync_marginalization: '''+str(sync_marginalization)+'''
     AL_marginalization: '''+str(AL_marginalization)+'''
@@ -216,9 +220,9 @@ def main():
         generate_config_yml(id_tag, sensitivity_mode=args.sensitivity_mode, knee_mode=args.knee_mode,\
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
                 sync_marginalization=args.sync_marginalization,\
-                path_to_temp_files=args.path_to_temp_files, r_input=args.r_input,\
+                path_to_temp_files=args.path_to_temp_files, r_input=args.r_input, AL_input=args.AL_input,\
                 apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res,\
-                AL_marginalization=args.AL_marginalization)
+                AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
