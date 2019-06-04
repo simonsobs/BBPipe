@@ -37,7 +37,7 @@ class BBMapSim(PipelineStage):
         if self.config['cmb_sim_no_pysm']:
             Cl_BB_prim = self.config['r_input']*hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
             Cl_lens = hp.read_cl(self.get_input('Cl_BB_lens'))
-            l_max_lens = len(Cl_lens)
+            l_max_lens = len(Cl_lens[0])
             Cl_BB_lens = self.config['A_lens']*Cl_lens[2]#[:l_max_prim]
             Cl_TT = Cl_lens[0]#[:l_max_prim]
             Cl_EE = Cl_lens[1]#[:l_max_prim]
