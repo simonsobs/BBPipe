@@ -35,7 +35,6 @@ class BBMapSim(PipelineStage):
         s_config = models(self.config['sync_model'], self.config['nside'])
         c_config = models(self.config['cmb_model'], self.config['nside'])
        
-
         # performing the CMB simulation with synfast
         if self.config['cmb_sim_no_pysm']:
             Cl_BB_prim = self.config['r_input']*hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
@@ -54,7 +53,9 @@ class BBMapSim(PipelineStage):
             sky = pysm.Sky(sky_config)
             Cl_BB = Cl_BB_prim[:l_max_lens] + Cl_BB_lens
             pl.loglog(Cl_BB, 'r--')
-            pl.show()
+            pl.savefig('test.pdf')
+            pl.close()
+            # pl.show()
             exit()
             cmb_sky = hp.synfast([Cl_TT, Cl_EE, Cl_BB, Cl_EE, Cl_EE*0.0, Cl_EE*0.0], nside=self.config['nside'])
         else:
