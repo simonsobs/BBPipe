@@ -3,7 +3,7 @@ from .types import FitsFile, TextFile
 import numpy as np
 import matplotlib
 # matplotlib.use('agg')
-matplotlib.use('tkagg')
+# matplotlib.use('tkagg')
 import matplotlib.pyplot as pl
 import pysm
 from pysm.nominal import models
