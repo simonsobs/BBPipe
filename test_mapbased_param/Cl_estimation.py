@@ -79,9 +79,11 @@ class BBClEstimation(PipelineStage):
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))
+
+        mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
+
         if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
             mask *= np.sqrt(nh)
-        mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
 
         fsky_eff = np.mean(mask_apo)
         print('fsky_eff = ', fsky_eff)
@@ -123,12 +125,14 @@ class BBClEstimation(PipelineStage):
         pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
         pl.savefig('./test.pdf')
         exit()
+
         ##############################
 
         ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
-            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
+            # fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
+            fn = get_field(noise_maps[3*f+1,:], noise_maps[3*f+2,:])
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
 
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
@@ -164,14 +168,18 @@ class BBClEstimation(PipelineStage):
             ## signal spectra
             if comp_i > 1: purify_b_=False
             else: purify_b_=True
-            fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], purify_b=purify_b_)
-            fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], purify_b=purify_b_)
+            # fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], purify_b=purify_b_)
+            fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1], purify_b=purify_b_)
+            # fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], purify_b=purify_b_)
+            fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1], purify_b=purify_b_)
 
             Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
 
             ## noise spectra
-            fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=True)
-            fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=True)
+            # fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=True)
+            fyp_i_noise=get_field(post_compsep_noise[2*comp_i], post_compsep_noise[2*comp_i+1], purify_b=True)
+            # fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=True)
+            fyp_j_noise=get_field(post_compsep_noise[2*comp_j], post_compsep_noise[2*comp_j+1], purify_b=True)
 
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
 
@@ -207,15 +215,18 @@ class BBClEstimation(PipelineStage):
                 if fi > fj:
                     Cl_fgs[fi, fj] = Cl_fgs[fj, fi]
                 else:
-                    fgs_i=get_field(mask*frequency_maps_[fi,0,:], mask*frequency_maps_[fi,1,:], purify_b=purify_b_)
-                    fgs_j=get_field(mask*frequency_maps_[fj,0,:], mask*frequency_maps_[fj,1,:], purify_b=purify_b_)
+                    # fgs_i=get_field(mask*frequency_maps_[fi,0,:], mask*frequency_maps_[fi,1,:], purify_b=purify_b_)
+                    fgs_i=get_field(frequency_maps_[fi,0,:], frequency_maps_[fi,1,:], purify_b=purify_b_)
+                    # fgs_j=get_field(mask*frequency_maps_[fj,0,:], mask*frequency_maps_[fj,1,:], purify_b=purify_b_)
+                    fgs_j=get_field(frequency_maps_[fj,0,:], frequency_maps_[fj,1,:], purify_b=purify_b_)
                     Cl_fgs[fi,fj,:] = compute_master(fgs_i, fgs_j, w)[3]
 
         np.save(self.get_output('Cl_fgs'),  Cl_fgs)
 
         ########
         # estimation of the input CMB map cross spectrum
-        cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], purify_b=True)
+        # cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], purify_b=True)
+        cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
         Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
         np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
 
