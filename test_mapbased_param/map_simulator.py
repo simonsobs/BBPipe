@@ -44,12 +44,9 @@ class BBMapSim(PipelineStage):
             Cl_TT = Cl_lens[0]#[:l_max_prim]
             Cl_EE = Cl_lens[1]#[:l_max_prim]
             Cl_TE = Cl_lens[3]#[:l_max_prim]
-            print(Cl_lens[0])
             sky_config = {'cmb' : '', 'dust' : d_config, 'synchrotron' : s_config}
             sky = pysm.Sky(sky_config)
             Cl_BB = Cl_BB_prim[:l_max_lens] + Cl_BB_lens
-            print(Cl_BB)
-            exit()
             cmb_sky = hp.synfast([Cl_TT, Cl_EE, Cl_BB, Cl_TE, Cl_EE*0.0, Cl_EE*0.0], nside=self.config['nside'], new=True)
         else:
             sky_config = {'cmb' : c_config, 'dust' : d_config, 'synchrotron' : s_config}
@@ -92,7 +89,10 @@ class BBMapSim(PipelineStage):
         if self.config['cmb_sim_no_pysm']:
             # adding CMB in this case
             for i in range(freq_maps.shape[0]):
+                print(freq_maps.shape, cmb_sky.shape)
                 freq_maps[i,:,:] += cmb_sky[:,:]
+                print(cmb_sky)
+            exit()
             CMB_template_150GHz = cmb_sky
         else:
             CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
