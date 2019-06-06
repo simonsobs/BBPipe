@@ -100,8 +100,8 @@ class BBREstimation(PipelineStage):
         ################
 
         # model 
-        Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
-        Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
+        Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2][2:]
+        Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2][2:]
         
         bins = binning_definition(self.config['nside'], lmin=self.config['lmin'], lmax=self.config['lmax'],\
                              nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
@@ -158,27 +158,30 @@ class BBREstimation(PipelineStage):
                     ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
                     norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
                     pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                  label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
+                                                label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
                     pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                 label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
+                                                label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
                     pl.loglog( ell_v_loc, norm*AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                 label='fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
+                                                label='fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
                     pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
+                                                label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
                     pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                 label='actual noise post comp sep', linestyle=':', color='Cyan')
+                                                label='actual noise post comp sep', linestyle=':', color='Cyan')
                     pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                 label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
+                                                label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                     pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
                     pl.loglog( ell_v_loc, norm*A_dust*Cl_dust_obs, label='bias-fitted dust template', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
                     if self.config['sync_marginalization']: pl.loglog( ell_v_loc, norm*A_sync*Cl_sync_obs,
-                                                 label='synchrotron template @ 150GHz', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
-                    pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - actual noise', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
-                    pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='modeled BB - modeled noise', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+                                                label='synchrotron template @ 150GHz', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
+                    pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - actual noise', 
+                                                color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                    pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='modeled BB - modeled noise', 
+                                                color='k', linestyle='-', linewidth=2.0, alpha=0.8)
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
-                                                 linewidth=2.0, alpha=0.8)
-                    pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
+                                                linewidth=2.0, alpha=0.8)
+                    pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
+                                                linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz')
                     ax = pl.gca()
                     box = ax.get_position()
                     ax.set_position([box.x0-box.width*0.02, box.y0, box.width*0.8, box.height])
