@@ -100,8 +100,8 @@ class BBREstimation(PipelineStage):
         ################
 
         # model 
-        Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2][2:]
-        Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2][2:]
+        Cl_BB_prim_r1 = hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
+        Cl_BB_lens = hp.read_cl(self.get_input('Cl_BB_lens'))[2]
         
         bins = binning_definition(self.config['nside'], lmin=self.config['lmin'], lmax=self.config['lmax'],\
                              nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
@@ -138,7 +138,7 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust = p_loc
                         AL = 1.0
 
-                Cov_model = bins.bin_cell(Cl_BB_prim_r1[2:3*self.config['nside']+2]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                Cov_model = bins.bin_cell(Cl_BB_prim_r1[self.config['lmin']:3*self.config['nside']+self.config['lmin']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
 
                 if self.config['sync_marginalization']: 
@@ -163,7 +163,7 @@ class BBREstimation(PipelineStage):
                     ell_v_loc_eff = ell_v_eff[(ell_v_eff>=lmin)&(ell_v_eff<=lmax)]
                     norm_eff = ell_v_loc_eff*(ell_v_loc_eff+1)/2/np.pi
                     # theory BB primordial
-                    pl.loglog( ell_v_loc_eff, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])],
+                    pl.loglog( ell_v_loc_eff, norm*bins.bin_cell(Cl_BB_prim_r1[self.config['lmin']:3*self.config['nside']+self.config['lmin']]*r_loc)[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])],
                                                 label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
                     # theory lensing
                     pl.loglog( ell_v_loc_eff, norm*Cl_BB_lens_bin[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])],
