@@ -107,7 +107,7 @@ class BBREstimation(PipelineStage):
                              nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
         # bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
-        Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
+        Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[2:3*self.config['nside']])
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
