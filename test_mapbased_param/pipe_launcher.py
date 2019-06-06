@@ -139,7 +139,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 global:
     frequencies: [27,39,93,145,225,280]
     fsky: 0.1
-    nside: 512
+    nside: 1024
     lmin: 30
     lmax: 500
     nlb: 9
