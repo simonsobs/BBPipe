@@ -105,6 +105,7 @@ class BBREstimation(PipelineStage):
         
         bins = binning_definition(self.config['nside'], lmin=self.config['lmin'], lmax=self.config['lmax'],\
                              nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
+        ell_v_eff = bins.get_effective_ells()
         # bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[2:3*self.config['nside']+2])
@@ -157,9 +158,13 @@ class BBREstimation(PipelineStage):
                     pl.figure(num=None, figsize=(14,10), facecolor='w', edgecolor='k')
                     ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
                     norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
-                    pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+
+                    ell_v_loc_eff = ell_v_eff[(ell_v_eff>=lmin)&(ell_v_eff<=lmax)]
+                    norm_eff = ell_v_loc_eff*(ell_v_loc_eff+1)/2/np.pi
+
+                    pl.loglog( ell_v_loc_eff, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])],
                                                 label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
-                    pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                    pl.loglog( ell_v_loc_eff, norm*Cl_BB_lens_bin[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])],
                                                 label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
                     pl.loglog( ell_v_loc, norm*AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
