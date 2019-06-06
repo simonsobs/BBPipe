@@ -107,7 +107,7 @@ class BBREstimation(PipelineStage):
                              nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
         # bins = nmt.NmtBin(self.config['nside'], nlb=int(1./self.config['fsky']))
 
-        Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[2:3*self.config['nside']])
+        Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[2:3*self.config['nside']+2])
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
@@ -136,7 +136,7 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust = p_loc
                         AL = 1.0
 
-                Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                Cov_model = bins.bin_cell(Cl_BB_prim_r1[2:3*self.config['nside']+2]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
 
                 if self.config['sync_marginalization']: 
