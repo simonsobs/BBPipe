@@ -117,7 +117,7 @@ class BBClEstimation(PipelineStage):
         for i in range(100):
             mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
             f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim)
-            Cl_BB_reconstructed.append(compute_master(fn, fn, w, purify_b=True)[3])
+            Cl_BB_reconstructed.append(compute_master(f2y0, f2y0, w, purify_b=True)[3])
         pl.figure()
         pl.loglog( ell_eff, Cl_BB_reconstructed, 'k-', alpha=0.2)
         pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
