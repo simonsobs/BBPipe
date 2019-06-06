@@ -83,7 +83,8 @@ class BBClEstimation(PipelineStage):
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
 
         if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
-            mask_nh = mask*np.sqrt(nh)
+            # mask_nh = mask*np.sqrt(nh)
+            mask_apo *= np.sqrt(nh)
 
         fsky_eff = np.mean(mask_apo)
         print('fsky_eff = ', fsky_eff)
@@ -102,10 +103,10 @@ class BBClEstimation(PipelineStage):
             return f2y
 
         #We initialize two workspaces for the non-pure and pure fields:
-        if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
-            f2y0=get_field(mask_nh*mp_q_sim,mask_nh*mp_u_sim)
-        else:
-            f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim)
+        # if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
+            # f2y0=get_field(mask_nh*mp_q_sim,mask_nh*mp_u_sim)
+        # else:
+        f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim)
         w.compute_coupling_matrix(f2y0,f2y0,b)
 
         #This wraps up the two steps needed to compute the power spectrum
