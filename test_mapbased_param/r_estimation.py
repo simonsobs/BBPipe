@@ -332,7 +332,8 @@ class BBREstimation(PipelineStage):
                         
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
-                        pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', linewidth=3.0, alpha=1.0)
+                        pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
+                                        linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz')
                         pl.legend()
                         pl.xlabel('$\ell$', fontsize=20)
                         pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)

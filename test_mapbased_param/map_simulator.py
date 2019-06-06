@@ -44,18 +44,12 @@ class BBMapSim(PipelineStage):
             Cl_TT = Cl_lens[0]#[:l_max_prim]
             Cl_EE = Cl_lens[1]#[:l_max_prim]
             Cl_TE = Cl_lens[3]#[:l_max_prim]
-            # pl.figure()
-            # pl.loglog(Cl_TT)
-            # pl.loglog(Cl_TE)
-            # pl.loglog(Cl_EE)
+            print Cl_lens[0]
             sky_config = {'cmb' : '', 'dust' : d_config, 'synchrotron' : s_config}
             sky = pysm.Sky(sky_config)
             Cl_BB = Cl_BB_prim[:l_max_lens] + Cl_BB_lens
-            # pl.loglog(Cl_BB, 'r--')
-            # pl.savefig('test.pdf')
-            # pl.close()
-            # pl.show()
-            # exit()
+            print Cl_BB
+            exit()
             cmb_sky = hp.synfast([Cl_TT, Cl_EE, Cl_BB, Cl_TE, Cl_EE*0.0, Cl_EE*0.0], nside=self.config['nside'], new=True)
         else:
             sky_config = {'cmb' : c_config, 'dust' : d_config, 'synchrotron' : s_config}
