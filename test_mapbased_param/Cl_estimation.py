@@ -110,6 +110,21 @@ class BBClEstimation(PipelineStage):
             cl_decoupled=wsp.decouple_cell(cl_coupled)
             return cl_decoupled
 
+
+        ##############################
+        # simulation of the CMB
+        Cl_BB_reconstructed = []
+        for i in range(100):
+            mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
+            f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim)
+            Cl_BB_reconstructed.append(compute_master(fn, fn, w, purify_b=True)[3])
+        pl.figure()
+        pl.loglog( ell_eff, Cl_BB_reconstructed, 'k-', alpha=0.2)
+        pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
+        pl.savefig('./test.pdf')
+        exit()
+        ##############################
+
         ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
         for f in range(len(self.config['frequencies'])):
