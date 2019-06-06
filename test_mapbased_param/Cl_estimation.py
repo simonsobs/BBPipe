@@ -119,7 +119,7 @@ class BBClEstimation(PipelineStage):
             f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim, purify_b=True)
             Cl_BB_reconstructed.append(compute_master(f2y0, f2y0, w)[3])
         pl.figure()
-        pl.loglog( ell_eff, Cl_BB_reconstructed, 'k-', alpha=0.2)
+        pl.loglog( ell_eff, np.array(Cl_BB_reconstructed).T, 'k-', alpha=0.2)
         pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
         pl.savefig('./test.pdf')
         exit()
