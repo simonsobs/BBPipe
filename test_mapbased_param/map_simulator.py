@@ -89,13 +89,20 @@ class BBMapSim(PipelineStage):
         if self.config['cmb_sim_no_pysm']:
             # adding CMB in this case
             for i in range(freq_maps.shape[0]):
-                print(freq_maps.shape, cmb_sky.shape)
                 freq_maps[i,:,:] += cmb_sky[:,:]
-                print(cmb_sky)
-            exit()
             CMB_template_150GHz = cmb_sky
-        else:
-            CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
+        hp.mollview(CMB_template_150GHz[0], sub=311)
+        hp.mollview(CMB_template_150GHz[1], sub=312)
+        hp.mollview(CMB_template_150GHz[2], sub=313)
+        pl.savefig('./test_CMB_sim_hp.pdf')
+        pl.close()
+        # else:
+        CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
+        hp.mollview(CMB_template_150GHz[0], sub=311)
+        hp.mollview(CMB_template_150GHz[1], sub=312)
+        hp.mollview(CMB_template_150GHz[2], sub=313)
+        pl.savefig('./test_CMB_sim_pysm.pdf')
+        exit()
         dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
         sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
 
