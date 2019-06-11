@@ -135,10 +135,12 @@ class BBClEstimation(PipelineStage):
 
         ### compute noise bias in the comp sep maps
         Cl_cov_clean_loc = []
+        Cl_cov_freq = []
         for f in range(len(self.config['frequencies'])):
             fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
             # fn = get_field(noise_maps[3*f+1,:], noise_maps[3*f+2,:])
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
+            Cl_cov_freq.append(compute_master(fn, fn, w)[3])
 
         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
         # print('shape of AtNA = ', AtNA.shape)
@@ -198,7 +200,7 @@ class BBClEstimation(PipelineStage):
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_noise'), np.array(Cl_noise), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
-        hp.fitsfunc.write_cl(self.get_output('Cl_cov_freq'), np.array(Cl_cov_clean_loc), overwrite=True)
+        hp.fitsfunc.write_cl(self.get_output('Cl_cov_freq'), np.array(Cl_cov_freq), overwrite=True)
 
         ###### 
         # cross power spectra of the input frequency maps 
