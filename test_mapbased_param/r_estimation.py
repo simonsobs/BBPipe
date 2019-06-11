@@ -198,10 +198,10 @@ class BBREstimation(PipelineStage):
                     # including true CMB template @ 150GHz
                     pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
                                                 linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz')
+                    # noise per frequency channel  
                     for i in range(len(Cl_cov_freq)):
-                        pl.loglog( ell_v_loc, norm*Cl_cov_freq[i][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle='-', color='cyan', 
-                                                linewidth=3.0, alpha=0.5)
-
+                        pl.loglog( ell_v_loc, norm*Cl_cov_freq[i][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
+                                            linestyle='-', color='cyan', linewidth=3.0, alpha=0.5, label='noise for frequency '+str(i))
                     ax = pl.gca()
                     box = ax.get_position()
                     ax.set_position([box.x0-box.width*0.02, box.y0, box.width*0.8, box.height])
