@@ -82,9 +82,9 @@ class BBClEstimation(PipelineStage):
 
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
 
-        # if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
-            # mask_nh = mask*np.sqrt(nh)
-            # mask_apo *= np.sqrt(nh)
+        if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
+            mask_nh = mask*np.sqrt(nh)
+            mask_apo *= np.sqrt(nh)
 
         fsky_eff = np.mean(mask_apo)
         print('fsky_eff = ', fsky_eff)
