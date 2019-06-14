@@ -176,10 +176,10 @@ class BBClEstimation(PipelineStage):
             ## signal spectra
             if comp_i > 1: purify_b_=False
             else: purify_b_=True
-            # fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], purify_b=purify_b_)
-            fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1], purify_b=purify_b_)
-            # fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], purify_b=purify_b_)
-            fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1], purify_b=purify_b_)
+            fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], purify_b=purify_b_)
+            # fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1], purify_b=purify_b_)
+            fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], purify_b=purify_b_)
+            # fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1], purify_b=purify_b_)
 
             Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
 
