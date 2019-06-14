@@ -137,7 +137,7 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean_loc = []
         Cl_cov_freq = []
         for f in range(len(self.config['frequencies'])):
-            fn = get_field(noise_maps[3*f+1,:], noise_maps[3*f+2,:])
+            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
             # fn = get_field(mask_nh*noise_maps[3*f+1,:], mask_nh*noise_maps[3*f+2,:])
             # fn = get_field(noise_maps[3*f+1,:], noise_maps[3*f+2,:])
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
@@ -186,10 +186,10 @@ class BBClEstimation(PipelineStage):
             ## noise spectra
             # fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=True)
             # fyp_i_noise=get_field(mask_nh*post_compsep_noise[2*comp_i], mask_nh*post_compsep_noise[2*comp_i+1], purify_b=True)
-            fyp_i_noise=get_field(post_compsep_noise[2*comp_i], post_compsep_noise[2*comp_i+1], purify_b=True)
+            fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=True)
             # fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=True)
             # fyp_j_noise=get_field(mask_nh*post_compsep_noise[2*comp_j], mask_nh*post_compsep_noise[2*comp_j+1], purify_b=True)
-            fyp_j_noise=get_field(post_compsep_noise[2*comp_j], post_compsep_noise[2*comp_j+1], purify_b=True)
+            fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=True)
 
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
 
