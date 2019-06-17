@@ -158,8 +158,8 @@ BBMapSim:
     dust_model: 'd1'
     sync_model: 's1'
     tag: 'SO_sims'
-    cmb_sim_no_pysm: \''''+str(cmb_sim_no_pysm)+'''\'
-    no_inh: \''''+str(no_inh)+'''\'
+    cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
+    no_inh: '''+str(no_inh)+'''
 
 BBMapParamCompSep:
     nside_patch: 0
@@ -167,7 +167,7 @@ BBMapParamCompSep:
 
 BBClEstimation:
     aposize:  '''+str(aposize)+'''
-    apotype:  '''+str(apotype)+'''
+    apotype:  \''''+str(apotype)+'''\'
     purify_b: True
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
 
