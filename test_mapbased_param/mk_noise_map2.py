@@ -42,7 +42,7 @@ def get_mask(nh, nside_out=512) :
     msk[not0]=nh[not0]
     return msk
 
-def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_map=None) :
+def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_map=None, no_inh=False) :
     """
     Generates noise simulation
     sensitivity : choice of sensitivity model for SAC's V3 
@@ -74,7 +74,7 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_ma
                                   pol=True,new=True,verbose=False)
         # nv_t=nlev[i_n]*np.ones_like(no_t)/np.sqrt(2.);
         # nv_q=nlev[i_n]*np.ones_like(no_q); nv_u=nlev[i_n]*np.ones_like(no_u)
-        no_t/=np.sqrt(nh/np.amax(nh)); no_q/=np.sqrt(nh/np.amax(nh)); no_u/=np.sqrt(nh/np.amax(nh));
+        if not no_inh: no_t/=np.sqrt(nh/np.amax(nh)); no_q/=np.sqrt(nh/np.amax(nh)); no_u/=np.sqrt(nh/np.amax(nh));
         # nv_t/=np.sqrt(nh/np.amax(nh)); nv_q/=np.sqrt(nh/np.amax(nh)); nv_u/=np.sqrt(nh/np.amax(nh));
         # mps_no.append([no_t,no_q,no_u])
         mps_no.append(no_t)
