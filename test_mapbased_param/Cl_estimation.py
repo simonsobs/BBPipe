@@ -82,10 +82,10 @@ class BBClEstimation(PipelineStage):
 
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
 
-        if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
+        # if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
             # mask_nh = mask*np.sqrt(nh)
             # mask_apo *= np.sqrt(nh)
-            mask_apo *= nh
+            # mask_apo *= nh
 
         fsky_eff = np.mean(mask_apo)
         print('fsky_eff = ', fsky_eff)
@@ -236,8 +236,8 @@ class BBClEstimation(PipelineStage):
 
         ########
         # estimation of the input CMB map cross spectrum
-        # cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], purify_b=True)
-        cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
+        cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], purify_b=True)
+        # cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
         Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
         np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
 
