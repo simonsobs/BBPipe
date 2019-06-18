@@ -173,6 +173,9 @@ class BBREstimation(PipelineStage):
                     # true noise bias on CMB
                     pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='actual noise post comp sep', linestyle=':', color='Cyan')
+                    # true noise bias - observed noise bias 
+                    pl.loglog( ell_v_loc, norm*(Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]-Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
+                                                label='noise difference', linestyle=':', color='purple')
                     # true noise bias on dust
                     pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
@@ -185,11 +188,13 @@ class BBREstimation(PipelineStage):
                                                 label='synchrotron template @ 150GHz', linestyle='--', color='DarkGray', linewidth=2.0, alpha=0.8)
                     # true noise-debiased BB spectrum
                     # which should correspond to primordial BB + lensing BB + foregrounds residuals
-                    pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - actual noise', 
+                    pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
+                                                label='observed BB - actual noise = tot BB + residuals', 
                                                 color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                     # modeled noise-debiased BB spectrum
                     # which should correspond to primordial BB + lensing BB + foregrounds residuals
-                    pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='modeled BB - modeled noise', 
+                    pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
+                                                label='modeled BB - modeled noise = tot BB + residuals', 
                                                 color='k', linestyle='-', linewidth=2.0, alpha=0.8)
                     # including statistical foregrounds residuals
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
@@ -412,7 +417,7 @@ class BBREstimation(PipelineStage):
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r', 'L(r)']
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
-        if self.config['dust_marginalization'] is False and self.config['sync_marginalization'] is False:
+        if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization'])):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
 
 if __name__ == '__main__':
