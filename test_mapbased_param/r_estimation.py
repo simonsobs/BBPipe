@@ -243,8 +243,8 @@ class BBREstimation(PipelineStage):
                 return -np.inf
 
             def lnprob(p_loc):
-                # lp = 0.0
-                lp = lnprior( p_loc )
+                lp = 0.0
+                # lp = lnprior( p_loc )
                 return lp + likelihood_on_r_with_stat_and_sys_res(p_loc)
 
             neg_likelihood_on_r_with_stat_and_sys_res = lambda *args: lnprob(*args)
