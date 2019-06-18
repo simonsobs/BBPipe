@@ -136,7 +136,7 @@ class BBREstimation(PipelineStage):
                         AL = 1.0
 
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
-                                            + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
+                                            + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]
 
                 if self.config['sync_marginalization']: 
                     Cov_model += A_sync*Cl_sync_obs
@@ -174,7 +174,7 @@ class BBREstimation(PipelineStage):
                     pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='actual noise post comp sep', linestyle=':', color='Cyan')
                     # true noise bias - observed noise bias 
-                    pl.loglog( ell_v_loc, norm*(Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]-Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
+                    pl.loglog( ell_v_loc, norm*np.abs(Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]-Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
                                                 label='noise difference', linestyle=':', color='purple')
                     # true noise bias on dust
                     pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
@@ -300,9 +300,9 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)#, threads=4)
-            sampler.run_mcmc(p0, 10000)
+            sampler.run_mcmc(p0, 5000)
 
-            samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 500:, :].reshape((-1, ndim))
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
