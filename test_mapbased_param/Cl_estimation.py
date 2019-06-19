@@ -120,7 +120,7 @@ class BBClEstimation(PipelineStage):
 
         ##############################
         # simulation of the CMB
-        """
+
         Cl_BB_reconstructed = []
         for i in range(10):
             mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
@@ -131,8 +131,9 @@ class BBClEstimation(PipelineStage):
         pl.loglog( ell_eff, np.array(Cl_BB_reconstructed).T, 'k-', alpha=0.2)
         pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
         pl.savefig('./test.pdf')
-        exit()
-        """
+        # exit()
+        pl.close()
+
         ##############################
 
         ### compute noise bias in the comp sep maps
