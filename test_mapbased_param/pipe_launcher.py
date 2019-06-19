@@ -36,8 +36,10 @@ rand_string = comm.bcast( rand_string, root=0 )
 def grabargs():
 
     parser = argparse.ArgumentParser()
-
+    
     parser.add_argument("--Nsims", type=int, help = "number of CMB + noise simulations", default=1)
+    parser.add_argument("--nside", type=int, help = "resolution of maps for the analysis", default=512)
+    parser.add_argument("--nside_patch", type=int, help = "patch nside for a multipatch approach", default=512)
     parser.add_argument("--sensitivity_mode", type=int, help = "SO V3 sensitivity mode", default=1)
     parser.add_argument("--knee_mode", type=int, help = "SO V3 1/f knee mode", default=1)
     parser.add_argument("--ny_lf", type=float, help = "SO V3 low frequency integration time", default=1.0)
@@ -129,7 +131,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
-                cmb_sim_no_pysm=False, no_inh=False):
+                cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0):
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -140,7 +142,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 global:
     frequencies: [27,39,93,145,225,280]
     fsky: 0.1
-    nside: 512
+    nside: '''+str(nside)+'''
     lmin: 30
     lmax: 500
     nlb: 9
@@ -162,7 +164,7 @@ BBMapSim:
     no_inh: '''+str(no_inh)+'''
 
 BBMapParamCompSep:
-    nside_patch: 0
+    nside_patch: '''+str(nside_patch)+'''
     smart_multipatch: False
 
 BBClEstimation:
@@ -225,7 +227,7 @@ def main():
                 path_to_temp_files=args.path_to_temp_files, r_input=args.r_input, AL_input=args.AL_input,\
                 apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res,\
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
-                no_inh=args.no_inh)
+                no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
