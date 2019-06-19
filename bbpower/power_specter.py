@@ -171,7 +171,6 @@ class BBPowerSpecter(PipelineStage):
                 self.workspaces[name] = self.compute_workspace(i1,i2)
 
     def get_cell_iterator(self):
-        typ,ell,dell,t1,q1,t2,q2=[],[],[],[],[],[],[]
         for b1 in range(self.n_bpss):
             for b2 in range(b1,self.n_bpss):
                 for s1 in range(self.nsplits):
@@ -180,9 +179,9 @@ class BBPowerSpecter(PipelineStage):
                         splits_range=range(s1,self.nsplits)
                     else:
                         splits_range=range(self.nsplits)
-                    for s2 in range(self.nsplits):
+                    for s2 in splits_range:
                         l2=self.get_map_label(b2,s2)
-                    yield(b1,b2,s1,s2,l1,l2)
+                        yield(b1,b2,s1,s2,l1,l2)
 
     def get_sacc_tracers(self):
         sacc_t = []
@@ -193,7 +192,7 @@ class BBPowerSpecter(PipelineStage):
                               bpss['nu'],bpss['bnu'],
                               exp_sample='SO_SAT')
                 T.addColumns({'dnu':bpss['dnu']})
-            sacc_t.append(T)
+                sacc_t.append(T)
         return sacc_t
                                           
     def get_sacc_binning(self,with_windows=False):
@@ -233,6 +232,7 @@ class BBPowerSpecter(PipelineStage):
                     if with_windows:
                         windows.append(sacc.Window(self.larr_all,
                                                    windows_wsp[name_wsp][ty][il]))
+
         return sacc.Binning(typ,ell,t1,q1,t2,q2,windows=windows)
 
     def save_cell_to_file(self,cell,tracers,binning,fname):
@@ -317,7 +317,7 @@ class BBPowerSpecter(PipelineStage):
             fname=prefix_out + "_sim%d.sacc" % isim
             self.save_cell_to_file(cell_sim,
                                    self.tracers,
-                                   self.bin_win,
+                                   self.bin_nowin,
                                    fname)
             fo.write(fname+"\n")
         fo.close()

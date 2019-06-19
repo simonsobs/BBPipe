@@ -1,10 +1,10 @@
 # These parameters are accessible to all stages
 global:
-    nside: 512
+    nside: 64
 
 BBPowerSpecter:
     # Bandpower definition
-    bpw_edges: "./examples/bpw_edges.txt"
+    bpw_edges: "./examples/bpw_edges_ns64.txt"
     purify_B: True
     n_iter : 3
     
