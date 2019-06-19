@@ -59,14 +59,10 @@ class BBREstimation(PipelineStage):
                     ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile),
                         ('Cl_cov_freq', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
-                ('power_spectrum_post_comp_sep', PdfFile)]
+                ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
     def run(self):
 
-
-        if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization'])):
-            outputs.append( ('gridded_likelihood', NumpyFile))
-            
         Cl_clean = hp.read_cl(self.get_input('Cl_clean'))
         Cl_noise = hp.read_cl(self.get_input('Cl_noise'))
         Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
@@ -431,6 +427,8 @@ class BBREstimation(PipelineStage):
         np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
         if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization'])):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
+        else:
+            np.save(self.get_output('gridded_likelihood'), samples)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
