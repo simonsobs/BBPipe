@@ -78,6 +78,12 @@ class NpzFile(DataFile):
     """
     suffix = 'npz'
 
+class DirFile(DataFile) :
+    """
+    A dummy type
+    """
+    suffix = 'dir'
+
 class DummyFile(DataFile) :
     """
     A dummy type

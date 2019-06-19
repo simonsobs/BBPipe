@@ -5,9 +5,11 @@ import sys
 import pymaster as nmt
 import healpy as hp
 import os
+import sacc
+from scipy.interpolate import interp1d
 
-if len(sys.argv)!=6:
-    print("Usage: generate_SO_maps.py isim nside sens knee nsplits")
+if len(sys.argv)!=7:
+    print("Usage: generate_SO_maps.py isim nside sens knee nsplits mask_type")
     exit(1)
 
 isim=int(sys.argv[1])
@@ -15,9 +17,39 @@ nside=int(sys.argv[2])
 sens=int(sys.argv[3])
 knee=int(sys.argv[4])
 nsplits=int(sys.argv[5])
+mask_type=sys.argv[6]
 npix= hp.nside2npix(nside)
 
-prefix_out="SO_V3_ns%d_sens%d_knee%d_%dsplit_Mock%04d" % (nside, sens, knee, nsplits, isim)
+prefix_out="SO_V3_ns%d_sens%d_knee%d_%dsplit_Mask%s_Mock%04d" % (nside, sens, knee, nsplits, mask_type, isim)
+
+if mask_type=='analytic':
+    # Sky fraction and apodization scale
+    fsky=0.1
+    aposcale=np.radians(10.)
+
+    # Coords of patch centre
+    vec_centre=np.array([1.,0.,0.])
+    # Patch radius
+    theta_range=np.arccos(1-2*fsky)+aposcale/2
+    # Distance to patch centre
+    theta=np.arccos(np.sum(np.array(hp.pix2vec(nside,np.arange(npix)))*
+                           vec_centre[:,None],axis=0))
+    # Normalized distance to edge
+    x=np.sqrt((1-np.cos(theta-theta_range))/(1-np.cos(aposcale)))
+
+    # 1 everywhere
+    mask=np.ones(npix)
+    nhits=np.ones(npix)
+    # Apodized region
+    mask[x<1]=(x-np.sin(2*np.pi*x)/(2*np.pi))[x<1]
+    # Zero beyond range
+    mask[theta>theta_range]=0
+    nhits[theta>theta_range]=0
+    hp.write_map("masks_analytic.fits",mask[None,:]*np.ones(6)[:,None],overwrite=True)
+else:
+    nhits=hp.ud_grade(hp.read_map("norm_nHits_SA_35FOV.fits",verbose=False),nside_out=nside)
+    nhits/=np.amax(nhits)
+    fsky=np.mean(nhits)
 
 #CMB spectrum
 def fcmb(nu):
@@ -95,9 +127,10 @@ larr_all=np.arange(lmax+1)
 dlfac=2*np.pi/(larr_all*(larr_all+1.)); dlfac[0]=1
 
 #Component power spectra
-def dl_plaw(A,alpha,ls):
+def dl_plaw(A,alpha,ls,correct_first=True):
     dl = A*((ls+0.001)/80.)**alpha
-    dl[:2]=0
+    if correct_first:
+        dl[:2]=0
     return dl
 
 def read_camb(fname):
@@ -129,14 +162,62 @@ for ib,b in enumerate(bpss):
     seds[ib,1]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_sync,beta_sync,None,'sync'))
     seds[ib,2]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_dust,beta_dust,temp_dust,'dust'))
 
+ells_bpw=np.array([6.5,16.5,26.5,36.5,46.5,56.5,66.5,76.5,86.5,
+                   96.5,106.5,116.5,126.5,136.5,146.5,156.5,
+                   166.5,176.5])
+n_bpw=len(ells_bpw)
+dlfac_bpw=2*np.pi/(ells_bpw*(ells_bpw+1.));
+bpw_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync,ells_bpw,correct_first=False)*dlfac_bpw
+bpw_sync_bb=dl_plaw(A_sync_BB,alpha_sync,ells_bpw,correct_first=False)*dlfac_bpw
+bpw_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust,ells_bpw,correct_first=False)*dlfac_bpw
+bpw_dust_bb=dl_plaw(A_dust_BB,alpha_dust,ells_bpw,correct_first=False)*dlfac_bpw
+dls_cmb_ee_f=interp1d(larr_all,dls_cmb_ee)
+dls_cmb_bb_f=interp1d(larr_all,dls_cmb_bb)
+bpw_cmb_ee=dls_cmb_ee_f(ells_bpw)*dlfac_bpw
+bpw_cmb_bb=dls_cmb_bb_f(ells_bpw)*dlfac_bpw
 
-nhits=hp.ud_grade(hp.read_map("norm_nHits_SA_35FOV.fits",verbose=False),nside_out=nside)
-nhits/=np.amax(nhits)
+bpw_zero = np.zeros(n_bpw)
+bpw_model=np.zeros([nfreqs,2,nfreqs,2,n_bpw])
+for b1 in range(nfreqs):
+    for b2 in range(nfreqs):
+        bpw_model[b1,0,b2,0,:]+=bpw_cmb_ee*seds[b1,0]*seds[b2,0]
+        bpw_model[b1,1,b2,1,:]+=bpw_cmb_bb*seds[b1,0]*seds[b2,0]
+        bpw_model[b1,0,b2,0,:]+=bpw_sync_ee*seds[b1,1]*seds[b2,1]
+        bpw_model[b1,1,b2,1,:]+=bpw_sync_bb*seds[b1,1]*seds[b2,1]
+        bpw_model[b1,0,b2,0,:]+=bpw_dust_ee*seds[b1,2]*seds[b2,2]
+        bpw_model[b1,1,b2,1,:]+=bpw_dust_bb*seds[b1,2]*seds[b2,2]
+tracers=[]
+for b in range(nfreqs):
+    T=sacc.Tracer("band%d"%(b+1),'CMBP',
+                  bpss[b].nu,bpss[b].bnu,exp_sample='SO_SAT')
+    T.addColumns({'dnu':bpss[b].dnu})
+    tracers.append(T)
+typ, ell, t1, q1, t2, q2 = [], [], [], [], [], []
+pol_names=['E','B']
+for i1 in range(2*nfreqs):
+    b1=i1//2
+    p1=i1%2
+    for i2 in range(i1,2*nfreqs):
+        b2=i2//2
+        p2=i2%2
+        ty=pol_names[p1]+pol_names[p2]
+        for il,ll in enumerate(ells_bpw):
+            ell.append(ll)
+            typ.append(ty)
+            t1.append(b1)
+            t2.append(b2)
+            q1.append('C')
+            q2.append('C')
+bins=sacc.Binning(typ,ell,t1,q1,t2,q2)
+bpw_model=bpw_model.reshape([2*nfreqs,2*nfreqs,n_bpw])[np.triu_indices(2*nfreqs)].flatten()
+mean_model=sacc.MeanVec(bpw_model)
+sacc_model=sacc.SACC(tracers,bins,mean=mean_model)
+sacc_model.saveToHDF(prefix_out+"/cells_model.sacc")
+
 nhits_binary=np.zeros_like(nhits)
 inv_sqrtnhits=np.zeros_like(nhits)
 inv_sqrtnhits[nhits>1E-3]=1./np.sqrt(nhits[nhits>1E-3])
 nhits_binary[nhits>1E-3]=1
-fsky=np.mean(nhits)
 #Add noise
 ylf=1
 nell=np.zeros([nfreqs,lmax+1])
@@ -152,8 +233,8 @@ print("Generating noise maps")
 noimaps = np.zeros([nsplits,nfreqs,2,npix])
 for s in range(nsplits):
     for f in range(nfreqs):
-        noimaps[s,f,0,:]=hp.synfast(nell[f] * nsplits, nside, pol=False, verbose=False) * inv_sqrtnhits
-        noimaps[s,f,1,:]=hp.synfast(nell[f] * nsplits, nside, pol=False, verbose=False) * inv_sqrtnhits
+        noimaps[s,f,0,:]=hp.synfast(nell[f] * nsplits, nside, pol=False, verbose=False, new=True) * inv_sqrtnhits
+        noimaps[s,f,1,:]=hp.synfast(nell[f] * nsplits, nside, pol=False, verbose=False, new=True) * inv_sqrtnhits
 noi_coadd = np.mean(noimaps, axis=0)
 
 # Component amplitudes
@@ -161,13 +242,14 @@ print("Generating component maps")
 maps_comp = np.zeros([3, 2, npix])
 _, maps_comp[0, 0, :], maps_comp[0, 1, :] = hp.synfast([cls_zero, cls_cmb_ee, cls_cmb_bb,
                                                         cls_zero, cls_zero, cls_zero],
-                                                       nside, pol=True, verbose=False)
+                                                       nside, pol=True, verbose=False,new=True)
 _, maps_comp[1, 0, :], maps_comp[1, 1, :] = hp.synfast([cls_zero, cls_sync_ee, cls_sync_bb,
                                                         cls_zero, cls_zero, cls_zero],
-                                                       nside, pol=True, verbose=False)
+                                                       nside, pol=True, verbose=False,new=True)
 _, maps_comp[2, 0, :], maps_comp[2, 1, :] = hp.synfast([cls_zero, cls_dust_ee, cls_dust_bb,
                                                         cls_zero, cls_zero, cls_zero],
-                                                       nside, pol=True, verbose=False)
+                                                       nside, pol=True, verbose=False,new=True)
+
 print("Extrapolating in frequency")
 # Components scaled over frequencies
 maps_comp_freq = seds[:,:,None,None] * maps_comp[None,:,:,:]
@@ -204,3 +286,10 @@ np.savetxt(prefix_out + "/cls_cmb.txt",np.transpose([larr_all, cls_cmb_ee, cls_c
 np.savetxt(prefix_out + "/cls_sync.txt",np.transpose([larr_all, cls_sync_ee, cls_sync_bb, cls_zero]))
 np.savetxt(prefix_out + "/cls_dust.txt",np.transpose([larr_all, cls_dust_ee, cls_dust_bb, cls_zero]))
 np.savetxt(prefix_out + "/seds.txt", np.transpose(seds))
+# Write splits list
+f=open(prefix_out+"/splits_list.txt","w")
+stout=""
+for i in range(nsplits):
+    stout += 'examples/'+prefix_out+'/obs_split%dof%d.fits\n' % (i+1, nsplits)
+f.write(stout)
+f.close()
