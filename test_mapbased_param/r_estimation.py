@@ -59,7 +59,12 @@ class BBREstimation(PipelineStage):
                     ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile),
                         ('Cl_cov_freq', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
-                ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
+                ('power_spectrum_post_comp_sep', PdfFile)]
+
+
+    if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization'])):
+        outputs.append( ('gridded_likelihood', NumpyFile))
+
 
     def run(self):
 
@@ -359,8 +364,16 @@ class BBREstimation(PipelineStage):
                                                      label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                         pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
                         
-                        pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
-                        pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+                        # pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                        # pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+                        pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
+                                                label='observed BB - actual noise = tot BB + residuals', 
+                                                color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                        # modeled noise-debiased BB spectrum
+                        # which should correspond to primordial BB + lensing BB + foregrounds residuals
+                        pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
+                                                    label='modeled BB - modeled noise = tot BB + residuals', 
+                                                    color='k', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
                                         linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz')
                         pl.legend()
