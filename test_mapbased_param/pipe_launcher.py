@@ -148,7 +148,7 @@ global:
     nlb: 9
     custom_bins: True
     noise_option: \''''+str(noise_option)+'''\'
-    include_stat_res: \''''+str(include_stat_res)+'''\'
+    include_stat_res: '''+str(include_stat_res)+'''
     r_input: '''+str(r_input)+'''
     A_lens:  '''+str(AL_input)+'''
 
