@@ -319,18 +319,28 @@ class BBREstimation(PipelineStage):
             g.triangle_plot(samps, filled=True)#,
                 # legend_labels=legend_labels, line_args=[{'lw':2,'color':color_loc[0],'alpha':0.7},{'lw':2,'color':color_loc[1],'alpha':0.7}])
             # pl.savefig('./test_sampling_r_Adust.pdf')
-            pl.savefig(self.get_output('likelihood_on_r'))
-            pl.close()
+
             ##############
             # print(samps.getInlineLatex('r',limit=1))
             # print(samps.getMeans())
             # print(samps.getVars())
             ##############
             r_fit = samps.getMeans()[names.index("r")]
+            Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
             sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
 
-            # pl.show()
-            # exit()
+            # draw vertical and horizontal lines to display the input and fitted values 
+            for ax in g.subplots[:,0]:
+                ax.axvline(0.0, color='k', ls=':')
+                ax.axvline(r_fit, color='gray', ls='--')
+            for ax in [g.subplots[1,0]]:
+                ax.axhline(Ad_fit, color='gray', ls='--')
+            for ax in [g.subplots[1,1]]:
+                ax.axvline(Ad_fit, color='gray', ls='--')
+
+
+            pl.savefig(self.get_output('likelihood_on_r'))
+            pl.close()
 
         else:
 
