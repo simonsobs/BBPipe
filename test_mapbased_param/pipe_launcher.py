@@ -36,10 +36,10 @@ rand_string = comm.bcast( rand_string, root=0 )
 def grabargs():
 
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument("--Nsims", type=int, help = "number of CMB + noise simulations", default=1)
     parser.add_argument("--nside", type=int, help = "resolution of maps for the analysis", default=512)
-    parser.add_argument("--nside_patch", type=int, help = "patch nside for a multipatch approach", default=512)
+    parser.add_argument("--nside_patch", type=int, help = "patch nside for a multipatch approach", default=0)
     parser.add_argument("--sensitivity_mode", type=int, help = "SO V3 sensitivity mode", default=1)
     parser.add_argument("--knee_mode", type=int, help = "SO V3 1/f knee mode", default=1)
     parser.add_argument("--ny_lf", type=float, help = "SO V3 low frequency integration time", default=1.0)
