@@ -196,6 +196,11 @@ class BBREstimation(PipelineStage):
                     pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
                                                 label='modeled BB - modeled noise = tot BB + residuals', 
                                                 color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+
+                    pl.loglog( ell_v_loc, norm*(ClBB_obs - Cov_model), 
+                                                label='observed BB - modeled BB', 
+                                                color='red', linestyle=':', linewidth=2.0, alpha=0.8)
+
                     # including statistical foregrounds residuals
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
@@ -337,7 +342,6 @@ class BBREstimation(PipelineStage):
                 ax.axhline(Ad_fit, color='gray', ls='--')
             for ax in [g.subplots[1,1]]:
                 ax.axvline(Ad_fit, color='gray', ls='--')
-
 
             pl.savefig(self.get_output('likelihood_on_r'))
             pl.close()
