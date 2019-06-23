@@ -246,15 +246,16 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust, AL = p_loc 
                     else:
                         r_loc, A_dust = p_loc 
-                # if -1e-3<=r_loc  and 0.0<=A_dust:
+                if 0.0<=r_loc or 0.0<=A_dust:
+                    return 0.0
                 # if -1e-3<=r_loc  and 
                 # if 0.0<=A_dust:
                     # return 0.0
                 return -np.inf
 
             def lnprob(p_loc):
-                lp = 0.0
-                # lp = lnprior( p_loc )
+                # lp = 0.0
+                lp = lnprior( p_loc )
                 return lp + likelihood_on_r_with_stat_and_sys_res(p_loc)
 
             neg_likelihood_on_r_with_stat_and_sys_res = lambda *args: lnprob(*args)
