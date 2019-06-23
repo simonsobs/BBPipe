@@ -121,7 +121,7 @@ class BBREstimation(PipelineStage):
         if self.config['dust_marginalization']:
 
             #####################################
-            def likelihood_on_r_with_stat_and_sys_res( p_loc, bins=bins, make_figure=False ):
+            def likelihood_on_r_with_stat_and_sys_res( p_loc, bins=bins, make_figure=False, tag='' ):
                 if self.config['sync_marginalization']:
                     if self.config['AL_marginalization']:
                         r_loc, A_dust, A_sync, AL = p_loc 
@@ -224,7 +224,7 @@ class BBREstimation(PipelineStage):
                     pl.xlabel('$\ell$', fontsize=20)
                     pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
                     pl.ylim([1e-5,2e-1])
-                    pl.savefig(self.get_output('power_spectrum_post_comp_sep'))
+                    pl.savefig(self.get_output('power_spectrum_post_comp_sep'+tag))
                     # pl.show()
                     pl.close()
 
@@ -246,8 +246,8 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust, AL = p_loc 
                     else:
                         r_loc, A_dust = p_loc 
-                # if 0.0>r_loc or 0.0>A_dust:
-                if 0.0>A_dust:
+                if 0.0>r_loc or 0.0>A_dust:
+                # if 0.0>A_dust:
                     return -np.inf
                 else: return 0.0
                 # if -1e-3<=r_loc  and 
@@ -338,6 +338,8 @@ class BBREstimation(PipelineStage):
             r_fit = samps.getMeans()[names.index("r")]
             Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
             sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
+
+            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='bis' )
 
             # draw vertical and horizontal lines to display the input and fitted values 
             for ax in g.subplots[:,0]:
