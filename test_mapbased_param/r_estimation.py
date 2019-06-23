@@ -59,7 +59,7 @@ class BBREstimation(PipelineStage):
                     ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile),
                         ('Cl_cov_freq', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
-                ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
+                ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile), ('power_spectrum_post_comp_sep_v2', PdfFile)]
 
     def run(self):
 
@@ -339,7 +339,7 @@ class BBREstimation(PipelineStage):
             Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
             sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
 
-            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='bis' )
+            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
             # draw vertical and horizontal lines to display the input and fitted values 
             for ax in g.subplots[:,0]:
