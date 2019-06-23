@@ -246,13 +246,14 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust, AL = p_loc 
                     else:
                         r_loc, A_dust = p_loc 
-                if 0.0<=r_loc or 0.0<=A_dust:
-                    return 0.0
+                if 0.0>r_loc or 0.0>A_dust:
+                    return -np.inf
+                else: return 0.0
                 # if -1e-3<=r_loc  and 
                 # if 0.0<=A_dust:
                     # return 0.0
-                print('r = ', r_loc, ' and A_dust = ', A_dust)
-                return -np.inf
+                # print('r = ', r_loc, ' and A_dust = ', A_dust)
+                # return -np.inf
 
             def lnprob(p_loc):
                 # lp = 0.0
