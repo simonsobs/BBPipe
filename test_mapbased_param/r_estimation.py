@@ -310,9 +310,10 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)#, threads=4)
-            sampler.run_mcmc(p0, 5000)
+            # sampler.run_mcmc(p0, 5000)
+            sampler.run_mcmc(p0, 500)
 
-            samples = sampler.chain[:, 500:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
@@ -343,6 +344,8 @@ class BBREstimation(PipelineStage):
             sigma_Ad_fit = np.sqrt(samps.getVars()[names.index("\Lambda_d")])
 
             #### another way of estimating error bars ..... 
+            print('samples = ', samples)
+            print('w/ shape = ', samples.shape)
             counts, bins, patches = pl.hist(samples[:,0], samples.shape[0]/10)
             bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
             r_fit = bins_av[np.argmax(counts)]
@@ -353,6 +356,7 @@ class BBREstimation(PipelineStage):
                 if sum_ > 0.68*sum_tot:
                     continue
             sigma_r_fit = bins_av[np.argmax(counts)+i-1]*1.0
+            ########
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
