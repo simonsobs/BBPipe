@@ -346,7 +346,8 @@ class BBREstimation(PipelineStage):
             #### another way of estimating error bars ..... 
             print('samples = ', samples)
             print('w/ shape = ', samples.shape)
-            counts, bins, patches = pl.hist(samples[:,0], samples.shape[0]/10)
+            print('nbins = ', int(samples.shape[0]/10))
+            counts, bins, patches = pl.hist(samples[:,0], int(samples.shape[0]/10))
             bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
             r_fit = bins_av[np.argmax(counts)]
             sum_ = 0.0
