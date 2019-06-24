@@ -152,6 +152,7 @@ global:
     include_stat_res: '''+str(include_stat_res)+'''
     r_input: '''+str(r_input)+'''
     A_lens:  '''+str(AL_input)+'''
+    no_inh: '''+str(no_inh)+'''
 
 BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
@@ -162,7 +163,6 @@ BBMapSim:
     sync_model: 's1'
     tag: 'SO_sims'
     cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
-    no_inh: '''+str(no_inh)+'''
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
