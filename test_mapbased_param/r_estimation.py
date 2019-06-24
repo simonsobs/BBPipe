@@ -346,21 +346,22 @@ class BBREstimation(PipelineStage):
             #### another way of estimating error bars ..... 
             print('samples = ', samples)
             print('w/ shape = ', samples.shape)
-            print('nbins = ', int(samples.shape[0]/10))
-            counts, bins, patches = pl.hist(samples[:,0], int(samples.shape[0]/10))
+            print('nbins = ', 500)
+            counts, bins, patches = pl.hist(samples[:,0], 500)
             bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
-            r_fit = bins_av[np.argmax(counts)]
+            ind_r_fit = np.argmax(counts)
+            r_fit = bins_av[ind_r_fit]
             sum_ = 0.0
             # sum_tot = np.sum(counts[np.argmax(counts):]*bins_av[np.argmax(counts):])
-            sum_tot = np.sum(counts[np.argmax(counts):]*bins_av[np.argmax(counts):])
-            for i in range(len(counts))[np.argmax(counts):]:
-                sum_ = np.sum(counts[:i]*bins_av[:i])
-                print('sum_/sum_tot = ', sum_/sum_tot, ' for i = ', i)
+            sum_tot = np.sum(counts[ind_r_fit:]*bins_av[ind_r_fit:])
+            for i in range(len(counts))[ind_r_fit:]:
+                sum_ += np.sum(counts[i]*bins_av[i])
+                # print('sum_/sum_tot = ', sum_/sum_tot, ' for i = ', i)
                 if sum_ > 0.68*sum_tot:
                     break
             print('the bin for which we got 68% : ', i-1)
             print('and i was going up to ', len(counts))
-            print('and the peak of the likelihood is at :', np.argmax(counts))
+            print('and the peak of the likelihood is at :', ind_r_fit)
 
             sigma_r_fit = bins_av[i-1]*1.0
             print('r_fit = ', r_fit)
