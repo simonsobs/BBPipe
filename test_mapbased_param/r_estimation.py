@@ -246,7 +246,7 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust, AL = p_loc 
                     else:
                         r_loc, A_dust = p_loc 
-                if 0.0>r_loc or 0.0>A_dust:
+                if -1e-3>r_loc or 0.0>A_dust:
                 # if 0.0>A_dust:
                     return -np.inf
                 else: return 0.0
@@ -336,24 +336,26 @@ class BBREstimation(PipelineStage):
             # print(samps.getVars())
             ##############
             r_fit = samps.getMeans()[names.index("r")]
-            r_fit2 = samps.getBestFit()[names.index('r')]
+            # r_fit2 = samps.getBestFit()[names.index("r")]
             Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
-            Ad_fit2 = samps.getBestFit()[names.index("\Lambda_d")]
+            # Ad_fit2 = samps.getBestFit()[names.index("\Lambda_d")]
             sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
+            sigma_Ad_fit = np.sqrt(samps.getVars()[names.index("\Lambda_d")])
 
-            print('==========')
-            print(r_fit)
-            print(r_fit2)
-            print(Ad_fit)
-            print(Ad_fit2)
-            print(samps.getLikeStats()) 
-            print(samps.confidence(0, limfrac=0.05))
-            print(samps.confidence(0, limfrac=0.32))
-            print('==========')
+            # print('==========')
+            # print(r_fit)
+            # print(r_fit2)
+            # print(Ad_fit)
+            # print(Ad_fit2)
+            # print(samps.getLikeStats()) 
+            # print(samps.confidence(0, limfrac=0.05))
+            # print(samps.confidence(0, limfrac=0.32))
+            # print('==========')
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
             # draw vertical and horizontal lines to display the input and fitted values 
+            pl.title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit))
             for ax in g.subplots[:,0]:
                 ax.axvline(0.0, color='k', ls=':')
                 ax.axvline(r_fit, color='gray', ls='--')
@@ -457,7 +459,11 @@ class BBREstimation(PipelineStage):
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r', 'L(r)']
-        np.savetxt(self.get_output('estimated_cosmo_params'), np.hstack((r_fit,  sigma_r_fit)), comments=column_names)
+        if self.config['dust_marginalization']:
+            to_be_saved = np.hstack((r_fit,  sigma_r_fit, Ad_fit, sigma_Ad_fit))
+        else:
+            to_be_saved = np.hstack((r_fit,  sigma_r_fit))
+        np.savetxt(self.get_output('estimated_cosmo_params'), to_be_saved, comments=column_names)
         if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization'])):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
         else:
