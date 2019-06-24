@@ -357,7 +357,7 @@ class BBREstimation(PipelineStage):
                 sum_ = np.sum(counts[:i]*bins_av[:i])
                 print('sum_/sum_tot = ', sum_/sum_tot, ' for i = ', i)
                 if sum_ > 0.68*sum_tot:
-                    continue
+                    break
             print('the bin for which we got 68% : ', i-1)
             print('and i was going up to ', len(counts))
             print('and the peak of the likelihood is at :', np.argmax(counts))
