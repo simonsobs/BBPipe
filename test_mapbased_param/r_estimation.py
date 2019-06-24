@@ -246,7 +246,7 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust, AL = p_loc 
                     else:
                         r_loc, A_dust = p_loc 
-                if -1e-3>r_loc or 0.0>A_dust:
+                if -2e-3>r_loc or 0.0>A_dust:
                 # if 0.0>A_dust:
                     return -np.inf
                 else: return 0.0
@@ -355,7 +355,7 @@ class BBREstimation(PipelineStage):
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
             # draw vertical and horizontal lines to display the input and fitted values 
-            pl.title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit))
+            g.subplots[0,0].set_title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit), fontsize=12)
             for ax in g.subplots[:,0]:
                 ax.axvline(0.0, color='k', ls=':')
                 ax.axvline(r_fit, color='gray', ls='--')
