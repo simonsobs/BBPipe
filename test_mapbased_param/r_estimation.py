@@ -355,13 +355,14 @@ class BBREstimation(PipelineStage):
             sum_tot = np.sum(counts[np.argmax(counts):]*bins_av[np.argmax(counts):])
             for i in range(len(counts))[np.argmax(counts):]:
                 sum_ = np.sum(counts[:i]*bins_av[:i])
+                print('sum_/sum_tot = ', sum_/sum_tot, ' for i = ', i)
                 if sum_ > 0.68*sum_tot:
                     continue
             print('the bin for which we got 68% : ', i-1)
             print('and i was going up to ', len(counts))
             print('and the peak of the likelihood is at :', np.argmax(counts))
 
-            sigma_r_fit = bins_av[np.argmax(counts)+i-1]*1.0
+            sigma_r_fit = bins_av[i-1]*1.0
             ########
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
