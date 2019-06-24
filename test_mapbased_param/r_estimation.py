@@ -352,7 +352,7 @@ class BBREstimation(PipelineStage):
             r_fit = bins_av[np.argmax(counts)]
             sum_ = 0.0
             sum_tot = np.sum(counts[np.argmax(counts):]*bins_av[np.argmax(counts):])
-            for i in range(len(count)-np.argmax(counts)):
+            for i in range(len(counts)-np.argmax(counts)):
                 sum_ = np.sum(counts[np.argmax(counts):np.argmax(counts)+i]*bins_av[np.argmax(counts):np.argmax(counts)+i])
                 if sum_ > 0.68*sum_tot:
                     continue
