@@ -342,15 +342,17 @@ class BBREstimation(PipelineStage):
             sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
             sigma_Ad_fit = np.sqrt(samps.getVars()[names.index("\Lambda_d")])
 
-            # print('==========')
-            # print(r_fit)
-            # print(r_fit2)
-            # print(Ad_fit)
-            # print(Ad_fit2)
-            # print(samps.getLikeStats()) 
-            # print(samps.confidence(0, limfrac=0.05))
-            # print(samps.confidence(0, limfrac=0.32))
-            # print('==========')
+            #### another way of estimating error bars ..... 
+            counts, bins, patches = pl.hist(samples[:,0], samples.shape[0]/10)
+            bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
+            r_fit = bins_av[np.argmax(counts)]
+            sum_ = 0.0
+            sum_tot = np.sum(counts[np.argmax(counts):]*bins_av[np.argmax(counts):])
+            for i in range(len(count)-np.argmax(counts)):
+                sum_ = np.sum(counts[np.argmax(counts):np.argmax(counts)+i]*bins_av[np.argmax(counts):np.argmax(counts)+i])
+                if sum_ > 0.68*sum_tot:
+                    continue
+            sigma_r_fit = bins_av[np.argmax(counts)+i-1]*1.0
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
