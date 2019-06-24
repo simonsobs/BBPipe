@@ -336,8 +336,20 @@ class BBREstimation(PipelineStage):
             # print(samps.getVars())
             ##############
             r_fit = samps.getMeans()[names.index("r")]
+            r_fit2 = samps.getBestFit()[names.index('r')]
             Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
+            Ad_fit2 = samps.getBestFit()[names.index("\Lambda_d")]
             sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
+
+            print('==========')
+            print(r_fit)
+            print(r_fit2)
+            print(Ad_fit)
+            print(Ad_fit2)
+            print(samps.getLikeStats()) 
+            print(samps.confidence(0, limfrac=0.05))
+            print(samps.confidence(0, limfrac=0.32))
+            print('==========')
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
