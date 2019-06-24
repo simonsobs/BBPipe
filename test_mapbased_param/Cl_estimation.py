@@ -54,7 +54,7 @@ class BBClEstimation(PipelineStage):
             ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
                 ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
-                    ('Cl_CMB_template_150GHz', NumpyFile)]
+                    ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile)]
 
     def run(self):
 
@@ -247,6 +247,8 @@ class BBClEstimation(PipelineStage):
         Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
         np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
 
+        hp.write_map(self.get_output('mask_apo'), mask_apo, overwrite=True)
+        
 
 if __name__ == '__main__':
     results = PipelineStage.main()
