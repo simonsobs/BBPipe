@@ -313,7 +313,7 @@ class BBREstimation(PipelineStage):
             sampler.run_mcmc(p0, 5000)
             # sampler.run_mcmc(p0, 500)
 
-            samples = sampler.chain[:, 500:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
