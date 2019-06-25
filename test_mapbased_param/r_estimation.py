@@ -369,7 +369,7 @@ class BBREstimation(PipelineStage):
             sigma_r_fit = bins_av[i-1]*1.0
             print('r_fit = ', r_fit)
             print('sigma_r_fit = ', sigma_r_fit)
-            exit()
+            # exit()
             ########
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
