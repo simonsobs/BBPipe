@@ -353,9 +353,12 @@ class BBREstimation(PipelineStage):
             r_fit = bins_av[ind_r_fit]
             sum_ = 0.0
             # sum_tot = np.sum(counts[np.argmax(counts):]*bins_av[np.argmax(counts):])
-            sum_tot = np.sum(counts[ind_r_fit:]*bins_av[ind_r_fit:])
+            sum_tot = 0.0
             for i in range(len(counts))[ind_r_fit:]:
-                sum_ += np.sum(counts[i]*bins_av[i])
+                sum_tot += counts[i]*(bins[i+1] - bins[i])
+                # sum_tot = np.sum(counts[ind_r_fit:]*bins_av[ind_r_fit:])
+            for i in range(len(counts))[ind_r_fit:]:
+                sum_ += counts[i]*(bins[i+1] - bins[i])
                 # print('sum_/sum_tot = ', sum_/sum_tot, ' for i = ', i)
                 if sum_ > 0.68*sum_tot:
                     break
