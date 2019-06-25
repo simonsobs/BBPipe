@@ -84,10 +84,11 @@ class BBClEstimation(PipelineStage):
 
         if ((self.config['noise_option']!='white_noise') 
                 and (self.config['noise_option']!='no_noise')
-                    and (not self.confid['no_inh'])):
+                    and (not self.config['no_inh'])):
             ##### mask_nh = mask*np.sqrt(nh)
             ##### mask_apo *= np.sqrt(nh)
             nh = hp.smoothing(nh, fwhm=1*np.pi/180.0, verbose=False) 
+            nh /= nh.max()
             mask_apo *= nh
 
         fsky_eff = np.mean(mask_apo)
@@ -248,7 +249,7 @@ class BBClEstimation(PipelineStage):
         np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
 
         hp.write_map(self.get_output('mask_apo'), mask_apo, overwrite=True)
-        
+
 
 if __name__ == '__main__':
     results = PipelineStage.main()
