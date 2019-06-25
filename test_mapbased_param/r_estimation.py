@@ -310,10 +310,9 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)#, threads=4)
-            sampler.run_mcmc(p0, 1000)
-            # sampler.run_mcmc(p0, 500)
+            sampler.run_mcmc(p0, 2000)
 
-            samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
@@ -322,8 +321,8 @@ class BBREstimation(PipelineStage):
             import getdist
             from getdist import plots, MCSamples
             pl.rcParams['text.usetex']=False
-            # ci-dessous names et labels definient les parametres du corner plot
 
+            # ci-dessous names et labels definient les parametres du corner plot
             g = plots.getSubplotPlotter()
             samps = MCSamples(samples=samples, names=names, labels=labels)
 
