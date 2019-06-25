@@ -310,9 +310,9 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)#, threads=4)
-            sampler.run_mcmc(p0, 2000)
+            sampler.run_mcmc(p0, 1000)
 
-            samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
@@ -346,6 +346,7 @@ class BBREstimation(PipelineStage):
             # print('samples = ', samples)
             # print('w/ shape = ', samples.shape)
             # print('nbins = ', 500)
+            '''
             counts, bins, patches = pl.hist(samples[:,0], 500)
             bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
             ind_r_fit = np.argmax(counts)
@@ -369,9 +370,10 @@ class BBREstimation(PipelineStage):
             # print('sigma_r_fit = ', sigma_r_fit)
             # exit()
             ########
+            '''
 
             # draw vertical and horizontal lines to display the input and fitted values 
-            g.subplots[0,0].set_title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit), fontsize=12)
+            # g.subplots[0,0].set_title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit), fontsize=12)
             for ax in g.subplots[:,0]:
                 ax.axvline(0.0, color='k', ls=':')
                 ax.axvline(r_fit, color='gray', ls='--')
