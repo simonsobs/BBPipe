@@ -310,10 +310,10 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)#, threads=4)
-            sampler.run_mcmc(p0, 10000)
+            sampler.run_mcmc(p0, 1000)
             # sampler.run_mcmc(p0, 500)
 
-            samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
@@ -344,35 +344,32 @@ class BBREstimation(PipelineStage):
             sigma_Ad_fit = np.sqrt(samps.getVars()[names.index("\Lambda_d")])
 
             #### another way of estimating error bars ..... 
-            print('samples = ', samples)
-            print('w/ shape = ', samples.shape)
-            print('nbins = ', 500)
+            # print('samples = ', samples)
+            # print('w/ shape = ', samples.shape)
+            # print('nbins = ', 500)
             counts, bins, patches = pl.hist(samples[:,0], 500)
             bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
             ind_r_fit = np.argmax(counts)
             r_fit = bins_av[ind_r_fit]
             sum_ = 0.0
-            # sum_tot = np.sum(counts[np.argmax(counts):]*bins_av[np.argmax(counts):])
             sum_tot = 0.0
             for i in range(len(counts))[ind_r_fit:]:
                 sum_tot += counts[i]*(bins[i+1] - bins[i])
-                # sum_tot = np.sum(counts[ind_r_fit:]*bins_av[ind_r_fit:])
+
             for i in range(len(counts))[ind_r_fit:]:
                 sum_ += counts[i]*(bins[i+1] - bins[i])
                 # print('sum_/sum_tot = ', sum_/sum_tot, ' for i = ', i)
                 if sum_ > 0.68*sum_tot:
                     break
-            print('the bin for which we got 68% : ', i-1)
-            print('and i was going up to ', len(counts))
-            print('and the peak of the likelihood is at :', ind_r_fit)
-
-            sigma_r_fit = bins_av[i-1]*1.0
-            print('r_fit = ', r_fit)
-            print('sigma_r_fit = ', sigma_r_fit)
+            # print('the bin for which we got 68% : ', i-1)
+            # print('and i was going up to ', len(counts))
+            # print('and the peak of the likelihood is at :', ind_r_fit)
+            # sigma(r) is the distance between peak and 68% of the integral
+            sigma_r_fit = bins_av[i-1] - r_fit
+            # print('r_fit = ', r_fit)
+            # print('sigma_r_fit = ', sigma_r_fit)
             # exit()
             ########
-
-            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
             # draw vertical and horizontal lines to display the input and fitted values 
             g.subplots[0,0].set_title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit), fontsize=12)
@@ -386,6 +383,9 @@ class BBREstimation(PipelineStage):
 
             pl.savefig(self.get_output('likelihood_on_r'))
             pl.close()
+
+            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
+
 
         else:
 
