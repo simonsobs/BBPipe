@@ -380,10 +380,10 @@ class BBREstimation(PipelineStage):
             for ax in g.subplots[:,0]:
                 ax.axvline(0.0, color='k', ls=':')
                 ax.axvline(r_fit, color='gray', ls='--')
-            for ax in [g.subplots[1,0]]:
-                ax.axhline(Ad_fit, color='gray', ls='--')
-            for ax in [g.subplots[1,1]]:
-                ax.axvline(Ad_fit, color='gray', ls='--')
+            # for ax in [g.subplots[1,0]]:
+                # ax.axhline(Ad_fit, color='gray', ls='--')
+            # for ax in [g.subplots[1,1]]:
+                # ax.axvline(Ad_fit, color='gray', ls='--')
 
             pl.savefig(self.get_output('likelihood_on_r'))
             pl.close()
