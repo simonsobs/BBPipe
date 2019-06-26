@@ -103,7 +103,7 @@ inputs:
     # binary_mask: /global/cscratch1/sd/josquin/SO_sims/mask_04000.fits
     binary_mask: /global/cscratch1/sd/josquin/SO_sims/mask_hits.fits
     # mask_apo: '''+mask_apo+'''
-    norm_hits_map: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/norm_nHits_SA_35FOV_G.fits
+    norm_hits_map: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/norm_nHits_SA_35FOV_G_nside512.fits
     Cl_BB_lens: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_lensed_scalar.fits
     Cl_BB_prim_r1: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits
 
@@ -250,11 +250,15 @@ def main():
         list_output_dir = glob.glob(os.path.join(args.path_to_temp_files,'outputs_'+args.tag+'*'))
         # read the estimated_cosmo_params.txt in each directory 
         r_all = []
+        Ad_all = []
         sigma_all = []
+        sigma_Ad_all = []
         for dir_ in list_output_dir:
-            r_, sigma_ = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+            r_, sigma_, Ad_, sigma_Ad_ = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
             r_all.append(r_)
+            Ad_all.append(Ad_)
             sigma_all.append(sigma_)
+            sigma_Ad_all.append(sigma_Ad_)
 
         pl.figure()
         pl.hist( r_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
