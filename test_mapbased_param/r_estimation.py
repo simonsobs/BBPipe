@@ -357,13 +357,13 @@ class BBREstimation(PipelineStage):
             # print(samps.getInlineLatex('r',limit=1))
             # print(samps.getMeans())
             # print(samps.getVars())
-            ##############
-            r_fit = samps.getMeans()[names.index("r")]
-            # r_fit2 = samps.getBestFit()[names.index("r")]
-            Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
-            # Ad_fit2 = samps.getBestFit()[names.index("\Lambda_d")]
-            sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
-            sigma_Ad_fit = np.sqrt(samps.getVars()[names.index("\Lambda_d")])
+            # ##############
+            # r_fit = samps.getMeans()[names.index("r")]
+            # # r_fit2 = samps.getBestFit()[names.index("r")]
+            # Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
+            # # Ad_fit2 = samps.getBestFit()[names.index("\Lambda_d")]
+            # sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
+            # sigma_Ad_fit = np.sqrt(samps.getVars()[names.index("\Lambda_d")])
 
             #### another way of estimating error bars ..... 
             # print('samples = ', samples)
