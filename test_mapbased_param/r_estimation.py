@@ -313,6 +313,29 @@ class BBREstimation(PipelineStage):
             sampler.run_mcmc(p0, 5000)
 
             samples = sampler.chain[:, 500:, :].reshape((-1, ndim))
+            
+
+            ######################################
+            counts, bins, patches = pl.hist(samples[:,0], 500)
+            pl.close()
+            bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
+            ind_r_fit = np.argmax(counts)
+            r_fit = bins_av[ind_r_fit]
+            sum_ = 0.0
+            sum_tot = 0.0
+            for i in range(len(counts))[ind_r_fit:]:
+                sum_tot += counts[i]*(bins[i+1] - bins[i])
+
+            for i in range(len(counts))[ind_r_fit:]:
+                sum_ += counts[i]*(bins[i+1] - bins[i])
+                if sum_ > 0.68*sum_tot:
+                    break
+            # sigma(r) is the distance between peak and 68% of the integral
+            sigma_r_fit = bins_av[i-1] - r_fit
+            ########################################
+
+
+
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
@@ -356,34 +379,15 @@ class BBREstimation(PipelineStage):
             # g.subplots[0,0].set_title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit), fontsize=12)
             for ax in g.subplots[:,0]:
                 ax.axvline(0.0, color='k', ls=':')
-                # ax.axvline(r_fit, color='gray', ls='--')
-            # for ax in [g.subplots[1,0]]:
-                # ax.axhline(Ad_fit, color='gray', ls='--')
-            # for ax in [g.subplots[1,1]]:
-                # ax.axvline(Ad_fit, color='gray', ls='--')
+                ax.axvline(r_fit, color='gray', ls='--')
+            for ax in [g.subplots[1,0]]:
+                ax.axhline(Ad_fit, color='gray', ls='--')
+            for ax in [g.subplots[1,1]]:
+                ax.axvline(Ad_fit, color='gray', ls='--')
 
             pl.savefig(self.get_output('likelihood_on_r'))
             pl.close()
 
-            counts, bins, patches = pl.hist(samples[:,0], 500)
-            bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
-            ind_r_fit = np.argmax(counts)
-            r_fit = bins_av[ind_r_fit]
-            sum_ = 0.0
-            sum_tot = 0.0
-            for i in range(len(counts))[ind_r_fit:]:
-                sum_tot += counts[i]*(bins[i+1] - bins[i])
-
-            for i in range(len(counts))[ind_r_fit:]:
-                sum_ += counts[i]*(bins[i+1] - bins[i])
-                # print('sum_/sum_tot = ', sum_/sum_tot, ' for i = ', i)
-                if sum_ > 0.68*sum_tot:
-                    break
-            # print('the bin for which we got 68% : ', i-1)
-            # print('and i was going up to ', len(counts))
-            # print('and the peak of the likelihood is at :', ind_r_fit)
-            # sigma(r) is the distance between peak and 68% of the integral
-            sigma_r_fit = bins_av[i-1] - r_fit
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
