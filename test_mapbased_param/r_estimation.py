@@ -316,24 +316,30 @@ class BBREstimation(PipelineStage):
             
 
             ######################################
-            counts, bins, patches = pl.hist(samples[:,0], 500)
-            pl.close()
-            bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
-            ind_r_fit = np.argmax(counts)
-            r_fit = bins_av[ind_r_fit]
-            sum_ = 0.0
-            sum_tot = 0.0
-            for i in range(len(counts))[ind_r_fit:]:
-                sum_tot += counts[i]*(bins[i+1] - bins[i])
+            for p in ['r', 'Ad']:
+                counts, bins, patches = pl.hist(samples[:,0], 500)
+                pl.close()
+                bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
+                ind_r_fit = np.argmax(counts)
+                if p == 'r':
+                    r_fit = bins_av[ind_r_fit]
+                else:
+                    Ad_fit = bins_av[ind_r_fit]
+                sum_ = 0.0
+                sum_tot = 0.0
+                for i in range(len(counts))[ind_r_fit:]:
+                    sum_tot += counts[i]*(bins[i+1] - bins[i])
 
-            for i in range(len(counts))[ind_r_fit:]:
-                sum_ += counts[i]*(bins[i+1] - bins[i])
-                if sum_ > 0.68*sum_tot:
-                    break
-            # sigma(r) is the distance between peak and 68% of the integral
-            sigma_r_fit = bins_av[i-1] - r_fit
+                for i in range(len(counts))[ind_r_fit:]:
+                    sum_ += counts[i]*(bins[i+1] - bins[i])
+                    if sum_ > 0.68*sum_tot:
+                        break
+                # sigma(r) is the distance between peak and 68% of the integral
+                if p == 'r':
+                    sigma_r_fit = bins_av[i-1] - r_fit
+                else:
+                    sigma_Ad_fit = bins_av[i-1] - Ad_fit
             ########################################
-
 
 
             truths = []
@@ -387,7 +393,6 @@ class BBREstimation(PipelineStage):
 
             pl.savefig(self.get_output('likelihood_on_r'))
             pl.close()
-
 
             likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
 
