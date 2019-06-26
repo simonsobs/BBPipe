@@ -317,7 +317,9 @@ class BBREstimation(PipelineStage):
 
             ######################################
             for p in ['r', 'Ad']:
-                counts, bins, patches = pl.hist(samples[:,0], 500)
+                if p == 'r': ind = 0
+                else : ind = 1
+                counts, bins, patches = pl.hist(samples[:,ind], 500)
                 pl.close()
                 bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
                 ind_r_fit = np.argmax(counts)
