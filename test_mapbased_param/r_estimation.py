@@ -127,13 +127,13 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust, A_sync, AL = p_loc 
                     else:
                         r_loc, A_dust, A_sync = p_loc 
-                        AL = self.config['A_lens']
+                        AL = 1.0
                 else:
                     if self.config['AL_marginalization']:
                         r_loc, A_dust, AL = p_loc
                     else:
                         r_loc, A_dust = p_loc
-                        AL = self.config['A_lens']
+                        AL = 1.0
 
                 Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                             + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]
