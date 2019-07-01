@@ -6,7 +6,6 @@ import healpy as hp
 import pymaster as nmt
 import os
 
-
 class BBPowerSpecter(PipelineStage):
     """
     Template for a power spectrum stage
@@ -54,7 +53,12 @@ class BBPowerSpecter(PipelineStage):
             for s in range(self.nsplits):
                 name = self.get_map_label(b,s)
                 print("  "+name)
-                mp_q,mp_u=hp.read_map(splits_list[s], field=[2*b,2*b+1], verbose=False)
+                fname = splits_list[s]
+                if not os.path.isfile(fname):  # See if it's gzipped
+                    fname = fname + '.gz'
+                if not os.path.isfile(fname):
+                    raise ValueError("Can't find file ",splits_list[s])
+                mp_q,mp_u=hp.read_map(fname, field=[2*b,2*b+1], verbose=False)
                 fields[name] = self.get_field(b,[mp_q,mp_u])
 
         # Iterate over field pairs
@@ -117,7 +121,7 @@ class BBPowerSpecter(PipelineStage):
                                  weights=weights)
         else: # otherwise it could be a constant integer interval
             self.bins=nmt.NmtBin(self.nside,nlb=int(self.config['bpw_edges']))
-            
+
     def get_fname_workspace(self,band1,band2):
         b1=min(band1,band2)
         b2=max(band1,band2)
@@ -279,10 +283,6 @@ class BBPowerSpecter(PipelineStage):
                 splits.append(fname.strip())
         self.nsplits = len(splits)
 
-        # Compute all possible cross-power spectra
-        print("Computing all cross-correlations")
-        cell_data = self.compute_cells_from_splits(splits)
-
         # Get SACC binning
         self.bin_win = self.get_sacc_binning(with_windows=True)
         self.bin_nowin = self.get_sacc_binning(with_windows=False)
@@ -290,13 +290,17 @@ class BBPowerSpecter(PipelineStage):
         # Get SACC tracers
         self.tracers = self.get_sacc_tracers()
 
+        # Compute all possible cross-power spectra
+        print("Computing all cross-correlations")
+        cell_data = self.compute_cells_from_splits(splits)
+        
         # Save output
         print("Saving to file")
         self.save_cell_to_file(cell_data,
                                self.tracers,
                                self.bin_win,
                                self.get_output('cells_all_splits'))
-
+        
         # Iterate over simulations
         sims = []
         with open(self.get_input('sims_list'),'r') as f:
@@ -306,6 +310,11 @@ class BBPowerSpecter(PipelineStage):
         # Write all output file names into a text file
         fo=open(self.get_output('cells_all_sims'),'w')
         prefix_out=self.get_output('cells_all_splits')[:-5]
+        for isim,d in enumerate(sims):
+            fname=prefix_out + "_sim%d.sacc" % isim
+            fo.write(fname+"\n")
+        fo.close()
+
         for isim,d in enumerate(sims):
             print("%d-th / %d simulation" % (isim+1, len(sims)))
             #   Compute list of splits
@@ -319,8 +328,6 @@ class BBPowerSpecter(PipelineStage):
                                    self.tracers,
                                    self.bin_nowin,
                                    fname)
-            fo.write(fname+"\n")
-        fo.close()
 
 if __name__ == '__main__':
     cls = PipelineStage.main()

@@ -20,7 +20,9 @@ nsplits=int(sys.argv[5])
 mask_type=sys.argv[6]
 npix= hp.nside2npix(nside)
 
-prefix_out="SO_V3_ns%d_sens%d_knee%d_%dsplit_Mask%s_Mock%04d" % (nside, sens, knee, nsplits, mask_type, isim)
+prefix_out="/mnt/extraspace/damonge/SO/BBPipe/"
+prefix_out+="SO_V3_ns%d_sens%d_knee%d_%dsplit_Mask%s_Mock%04d" % (nside, sens, knee, nsplits, mask_type, isim)
+print(prefix_out)
 
 if mask_type=='analytic':
     # Sky fraction and apodization scale
@@ -162,9 +164,25 @@ for ib,b in enumerate(bpss):
     seds[ib,1]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_sync,beta_sync,None,'sync'))
     seds[ib,2]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_dust,beta_dust,temp_dust,'dust'))
 
-ells_bpw=np.array([6.5,16.5,26.5,36.5,46.5,56.5,66.5,76.5,86.5,
-                   96.5,106.5,116.5,126.5,136.5,146.5,156.5,
-                   166.5,176.5])
+ells_bpw=np.array([6.5,16.5,26.5,36.5,46.5,56.5,66.5,76.5,86.5,96.5,
+                   106.5,116.5,126.5,136.5,146.5,156.5,166.5,176.5,186.5,196.5,
+                   206.5,216.5,226.5,236.5,246.5,256.5,266.5,276.5,286.5,296.5,
+                   306.5,316.5,326.5,336.5,346.5,356.5,366.5,376.5,386.5,396.5,
+                   406.5,416.5,426.5,436.5,446.5,456.5,466.5,476.5,486.5,496.5,
+                   506.5,516.5,526.5,536.5,546.5,556.5,566.5,576.5,586.5,596.5,
+                   606.5,616.5,626.5,636.5,646.5,656.5,666.5,676.5,686.5,696.5,
+                   706.5,716.5,726.5,736.5,746.5,756.5,766.5,776.5,786.5,796.5,
+                   806.5,816.5,826.5,836.5,846.5,856.5,866.5,876.5,886.5,896.5,
+                   906.5,916.5,926.5,936.5,946.5,956.5,966.5,976.5,986.5,996.5,
+                   1006.5,1016.5,1026.5,1036.5,1046.5,1056.5,1066.5,1076.5,1086.5,1096.5,
+                   1106.5,1116.5,1126.5,1136.5,1146.5,1156.5,1166.5,1176.5,1186.5,1196.5,
+                   1206.5,1216.5,1226.5,1236.5,1246.5,1256.5,1266.5,1276.5,1286.5,1296.5,
+                   1306.5,1316.5,1326.5,1336.5,1346.5,1356.5,1366.5,1376.5,1386.5,1396.5,
+                   1406.5,1416.5,1426.5,1436.5,1446.5,1456.5,1466.5,1476.5,1486.5,1496.5,
+                   1506.5,1516.5,1526.5])
+#ells_bpw=np.array([6.5,16.5,26.5,36.5,46.5,56.5,66.5,76.5,86.5,
+#                   96.5,106.5,116.5,126.5,136.5,146.5,156.5,
+#                   166.5,176.5])
 n_bpw=len(ells_bpw)
 dlfac_bpw=2*np.pi/(ells_bpw*(ells_bpw+1.));
 bpw_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync,ells_bpw,correct_first=False)*dlfac_bpw
@@ -212,6 +230,7 @@ bins=sacc.Binning(typ,ell,t1,q1,t2,q2)
 bpw_model=bpw_model.reshape([2*nfreqs,2*nfreqs,n_bpw])[np.triu_indices(2*nfreqs)].flatten()
 mean_model=sacc.MeanVec(bpw_model)
 sacc_model=sacc.SACC(tracers,bins,mean=mean_model)
+os.system('mkdir -p ' + prefix_out)
 sacc_model.saveToHDF(prefix_out+"/cells_model.sacc")
 
 nhits_binary=np.zeros_like(nhits)
@@ -265,18 +284,17 @@ for f,b in enumerate(beams):
         maps_freq[f,i,:] = hp.smoothing(maps_freq[f,i,:], fwhm=fwhm, verbose=False)
 
 print("Saving data")
-os.system('mkdir -p ' + prefix_out)
-hp.write_map(prefix_out+"/components_cmb.fits",maps_comp[0], overwrite=True)
-hp.write_map(prefix_out+"/components_sync.fits",maps_comp[1], overwrite=True)
-hp.write_map(prefix_out+"/components_dust.fits",maps_comp[1], overwrite=True)
-hp.write_map(prefix_out+"/compfreq_cmb.fits",maps_comp_freq[:,0,:,:].reshape([2*nfreqs,npix]),
-             overwrite=True)
-hp.write_map(prefix_out+"/sky_signal.fits", maps_freq.reshape([nfreqs*2,npix]),
-             overwrite=True)
-hp.write_map(prefix_out+"/obs_coadd.fits", ((maps_freq+noi_coadd)*nhits_binary).reshape([nfreqs*2,npix]),
-             overwrite=True)
+#hp.write_map(prefix_out+"/components_cmb.fits.gz",maps_comp[0], overwrite=True)
+#hp.write_map(prefix_out+"/components_sync.fits.gz",maps_comp[1], overwrite=True)
+#hp.write_map(prefix_out+"/components_dust.fits.gz",maps_comp[1], overwrite=True)
+#hp.write_map(prefix_out+"/compfreq_cmb.fits.gz",maps_comp_freq[:,0,:,:].reshape([2*nfreqs,npix]),
+#             overwrite=True)
+#hp.write_map(prefix_out+"/sky_signal.fits.gz", maps_freq.reshape([nfreqs*2,npix]),
+#             overwrite=True)
+#hp.write_map(prefix_out+"/obs_coadd.fits.gz", ((maps_freq+noi_coadd)*nhits_binary).reshape([nfreqs*2,npix]),
+#             overwrite=True)
 for s in range(nsplits):
-    hp.write_map(prefix_out+"/obs_split%dof%d.fits" % (s+1, nsplits),
+    hp.write_map(prefix_out+"/obs_split%dof%d.fits.gz" % (s+1, nsplits),
                  ((maps_freq[:,:,:]+noimaps[s,:,:,:])*nhits_binary).reshape([nfreqs*2,npix]),
                  overwrite=True)
 
@@ -290,6 +308,6 @@ np.savetxt(prefix_out + "/seds.txt", np.transpose(seds))
 f=open(prefix_out+"/splits_list.txt","w")
 stout=""
 for i in range(nsplits):
-    stout += 'examples/'+prefix_out+'/obs_split%dof%d.fits\n' % (i+1, nsplits)
+    stout += prefix_out+'/obs_split%dof%d.fits.gz\n' % (i+1, nsplits)
 f.write(stout)
 f.close()

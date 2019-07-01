@@ -11,22 +11,26 @@ class BBPowerSummarizer(PipelineStage):
             ('cells_all_splits',SACCFile),('cells_all_sims',TextFile)]
     outputs=[('cell_plots',DirFile),('cells_coadded_total',SACCFile),('cells_coadded',SACCFile),
              ('cells_noise',SACCFile),('cells_null',SACCFile)]
-    config_options={'dummy':False,'diagonal_covariance':False,'do_plots':True}
+    config_options={'diagonal_covariance':False,'do_plots':True}
     
     def save_figure(self,plot_title,extension='pdf'):
         fname=self.get_output('cell_plots')+'/'+plot_title+'.'+extension
         print(fname)
         plt.savefig(fname,bbox_inches='tight')
 
-    def get_covariance_from_samples(self,v):
+    def get_covariance_from_samples(self,v,is_diagonal=False):
         """
         Computes a covariance matrix from a set of samples in the form [nsamples, ndata]
         """
-        if self.config['diagonal_covariance']:
-            cov=np.diag(np.std(v,axis=0)**2)
+        if self.config['diagonal_covariance'] or is_diagonal:
+            cov=np.std(v,axis=0)**2
+            return sacc.Precision(matrix=cov,is_covariance=True,mode="diagonal")
         else:
-            cov=np.cov(v,rowvar=False)
-        return sacc.Precision(matrix=cov,is_covariance=True)
+            # We could use np.cov here, but this runs out of memory for large v
+            nsim, nd = v.shape
+            vmean = np.mean(v,axis=0) 
+            cov = np.einsum('ij,ik',v,v)
+            return sacc.Precision(matrix=cov,is_covariance=True,mode="dense")
 
     def save_to_sacc(self,fname,t,b,v,cov=None,return_sacc=False):
         s=sacc.SACC(t,b,mean=v,precision=cov)
@@ -347,7 +351,7 @@ class BBPowerSummarizer(PipelineStage):
 
         # Read data file, coadd and compute nulls
         sv_cd_t, sv_cd_x, sv_cd_n, sv_null=self.parse_splits_sacc_file(self.s_splits,plot_stuff=True)
-
+        
         # Read simulations
         sim_cd_t=np.zeros([self.nsims,len(sv_cd_t.vector)])
         sim_cd_x=np.zeros([self.nsims,len(sv_cd_x.vector)])
@@ -365,7 +369,8 @@ class BBPowerSummarizer(PipelineStage):
         cov_cd_t=self.get_covariance_from_samples(sim_cd_t)
         cov_cd_x=self.get_covariance_from_samples(sim_cd_x)
         cov_cd_n=self.get_covariance_from_samples(sim_cd_n)
-        cov_null=self.get_covariance_from_samples(sim_null)
+        # There are so many nulls that we'll probably run out of memory
+        cov_null=self.get_covariance_from_samples(sim_null,is_diagonal=True)
 
         # Save data
         s_cd_t=self.save_to_sacc(self.get_output("cells_coadded_total"),
@@ -381,14 +386,16 @@ class BBPowerSummarizer(PipelineStage):
                                  self.t_nulls,self.bins_nulls,sv_null,cov=cov_null,
                                  return_sacc=self.config['do_plots'])
 
+        # Plot stuff
         if self.config['do_plots']:
             # Nulls
+            print("plotting")
             cols={'EE':'r','EB':'g','BE':'y','BB':'b'}
             sorter=s_null.sortTracers()
             xcorrs=np.array(["%d_%d"%(s[0],s[1]) for s in sorter])
             xc_un=np.unique(xcorrs)
 
-            err_null=np.sqrt(np.diag(s_null.precision.getCovarianceMatrix()))
+            err_null=np.sqrt(s_null.precision.getCovarianceMatrix())
             cls_null=s_null.mean.vector
             for comb in xc_un:
                 t1,t2=comb.split('_')
