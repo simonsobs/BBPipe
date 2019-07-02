@@ -121,7 +121,7 @@ beta_dust=1.59
 temp_dust=19.6
 nu0_dust=353.
 nu0_sync=23.
-Alens=0.5
+Alens=1.0
 
 #Bandpowers
 lmax=3*nside-1
@@ -153,7 +153,7 @@ cls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust,larr_all)*dlfac
 cls_dust_bb=dl_plaw(A_dust_BB,alpha_dust,larr_all)*dlfac
 _,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
 cls_cmb_ee=dls_cmb_ee*dlfac
-cls_cmb_bb=dls_cmb_bb*dlfac
+cls_cmb_bb=dls_cmb_bb*dlfac*Alens
 cls_zero = np.zeros(3*nside)
 
 #Band-convolved SEDs
