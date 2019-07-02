@@ -167,7 +167,7 @@ BBMapSim:
     sync_model: 's1'
     tag: 'SO_sims'
     cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
-    external_sky_sims: '''+str(external_sky_sims)+'''
+    external_sky_sims: \''''+str(external_sky_sims)+'''\'
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
