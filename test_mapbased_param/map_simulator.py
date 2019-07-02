@@ -103,7 +103,7 @@ class BBMapSim(PipelineStage):
 
         if self.config['external_sky_sims']!='':
             print('EXTERNAL SKY-ONLY MAPS LOADED')
-            list_of_files = sorted(glob.glob(self.conf['external_sky_sims']))   
+            list_of_files = sorted(glob.glob(self.config['external_sky_sims']))   
             for f in range(len(list_of_files)):
                 freq_maps[f:f+3,:] = hp.read_map(list_of_files[f], field=None)
                 freq_maps[f:f+3,:] = hp.ud_grade(freq_maps[f:f+3,:], nside_out=self.config['nside'])
