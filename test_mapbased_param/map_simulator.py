@@ -101,7 +101,7 @@ class BBMapSim(PipelineStage):
         # restructuration of the noise map
         freq_maps = freq_maps.reshape(noise_maps.shape)
 
-        if self.conf['external_sky_sims']!='':
+        if self.config['external_sky_sims']!='':
             print('EXTERNAL SKY-ONLY MAPS LOADED')
             list_of_files = sorted(glob.glob(self.conf['external_sky_sims']))   
             for f in range(len(list_of_files)):
