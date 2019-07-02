@@ -58,6 +58,7 @@ def grabargs():
     parser.add_argument("--no_inh", action='store_true', help = "do not generate inhomogeneous noise", default=False)
     parser.add_argument("--nlb", type=int, help = "number of bins", default=512)
     parser.add_argument("--mask_apo", type=str, help = "path to apodized mask", default='')
+    parser.add_argument("--external_sky_sims", type=str, help = "path to the external, sky simulated, noise-free maps", default='')
 
     args = parser.parse_args()
 
@@ -135,7 +136,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
-                cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9):
+                cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims=''):
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -166,6 +167,7 @@ BBMapSim:
     sync_model: 's1'
     tag: 'SO_sims'
     cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
+    external_sky_sims: '''+str(external_sky_sims)+'''
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
@@ -231,7 +233,8 @@ def main():
                 path_to_temp_files=args.path_to_temp_files, r_input=args.r_input, AL_input=args.AL_input,\
                 apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res,\
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
-                no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb)
+                no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
+                external_sky_sims=args.external_sky_sims)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
