@@ -20,7 +20,6 @@ for f in freqs:
 	for s in ['cmb', 'dust', 'synchrotron']:
 		output_freq_maps[indf] += hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)
 
-	print(output_freq_maps.shape)
 	print(output_freq_maps[indf].shape)
 	hp.write_map(output_freq_maps[indf], './201901_gaussian_fg_lensed_cmb_uKCMB_sa'+f+'_nside512_'+sims_+'.fits')
 
