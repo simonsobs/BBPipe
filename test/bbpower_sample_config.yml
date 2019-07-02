@@ -1,9 +1,10 @@
 # These parameters are accessible to all stages
 global:
-    beam_corrected: True
+    nside: 512
+    compute_dell: True
 
 BBCompSep:
-    # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing'
+    # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
     sampler: 'emcee'
     # If you chose emcee:
     # Number of walkers

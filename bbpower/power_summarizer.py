@@ -11,25 +11,39 @@ class BBPowerSummarizer(PipelineStage):
             ('cells_all_splits',SACCFile),('cells_all_sims',TextFile)]
     outputs=[('cell_plots',DirFile),('cells_coadded_total',SACCFile),('cells_coadded',SACCFile),
              ('cells_noise',SACCFile),('cells_null',SACCFile)]
-    config_options={'diagonal_covariance':False,'do_plots':True}
+    config_options={'nulls_covar_type':'diagonal',
+                    'nulls_covar_diag_order': 0,
+                    'data_covar_type':'block_diagonal',
+                    'data_covar_diag_order': 3}
     
     def save_figure(self,plot_title,extension='pdf'):
         fname=self.get_output('cell_plots')+'/'+plot_title+'.'+extension
         print(fname)
         plt.savefig(fname,bbox_inches='tight')
 
-    def get_covariance_from_samples(self,v,is_diagonal=False):
+    def get_covariance_from_samples(self,v,covar_type='dense',
+                                    off_diagonal_cut=0):
         """
         Computes a covariance matrix from a set of samples in the form [nsamples, ndata]
         """
-        if self.config['diagonal_covariance'] or is_diagonal:
+        if covar_type=='diagonal':
             cov=np.std(v,axis=0)**2
             return sacc.Precision(matrix=cov,is_covariance=True,mode="diagonal")
         else:
-            # We could use np.cov here, but this runs out of memory for large v
             nsim, nd = v.shape
             vmean = np.mean(v,axis=0) 
             cov = np.einsum('ij,ik',v,v)
+            cov = cov/nsim - vmean[None,:]*vmean[:,None]
+            if covar_type=='block_diagonal':
+                nblocks = nd // self.n_bpws
+                cuts = np.ones([self.n_bpws, self.n_bpws])
+                if nblocks * self.n_bpws != nd:
+                    raise ValueError("Vector can't be divided into blocks")
+                for i in range(off_diagonal_cut+1,self.n_bpws):
+                    cuts -= np.diag(np.ones(self.n_bpws-i),k=i)
+                    cuts -= np.diag(np.ones(self.n_bpws-i),k=-i)
+                cov = cov.reshape([nblocks, self.n_bpws, nblocks, self.n_bpws])
+                cov = (cov * cuts[None, :, None, :]).reshape([nd, nd])
             return sacc.Precision(matrix=cov,is_covariance=True,mode="dense")
 
     def save_to_sacc(self,fname,t,b,v,cov=None,return_sacc=False):
@@ -160,7 +174,7 @@ class BBPowerSummarizer(PipelineStage):
                     self.t_nulls.append(T)
                     ind_null+=1
 
-    def get_binnings(self,with_windows=False):
+    def get_binnings(self,with_windows=True):
         # Get windows if needed
         win_coadd=None
         win_nulls=None
@@ -182,28 +196,6 @@ class BBPowerSummarizer(PipelineStage):
                         windows[b1,p1,b2,p2,b,:]=w
                         if not ((b1==b2) and (p1==p2)):
                             windows[b2,p2,b1,p1,b,:]=w
-
-            if False:#self.config['do_plots']:
-                for b1 in range(self.nbands):
-                    for b2 in range(b1,self.nbands):
-                        plt.figure()
-                        plt.title('Bandpowers: band %d x band %d'% (b1+1,b2+1))
-                        cols_pol=[['r','g'],['y','b']]
-                        for p1 in range(2):
-                            if b2==b1:
-                                p2range=range(p1,2)
-                            else:
-                                p2range=range(2)
-                            for p2 in p2range:
-                                plt.plot(ls_win,windows[b1,p1,b2,p2,0],cols_pol[p1][p2]+'-',
-                                         label=self.pol_names[p1]+self.pol_names[p2])
-                                for ibpw in range(1,self.n_bpws):
-                                    plt.plot(ls_win,windows[b1,p1,b2,p2,ibpw],cols_pol[p1][p2]+'-')
-                        plt.xlabel('$\\ell$',fontsize=15)
-                        plt.ylabel('$W_\\ell$',fontsize=15)
-                        plt.legend()
-                        self.save_figure('bandpowers_%dx%d'%(b1+1,b2+1))
-                        plt.close()
 
         # Binnings for coadds
         typ, ell, t1, q1, t2, q2 = [], [], [], [], [], []
@@ -264,9 +256,6 @@ class BBPowerSummarizer(PipelineStage):
         1 that contains all null tests
         """
 
-        # Check if we need to keep track of window functions
-        has_windows = s.binning.windows is not None
-
         # Check we have the right number of bands, splits, cross-correlations and power spectra
         self.check_sacc_consistency(s)
 
@@ -304,28 +293,6 @@ class BBPowerSummarizer(PipelineStage):
         spectra_nulls=np.zeros([self.n_nulls,self.nbands,2,self.nbands,2,self.n_bpws])
         for i_null,(i,j,k,l) in enumerate(self.pairings):
             spectra_nulls[i_null]=spectra[i,k]-spectra[i,l]-spectra[j,k]+spectra[j,l]
-
-        if False:#self.config['do_plots'] and plot_stuff:
-            for i_null,(i,j,k,l) in enumerate(self.pairings):
-                for b1 in range(self.nbands):
-                    for b2 in range(b1,self.nbands):
-                        plt.figure()
-                        plt.title('Power spectra: (%d-%d)x(%d-%d), band %d x band %d'%(i+1,j+1,k+1,l+1,b1+1,b2+1))
-                        cols_pol=[['r','g'],['y','b']]
-                        for p1 in range(2):
-                            if b2==b1:
-                                p2range=range(p1,2)
-                            else:
-                                p2range=range(2)
-                            for p2 in p2range:
-                                plt.plot(self.ells,spectra_nulls[i_null,b1,p1,b2,p2]*self.ells,cols_pol[p1][p2]+'o-',
-                                         label=self.pol_names[p1]+self.pol_names[p2])
-                        plt.xlabel('$\\ell$',fontsize=15)
-                        plt.ylabel('$\\ell\\,C_\\ell$',fontsize=15)
-                        plt.legend()
-                        self.save_figure('cls_null_%dm%dx%dm%d_bands%dx%d'%(i+1,j+1,k+1,l+1,b1+1,b2+1))
-                        plt.close()
-
             
         # Turn into SACC means
         spectra_coadd_total=spectra_coadd_total.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)]
@@ -341,18 +308,23 @@ class BBPowerSummarizer(PipelineStage):
 
     def run(self):
         # Set things up
-        self.init_params()
+        print("Init")
+        self.init_params()        
 
         # Create tracers for all future files
+        print("Tracers")
         self.get_tracers(self.s_splits)
 
         # Create binnings for all future files
+        print("Binning")
         self.get_binnings(self)
 
         # Read data file, coadd and compute nulls
+        print("Reading data")
         sv_cd_t, sv_cd_x, sv_cd_n, sv_null=self.parse_splits_sacc_file(self.s_splits,plot_stuff=True)
         
         # Read simulations
+        print("Reading simulations")
         sim_cd_t=np.zeros([self.nsims,len(sv_cd_t.vector)])
         sim_cd_x=np.zeros([self.nsims,len(sv_cd_x.vector)])
         sim_cd_n=np.zeros([self.nsims,len(sv_cd_n.vector)])
@@ -366,11 +338,20 @@ class BBPowerSummarizer(PipelineStage):
             sim_null[i,:]=null.vector
 
         # Compute covariance
-        cov_cd_t=self.get_covariance_from_samples(sim_cd_t)
-        cov_cd_x=self.get_covariance_from_samples(sim_cd_x)
-        cov_cd_n=self.get_covariance_from_samples(sim_cd_n)
+        print("Covariances")
+        cov_cd_t=self.get_covariance_from_samples(sim_cd_t,
+                                                  covar_type=self.config['data_covar_type'],
+                                                  off_diagonal_cut=self.config['data_covar_diag_order'])
+        cov_cd_x=self.get_covariance_from_samples(sim_cd_x,
+                                                  covar_type=self.config['data_covar_type'],
+                                                  off_diagonal_cut=self.config['data_covar_diag_order'])
+        cov_cd_n=self.get_covariance_from_samples(sim_cd_n,
+                                                  covar_type=self.config['data_covar_type'],
+                                                  off_diagonal_cut=self.config['data_covar_diag_order'])
         # There are so many nulls that we'll probably run out of memory
-        cov_null=self.get_covariance_from_samples(sim_null,is_diagonal=True)
+        cov_null=self.get_covariance_from_samples(sim_null,
+                                                  covar_type=self.config['nulls_covar_type'],
+                                                  covar_type=self.config['nulls_covar_diag_order'])
 
         # Save data
         s_cd_t=self.save_to_sacc(self.get_output("cells_coadded_total"),
@@ -388,6 +369,7 @@ class BBPowerSummarizer(PipelineStage):
 
         # Plot stuff
         if self.config['do_plots']:
+            msk = self.ells<300
             # Nulls
             print("plotting")
             cols={'EE':'r','EB':'g','BE':'y','BB':'b'}
@@ -403,13 +385,14 @@ class BBPowerSummarizer(PipelineStage):
                 t2=int(t2)
                 ind_spectra=np.where(xcorrs==comb)[0]
                 title="cl_"+self.t_nulls[t1].name+"_x_"+self.t_nulls[t2].name
+                print(title)
                 plt.figure()
                 plt.title(self.t_nulls[t1].name+' x '+self.t_nulls[t2].name)
                 for ind in ind_spectra:
                     typ=sorter[ind][2].decode()
                     ndx=sorter[ind][4]
-                    plt.errorbar(self.ells, cls_null[ndx]/err_null[ndx],
-                                 yerr=np.ones(len(ndx)),
+                    plt.errorbar(self.ells[msk], (cls_null[ndx]/err_null[ndx])[msk],
+                                 yerr=np.ones(len(ndx))[msk],
                                  fmt=cols[typ]+'-',label=typ)
                 plt.xlabel('$\\ell$',fontsize=15)
                 plt.ylabel('$C_\\ell/\\sigma_\\ell$',fontsize=15)
@@ -422,6 +405,7 @@ class BBPowerSummarizer(PipelineStage):
             for t1,t2,typ,ells,ndx in sorter:
                 typ=typ.decode()
                 title='cl_'+s_cd_t.tracers[t1].name+'_'+s_cd_t.tracers[t2].name+'_'+typ
+                print(title)
                 ct=s_cd_t.mean.vector[ndx]
                 cx=s_cd_x.mean.vector[ndx]
                 cn=s_cd_n.mean.vector[ndx]
@@ -431,13 +415,13 @@ class BBPowerSummarizer(PipelineStage):
                 en=np.sqrt(np.diag(s_cd_n.precision.getCovarianceMatrix()))[ndx]
                 plt.figure()
                 plt.title(s_cd_t.tracers[t1].name+' x '+s_cd_t.tracers[t2].name+' '+typ)
-                plt.plot(self.ells, cf,'k-','Fiducial model')
-                plt.errorbar(self.ells, ct,yerr=et,fmt='ro-',label='Total coadd')
-                plt.errorbar(self.ells,-ct,yerr=et,fmt='rs-')
-                plt.errorbar(self.ells, cn,yerr=et,fmt='yo-',label='Noise')
-                plt.errorbar(self.ells,-cn,yerr=et,fmt='ys-')
-                plt.errorbar(self.ells, cx,yerr=et,fmt='bo-',label='Cross-coadd')
-                plt.errorbar(self.ells,-cx,yerr=et,fmt='bs-')
+                plt.plot(self.ells[msk], cf[msk],'k-','Fiducial model')
+                plt.errorbar(self.ells[msk], ct[msk],yerr=et[msk],fmt='ro-',label='Total coadd')
+                plt.errorbar(self.ells[msk],-ct[msk],yerr=et[msk],fmt='rs-')
+                plt.errorbar(self.ells[msk], cn[msk],yerr=en[msk],fmt='yo-',label='Noise')
+                plt.errorbar(self.ells[msk],-cn[msk],yerr=en[msk],fmt='ys-')
+                plt.errorbar(self.ells[msk], cx[msk],yerr=ex[msk],fmt='bo-',label='Cross-coadd')
+                plt.errorbar(self.ells[msk],-cx[msk],yerr=ex[msk],fmt='bs-')
                 plt.yscale('log')
                 plt.xlabel('$\\ell$',fontsize=15)
                 plt.ylabel('$C_\\ell$',fontsize=15)

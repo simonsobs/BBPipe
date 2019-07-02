@@ -115,10 +115,15 @@ class BBPowerSpecter(PipelineStage):
                     ibpw+=1
                     bpws[l0:l0+dell]=ibpw
                     l0+=dell
+
+            is_dell = False
+            if self.config.get('compute_dell'):
+                is_dell = True
             self.bins=nmt.NmtBin(self.nside,
                                  bpws=bpws,
                                  ells=self.larr_all,
-                                 weights=weights)
+                                 weights=weights,
+                                 is_Dell=is_dell)
         else: # otherwise it could be a constant integer interval
             self.bins=nmt.NmtBin(self.nside,nlb=int(self.config['bpw_edges']))
 
