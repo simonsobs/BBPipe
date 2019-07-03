@@ -2,6 +2,8 @@ from bbpipe import PipelineStage
 from .types import TextFile, SACCFile,DirFile
 import sacc
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
 
@@ -14,9 +16,10 @@ class BBPowerSummarizer(PipelineStage):
     config_options={'nulls_covar_type':'diagonal',
                     'nulls_covar_diag_order': 0,
                     'data_covar_type':'block_diagonal',
-                    'data_covar_diag_order': 3}
+                    'data_covar_diag_order': 3,
+                    'do_plots': True}
     
-    def save_figure(self,plot_title,extension='pdf'):
+    def save_figure(self,plot_title,extension='png'):
         fname=self.get_output('cell_plots')+'/'+plot_title+'.'+extension
         print(fname)
         plt.savefig(fname,bbox_inches='tight')
@@ -351,7 +354,7 @@ class BBPowerSummarizer(PipelineStage):
         # There are so many nulls that we'll probably run out of memory
         cov_null=self.get_covariance_from_samples(sim_null,
                                                   covar_type=self.config['nulls_covar_type'],
-                                                  covar_type=self.config['nulls_covar_diag_order'])
+                                                  off_diagonal_cut=self.config['nulls_covar_diag_order'])
 
         # Save data
         s_cd_t=self.save_to_sacc(self.get_output("cells_coadded_total"),

@@ -37,10 +37,10 @@ config: ./test/bbpower_pspec_sample_config.yml
 resume: False
 
 # Put all the output files in this directory:
-output_dir: ./test/sample_out_ns512_Mock0001
+output_dir: /mnt/extraspace/damonge/SO/BBPipe/outputs/sample_out_ns512_Mock0001
 
 # Put the logs from the individual stages in this directory:
-log_dir: ./test/sample_out_ns512_Mock0001
+log_dir: /mnt/extraspace/damonge/SO/BBPipe/outputs/sample_out_ns512_Mock0001
 
 # Put the log for the overall pipeline infrastructure in this file:
-pipeline_log: ./test/sample_out_ns512_Mock0001/log.txt
+pipeline_log: /mnt/extraspace/damonge/SO/BBPipe/outputs/sample_out_ns512_Mock0001/log.txt
