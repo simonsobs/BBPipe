@@ -5,3 +5,4 @@ from .power_specter import BBPowerSpecter
 from .power_summarizer import BBPowerSummarizer
 from .covfefe import BBCovFeFe
 from .compsep import BBCompSep
+from .plotter import BBPlotter

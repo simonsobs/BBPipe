@@ -84,6 +84,12 @@ class DirFile(DataFile) :
     """
     suffix = 'dir'
 
+class HTMLFile(DataFile) :
+    """
+    A dummy type
+    """
+    suffix = 'html'
+
 class DummyFile(DataFile) :
     """
     A dummy type

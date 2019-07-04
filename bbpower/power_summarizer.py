@@ -2,28 +2,19 @@ from bbpipe import PipelineStage
 from .types import TextFile, SACCFile,DirFile
 import sacc
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import os
 
 class BBPowerSummarizer(PipelineStage):
     name="BBPowerSummarizer"
     inputs=[('splits_list',TextFile),('bandpasses_list',TextFile),('cells_fiducial',SACCFile),
             ('cells_all_splits',SACCFile),('cells_all_sims',TextFile)]
-    outputs=[('cell_plots',DirFile),('cells_coadded_total',SACCFile),('cells_coadded',SACCFile),
+    outputs=[('cells_coadded_total',SACCFile),('cells_coadded',SACCFile),
              ('cells_noise',SACCFile),('cells_null',SACCFile)]
     config_options={'nulls_covar_type':'diagonal',
                     'nulls_covar_diag_order': 0,
                     'data_covar_type':'block_diagonal',
-                    'data_covar_diag_order': 3,
-                    'do_plots': True}
+                    'data_covar_diag_order': 3}
     
-    def save_figure(self,plot_title,extension='png'):
-        fname=self.get_output('cell_plots')+'/'+plot_title+'.'+extension
-        print(fname)
-        plt.savefig(fname,bbox_inches='tight')
-
     def get_covariance_from_samples(self,v,covar_type='dense',
                                     off_diagonal_cut=0):
         """
@@ -59,10 +50,6 @@ class BBPowerSummarizer(PipelineStage):
         """
         Read some input files to determine the size of the power spectra
         """
-        # Open plots directory
-        if not os.path.isdir(self.get_output('cell_plots')):
-            os.mkdir(self.get_output('cell_plots'))
-
         # Calculate number of splits and number of frequency channels
         self.nsplits=len(open(self.get_input('splits_list'),'r').readlines())
         self.nbands=len(open(self.get_input('bandpasses_list'),'r').readlines())
@@ -149,15 +136,6 @@ class BBPowerSummarizer(PipelineStage):
                 T=sacc.Tracer(band,t.type,t.z,t.Nz,exp_sample=t.exp_sample)
                 T.addColumns({'dnu':t.extra_cols['dnu']})
                 tracers_bands[band]=T
-        if False:#self.config['do_plots']:
-            plt.figure()
-            for b in range(self.nbands):
-                t=tracers_bands['band%d'%(b+1)]
-                plt.plot(t.z,t.Nz,label='band %d'%(b+1))
-            plt.xlabel('$\\nu [{\\rm GHz}]$',fontsize=15)
-            plt.ylabel('Bandpass transmission',fontsize=15)
-            self.save_figure('bandpasses')
-            plt.close()
 
         self.t_coadd=[]
         for i in range(self.nbands):
@@ -250,7 +228,7 @@ class BBPowerSummarizer(PipelineStage):
         band=itracer//self.nsplits
         return band,split
 
-    def parse_splits_sacc_file(self,s,plot_stuff=False):
+    def parse_splits_sacc_file(self,s):
         """
         Transform a SACC file containing splits into 4 SACC vectors:
         1 that contains the coadded power spectra.
@@ -320,11 +298,11 @@ class BBPowerSummarizer(PipelineStage):
 
         # Create binnings for all future files
         print("Binning")
-        self.get_binnings(self)
+        self.get_binnings()
 
         # Read data file, coadd and compute nulls
         print("Reading data")
-        sv_cd_t, sv_cd_x, sv_cd_n, sv_null=self.parse_splits_sacc_file(self.s_splits,plot_stuff=True)
+        sv_cd_t, sv_cd_x, sv_cd_n, sv_null=self.parse_splits_sacc_file(self.s_splits)
         
         # Read simulations
         print("Reading simulations")
@@ -333,6 +311,7 @@ class BBPowerSummarizer(PipelineStage):
         sim_cd_n=np.zeros([self.nsims,len(sv_cd_n.vector)])
         sim_null=np.zeros([self.nsims,len(sv_null.vector)])
         for i,fn in enumerate(self.fname_sims):
+            print(fn)
             s=sacc.SACC.loadFromHDF(fn)
             cd_t,cd_x,cd_n,null=self.parse_splits_sacc_file(s)
             sim_cd_t[i,:]=cd_t.vector
@@ -357,80 +336,20 @@ class BBPowerSummarizer(PipelineStage):
                                                   off_diagonal_cut=self.config['nulls_covar_diag_order'])
 
         # Save data
-        s_cd_t=self.save_to_sacc(self.get_output("cells_coadded_total"),
-                                 self.t_coadd,self.bins_coadd,sv_cd_t,cov=cov_cd_t,
-                                 return_sacc=self.config['do_plots'])
-        s_cd_x=self.save_to_sacc(self.get_output("cells_coadded"),
-                                 self.t_coadd,self.bins_coadd,sv_cd_x,cov=cov_cd_x,
-                                 return_sacc=self.config['do_plots'])
-        s_cd_n=self.save_to_sacc(self.get_output("cells_noise"),
-                                 self.t_coadd,self.bins_coadd,sv_cd_n,cov=cov_cd_n,
-                                 return_sacc=self.config['do_plots'])
-        s_null=self.save_to_sacc(self.get_output("cells_null"),
-                                 self.t_nulls,self.bins_nulls,sv_null,cov=cov_null,
-                                 return_sacc=self.config['do_plots'])
+        print("Writing output")
+        self.save_to_sacc(self.get_output("cells_coadded_total"),
+                          self.t_coadd,self.bins_coadd,sv_cd_t,cov=cov_cd_t,
+                          return_sacc=False)
+        self.save_to_sacc(self.get_output("cells_coadded"),
+                          self.t_coadd,self.bins_coadd,sv_cd_x,cov=cov_cd_x,
+                          return_sacc=False)
+        self.save_to_sacc(self.get_output("cells_noise"),
+                          self.t_coadd,self.bins_coadd,sv_cd_n,cov=cov_cd_n,
+                          return_sacc=False)
+        self.save_to_sacc(self.get_output("cells_null"),
+                          self.t_nulls,self.bins_nulls,sv_null,cov=cov_null,
+                          return_sacc=False)
 
-        # Plot stuff
-        if self.config['do_plots']:
-            msk = self.ells<300
-            # Nulls
-            print("plotting")
-            cols={'EE':'r','EB':'g','BE':'y','BB':'b'}
-            sorter=s_null.sortTracers()
-            xcorrs=np.array(["%d_%d"%(s[0],s[1]) for s in sorter])
-            xc_un=np.unique(xcorrs)
-
-            err_null=np.sqrt(s_null.precision.getCovarianceMatrix())
-            cls_null=s_null.mean.vector
-            for comb in xc_un:
-                t1,t2=comb.split('_')
-                t1=int(t1)
-                t2=int(t2)
-                ind_spectra=np.where(xcorrs==comb)[0]
-                title="cl_"+self.t_nulls[t1].name+"_x_"+self.t_nulls[t2].name
-                print(title)
-                plt.figure()
-                plt.title(self.t_nulls[t1].name+' x '+self.t_nulls[t2].name)
-                for ind in ind_spectra:
-                    typ=sorter[ind][2].decode()
-                    ndx=sorter[ind][4]
-                    plt.errorbar(self.ells[msk], (cls_null[ndx]/err_null[ndx])[msk],
-                                 yerr=np.ones(len(ndx))[msk],
-                                 fmt=cols[typ]+'-',label=typ)
-                plt.xlabel('$\\ell$',fontsize=15)
-                plt.ylabel('$C_\\ell/\\sigma_\\ell$',fontsize=15)
-                plt.legend()
-                self.save_figure(title)
-                plt.close()
-
-            s_fid=sacc.SACC.loadFromHDF(self.get_input('cells_fiducial'))
-            sorter=s_fid.sortTracers()
-            for t1,t2,typ,ells,ndx in sorter:
-                typ=typ.decode()
-                title='cl_'+s_cd_t.tracers[t1].name+'_'+s_cd_t.tracers[t2].name+'_'+typ
-                print(title)
-                ct=s_cd_t.mean.vector[ndx]
-                cx=s_cd_x.mean.vector[ndx]
-                cn=s_cd_n.mean.vector[ndx]
-                cf=s_fid.mean.vector[ndx]
-                et=np.sqrt(np.diag(s_cd_t.precision.getCovarianceMatrix()))[ndx]
-                ex=np.sqrt(np.diag(s_cd_x.precision.getCovarianceMatrix()))[ndx]
-                en=np.sqrt(np.diag(s_cd_n.precision.getCovarianceMatrix()))[ndx]
-                plt.figure()
-                plt.title(s_cd_t.tracers[t1].name+' x '+s_cd_t.tracers[t2].name+' '+typ)
-                plt.plot(self.ells[msk], cf[msk],'k-','Fiducial model')
-                plt.errorbar(self.ells[msk], ct[msk],yerr=et[msk],fmt='ro-',label='Total coadd')
-                plt.errorbar(self.ells[msk],-ct[msk],yerr=et[msk],fmt='rs-')
-                plt.errorbar(self.ells[msk], cn[msk],yerr=en[msk],fmt='yo-',label='Noise')
-                plt.errorbar(self.ells[msk],-cn[msk],yerr=en[msk],fmt='ys-')
-                plt.errorbar(self.ells[msk], cx[msk],yerr=ex[msk],fmt='bo-',label='Cross-coadd')
-                plt.errorbar(self.ells[msk],-cx[msk],yerr=ex[msk],fmt='bs-')
-                plt.yscale('log')
-                plt.xlabel('$\\ell$',fontsize=15)
-                plt.ylabel('$C_\\ell$',fontsize=15)
-                plt.legend()
-                self.save_figure(title)
-                plt.close()
 
 if __name__ == '__main_':
     cls = PipelineStage.main()
