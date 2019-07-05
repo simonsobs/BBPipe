@@ -24,7 +24,7 @@ indf = 0
 for f in freqs:
 	for s in ['cmb', 'dust', 'synchrotron']:
 		output_freq_maps[indf] += hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)
-		print output_freq_maps[indf].shape
+		print(output_freq_maps[indf].shape)
 		if s == 'cmb': std_cmb.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
 		if s == 'dust': std_dust.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
 		if s == 'synchrotron': std_sync.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
