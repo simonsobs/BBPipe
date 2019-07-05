@@ -58,6 +58,7 @@ class BBMapParamCompSep(PipelineStage):
         method='TNC'
 
         if self.config['Nspec']!=0.0:
+            print('Nspec != 0 !! building and analysis independent Bd regions ... ')
             # read the template used to produce simulation
             # in practice, we would use the Bd map estimated from data sets.
             Bd_template = hp.read_map('/global/cscratch1/sd/josquin/SO_sims/dust_beta.fits')
