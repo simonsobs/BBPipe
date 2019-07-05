@@ -57,7 +57,7 @@ def grabargs():
     parser.add_argument("--cmb_sim_no_pysm", action='store_true', help = "perform the CMB simulation with synfast, outside pysm", default=False)
     parser.add_argument("--no_inh", action='store_true', help = "do not generate inhomogeneous noise", default=False)
     parser.add_argument("--nlb", type=int, help = "number of bins", default=512)
-    parser.add_argument("--Nspec", type=int, help = "number of slices through the Bd PySM map", default=512)
+    parser.add_argument("--Nspec", type=int, help = "number of slices through the Bd PySM map", default=0)
     parser.add_argument("--mask_apo", type=str, help = "path to apodized mask", default='')
     parser.add_argument("--external_sky_sims", type=str, help = "path to the external, sky simulated, noise-free maps", default='')
 
@@ -137,7 +137,8 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 				noise_option='white_noise', dust_marginalization=True, 
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
-                cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims=''):
+                cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims='',
+                Nspec=0.0):
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -158,6 +159,7 @@ global:
     r_input: '''+str(r_input)+'''
     A_lens:  '''+str(AL_input)+'''
     no_inh: '''+str(no_inh)+'''
+    Nspec: '''+str(Nspec)+'''
 
 BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
@@ -235,7 +237,7 @@ def main():
                 apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res,\
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
                 no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
-                external_sky_sims=args.external_sky_sims)
+                external_sky_sims=args.external_sky_sims, Nspec=args.Nspec)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
