@@ -57,6 +57,7 @@ def grabargs():
     parser.add_argument("--cmb_sim_no_pysm", action='store_true', help = "perform the CMB simulation with synfast, outside pysm", default=False)
     parser.add_argument("--no_inh", action='store_true', help = "do not generate inhomogeneous noise", default=False)
     parser.add_argument("--nlb", type=int, help = "number of bins", default=512)
+    parser.add_argument("--Nspec", type=int, help = "number of slices through the Bd PySM map", default=512)
     parser.add_argument("--mask_apo", type=str, help = "path to apodized mask", default='')
     parser.add_argument("--external_sky_sims", type=str, help = "path to the external, sky simulated, noise-free maps", default='')
 

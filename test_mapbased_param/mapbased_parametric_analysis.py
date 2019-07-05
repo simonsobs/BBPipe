@@ -51,102 +51,113 @@ class BBMapParamCompSep(PipelineStage):
 
         # perform component separation
         # assuming inhomogeneous noise
-
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
         options={'disp':False, 'gtol': 1e-6, 'eps': 1e-4, 'maxiter': 100, 'ftol': 1e-6 } 
         tol=1e-18
         method='TNC'
 
-        res = fg.separation_recipies.weighted_comp_sep(components, instrument,
-                     data=frequency_maps_, cov=noise_cov_, nside=self.config['nside_patch'], 
-                        options=options, tol=tol, method=method)
+        if self.config['Nspec']!=0.0:
+            # read the template used to produce simulation
+            # in practice, we would use the Bd map estimated from data sets.
+            Bd_template = hp.read_map('/global/cscratch1/sd/josquin/SO_sims/dust_beta.fits')
+            # upgrade the map to the actual working resolution
+            Bd_template = hp.ud_grade(Bd_template, nside_out=self.config['nside'])
+            # make slices through this map. Define the regions of interest
+            mask_patches = [Bd_template*0.0]*self.config['Nspec']
+            # observed patches
+            obs_pix = np.where(binary_mask!=0.0)[0]
+            # thickness of the corresponding patches
+            delta_Bd_patch = np.abs(max(Bd_template[obs_pix])-min(Bd_template[obs_pix]))/self.config['Nspec']
+            slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix]), delta_Bd_patch )
+            for i in range(self.config['Nspec']):
+                mask_patches[np.where( (Bd_template[obs_pix] >= slices[i] ) & (Bd_template[beobs_pixta_map] < slices[i+1]) )[0]] = 1.0
+        else:
+            mask_patches = [binary_mask]
 
-        # save results
-        # fits for components maps
-        # and text file for spectral parameters with error bars?
-        # or maps for everything maybe....
-
-        if res.s.shape[1] == 1:
-            optI = 1
-            optQU = 0
-        elif res.s.shape[1] == 2:
-            optI = 0
-            optQU = 1
-        else: 
-            optI = 1
-            optQU = 1
-
-        A = MixingMatrix(*components)
-        A_ev = A.evaluator(instrument['frequencies'])
-        A_maxL = A_ev(res.x)
-        np.savetxt(self.get_output('A_maxL'), A_maxL)
-
-        A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
-        # print('shape(A_maxL) = ',np.shape(A_maxL))
-        noise_cov_diag = np.zeros((2*len(instrument['frequencies']), 2*len(instrument['frequencies']), noise_cov.shape[1]))
-        noise_maps__ = np.zeros((2*len(instrument['frequencies']), noise_cov.shape[1]))
-        for f in range(len(instrument['frequencies'])):
-            A_maxL_loc[2*f,:2] = A_maxL[f,0]
-            A_maxL_loc[2*f+1,:2] = A_maxL[f,0]
-            A_maxL_loc[2*f,2:4] = A_maxL[f,1]
-            A_maxL_loc[2*f+1,2:4] = A_maxL[f,1]
-            A_maxL_loc[2*f,4:] = A_maxL[f,2]
-            A_maxL_loc[2*f+1,4:] = A_maxL[f,2]
-            noise_cov_diag[2*f,2*f,:] = noise_cov_[f,0,:]*1.0
-            noise_cov_diag[2*f+1,2*f+1,:] = noise_cov_[f,1,:]*1.0
-            noise_maps__[2*f,:] = noise_maps_[f,0,:]*1.0
-            noise_maps__[2*f+1,:] = noise_maps_[f,1,:]*1.0
-
-        # print('A_maxL_loc = ', A_maxL_loc)
-        # print('shape(A_maxL_loc) = ',np.shape(A_maxL_loc))
-        # print('shape(noise_cov_diag) = ',np.shape(noise_cov_diag))
-        # print('shape(noise_maps__) = ',np.shape(noise_maps__))
-        # define masking
-        mask = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
-        # mask = ~(np.any(mask, axis=tuple(range(noise_maps__.ndim-1))))
-        # print('mask = ', mask)
-        noise_after_comp_sep = np.ones((3,2, noise_cov.shape[1]))*hp.UNSEEN
-        obs_pix = np.where(mask==False)[0]
-        # test_map = np.zeros(noise_cov.shape[1])
-        # test_map[obs_pix] = 1.0
-        # hp.mollview(test_map, title='test')
-        # hp.mollview(noise_maps__[0], title='noise')
-        # hp.mollview(noise_cov_diag[0,0], title='cov')
-        # pl.show()
-
-        for p in obs_pix:
-            # noise_cov_inv = np.diag(1.0/np.diag(noise_cov_diag[:,:,p]))
-            # print('1.0/noise_cov_diag[:,:,p]=', noise_cov_inv)
-            # print('A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc) = ', A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
-            # inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
-            for s in range(2):
-                noise_cov_inv = np.diag(1.0/noise_cov_[:,s,p])
-                # print('shape of noise_cov_inv', np.shape(noise_cov_inv))
-                # print('shape of A_maxL', np.shape(A_maxL))
-                inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
-                noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
-            # print('shape(inv_AtNA) = ',np.shape(inv_AtNA))
-            # print('ATNd = ',  np.shape(A_maxL_loc.T.dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
-            # print('inv_AtNA.ATNd = ', np.shape(inv_AtNA.dot( A_maxL_loc.T ).dot(1.0/noise_cov_diag[:,:,p]).dot(noise_maps__[:,p])))
-            # print('noise_after_comp_sep[:,p] = ', np.shape(noise_after_comp_sep[:,p]))
-            # noise_after_comp_sep[:,p] = inv_AtNA.dot( A_maxL_loc.T ).dot(noise_cov_inv).dot(noise_maps__[:,p])
 
         noise_after_comp_sep_ = np.zeros((6, noise_cov.shape[1]))
-        for f in range(noise_after_comp_sep.shape[0]):
-            noise_after_comp_sep_[2*f,:] = noise_after_comp_sep[f,0,:]*1.0
-            noise_after_comp_sep_[2*f+1,:] = noise_after_comp_sep[f,1,:]*1.0
+        maps_estimated = np.zeros((6, noise_cov.shape[1]))
+        cov_estimated = np.zeros((6, noise_cov.shape[1]))
 
+        # loop over pixels within defined-above regions:
+        for mask_patch_ in mask_patches:
+
+            frequency_maps__ = frequency_maps_*1.0
+            frequency_maps__[:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            noise_cov__ = noise_cov_*1.0
+            noise_cov__[:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+
+            res = fg.separation_recipies.weighted_comp_sep(components, instrument,
+                         data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
+                            options=options, tol=tol, method=method)
+
+            if res.s.shape[1] == 1:
+                optI = 1
+                optQU = 0
+            elif res.s.shape[1] == 2:
+                optI = 0
+                optQU = 1
+            else: 
+                optI = 1
+                optQU = 1
+
+            A = MixingMatrix(*components)
+            A_ev = A.evaluator(instrument['frequencies'])
+            A_maxL = A_ev(res.x)
+            np.savetxt(self.get_output('A_maxL'), A_maxL)
+
+            A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
+
+            # reshaping quantities of interest
+            noise_cov_diag = np.zeros((2*len(instrument['frequencies']), 2*len(instrument['frequencies']), noise_cov.shape[1]))
+            noise_maps__ = np.zeros((2*len(instrument['frequencies']), noise_cov.shape[1]))
+
+            for f in range(len(instrument['frequencies'])):
+                A_maxL_loc[2*f,:2] = A_maxL[f,0]
+                A_maxL_loc[2*f+1,:2] = A_maxL[f,0]
+                A_maxL_loc[2*f,2:4] = A_maxL[f,1]
+                A_maxL_loc[2*f+1,2:4] = A_maxL[f,1]
+                A_maxL_loc[2*f,4:] = A_maxL[f,2]
+                A_maxL_loc[2*f+1,4:] = A_maxL[f,2]
+                noise_cov_diag[2*f,2*f,:] = noise_cov_[f,0,:]*1.0
+                noise_cov_diag[2*f+1,2*f+1,:] = noise_cov_[f,1,:]*1.0
+                noise_maps__[2*f,:] = noise_maps_[f,0,:]*1.0
+                noise_maps__[2*f+1,:] = noise_maps_[f,1,:]*1.0
+
+            # define masking
+            mask_patch_ = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
+
+            noise_after_comp_sep = np.ones((3,2, noise_cov.shape[1]))*hp.UNSEEN
+            obs_pix = np.where(mask_patch_==False)[0]
+
+            for p in obs_pix:
+                for s in range(2):
+                    noise_cov_inv = np.diag(1.0/noise_cov_[:,s,p])
+                    inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
+                    noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
+
+            # the noise if the combination (sum) of the noise_after_comp_sep
+            # recovered on each of the sub masks
+            for f in range(noise_after_comp_sep.shape[0]):
+                noise_after_comp_sep_[2*f,:] += noise_after_comp_sep[f,0,:]*1.0
+                noise_after_comp_sep_[2*f+1,:] += noise_after_comp_sep[f,1,:]*1.0
+
+            # reshape map_estimated_ from the recovered sky signals ... 
+            maps_estimated += res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+
+            # reshaping and saving the covariance matrix
+            cov_estimated_ = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
+            cov_estimated += cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+
+        ## SAVING PRODUCTS
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
 
         column_names = []
         [ column_names.extend( (('I_'+str(ch))*optI,('Q_'+str(ch))*optQU,('U_'+str(ch))*optQU)) for ch in A.components]
         column_names = [x for x in column_names if x]
-        maps_estimated=res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
         hp.write_map(self.get_output('post_compsep_maps'), maps_estimated, overwrite=True, column_names=column_names)
 
-        cov_estimated = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
-        cov_estimated = cov_estimated.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
         hp.write_map(self.get_output('post_compsep_cov'), cov_estimated, overwrite=True, column_names=column_names)
 
         column_names = []
@@ -156,6 +167,6 @@ class BBMapParamCompSep(PipelineStage):
         [column_names.append(all_combinations[i]) for i in range(len(all_combinations))]
         np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x,  list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
 
-
 if __name__ == '__main__':
     results = PipelineStage.main()
+    
