@@ -14,8 +14,8 @@ from .Cl_estimation import binning_definition
 from fgbuster.algebra import W_dB, _mmm
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
+from matplotlib import ticker
 from matplotlib.ticker import LogLocator
-
 
 def ticks_format(value, index):
     """
