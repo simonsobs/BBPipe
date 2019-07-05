@@ -25,6 +25,7 @@ components = ['dust', 'synchrotron']
 indf = 0
 for f in freqs:
 	for s in components:
+		print('loading file = '+os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'))
 		output_freq_maps[indf] += hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)
 		print(output_freq_maps[indf].shape)
 		if s == 'cmb': std_cmb.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
@@ -37,10 +38,6 @@ for f in freqs:
 
 
 pl.figure()
-# print(len(freqs_))
-# print(len(std_cmb))
-# print(len(std_dust))
-# print(len(std_sync))
 pl.figure()
 # pl.plot(freqs_, std_cmb, 'k-', label='CMB')
 pl.plot(freqs_, std_dust, 'r-', label='dust')
