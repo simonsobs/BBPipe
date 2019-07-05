@@ -24,9 +24,10 @@ indf = 0
 for f in freqs:
 	for s in ['cmb', 'dust', 'synchrotron']:
 		output_freq_maps[indf] += hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)
-		if s == 'cmb': std_cmb.append(np.std(output_freq_maps[indf][1]))
-		if s == 'dust': std_dust.append(np.std(output_freq_maps[indf][1]))
-		if s == 'synchrotron': std_sync.append(np.std(output_freq_maps[indf][1]))
+		print output_freq_maps[indf].shape
+		if s == 'cmb': std_cmb.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
+		if s == 'dust': std_dust.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
+		if s == 'synchrotron': std_sync.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
 	hp.write_map('./201901_gaussian_fg_lensed_cmb_uKCMB_sa'+f+'_nside512_'+sims_+'.fits', output_freq_maps[indf], overwrite=True)
 	
 	indf+= 1
@@ -41,7 +42,7 @@ pl.plot(freqs_, std_dust, 'r-', label='dust')
 pl.plot(freqs_, std_sync, 'b-', label='sync')
 pl.legend()
 pl.xlabel('frequency [GHz]')
-pl.ylabel('standard deviation [uK_CMB]')
+pl.ylabel('standard deviation of the Q map [uK_CMB]')
 pl.show()
 
 
