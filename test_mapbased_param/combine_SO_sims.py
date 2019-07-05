@@ -33,12 +33,12 @@ for f in freqs:
 	
 	indf+= 1
 
-'''
+
 pl.figure()
-print(len(freqs_))
-print(len(std_cmb))
-print(len(std_dust))
-print(len(std_sync))
+# print(len(freqs_))
+# print(len(std_cmb))
+# print(len(std_dust))
+# print(len(std_sync))
 pl.figure()
 pl.plot(freqs_, std_cmb, 'k-', label='CMB')
 pl.plot(freqs_, std_dust, 'r-', label='dust')
@@ -47,7 +47,7 @@ pl.legend()
 pl.xlabel('frequency [GHz]')
 pl.ylabel('standard deviation of the Q map [uK_CMB]')
 pl.show()
-'''
+
 
 
 exit()
