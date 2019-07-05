@@ -14,6 +14,7 @@ from .Cl_estimation import binning_definition
 from fgbuster.algebra import W_dB, _mmm
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
+from matplotlib.ticker import LogLocator
 
 
 def ticks_format(value, index):
@@ -244,7 +245,6 @@ class BBREstimation(PipelineStage):
                     pl.ylim([1e-6,2e-1])
 
                     subs = [ 1.0, 2.0, 5.0 ]  
-                    from matplotlib.ticker import LogLocator
                     ax.xaxis.set_major_locator( ticker.LogLocator( subs=subs ) )
                     ax.xaxis.set_minor_locator( ticker.LogLocator( subs=subs ) ) #set the ticks position
                     ax.xaxis.set_major_formatter( ticker.NullFormatter() )   # remove the major ticks
