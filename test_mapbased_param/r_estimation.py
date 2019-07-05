@@ -15,6 +15,24 @@ from fgbuster.algebra import W_dB, _mmm
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
 
+
+def ticks_format(value, index):
+    """
+    get the value and returns the value as:
+        integer: [0,99]
+        1 digit float: [0.1, 0.99]
+        n*10^m: otherwise
+    To have all the number of the same size they are all returned as latex strings
+    """
+    exp = np.floor(np.log10(value))
+    base = value/10**exp
+    if exp == 0 or exp == 1:   
+        return '${0:d}$'.format(int(value))
+    if exp == -1:
+        return '${0:.1f}$'.format(value)
+    else:
+        return '${0:d}\\times10^{{{1:d}}}$'.format(int(base), int(exp))
+
 def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN=None, i_cmb=0):
     """
     This function estimates the statistical foregrounds
@@ -197,9 +215,9 @@ class BBREstimation(PipelineStage):
                                                 label='modeled BB - modeled noise = tot BB + residuals', 
                                                 color='k', linestyle='-', linewidth=2.0, alpha=0.8)
 
-                    pl.loglog( ell_v_loc, norm*(ClBB_obs - Cov_model), 
-                                                label='observed BB - modeled BB', 
-                                                color='red', linestyle=':', linewidth=2.0, alpha=0.8)
+                    # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cov_model), 
+                                                # label='observed BB - modeled BB', 
+                                                # color='red', linestyle=':', linewidth=2.0, alpha=0.8)
 
                     # including statistical foregrounds residuals
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
@@ -223,7 +241,28 @@ class BBREstimation(PipelineStage):
                     # pl.legend()
                     pl.xlabel('$\ell$', fontsize=20)
                     pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
-                    pl.ylim([1e-5,2e-1])
+                    pl.ylim([1e-6,2e-1])
+
+                    subs = [ 1.0, 2.0, 5.0 ]  
+                    from matplotlib.ticker import LogLocator
+                    ax.xaxis.set_major_locator( ticker.LogLocator( subs=subs ) )
+                    ax.xaxis.set_minor_locator( ticker.LogLocator( subs=subs ) ) #set the ticks position
+                    ax.xaxis.set_major_formatter( ticker.NullFormatter() )   # remove the major ticks
+                    ax.xaxis.set_minor_formatter( ticker.FuncFormatter(ticks_format) )
+                    ax.yaxis.set_major_locator( ticker.LogLocator( subs=subs ) )
+                    ax.yaxis.set_minor_locator( ticker.LogLocator( subs=subs ) ) #set the ticks position
+                    ax.yaxis.set_major_formatter( ticker.NullFormatter() )   # remove the major ticks
+                    ax.yaxis.set_minor_formatter( ticker.FuncFormatter(ticks_format) )
+
+                    for tick in ax.xaxis.get_major_ticks():
+                        tick.label.set_fontsize(16)
+                    for tick in ax.xaxis.get_minor_ticks():
+                        tick.label.set_fontsize(16)
+                    for tick in ax.yaxis.get_major_ticks():
+                        tick.label.set_fontsize(16)
+                    for tick in ax.yaxis.get_minor_ticks():
+                        tick.label.set_fontsize(16)
+
                     pl.savefig(self.get_output('power_spectrum_post_comp_sep'+tag))
                     # pl.show()
                     pl.close()
