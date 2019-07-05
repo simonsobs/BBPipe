@@ -75,7 +75,6 @@ class BBMapParamCompSep(PipelineStage):
         else:
             mask_patches = [binary_mask]
 
-
         noise_after_comp_sep_ = np.zeros((6, noise_cov.shape[1]))
         maps_estimated = np.zeros((6, noise_cov.shape[1]))
         cov_estimated = np.zeros((6, noise_cov.shape[1]))
@@ -84,9 +83,9 @@ class BBMapParamCompSep(PipelineStage):
         for mask_patch_ in mask_patches:
 
             frequency_maps__ = frequency_maps_*1.0
-            frequency_maps__[:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
-            noise_cov__[:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
 
             res = fg.separation_recipies.weighted_comp_sep(components, instrument,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
@@ -169,4 +168,4 @@ class BBMapParamCompSep(PipelineStage):
 
 if __name__ == '__main__':
     results = PipelineStage.main()
-    
+
