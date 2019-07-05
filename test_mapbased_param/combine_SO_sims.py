@@ -6,6 +6,7 @@ import os
 import numpy as np
 import healpy as hp
 import glob
+import pylab as pl
 
 path_to_files = '/project/projectdirs/sobs/v4_sims/mbs/201901_gaussian_fg_lensed_cmb_realistic_noise/512'
 
