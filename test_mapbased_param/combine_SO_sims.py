@@ -19,10 +19,11 @@ freqs_ = [27, 39, 93, 145, 225, 280]
 std_cmb = []
 std_dust = []
 std_sync = []
-pl.figure()
+# components = ['cmb', 'dust', 'synchrotron']
+components = ['dust', 'synchrotron']
 indf = 0
 for f in freqs:
-	for s in ['cmb', 'dust', 'synchrotron']:
+	for s in components:
 		output_freq_maps[indf] += hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)
 		print(output_freq_maps[indf].shape)
 		if s == 'cmb': std_cmb.append(np.std(hp.read_map(os.path.join(path_to_files, s+'/'+sims_+'/simonsobs_'+s+'_uKCMB_sa'+f+'_nside512_0010.fits'), field=None)[1]))
@@ -32,6 +33,8 @@ for f in freqs:
 	
 	indf+= 1
 
+'''
+pl.figure()
 print(len(freqs_))
 print(len(std_cmb))
 print(len(std_dust))
@@ -44,6 +47,7 @@ pl.legend()
 pl.xlabel('frequency [GHz]')
 pl.ylabel('standard deviation of the Q map [uK_CMB]')
 pl.show()
+'''
 
 
 exit()

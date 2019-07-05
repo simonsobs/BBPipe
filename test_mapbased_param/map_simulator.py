@@ -106,9 +106,9 @@ class BBMapSim(PipelineStage):
             print('EXTERNAL SKY-ONLY MAPS LOADED')
             list_of_files = sorted(glob.glob(self.config['external_sky_sims']))   
             for f in range(len(list_of_files)):
-                freq_maps[3*f:3*(f+1),:] = hp.read_map(list_of_files[f], field=None)
-                freq_maps[3*f:3*(f+1),:] = hp.ud_grade(freq_maps[3*f:3*f+3,:], nside_out=self.config['nside'])
-
+                freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
+                if self.config['cmb_sim_no_pysm']:
+                    freq_maps[3*f:3*(f+1),:] += cmb_sky[:,:]
         # adding noise
         if self.config['noise_option']=='white_noise':
             nlev_map = freq_maps*0.0
