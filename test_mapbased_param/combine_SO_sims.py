@@ -13,7 +13,7 @@ path_to_files = '/project/projectdirs/sobs/v4_sims/mbs/201901_gaussian_fg_lensed
 CMB_loc = hp.read_map(os.path.join(path_to_files, 'cmb/0010/simonsobs_cmb_uKCMB_sa027_nside512_0010.fits'), field=None)
 
 # output_freq_maps = [np.zeros_like(CMB_loc)]*6
-output_freq_maps =np,.zeros((6, CMB_loc.shape[0], CMB_loc.shape[1]))
+output_freq_maps =np.zeros((6, CMB_loc.shape[0], CMB_loc.shape[1]))
 freqs = ['027', '039', '093', '145', '225', '280']
 sims_ = '0010' # because there is a single foregrounds realization
 freqs_ = [27, 39, 93, 145, 225, 280]
