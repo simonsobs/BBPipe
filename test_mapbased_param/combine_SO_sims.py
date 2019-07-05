@@ -27,7 +27,7 @@ for f in freqs:
 		if s == 'cmb': std_cmb.append(np.std(output_freq_maps[indf]))
 		if s == 'dust': std_dust.append(np.std(output_freq_maps[indf]))
 		if s == 'sync': std_sync.append(np.std(output_freq_maps[indf]))
-	hp.write_map('./201901_gaussian_fg_lensed_cmb_uKCMB_sa'+f+'_nside512_'+sims_+'.fits', output_freq_maps[indf])
+	hp.write_map('./201901_gaussian_fg_lensed_cmb_uKCMB_sa'+f+'_nside512_'+sims_+'.fits', output_freq_maps[indf], overwrite=True)
 	
 	indf+= 1
 
