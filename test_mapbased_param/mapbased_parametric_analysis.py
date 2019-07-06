@@ -72,7 +72,8 @@ class BBMapParamCompSep(PipelineStage):
             delta_Bd_patch = np.abs(max(Bd_template[obs_pix])-min(Bd_template[obs_pix]))/self.config['Nspec']
             slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix]), delta_Bd_patch )
             for i in range(self.config['Nspec']):
-                mask_patches[np.where( (Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]) )[0]] = 1
+                print((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))
+                mask_patches[(Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1])] = 1
         else:
             mask_patches = [binary_mask]
 
