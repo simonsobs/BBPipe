@@ -71,8 +71,9 @@ class BBMapParamCompSep(PipelineStage):
             # thickness of the corresponding patches
             delta_Bd_patch = np.abs(max(Bd_template[obs_pix])-min(Bd_template[obs_pix]))/self.config['Nspec']
             slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix]), delta_Bd_patch )
+            print('these are the slides : ', slices)
             for i in range(self.config['Nspec']):
-                print((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))
+                print('these are the list of indices : ', (Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))
                 mask_patches[(Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1])] = 1
         else:
             mask_patches = [binary_mask]
