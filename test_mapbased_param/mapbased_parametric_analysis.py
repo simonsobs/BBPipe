@@ -75,7 +75,7 @@ class BBMapParamCompSep(PipelineStage):
             for i in range(self.config['Nspec']):
                 pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
                 print('these are the list of indices : ', pix_within_patch)
-                [ mask_patches[p] = 1 for p in pix_within_patch]
+                mask_patches[i][pix_within_patch] = 1
         else:
             mask_patches = [binary_mask]
 
