@@ -90,9 +90,9 @@ class BBMapParamCompSep(PipelineStage):
         for mask_patch_ in mask_patches:
 
             frequency_maps__ = frequency_maps_*1.0
-            frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = 0.0#hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
-            noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            noise_cov__[:,:,np.where(mask_patch_==0)[0]] = 0.0#hp.UNSEEN
 
             res = fg.separation_recipies.weighted_comp_sep(components, instrument,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
@@ -141,7 +141,7 @@ class BBMapParamCompSep(PipelineStage):
             # define masking
             mask_patch_ = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
 
-            noise_after_comp_sep = np.ones((3,2, noise_cov.shape[1]))*hp.UNSEEN
+            noise_after_comp_sep = np.ones((3,2, noise_cov.shape[1]))#*hp.UNSEEN
             obs_pix = np.where(mask_patch_==False)[0]
 
             for p in obs_pix:
