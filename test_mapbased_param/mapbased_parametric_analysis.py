@@ -86,7 +86,7 @@ class BBMapParamCompSep(PipelineStage):
         resx = []
         resS = []
         AmaxL_v = []
-        
+
         for mask_patch_ in mask_patches:
 
             frequency_maps__ = frequency_maps_*1.0
@@ -179,14 +179,14 @@ class BBMapParamCompSep(PipelineStage):
         all_combinations = []
         [all_combinations.append(str(A.params[i])+' x '+str(A.params[j])) for i, j in zip(list(np.triu_indices(len(A.params))[0]),list(np.triu_indices(len(A.params))[1]) )]
         [column_names.append(all_combinations[i]) for i in range(len(all_combinations))]
-        if self.config['Nspec']!=0.0:
-            column = np.hstack((resx[0],  list(resS[0][np.triu_indices(len(A.params))])))
-            for p in range(self.config['Nspec'])[1:]:
-                column_ = np.hstack((resx[p],  list(resS[p][np.triu_indices(len(A.params))])))
-                column = np.vstack((column, column_))
-            np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
-        else:
-            np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x,  list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
+        # if self.config['Nspec']!=0.0:
+        #     column = np.hstack((resx[0],  list(resS[0][np.triu_indices(len(A.params))])))
+        #     for p in range(self.config['Nspec'])[1:]:
+        #         column_ = np.hstack((resx[p],  list(resS[p][np.triu_indices(len(A.params))])))
+        #         column = np.vstack((column, column_))
+        #     np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
+        # else:
+        np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x,  list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
