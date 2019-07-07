@@ -19,7 +19,7 @@ class BBMapParamCompSep(PipelineStage):
     inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),
                 ('noise_maps',FitsFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
-                 ('A_maxL',TextFile),('post_compsep_noise',FitsFile), ('mask_patches', FitFile)]
+                 ('A_maxL',TextFile),('post_compsep_noise',FitsFile), ('mask_patches', FitsFile)]
 
     def run(self) :
         #Read input mask
@@ -85,6 +85,7 @@ class BBMapParamCompSep(PipelineStage):
         # loop over pixels within defined-above regions:
         resx = []
         resS = []
+        AmaxL_v = []
 
         for mask_patch_ in mask_patches:
 
@@ -114,7 +115,9 @@ class BBMapParamCompSep(PipelineStage):
             A = MixingMatrix(*components)
             A_ev = A.evaluator(instrument['frequencies'])
             A_maxL = A_ev(res.x)
-            np.savetxt(self.get_output('A_maxL'), A_maxL)
+
+            AmaxL_v.append(A_maxL)
+            np.savetxt(self.get_output('A_maxL'), AmaxL_v)
 
             A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
 
