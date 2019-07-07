@@ -69,14 +69,11 @@ class BBMapParamCompSep(PipelineStage):
             # observed patches
             obs_pix = np.where(binary_mask!=0.0)[0]
             # thickness of the corresponding patches
-            delta_Bd_patch = np.abs(np.max(Bd_template[obs_pix])-np.min(Bd_template[obs_pix]))/(self.config['Nspec']+1)
-            slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix]), delta_Bd_patch )
-            print('min of Bd : ', np.min(Bd_template[obs_pix]))
-            print('max of Bd : ', np.max(Bd_template[obs_pix]))
-            print('these are the slices : ', slices)
+            delta_Bd_patch = np.abs(np.max(Bd_template[obs_pix])-np.min(Bd_template[obs_pix]))/(self.config['Nspec'])
+            # definition of slices so that it includes the max of Bd as the last step
+            slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix])+delta_Bd_patch/10.0, delta_Bd_patch )
             for i in range(self.config['Nspec']):
                 pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
-                print('these are the list of indices : ', pix_within_patch)
                 mask_patches[i][pix_within_patch] = 1
         else:
             mask_patches = [binary_mask]
