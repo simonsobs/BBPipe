@@ -75,6 +75,8 @@ class BBMapParamCompSep(PipelineStage):
             for i in range(self.config['Nspec']):
                 pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
                 mask_patches[i][pix_within_patch] = 1
+            np.save('mask_patches', mask_patches)
+            exit()
         else:
             mask_patches = [binary_mask]
 
@@ -99,6 +101,7 @@ class BBMapParamCompSep(PipelineStage):
 
             resx.append(res.x)
             resS.append(res.Sigma)
+
 
             if res.s.shape[1] == 1:
                 optI = 1
