@@ -19,7 +19,7 @@ class BBMapParamCompSep(PipelineStage):
     inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),
                 ('noise_maps',FitsFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
-                 ('A_maxL',TextFile),('post_compsep_noise',FitsFile)]
+                 ('A_maxL',TextFile),('post_compsep_noise',FitsFile), ('mask_patches', FitFile)]
 
     def run(self) :
         #Read input mask
@@ -160,6 +160,7 @@ class BBMapParamCompSep(PipelineStage):
             cov_estimated += cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
         ## SAVING PRODUCTS
+        hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
 
         column_names = []
