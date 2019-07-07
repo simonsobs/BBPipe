@@ -85,6 +85,8 @@ class BBMapParamCompSep(PipelineStage):
         # loop over pixels within defined-above regions:
         for mask_patch_ in mask_patches:
 
+            hp.mollview(mask_patch_)
+            pl.show()
             frequency_maps__ = frequency_maps_*1.0
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
