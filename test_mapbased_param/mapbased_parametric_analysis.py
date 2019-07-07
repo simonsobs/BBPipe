@@ -77,7 +77,7 @@ class BBMapParamCompSep(PipelineStage):
                 mask_patches[i,pix_within_patch] = 1
             np.save('mask_patches', mask_patches)
             np.save('binary_mask', binary_mask)
-            np.save('Bd_template', `)
+            np.save('Bd_template', Bd_template)
             exit()
         else:
             mask_patches = [binary_mask]
