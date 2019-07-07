@@ -177,11 +177,8 @@ class BBMapParamCompSep(PipelineStage):
         [column_names.append(all_combinations[i]) for i in range(len(all_combinations))]
         if self.config['Nspec']!=0.0:
             column = np.hstack((resx[0],  list(resS[0][np.triu_indices(len(A.params))])))
-            print('column shape  = ', column.shape)
             for p in range(self.config['Nspec'])[1:]:
-                print('column shape  = ', column.shape)
                 column_ = np.hstack((resx[p],  list(resS[p][np.triu_indices(len(A.params))])))
-                print('column_ shape  = ', column_.shape)
                 column = np.vstack((column, column_))
             np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
         else:
