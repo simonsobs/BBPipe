@@ -85,7 +85,7 @@ class BBMapParamCompSep(PipelineStage):
         # loop over pixels within defined-above regions:
         resx = []
         resS = []
-        AmaxL_v = []
+        # AmaxL_v = []
 
         for mask_patch_ in mask_patches:
 
@@ -117,7 +117,8 @@ class BBMapParamCompSep(PipelineStage):
             A_maxL = A_ev(res.x)
 
             AmaxL_v.append(A_maxL)
-            np.savetxt(self.get_output('A_maxL'), AmaxL_v)
+            # np.savetxt(self.get_output('A_maxL'), AmaxL_v)
+            np.savetxt(self.get_output('A_maxL'), AmaxL)
 
             A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
 
