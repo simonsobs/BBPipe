@@ -118,7 +118,7 @@ class BBMapParamCompSep(PipelineStage):
 
             AmaxL_v.append(A_maxL)
             # np.savetxt(self.get_output('A_maxL'), AmaxL_v)
-            np.savetxt(self.get_output('A_maxL'), AmaxL)
+            np.savetxt(self.get_output('A_maxL'), A_maxL)
 
             A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
 
