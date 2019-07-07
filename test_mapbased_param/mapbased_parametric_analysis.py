@@ -83,10 +83,11 @@ class BBMapParamCompSep(PipelineStage):
         cov_estimated = np.zeros((6, noise_cov.shape[1]))
 
         # loop over pixels within defined-above regions:
+        resx = []
+        resS = []
+
         for mask_patch_ in mask_patches:
 
-            hp.mollview(mask_patch_)
-            pl.show()
             frequency_maps__ = frequency_maps_*1.0
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
@@ -95,6 +96,9 @@ class BBMapParamCompSep(PipelineStage):
             res = fg.separation_recipies.weighted_comp_sep(components, instrument,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
                             options=options, tol=tol, method=method)
+
+            resx.append(res.x)
+            resS.append(res.Sigma)
 
             if res.s.shape[1] == 1:
                 optI = 1
@@ -169,7 +173,13 @@ class BBMapParamCompSep(PipelineStage):
         all_combinations = []
         [all_combinations.append(str(A.params[i])+' x '+str(A.params[j])) for i, j in zip(list(np.triu_indices(len(A.params))[0]),list(np.triu_indices(len(A.params))[1]) )]
         [column_names.append(all_combinations[i]) for i in range(len(all_combinations))]
-        np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x,  list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
+        if self.config['Nspec']!=0.0:
+            column = np.hstack((resx[0],  list(resS[0][np.triu_indices(len(A.params))])))
+            for p in range(self.config['Nspec'])[1:]:
+                column = np.vstack((resx[p],  list(resS[p][np.triu_indices(len(A.params))])))
+            np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
+        else:
+            np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x,  list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
