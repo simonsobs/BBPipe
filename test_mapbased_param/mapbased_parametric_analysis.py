@@ -65,7 +65,7 @@ class BBMapParamCompSep(PipelineStage):
             # upgrade the map to the actual working resolution
             Bd_template = hp.ud_grade(Bd_template, nside_out=self.config['nside'])
             # make slices through this map. Define the regions of interest
-            mask_patches = [Bd_template*0.0]*self.config['Nspec']
+            mask_patches = np.zeros((self.config['Nspec'], len(Bd_template)))
             # observed patches
             obs_pix = np.where(binary_mask!=0.0)[0]
             # thickness of the corresponding patches
@@ -74,8 +74,10 @@ class BBMapParamCompSep(PipelineStage):
             slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix])+delta_Bd_patch/10.0, delta_Bd_patch )
             for i in range(self.config['Nspec']):
                 pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
-                mask_patches[i][pix_within_patch] = 1
+                mask_patches[i,pix_within_patch] = 1
             np.save('mask_patches', mask_patches)
+            np.save('binary_mask', binary_mask)
+            np.save('Bd_template', `)
             exit()
         else:
             mask_patches = [binary_mask]
