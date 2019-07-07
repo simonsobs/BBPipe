@@ -51,7 +51,8 @@ class BBClEstimation(PipelineStage):
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
-            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile)]
+            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),
+            ('mask_patches', mask_patches)]
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
                 ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
                     ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile)]
@@ -128,22 +129,21 @@ class BBClEstimation(PipelineStage):
             # f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim, purify_b=True)
             f2y0=get_field(mp_q_sim,mp_u_sim, purify_b=True)
             Cl_BB_reconstructed.append(compute_master(f2y0, f2y0, w)[3])
-        pl.figure()
-        pl.loglog( ell_eff, np.array(Cl_BB_reconstructed).T, 'k-', alpha=0.2)
-        pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
-        pl.savefig('./test.pdf')
-        # exit()
-        pl.close()
+        # pl.figure()
+        # pl.loglog( ell_eff, np.array(Cl_BB_reconstructed).T, 'k-', alpha=0.2)
+        # pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
+        # pl.savefig('./test.pdf')
+        # # exit()
+        # pl.close()
 
         ##############################
 
         ### compute noise bias in the comp sep maps
+
         Cl_cov_clean_loc = []
         Cl_cov_freq = []
         for f in range(len(self.config['frequencies'])):
             fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
-            # fn = get_field(mask_nh*noise_maps[3*f+1,:], mask_nh*noise_maps[3*f+2,:])
-            # fn = get_field(noise_maps[3*f+1,:], noise_maps[3*f+2,:])
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
             Cl_cov_freq.append(compute_master(fn, fn, w)[3])
 
