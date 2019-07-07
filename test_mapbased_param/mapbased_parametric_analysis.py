@@ -85,7 +85,7 @@ class BBMapParamCompSep(PipelineStage):
         # loop over pixels within defined-above regions:
         resx = []
         resS = []
-        # AmaxL_v = []
+        AmaxL_v = []
 
         for mask_patch_ in mask_patches:
 
