@@ -93,9 +93,9 @@ class BBMapParamCompSep(PipelineStage):
             mask_patch_ = mask_patches[i_patch]
 
             frequency_maps__ = frequency_maps_*1.0
-            frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = 0.0#hp.UNSEEN
+            frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
-            noise_cov__[:,:,np.where(mask_patch_==0)[0]] = 0.0#hp.UNSEEN
+            noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
 
             res = fg.separation_recipies.weighted_comp_sep(components, instrument,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
@@ -157,6 +157,9 @@ class BBMapParamCompSep(PipelineStage):
                 noise_after_comp_sep_[2*f+1,:] += noise_after_comp_sep[f,1,:]*1.0
 
             # reshape map_estimated_ from the recovered sky signals ... 
+            hp.mollview(res.s)[0,0,:]
+            pl.show()
+
             maps_estimated += res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
             # reshaping and saving the covariance matrix
