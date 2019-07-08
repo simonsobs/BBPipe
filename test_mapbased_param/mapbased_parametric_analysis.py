@@ -164,7 +164,12 @@ class BBMapParamCompSep(PipelineStage):
             # reshape map_estimated_ from the recovered sky signals ... 
             np.save('ress'+str(i_patch), res.s)
 
-            maps_estimated += res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+            #set to zeros areas with hp.UNSEEN
+            ress = res.s[:,:,:]
+            for i in range(ress.shape[0]):
+                for j in range(ress.shape[0]):
+                    ress[i,j,np.where(ress[i,j,:]==hp.UNSEEN)[0]] = 0.0
+            maps_estimated += ress.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
             # reshaping and saving the covariance matrix
             cov_estimated_ = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
