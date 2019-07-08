@@ -92,6 +92,9 @@ class BBMapParamCompSep(PipelineStage):
 
             mask_patch_ = mask_patches[i_patch]
 
+            hp.mollview(mask_patch_)
+            pl.show()
+
             frequency_maps__ = frequency_maps_*1.0
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
