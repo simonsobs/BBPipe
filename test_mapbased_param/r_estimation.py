@@ -130,9 +130,12 @@ class BBREstimation(PipelineStage):
         ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
         if self.config['noise_option']!='no_noise': 
-            ClBB_model_other_than_prim += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
-            ClBB_model_other_than_prim_and_lens += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
-            # ClBB_model_other_than_prim += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            if self.config['Nspec']!=0:
+                ClBB_model_other_than_prim += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                ClBB_model_other_than_prim_and_lens += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            else:
+                ClBB_model_other_than_prim += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                ClBB_model_other_than_prim_and_lens += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
         if self.config['include_stat_res']:
             ClBB_model_other_than_prim += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
             ClBB_model_other_than_prim_and_lens += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
