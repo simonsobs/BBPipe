@@ -161,13 +161,14 @@ class BBMapParamCompSep(PipelineStage):
 
             # reshape map_estimated_ from the recovered sky signals ... 
             np.save('ress', res.s)
-            exit()
 
             maps_estimated += res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
             # reshaping and saving the covariance matrix
             cov_estimated_ = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
             cov_estimated += cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+
+        np.save('maps_estimated', maps_estimated)
 
         ## SAVING PRODUCTS
         hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
