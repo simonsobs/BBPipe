@@ -92,6 +92,8 @@ class BBMapParamCompSep(PipelineStage):
 
             mask_patch_ = mask_patches[i_patch]
 
+            print('i_patch = ', i_patch)
+            print('mask_patch_'+str(i_patch))
             np.save('mask_patch_'+str(i_patch), mask_patch_)
 
             # filtering masked regions of the patch ... 
