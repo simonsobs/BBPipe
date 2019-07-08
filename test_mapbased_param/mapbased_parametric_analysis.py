@@ -76,7 +76,7 @@ class BBMapParamCompSep(PipelineStage):
                 pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
                 mask_patches[i,obs_pix[pix_within_patch]] = 1
         else:
-            mask_patches = [binary_mask]
+            mask_patches = binary_mask[np.newaxis,:]
 
         noise_after_comp_sep_ = np.zeros((6, noise_cov.shape[1]))
         maps_estimated = np.zeros((6, noise_cov.shape[1]))
@@ -87,10 +87,13 @@ class BBMapParamCompSep(PipelineStage):
         resS = []
         AmaxL_v = []
 
-        for mask_patch_ in mask_patches:
+        # for mask_patch_ in mask_patches:
+        for i_patch in range(mask_patches.shape[0]):
 
+            mask_patch_ = mask_patches[i_patch]
+            
             frequency_maps__ = frequency_maps_*1.0
-            frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = 0.0#hp.UNSEEN
+            frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
 
@@ -100,7 +103,6 @@ class BBMapParamCompSep(PipelineStage):
 
             resx.append(res.x)
             resS.append(res.Sigma)
-
 
             if res.s.shape[1] == 1:
                 optI = 1
