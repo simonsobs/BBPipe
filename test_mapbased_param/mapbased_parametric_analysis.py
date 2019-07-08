@@ -91,7 +91,7 @@ class BBMapParamCompSep(PipelineStage):
         for i_patch in range(mask_patches.shape[0]):
 
             mask_patch_ = mask_patches[i_patch]
-            
+
             frequency_maps__ = frequency_maps_*1.0
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
@@ -121,7 +121,6 @@ class BBMapParamCompSep(PipelineStage):
             AmaxL_v.append(A_maxL)
 
             np.savetxt(self.get_output('A_maxL'), A_maxL)
-
             A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
 
             # reshaping quantities of interest
@@ -135,20 +134,19 @@ class BBMapParamCompSep(PipelineStage):
                 A_maxL_loc[2*f+1,2:4] = A_maxL[f,1]
                 A_maxL_loc[2*f,4:] = A_maxL[f,2]
                 A_maxL_loc[2*f+1,4:] = A_maxL[f,2]
-                noise_cov_diag[2*f,2*f,:] = noise_cov_[f,0,:]*1.0
-                noise_cov_diag[2*f+1,2*f+1,:] = noise_cov_[f,1,:]*1.0
+                noise_cov_diag[2*f,2*f,:] = noise_cov__[f,0,:]*1.0
+                noise_cov_diag[2*f+1,2*f+1,:] = noise_cov__[f,1,:]*1.0
                 noise_maps__[2*f,:] = noise_maps_[f,0,:]*1.0
                 noise_maps__[2*f+1,:] = noise_maps_[f,1,:]*1.0
 
             # define masking
-            mask_patch_ = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
-
+            # mask_patch_ = (noise_maps__[0] == hp.UNSEEN )#| noise_maps__[0] == 0.0)
             noise_after_comp_sep = np.ones((3,2, noise_cov.shape[1]))#*hp.UNSEEN
-            obs_pix = np.where(mask_patch_==False)[0]
+            obs_pix = np.where(mask_patch_==1.0)[0]
 
             for p in obs_pix:
                 for s in range(2):
-                    noise_cov_inv = np.diag(1.0/noise_cov_[:,s,p])
+                    noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                     inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
                     noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
 
