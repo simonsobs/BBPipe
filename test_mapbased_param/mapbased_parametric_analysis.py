@@ -85,6 +85,7 @@ class BBMapParamCompSep(PipelineStage):
         # loop over pixels within defined-above regions:
         resx = []
         resS = []
+        A_maxL_v = []
 
         for i_patch in range(mask_patches.shape[0]):
 
@@ -116,8 +117,8 @@ class BBMapParamCompSep(PipelineStage):
             A = MixingMatrix(*components)
             A_ev = A.evaluator(instrument['frequencies'])
             A_maxL = A_ev(res.x)
+            A_maxL_v.append(A_maxL)
 
-            np.savetxt(self.get_output('A_maxL'), A_maxL)
             A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
 
             # reshaping quantities of interest
@@ -166,6 +167,12 @@ class BBMapParamCompSep(PipelineStage):
             cov_estimated += cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
         ## SAVING PRODUCTS
+        if self.config['Nspec']!=0.0:
+            A_maxL_ = [a+'\n' for a in A_maxL_v]
+            np.savetxt(self.get_output('A_maxL'), A_maxL_)
+        else:
+            np.savetxt(self.get_output('A_maxL'), A_maxL)
+
         hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
 
