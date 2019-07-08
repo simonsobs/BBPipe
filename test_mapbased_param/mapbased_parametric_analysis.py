@@ -92,7 +92,7 @@ class BBMapParamCompSep(PipelineStage):
 
             mask_patch_ = mask_patches[i_patch]
 
-            np.save('mask_patch_', mask_patch_)
+            np.save('mask_patch_'+str(i_patch), mask_patch_)
 
             # filtering masked regions of the patch ... 
             frequency_maps__ = frequency_maps_*1.0
@@ -160,7 +160,7 @@ class BBMapParamCompSep(PipelineStage):
                 noise_after_comp_sep_[2*f+1,:] += noise_after_comp_sep[f,1,:]*1.0
 
             # reshape map_estimated_ from the recovered sky signals ... 
-            np.save('ress', res.s)
+            np.save('ress'+str(i_patch), res.s)
 
             maps_estimated += res.s[:,:,:].reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
