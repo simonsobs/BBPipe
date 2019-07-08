@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import FitsFile, TextFile
+from .types import FitsFile, TextFile, NumpyFile
 import numpy as np
 import pylab as pl
 import fgbuster as fg
@@ -19,7 +19,7 @@ class BBMapParamCompSep(PipelineStage):
     inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),
                 ('noise_maps',FitsFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
-                 ('A_maxL',TextFile),('post_compsep_noise',FitsFile), ('mask_patches', FitsFile)]
+                 ('A_maxL',NumpyFile),('post_compsep_noise',FitsFile), ('mask_patches', FitsFile)]
 
     def run(self) :
         #Read input mask
@@ -85,7 +85,6 @@ class BBMapParamCompSep(PipelineStage):
         # loop over pixels within defined-above regions:
         resx = []
         resS = []
-        A_maxL_v = []
 
         for i_patch in range(mask_patches.shape[0]):
 
@@ -117,7 +116,10 @@ class BBMapParamCompSep(PipelineStage):
             A = MixingMatrix(*components)
             A_ev = A.evaluator(instrument['frequencies'])
             A_maxL = A_ev(res.x)
-            A_maxL_v.append(A_maxL)
+
+            if i_patch == 0 :
+                A_maxL_v = np.zeros((mask_patches.shape[0], A_maxL.shape[0], A_maxL.shape[1]))
+            A_maxL_v[i_patch,:,:] = A_maxL*1.0
 
             A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
 
@@ -167,11 +169,7 @@ class BBMapParamCompSep(PipelineStage):
             cov_estimated += cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
         ## SAVING PRODUCTS
-        if self.config['Nspec']!=0.0:
-            A_maxL_ = [a+'\n' for a in A_maxL_v]
-            np.savetxt(self.get_output('A_maxL'), A_maxL_)
-        else:
-            np.savetxt(self.get_output('A_maxL'), A_maxL)
+        np.save(self.get_output('A_maxL'), A_maxL_v)
 
         hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
