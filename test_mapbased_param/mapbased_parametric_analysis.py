@@ -85,15 +85,10 @@ class BBMapParamCompSep(PipelineStage):
         # loop over pixels within defined-above regions:
         resx = []
         resS = []
-        AmaxL_v = []
 
-        # for mask_patch_ in mask_patches:
         for i_patch in range(mask_patches.shape[0]):
 
             mask_patch_ = mask_patches[i_patch]
-            # print('i_patch = ', i_patch)
-            # print('mask_patch_'+str(i_patch))
-            # np.save('mask_patch_'+str(i_patch), mask_patch_)
 
             # filtering masked regions of the patch ... 
             frequency_maps__ = frequency_maps_*1.0
@@ -121,8 +116,6 @@ class BBMapParamCompSep(PipelineStage):
             A = MixingMatrix(*components)
             A_ev = A.evaluator(instrument['frequencies'])
             A_maxL = A_ev(res.x)
-
-            AmaxL_v.append(A_maxL)
 
             np.savetxt(self.get_output('A_maxL'), A_maxL)
             A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
@@ -161,9 +154,7 @@ class BBMapParamCompSep(PipelineStage):
                 noise_after_comp_sep_[2*f+1,:] += noise_after_comp_sep[f,1,:]*1.0
 
             # reshape map_estimated_ from the recovered sky signals ... 
-            # np.save('ress'+str(i_patch), res.s)
-
-            #set to zeros areas with hp.UNSEEN
+            # set to zeros areas with hp.UNSEEN
             ress = res.s[:,:,:]
             for i in range(ress.shape[0]):
                 for j in range(ress.shape[1]):
@@ -173,8 +164,6 @@ class BBMapParamCompSep(PipelineStage):
             # reshaping and saving the covariance matrix
             cov_estimated_ = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
             cov_estimated += cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
-
-        # np.save('maps_estimated', maps_estimated)
 
         ## SAVING PRODUCTS
         hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
@@ -192,14 +181,14 @@ class BBMapParamCompSep(PipelineStage):
         all_combinations = []
         [all_combinations.append(str(A.params[i])+' x '+str(A.params[j])) for i, j in zip(list(np.triu_indices(len(A.params))[0]),list(np.triu_indices(len(A.params))[1]) )]
         [column_names.append(all_combinations[i]) for i in range(len(all_combinations))]
-        # if self.config['Nspec']!=0.0:
-        #     column = np.hstack((resx[0],  list(resS[0][np.triu_indices(len(A.params))])))
-        #     for p in range(self.config['Nspec'])[1:]:
-        #         column_ = np.hstack((resx[p],  list(resS[p][np.triu_indices(len(A.params))])))
-        #         column = np.vstack((column, column_))
-        #     np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
-        # else:
-        np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x,  list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
+        if self.config['Nspec']!=0.0:
+            column = np.hstack((resx[0],  list(resS[0][np.triu_indices(len(A.params))])))
+            for p in range(self.config['Nspec'])[1:]:
+                column_ = np.hstack((resx[p],  list(resS[p][np.triu_indices(len(A.params))])))
+                column = np.vstack((column, column_))
+            np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
+        else:
+            np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x, list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
 
 if __name__ == '__main__':
     results = PipelineStage.main()
