@@ -52,7 +52,7 @@ class BBClEstimation(PipelineStage):
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',NumpyFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
             ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),\
-            ('mask_patches', FitsFile), ('post_compsep_cov', FitsFile)]
+            ('mask_patches', FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
                 ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
                     ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile)]
@@ -66,7 +66,6 @@ class BBClEstimation(PipelineStage):
         post_compsep_noise=hp.read_map(self.get_input('post_compsep_noise'),verbose=False, field=None)
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         CMB_template_150GHz = hp.read_map(self.get_input('CMB_template_150GHz'), field=None)
-        post_compsep_cov = hp.read_map(self.get_input('post_compsep_cov'), field=None)
         
         nhits = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
@@ -161,10 +160,10 @@ class BBClEstimation(PipelineStage):
         pl.figure()
         pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'k-')
         inv_AtNA_ell = []
-        for c1 in range(post_compsep_noise.shape[0]):
-            fn = get_field(np.sqrt(post_compsep_noise[c1,:]), np.sqrt(post_compsep_noise[c1,:]))
+        for c1 in range(cov_map.shape[0]):
+            fn = get_field(np.sqrt(cov_map[c1,:]), np.sqrt(cov_map[c1,:]))
             inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
-        Cl_cov_clean = np.diagonal(inv_AtNA_ell, axis1=-2,axis2=-1)    
+        Cl_cov_clean = np.diagonal(inv_AtNA_ell, axis1=-2,axis2=-1)
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'r-')
         pl.show()
