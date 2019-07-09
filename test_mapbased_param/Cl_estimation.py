@@ -148,20 +148,26 @@ class BBClEstimation(PipelineStage):
         np.save('Cl_cov_clean_', Cl_cov_clean)
 
         # else:
+        '''
         mask_patches = hp.read_map(self.get_input('mask_patches'))
+        
+        ANQ = np.zeros_like(noise_maps[0,:])
+        ANU = np.zeros_like(noise_maps[0,:])
         for P in range(self.config['Nspec']+1):
             # AtNA = np.sum(AtNA)
             obs_pix_P = np.where(mask_patches[P]!=0.0)[0]
             inv_Nl = []
             for f in range(len(self.config['frequencies'])):
-                AnQ = A_maxL[P].dot(noise_maps[3*f+1,obs_pix_P])
-                AnU = A_maxL[P].dot(noise_maps[3*f+2,obs_pix_P])
-                fn = get_field(mask*AnQ, mask*AnU)
-                AtNA.append(1.0/compute_master(fn, fn, w)[3])
-            # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[P], np.array(inv_Nl), A_maxL[P])
+                NQ = noise_maps[3*f+1,obs_pix_P]**2
+                NU = noise_maps[3*f+2,obs_pix_P]**2
+
+        fn = get_field(mask*AnQ, mask*AnU)
+        AtNA = compute_master(fn, fn, w)[3]
+        # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[P], np.array(inv_Nl), A_maxL[P])
         inv_AtNA = np.linalg.inv(AtNA)
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+        '''
         ## pl.figure()
         ## pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'k-')
         # inv_AtNA_ell = []
@@ -170,6 +176,20 @@ class BBClEstimation(PipelineStage):
         #     inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
         ## Cl_cov_clean = inv_AtNA_ell#, axis1=-2,axis2=-1)
         ## Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+
+        # for each component
+        # for comp in range(cov_map.shape[0]):
+        # perform 100 of simulated noise maps
+        cov_sq = np.zeros((cov_map.shape[0], cov_map.shape[0], cov_map.shape[1]))
+        for i in range(cov_map.shape[0]):
+            for j in range(cov_map.shape[0]):
+                cov_sq[i,j,:] = np.sqrt(cov_map[i,:])
+        for i_sim in range(100):
+            noise_map = 
+
+
+
+
         np.save('Cl_cov_clean', Cl_cov_clean)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
