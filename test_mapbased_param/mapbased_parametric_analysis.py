@@ -185,7 +185,7 @@ class BBMapParamCompSep(PipelineStage):
                             if s1==s2: cov_estimated_[ind0,ind1,:] = res.invAtNA[c1,c2,s1,:]*1.0
                             ind1+=1
                     ind0+=1
-            cov_estimated += cov_estimated_reshaped
+            cov_estimated += cov_estimated_
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
