@@ -148,7 +148,7 @@ class BBClEstimation(PipelineStage):
         np.save('Cl_cov_clean_', Cl_cov_clean)
 
         # else:
-        mask_patches = hp.write_map(self.get_output('mask_patches'))
+        mask_patches = hp.write_map(self.get_input('mask_patches'))
         for P in range(self.config['Nspec']):
             # AtNA = np.sum(AtNA)
             obs_pix_P = np.where(mask_patches[P]!=0.0)[0]
