@@ -149,7 +149,7 @@ class BBClEstimation(PipelineStage):
 
         # else:
         mask_patches = hp.read_map(self.get_input('mask_patches'))
-        for P in range(self.config['Nspec']):
+        for P in range(self.config['Nspec']+1):
             # AtNA = np.sum(AtNA)
             obs_pix_P = np.where(mask_patches[P]!=0.0)[0]
             inv_Nl = []
