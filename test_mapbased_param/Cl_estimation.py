@@ -170,7 +170,7 @@ class BBClEstimation(PipelineStage):
         #     inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
         ## Cl_cov_clean = inv_AtNA_ell#, axis1=-2,axis2=-1)
         ## Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-        np.save('Cl_cov_clean', inv_AtNA_ell)
+        np.save('Cl_cov_clean', Cl_cov_clean)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
         # exit()
