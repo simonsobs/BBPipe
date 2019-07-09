@@ -164,7 +164,7 @@ class BBClEstimation(PipelineStage):
         # pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'k-')
         inv_AtNA_ell = []
         for c1 in range(cov_map.shape[0]):
-            fn = get_field(np.sqrt(cov_map[c1,:]), np.sqrt(cov_map[c1,:]))
+            fn = get_field(np.sqrt(mask*cov_map[c1,:]), np.sqrt(mask*cov_map[c1,:]))
             inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
         # Cl_cov_clean = inv_AtNA_ell#, axis1=-2,axis2=-1)
         # Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
