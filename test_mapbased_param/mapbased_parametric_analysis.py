@@ -172,7 +172,16 @@ class BBMapParamCompSep(PipelineStage):
                 cov_estimated_reshaped[i,np.where(cov_estimated_reshaped[i,:]==hp.UNSEEN)[0]] = 0.0
             cov_estimated += cov_estimated_reshaped
             '''
-            cov_estimated_ = res.invAtNA[:,:,:,:]
+            # reorganization of the invAtNA matrix
+            # so that it is (n_stokes x n_components )^2 for each sky pixel
+            cov_estimated_ = np.zeros(((res.s.shape[0]*res.s.shape[1],res.s.shape[0]*res.s.shape[1], res.s.shape[2])))
+            ind0=ind1=0
+            for i in range(res.invAtNA.shape[0]):
+                for j in range(res.invAtNA.shape[1]):
+                    for k in range(res.invAtNA.shape[2]):
+                        cov_estimated_[ind0,ind1,:] = res.invAtNA[i,j,k,:]
+                        ind0+=1
+                        ind1+=1
             print (cov_estimated_.shape)
             exit()
 
