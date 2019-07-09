@@ -133,17 +133,16 @@ class BBClEstimation(PipelineStage):
 
         ##############################
         ### compute noise bias in the comp sep maps
-        if self.config['Nspec']==0.0:
-            Cl_cov_clean_loc = []
-            Cl_cov_freq = []
-            for f in range(len(self.config['frequencies'])):
-                fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
-                Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
-                Cl_cov_freq.append(compute_master(fn, fn, w)[3])
-            AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
-            inv_AtNA = np.linalg.inv(AtNA)
-            Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
-            Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+        Cl_cov_clean_loc = []
+        Cl_cov_freq = []
+        for f in range(len(self.config['frequencies'])):
+            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
+            Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
+            Cl_cov_freq.append(compute_master(fn, fn, w)[3])
+        AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
+        inv_AtNA = np.linalg.inv(AtNA)
+        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
+        Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         # else:
         #     mask_patches = hp.write_map(self.get_output('mask_patches'))
         #     for P in range(self.config['Nspec']):
