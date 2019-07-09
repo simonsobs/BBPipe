@@ -80,7 +80,7 @@ class BBMapParamCompSep(PipelineStage):
 
         noise_after_comp_sep_ = np.zeros((6, noise_cov.shape[1]))
         maps_estimated = np.zeros((6, noise_cov.shape[1]))
-        cov_estimated = np.zeros((6, noise_cov.shape[1]))
+        cov_estimated = np.zeros((6, 6, noise_cov.shape[1]))
 
         # loop over pixels within defined-above regions:
         resx = []
@@ -180,13 +180,12 @@ class BBMapParamCompSep(PipelineStage):
                 for s1 in range(res.invAtNA.shape[2]):
                     ind1=0
                     for c2 in range(res.invAtNA.shape[1]):
+                        res.invAtNA[c1,c2,s1,np.where(res.invAtNA[c1,c2,s1,:]==hp.UNSEEN)[0]] = 0.0
                         for s2 in range(res.invAtNA.shape[2]):
-                            if s1==s2: cov_estimated_[ind0,ind1,:] = res.invAtNA[c1,c2,s1,:]
+                            if s1==s2: cov_estimated_[ind0,ind1,:] = res.invAtNA[c1,c2,s1,:]*1.0
                             ind1+=1
                     ind0+=1
-            print (cov_estimated_.shape)
-            exit()
-
+            cov_estimated += cov_estimated_reshaped
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
@@ -199,7 +198,7 @@ class BBMapParamCompSep(PipelineStage):
         column_names = [x for x in column_names if x]
         hp.write_map(self.get_output('post_compsep_maps'), maps_estimated, overwrite=True, column_names=column_names)
 
-        hp.write_map(self.get_output('post_compsep_cov'), cov_estimated, overwrite=True, column_names=column_names)
+        hp.write_map(self.get_output('post_compsep_cov'), cov_estimated.reshape(-1, cov_estimated.shape[-1]), overwrite=True)
 
         column_names = []
         [column_names.append(str(A.params[i])) for i in range(len(A.params))]
