@@ -145,7 +145,7 @@ class BBClEstimation(PipelineStage):
             Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
             Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         
-        np.load('Cl_cov_clean_', Cl_cov_clean)
+        np.save('Cl_cov_clean_', Cl_cov_clean)
 
         # else:
         #     mask_patches = hp.write_map(self.get_output('mask_patches'))
@@ -168,7 +168,7 @@ class BBClEstimation(PipelineStage):
             inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
         Cl_cov_clean = np.diagonal(inv_AtNA_ell)#, axis1=-2,axis2=-1)
         # Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-        np.load('Cl_cov_clean', Cl_cov_clean)
+        np.save('Cl_cov_clean', Cl_cov_clean)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
         # exit()
