@@ -50,8 +50,9 @@ class BBClEstimation(PipelineStage):
 
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
-            ('A_maxL',TextFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
-            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile)]
+            ('A_maxL',NumpyFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
+            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),\
+            ('mask_patches', FitsFile), ('post_compsep_cov', FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
                 ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
                     ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile)]
@@ -60,11 +61,12 @@ class BBClEstimation(PipelineStage):
 
         clean_map = hp.read_map(self.get_input('post_compsep_maps'),verbose=False, field=None, h=False)
         cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=False)
-        A_maxL = np.loadtxt(self.get_input('A_maxL'))
+        A_maxL = np.load(self.get_input('A_maxL'))
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
         post_compsep_noise=hp.read_map(self.get_input('post_compsep_noise'),verbose=False, field=None)
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         CMB_template_150GHz = hp.read_map(self.get_input('CMB_template_150GHz'), field=None)
+        post_compsep_cov = hp.read_map(self.get_input('post_compsep_cov'), field=None)
         
         nhits = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
@@ -121,46 +123,55 @@ class BBClEstimation(PipelineStage):
 
         ##############################
         # simulation of the CMB
-
+        '''
         Cl_BB_reconstructed = []
         for i in range(10):
             mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
             # f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim, purify_b=True)
             f2y0=get_field(mp_q_sim,mp_u_sim, purify_b=True)
             Cl_BB_reconstructed.append(compute_master(f2y0, f2y0, w)[3])
-        # pl.figure()
-        # pl.loglog( ell_eff, np.array(Cl_BB_reconstructed).T, 'k-', alpha=0.2)
-        # pl.loglog( ell_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r--')
-        # pl.savefig('./test.pdf')
-        # # exit()
-        # pl.close()
+        '''
 
         ##############################
-
         ### compute noise bias in the comp sep maps
-
-        Cl_cov_clean_loc = []
-        Cl_cov_freq = []
-        for f in range(len(self.config['frequencies'])):
-            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
-            Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
-            Cl_cov_freq.append(compute_master(fn, fn, w)[3])
-
-        AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
-        # print('shape of AtNA = ', AtNA.shape)
-        # print('AtNA = ', AtNA)
-        inv_AtNA = np.linalg.inv(AtNA)
-        # print('shape of inv_AtNA = ', inv_AtNA.shape)
-        # print('inv_AtNA = ', inv_AtNA)
-        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)
-        # print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
-        # print('Cl_cov_clean = ', Cl_cov_clean)       
+        if self.config['Nspec']==0.0:
+            Cl_cov_clean_loc = []
+            Cl_cov_freq = []
+            for f in range(len(self.config['frequencies'])):
+                fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
+                Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
+                Cl_cov_freq.append(compute_master(fn, fn, w)[3])
+            AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
+            inv_AtNA = np.linalg.inv(AtNA)
+            Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
+            Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+        # else:
+        #     mask_patches = hp.write_map(self.get_output('mask_patches'))
+        #     for P in range(self.config['Nspec']):
+        #         # AtNA = np.sum(AtNA)
+        #         obs_pix_P = np.where(mask_patches[P]!=0.0)[0]
+        #         inv_Nl = []
+        #         for f in range(len(self.config['frequencies'])):
+        #             fn = get_field(mask*noise_maps[3*f+1,obs_pix_P], mask*noise_maps[3*f+2,obs_pix_P])
+        #             inv_Nl.append(1.0/compute_master(fn, fn, w)[3])
+        #         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[P], np.array(inv_Nl), A_maxL[P])
+        #     inv_AtNA = np.linalg.inv(AtNA)
+        #     Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
+        #     Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+        pl.figure()
+        pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'k-')
+        inv_AtNA_ell = []
+        for c1 in range(post_compsep_noise.shape[0]):
+            fn = get_field(np.sqrt(post_compsep_noise[c1,:]), np.sqrt(post_compsep_noise[c1,:]))
+            inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
+        Cl_cov_clean = np.diagonal(inv_AtNA_ell, axis1=-2,axis2=-1)    
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-        # print('shape of Cl_cov_clean = ', Cl_cov_clean.shape)
-        # print('Cl_cov_clean = ', Cl_cov_clean)          
-        # exit()
-        ### for comparison, compute the power spectrum of the noise after comp sep
+        pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'r-')
+        pl.show()
+        exit()
 
+
+        ### for comparison, compute the power spectrum of the noise after comp sep
         ### compute power spectra of the cleaned sky maps
         ncomp = int(len(clean_map)/2)
         Cl_clean = [ell_eff] 
