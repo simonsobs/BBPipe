@@ -175,9 +175,10 @@ class BBMapParamCompSep(PipelineStage):
             # reorganization of the invAtNA matrix
             # so that it is (n_stokes x n_components )^2 for each sky pixel
             cov_estimated_ = np.zeros(((res.s.shape[0]*res.s.shape[1],res.s.shape[0]*res.s.shape[1], res.s.shape[2])))
-            ind0=ind1=0
+            ind0=0
             for c1 in range(res.invAtNA.shape[0]):
                 for s1 in range(res.invAtNA.shape[2]):
+                    ind1=0
                     for c2 in range(res.invAtNA.shape[1]):
                         for s2 in range(res.invAtNA.shape[2]):
                             if s1==s2: cov_estimated_[ind0,ind1,:] = res.invAtNA[c1,c2,s1,:]
