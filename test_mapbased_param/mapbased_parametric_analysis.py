@@ -168,7 +168,7 @@ class BBMapParamCompSep(PipelineStage):
             cov_estimated_ = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
             cov_estimated_reshaped = cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
             for i in range(cov_estimated_reshaped.shape[0]):
-                cov_estimated_reshaped[i,np.where(ress[i,j,:]==hp.UNSEEN)[0]] = 0.0
+                cov_estimated_reshaped[i,np.where(cov_estimated_reshaped[i,:]==hp.UNSEEN)[0]] = 0.0
             cov_estimated += cov_estimated_reshaped
 
         ## SAVING PRODUCTS
