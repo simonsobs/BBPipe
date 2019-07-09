@@ -110,17 +110,21 @@ for i1,t1 in enumerate(map_names):
 
 
 #Foreground model
-EB_sync=1.
-EB_dust=2.
 A_sync_BB=2.0
-A_dust_BB=5.0
-alpha_sync=-0.6
-alpha_dust=-0.42
+EB_sync=2.
+alpha_sync_EE=-0.6
+alpha_sync_BB=-0.4
 beta_sync=-3.
+nu0_sync=23.
+
+A_dust_BB=5.0
+EB_dust=2.
+alpha_dust_EE=-0.42
+alpha_dust_BB=-0.2
 beta_dust=1.59
 temp_dust=19.6
 nu0_dust=353.
-nu0_sync=23.
+
 Alens=1.0
 
 #Bandpowers
@@ -147,10 +151,12 @@ def read_camb(fname):
     return dltt,dlee,dlbb,dlte
 
 # Foreground power spectra
-cls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync,larr_all)*dlfac
-cls_sync_bb=dl_plaw(A_sync_BB,alpha_sync,larr_all)*dlfac
-cls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust,larr_all)*dlfac
-cls_dust_bb=dl_plaw(A_dust_BB,alpha_dust,larr_all)*dlfac
+dls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync_EE,larr_all)
+dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
+
+dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
+dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
+
 _,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
 cls_cmb_ee=dls_cmb_ee*dlfac
 cls_cmb_bb=dls_cmb_bb*dlfac*Alens
@@ -185,10 +191,12 @@ ells_bpw=np.array([6.5,16.5,26.5,36.5,46.5,56.5,66.5,76.5,86.5,96.5,
 #                   166.5,176.5])
 n_bpw=len(ells_bpw)
 dlfac_bpw=2*np.pi/(ells_bpw*(ells_bpw+1.));
-bpw_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync,ells_bpw,correct_first=False)*dlfac_bpw
-bpw_sync_bb=dl_plaw(A_sync_BB,alpha_sync,ells_bpw,correct_first=False)*dlfac_bpw
-bpw_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust,ells_bpw,correct_first=False)*dlfac_bpw
-bpw_dust_bb=dl_plaw(A_dust_BB,alpha_dust,ells_bpw,correct_first=False)*dlfac_bpw
+
+bpw_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync_EE,ells_bpw,correct_first=False)*dlfac_bpw
+bpw_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,ells_bpw,correct_first=False)*dlfac_bpw
+bpw_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,ells_bpw,correct_first=False)*dlfac_bpw
+bpw_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,ells_bpw,correct_first=False)*dlfac_bpw
+
 dls_cmb_ee_f=interp1d(larr_all,dls_cmb_ee)
 dls_cmb_bb_f=interp1d(larr_all,dls_cmb_bb)
 bpw_cmb_ee=dls_cmb_ee_f(ells_bpw)*dlfac_bpw
