@@ -148,26 +148,28 @@ class BBClEstimation(PipelineStage):
         np.save('Cl_cov_clean_', Cl_cov_clean)
 
         # else:
-        #     mask_patches = hp.write_map(self.get_output('mask_patches'))
-        #     for P in range(self.config['Nspec']):
-        #         # AtNA = np.sum(AtNA)
-        #         obs_pix_P = np.where(mask_patches[P]!=0.0)[0]
-        #         inv_Nl = []
-        #         for f in range(len(self.config['frequencies'])):
-        #             fn = get_field(mask*noise_maps[3*f+1,obs_pix_P], mask*noise_maps[3*f+2,obs_pix_P])
-        #             inv_Nl.append(1.0/compute_master(fn, fn, w)[3])
-        #         AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[P], np.array(inv_Nl), A_maxL[P])
-        #     inv_AtNA = np.linalg.inv(AtNA)
-        #     Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
-        #     Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-        # pl.figure()
-        # pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'k-')
-        inv_AtNA_ell = []
-        for c1 in range(cov_map.shape[0]):
-            fn = get_field(np.sqrt(mask*cov_map[c1,:]), np.sqrt(mask*cov_map[c1,:]))
-            inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
-        # Cl_cov_clean = inv_AtNA_ell#, axis1=-2,axis2=-1)
-        # Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+        mask_patches = hp.write_map(self.get_output('mask_patches'))
+        for P in range(self.config['Nspec']):
+            # AtNA = np.sum(AtNA)
+            obs_pix_P = np.where(mask_patches[P]!=0.0)[0]
+            inv_Nl = []
+            for f in range(len(self.config['frequencies'])):
+                AnQ = A_maxL[P].dot(noise_maps[3*f+1,obs_pix_P])
+                AnU = A_maxL[P].dot(noise_maps[3*f+2,obs_pix_P])
+                fn = get_field(mask*AnQ, mask*AnU)
+                AtNA.append(1.0/compute_master(fn, fn, w)[3])
+            # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[P], np.array(inv_Nl), A_maxL[P])
+        inv_AtNA = np.linalg.inv(AtNA)
+        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
+        Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+        ## pl.figure()
+        ## pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'k-')
+        # inv_AtNA_ell = []
+        # for c1 in range(cov_map.shape[0]):
+        #     fn = get_field(np.sqrt(mask*cov_map[c1,:]), np.sqrt(mask*cov_map[c1,:]))
+        #     inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
+        ## Cl_cov_clean = inv_AtNA_ell#, axis1=-2,axis2=-1)
+        ## Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         np.save('Cl_cov_clean', inv_AtNA_ell)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
