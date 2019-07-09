@@ -184,8 +184,8 @@ class BBClEstimation(PipelineStage):
         for i in range(cov_map.shape[0]):
             for j in range(cov_map.shape[0]):
                 cov_sq[i,j,:] = np.sqrt(cov_map[i,:])
-        for i_sim in range(100):
-            noise_map = 
+        # for i_sim in range(100):
+            # noise_map = 
 
 
 
