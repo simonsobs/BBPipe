@@ -148,7 +148,7 @@ class BBClEstimation(PipelineStage):
         np.save('Cl_cov_clean_', Cl_cov_clean)
 
         # compute the square root of the covariance 
-        cov_map_reshaped = cov_map.reshape(np.sqrt(cov_map.shape[0]), np.sqrt(cov_map.shape[0]), cov_map.shape[-1])
+        cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
         for p in range(cov_map.shape[-1]):
             cov_sq[:,:,p] = np.sqrt(cov_map_reshaped[:,:,p])
