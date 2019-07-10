@@ -147,50 +147,20 @@ class BBClEstimation(PipelineStage):
         
         np.save('Cl_cov_clean_', Cl_cov_clean)
 
-        # else:
-        '''
-        mask_patches = hp.read_map(self.get_input('mask_patches'))
-        
-        ANQ = np.zeros_like(noise_maps[0,:])
-        ANU = np.zeros_like(noise_maps[0,:])
-        for P in range(self.config['Nspec']+1):
-            # AtNA = np.sum(AtNA)
-            obs_pix_P = np.where(mask_patches[P]!=0.0)[0]
-            inv_Nl = []
-            for f in range(len(self.config['frequencies'])):
-                NQ = noise_maps[3*f+1,obs_pix_P]**2
-                NU = noise_maps[3*f+2,obs_pix_P]**2
-
-        fn = get_field(mask*AnQ, mask*AnU)
-        AtNA = compute_master(fn, fn, w)[3]
-        # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[P], np.array(inv_Nl), A_maxL[P])
-        inv_AtNA = np.linalg.inv(AtNA)
-        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
-        Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-        '''
-        ## pl.figure()
-        ## pl.loglog(Cl_cov_clean[0], Cl_cov_clean[1], 'k-')
-        # inv_AtNA_ell = []
-        # for c1 in range(cov_map.shape[0]):
-        #     fn = get_field(np.sqrt(mask*cov_map[c1,:]), np.sqrt(mask*cov_map[c1,:]))
-        #     inv_AtNA_ell.append(compute_master(fn, fn, w)[3])
-        ## Cl_cov_clean = inv_AtNA_ell#, axis1=-2,axis2=-1)
-        ## Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-
-        # for each component
-        # for comp in range(cov_map.shape[0]):
+        # compute the square root of the covariance 
+        cov_map_reshaped = cov_map.reshape(np.sqrt(cov_map.shape[0]), np.sqrt(cov_map.shape[0]), cov_map.shape[-1])
+        cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
+        for p in range(cov_map.shape[-1]):
+            cov_sq[:,:,p] = np.sqrt(cov_map_reshaped[:,:,p])
         # perform 100 of simulated noise maps
-        cov_sq = np.zeros((cov_map.shape[0], cov_map.shape[0], cov_map.shape[1]))
-        for i in range(cov_map.shape[0]):
-            for j in range(cov_map.shape[0]):
-                cov_sq[i,j,:] = np.sqrt(cov_map[i,:])
-        # for i_sim in range(100):
-            # noise_map = 
+        Cl_cov_freq = [] 
+        for i_sim in range(10):
+            noise_map_loc = cov_sq.dot(np.random.normal(0.0,1.0,shape=(cov_sq.shape[0],cov_sq.shape[-1])))
+            for c in range(cov_map.shape[0]):
+                fn = get_field( mask*noise_map_loc[c,:], mask*noise_map_loc[c,:] )
+                Cl_cov_freq.append(compute_master(fn, fn, w)[3])
 
-
-
-
-        np.save('Cl_cov_clean', Cl_cov_clean)
+        np.save('Cl_cov_clean', Cl_cov_freq)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
         # exit()
