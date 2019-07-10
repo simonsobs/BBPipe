@@ -155,7 +155,7 @@ class BBClEstimation(PipelineStage):
         # perform 100 of simulated noise maps
         Cl_cov_freq = [] 
         for i_sim in range(10):
-            noise_map_loc = cov_sq.dot(np.random.normal(0.0,1.0,shape=(cov_sq.shape[0],cov_sq.shape[-1])))
+            noise_map_loc = cov_sq.dot(np.random.normal(0.0,1.0,size=(cov_sq.shape[0],cov_sq.shape[-1])))
             for c in range(cov_map.shape[0]):
                 fn = get_field( mask*noise_map_loc[c,:], mask*noise_map_loc[c,:] )
                 Cl_cov_freq.append(compute_master(fn, fn, w)[3])
@@ -163,7 +163,7 @@ class BBClEstimation(PipelineStage):
         np.save('Cl_cov_clean', Cl_cov_freq)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
-        # exit()
+        exit()
 
 
         ### for comparison, compute the power spectrum of the noise after comp sep
