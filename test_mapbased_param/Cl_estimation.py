@@ -159,10 +159,10 @@ class BBClEstimation(PipelineStage):
             for p in range(cov_sq.shape[-1]):
                 noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
             
-            print(cov_map.shape[0])
+            print(cov_sq.shape[0])
             print(noise_map_loc.shape)
 
-            for c in range(cov_map.shape[0]):
+            for c in range(cov_sq.shape[0]):
                 fn = get_field( mask*noise_map_loc[c,:], mask*noise_map_loc[c,:] )
                 Cl_cov_freq.append(compute_master(fn, fn, w)[3])
 
