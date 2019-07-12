@@ -9,7 +9,7 @@ from fgbuster.mixingmatrix import MixingMatrix
 import scipy.constants as constants
 from astropy.cosmology import Planck15
 from . import mk_noise_map2 as mknm
-
+import scipy
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     if custom_bins:
@@ -154,9 +154,8 @@ class BBClEstimation(PipelineStage):
         np.save('cov_reshaped', cov_map_reshaped)
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
         for p in range(cov_map.shape[-1]):
-            cov_sq[:,:,p] = np.sqrt(cov_map_reshaped[:,:,p])
+            cov_sq[:,:,p] = scipy.linalg.sqrtm(cov_map_reshaped[:,:,p])
         np.save('cov_sq', cov_sq)
-        exit()
         # perform 100 of simulated noise maps
         Cl_cov_freq = [] 
         for i_sim in range(10):
