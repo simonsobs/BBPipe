@@ -151,11 +151,11 @@ class BBClEstimation(PipelineStage):
         # first, reshape the covariance to be square 
         cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
         # second compute the square root of it
-        np.save('cov_reshaped', cov_map_reshaped)
+        # np.save('cov_reshaped', cov_map_reshaped)
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
         for p in range(cov_map.shape[-1]):
             cov_sq[:,:,p] = scipy.linalg.sqrtm(cov_map_reshaped[:,:,p])
-        np.save('cov_sq', cov_sq)
+        # np.save('cov_sq', cov_sq)
         # perform 100 of simulated noise maps
         Cl_cov_freq = [] 
         for i_sim in range(10):
