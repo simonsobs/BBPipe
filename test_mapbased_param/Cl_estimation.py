@@ -147,19 +147,26 @@ class BBClEstimation(PipelineStage):
         
         np.save('Cl_cov_clean_', Cl_cov_clean)
 
-        # compute the square root of the covariance 
+        #### compute the square root of the covariance 
+        # first, reshape the covariance to be square 
         cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
+        # second compute the square root of it
+        np.save('cov_reshaped', cov_map_reshaped)
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
         for p in range(cov_map.shape[-1]):
             cov_sq[:,:,p] = np.sqrt(cov_map_reshaped[:,:,p])
+        np.save('cov_sq', cov_sq)
+        exit()
         # perform 100 of simulated noise maps
         Cl_cov_freq = [] 
         for i_sim in range(10):
+            # generate noise following the covariance 
             noise_map_loc = np.zeros((cov_sq.shape[0],cov_sq.shape[-1]))
             for p in range(cov_sq.shape[-1]):
                 noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
             np.save('noise_map_loc', noise_map_loc)
             exit()
+            # take Fourier transform of the generated noise maps
             for c in range(int(cov_sq.shape[0]/2)):
                 # Q and U for each component
                 fn = get_field( mask*noise_map_loc[2*c,:], mask*noise_map_loc[2*c+1,:] )
