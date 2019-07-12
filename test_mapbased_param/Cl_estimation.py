@@ -158,6 +158,8 @@ class BBClEstimation(PipelineStage):
             noise_map_loc = np.zeros((cov_sq.shape[0],cov_sq.shape[-1]))
             for p in range(cov_sq.shape[-1]):
                 noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
+            np.save('noise_map_loc', noise_map_loc)
+            exit()
             for c in range(int(cov_sq.shape[0]/2)):
                 # Q and U for each component
                 fn = get_field( mask*noise_map_loc[2*c,:], mask*noise_map_loc[2*c+1,:] )
