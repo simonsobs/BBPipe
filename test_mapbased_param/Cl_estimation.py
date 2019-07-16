@@ -155,7 +155,7 @@ class BBClEstimation(PipelineStage):
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
         for p in range(cov_map.shape[-1]):
             cov_sq[:,:,p] = scipy.linalg.sqrtm(cov_map_reshaped[:,:,p])
-        # np.save('cov_sq', cov_sq)
+        np.save('cov_sq', cov_sq)
         # perform 100 of simulated noise maps
         Cl_cov_freq = [] 
         for i_sim in range(20):
@@ -163,9 +163,6 @@ class BBClEstimation(PipelineStage):
             noise_map_loc = np.zeros((cov_sq.shape[0],cov_sq.shape[-1]))
             for p in range(cov_sq.shape[-1]):
                 noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
-            # noise_map_loc /= np.sqrt(2)
-            # np.save('noise_map_loc', noise_map_loc)
-            # exit()
             # take Fourier transform of the generated noise maps
             for c in range(int(cov_sq.shape[0]/2)):
                 # Q and U for each component
