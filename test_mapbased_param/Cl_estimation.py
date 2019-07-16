@@ -158,12 +158,12 @@ class BBClEstimation(PipelineStage):
         # np.save('cov_sq', cov_sq)
         # perform 100 of simulated noise maps
         Cl_cov_freq = [] 
-        for i_sim in range(10):
+        for i_sim in range(20):
             # generate noise following the covariance 
             noise_map_loc = np.zeros((cov_sq.shape[0],cov_sq.shape[-1]))
             for p in range(cov_sq.shape[-1]):
                 noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
-            noise_map_loc /= np.sqrt(cov_sq.shape[-1])
+            # noise_map_loc /= np.sqrt(2)
             # np.save('noise_map_loc', noise_map_loc)
             # exit()
             # take Fourier transform of the generated noise maps
