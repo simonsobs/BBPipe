@@ -176,7 +176,7 @@ class BBClEstimation(PipelineStage):
         Cl_cov_freq_[2] = np.mean(Cl_cov_freq[1::cov_sq.shape[0]], axis=0)
         Cl_cov_freq_[3] = np.mean(Cl_cov_freq[2::cov_sq.shape[0]], axis=0)
 
-        np.save('Cl_cov_clean', Cl_cov_freq)
+        np.save('Cl_cov_clean', Cl_cov_freq_)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
         exit()
