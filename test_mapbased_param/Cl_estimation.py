@@ -151,23 +151,23 @@ class BBClEstimation(PipelineStage):
         # first, reshape the covariance to be square 
         cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
         # second compute the square root of it
-        # np.save('cov_reshaped', cov_map_reshaped)
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
         for p in range(cov_map.shape[-1]):
             cov_sq[:,:,p] = scipy.linalg.sqrtm(cov_map_reshaped[:,:,p])
-        np.save('cov_sq', cov_sq)
-        # perform 100 of simulated noise maps
+
+        # perform N simulations of noise maps, with covariance cov
         Cl_cov_freq = [] 
-        for i_sim in range(20):
+        for i_sim in range(10):
             # generate noise following the covariance 
             noise_map_loc = np.zeros((cov_sq.shape[0],cov_sq.shape[-1]))
             for p in range(cov_sq.shape[-1]):
                 noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
             # take Fourier transform of the generated noise maps
             for c in range(int(cov_sq.shape[0]/2)):
-                # Q and U for each component
+                # Q and U for each component: e,g, CMB, dust, sync
                 fn = get_field( mask*noise_map_loc[2*c,:], mask*noise_map_loc[2*c+1,:] )
                 Cl_cov_freq.append(compute_master(fn, fn, w)[3])
+        np.save('Cl_cov_clean_sim', Cl_cov_freq)
         Cl_cov_freq_ = Cl_cov_clean*1.0
         Cl_cov_freq_[1] = np.mean(Cl_cov_freq[::cov_sq.shape[0]], axis=0)
         Cl_cov_freq_[2] = np.mean(Cl_cov_freq[1::cov_sq.shape[0]], axis=0)
