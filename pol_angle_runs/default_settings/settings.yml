@@ -24,16 +24,16 @@ inputs:
     cells_noise: ./examples/SO_V3_Mock0_phase0_angle0_noise.sacc
 
 # Overall configuration file 
-config: ./xxx/config.yml
+config: pol_angle_runs/default_settings/config.yml
 
 # If all the outputs for a stage already exist then do not re-run that stage
 resume: False
 
 # Put all the output files in this directory:
-output_dir: ./xxx/output
+output_dir: pol_angle_runs/default_settings/output
 
 # Put the logs from the individual stages in this directory:
-log_dir: ./xxx/output
+log_dir: pol_angle_runs/default_settings/output
 
 # Put the log for the overall pipeline infrastructure in this file:
-pipeline_log: ./xxx/output/log.txt
+pipeline_log: pol_angle_runs/default_settings/output/log.txt

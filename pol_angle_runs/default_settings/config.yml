@@ -3,9 +3,9 @@ BBCompSep:
     sampler: 'emcee'
     # If you chose emcee:
     # Number of walkers
-    nwalkers: 128
+    nwalkers: 256
     # Number of iterations per walker
-    n_iters: 1000
+    n_iters: 5000
     # Likelihood type (choose 'chi2' or 'h&l')
     likelihood_type: 'h&l'
     # Which polarization channels do you want to include?

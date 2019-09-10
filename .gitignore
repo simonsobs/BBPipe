@@ -17,3 +17,4 @@ old/
 slurmjob.sl
 submit_job.sh
 test/sample_out/
+.bashrc
