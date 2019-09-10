@@ -9,3 +9,7 @@ log.txt
 runinfo
 *.npy
 *.sacc
+*.out
+run.sh
+bbpipe.sh
+pol_angle_runs/*
