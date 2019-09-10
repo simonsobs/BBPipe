@@ -13,3 +13,7 @@ runinfo
 run.sh
 bbpipe.sh
 pol_angle_runs/*
+old/
+slurmjob.sl
+submit_job.sh
+test/sample_out/
