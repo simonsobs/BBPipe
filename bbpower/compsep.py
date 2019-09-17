@@ -369,7 +369,11 @@ class BBCompSep(PipelineStage):
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob,backend=backend)
             if nsteps_use > 0:
-                sampler.run_mcmc(pos, nsteps_use, store=True, progress=True);
+                sampler.run_mcmc(pos, nsteps_use, store=True, progress=False);
+
+        #sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob,backend=backend)
+        #if nsteps_use > 0:
+        #    sampler.run_mcmc(pos, nsteps_use, store=True, progress=False);
 
         return sampler
 

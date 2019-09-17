@@ -13,16 +13,16 @@ class Bandpass(object):
 
         # Get frequency-dependent angle if necessary
         try:
-            fname=config['systematics']['bandpasses'][field]['phase_nu']
+            fname = config['systematics']['bandpasses'][field]['phase_nu']
         except KeyError:
-            fname=None
+            fname = None
             self.is_complex = False
         if fname:
             from scipy.interpolate import interp1d
-            nu_phi,phi=np.loadtxt(fname,unpack=True)
-            phif=interp1d(nu_phi, np.radians(phi),
+            nu_phi, phi = np.loadtxt(fname,unpack=True)
+            phif = interp1d(nu_phi, np.radians(phi),
                           bounds_error=False, fill_value=0)
-            phi_arr=phif(self.nu)
+            phi_arr = phif(self.nu)
             phase = np.cos(2*phi_arr) + 1j * np.sin(2*phi_arr)
             self.bnu_dnu = self.bnu_dnu * phase
             self.is_complex = True
@@ -34,6 +34,8 @@ class Bandpass(object):
         self.name_gain = None
         self.do_angle = False
         self.name_angle = None
+        self.do_dphi1 = False
+        self.name_dphi1 = None
         try:
             d = config['systematics']['bandpasses'][field]['parameters']
         except KeyError:
@@ -48,13 +50,22 @@ class Bandpass(object):
             if p[0] == 'angle':
                 self.do_angle = True
                 self.name_angle = n
-
+            if p[0] == 'dphi1':
+                self.do_dphi1 = True
+                self.name_dphi1 = n
         self.cmb_norm = 1./np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu)
+        return
 
     def convolve_sed(self, sed, params):
         dnu = 0.
         if self.do_shift:
             dnu = params[self.name_shift] * self.nu_mean
+        
+        if self.do_dphi1:
+            dphi1 = params[self.name_dphi1]
+            normed_dphi1 = dphi1 * np.pi / 180. * (self.nu - self.nu_mean) / self.nu_mean
+            dphi1_phase = np.cos(2*normed_dphi1) + 1j * np.sin(2*normed_dphi1)
+            self.bnu_dnu *= dphi1_phase
 
         conv_sed = np.sum(sed(self.nu + dnu) * self.bnu_dnu) * self.cmb_norm
 
