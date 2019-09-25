@@ -208,13 +208,15 @@ class BBCompSep(PipelineStage):
         # Fill diagonal
         for i_c, c_name in enumerate(self.fg_model.component_names):
             comp = self.fg_model.components[c_name]
-            for cl_comb,clfunc in comp['cl'].items():
+            for cl_comb, clfunc in comp['cl'].items():
                 m1, m2 = cl_comb
                 ip1 = self.pol_order[m1]
                 ip2 = self.pol_order[m2]
                 pspec_params = [params[comp['names_cl_dict'][cl_comb][k]]
                                 for k in clfunc.params]
                 fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params)
+                if m1 != m2:
+                    fg_pspectra[i_c, i_c, ip2, ip1, :] = clfunc.eval(self.bpw_l, *pspec_params)
 
         # Off diagonals
         for i_c1, c_name1 in enumerate(self.fg_model.component_names):
@@ -367,7 +369,7 @@ class BBCompSep(PipelineStage):
             nsteps_use = max(n_iters-len(backend.get_chain()), 0)
                                     
         with Pool() as pool:
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob,backend=backend)
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
             if nsteps_use > 0:
                 sampler.run_mcmc(pos, nsteps_use, store=True, progress=False);
 
@@ -404,9 +406,75 @@ class BBCompSep(PipelineStage):
         for i in range(n_eval):
             lik = self.lnprob(self.params.p0)
         end = time.time()
-
         return end-start, (end-start)/n_eval
 
+    def cheap_lnprob(self, par):
+        params = self.params.build_params(par)
+        dx = self.cheap_chisq(params)
+        return -0.5 * np.einsum('i, ij, j', dx, self.invcov, dx)
+
+    def cheap_chisq(self, params):
+        model_cls = self.model(params)
+        return self.matrix_to_vector(model_cls).flatten()
+    
+    def run_fisher(self):
+        import numdifftools as nd
+        hess = nd.Hessian(self.cheap_lnprob)
+        F = hess(self.params.p0)
+        self.F = F
+        self.fisher_cov = np.mat(F).I
+
+        names = self.params.p_free_names
+        N = len(names)
+        params0 = self.params.build_params(self.params.p0)
+        for k in range(N):
+            arg = names[k]
+            print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
+        return 
+
+    def run_fisher2(self, h=1.e-4):
+        prior = self.params.lnprior(self.params.p0)
+        params0 = self.params.build_params(self.params.p0)
+        names = self.params.p_free_names
+        N = len(names)
+
+        model0 = self.model(params0)
+        flat_model0 = self.matrix_to_vector(model0).flatten()
+
+        # lol check this numerical derivative
+        F = np.zeros((N, N))
+        for i in range(N):
+            iname = names[i]
+            paramsi = params0.copy()
+            paramsi[iname] = (1. + h) * params0[iname]
+            if params0[iname] == 0:
+                paramsi[iname] = h
+            modeli = self.model(paramsi)
+            flat_modeli = self.matrix_to_vector(modeli).flatten()
+            derivi = (flat_modeli - flat_model0) / ( params0[iname] * h)
+            if params0[iname] == 0:
+                derivi = (flat_modeli - flat_model0) / h
+            for j in range(N):
+                jname = names[j]
+                paramsj = params0.copy()
+                paramsj[jname] = (1. + h) * params0[jname]
+                if params0[jname] == 0:
+                    paramsj[jname] = h
+                modelj = self.model(paramsj)
+                flat_modelj = self.matrix_to_vector(modelj).flatten()
+                derivj = (flat_modelj - flat_model0) / ( params0[jname] * h)
+                if params0[jname] == 0:
+                    derivj = (flat_modelj - flat_model0) / h
+                F[i, j] = np.einsum('i, ij, j', derivi, self.invcov, derivj)
+        # lol check this inversion
+        self.F = F
+        self.fisher_cov = np.mat(F).I
+
+        for k in range(N):
+            arg = names[k]
+            print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
+        return
+    
     def run(self):
         from shutil import copyfile
         copyfile(self.get_input('config'), self.get_output('config_copy')) 
@@ -441,6 +509,15 @@ class BBCompSep(PipelineStage):
                      names=self.params.p_free_names)
             print("Total time:",sampler[0])
             print("Time per eval:",sampler[1])
+        elif self.config.get('sampler')=='fisher': 
+            #self.run_fisher()
+            #self.run_fisher2(self.config.get('h'))
+            self.run_fisher2(1.e-6)
+            np.savez(self.get_output('fisher'), 
+                     F=self.F, 
+                     cov=self.fisher_cov, 
+                     names=self.params.p_free_names, 
+                     p0=self.params.p0)
         else:
             raise ValueError("Unknown sampler")
 

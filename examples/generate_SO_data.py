@@ -2,18 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from noise_calc import Simons_Observatory_V3_SA_noise
 
-def get_output_params(do_phase=False,do_angle=False):
-    prefix_out="SO_V3_Mock0_phase%d_angle%d"%(int(do_phase),int(do_angle))
+def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
+    if do_sinuous:
+        prefix_out = "SO_V3_Mock1_sinuous"
+    else:
+        prefix_out = "SO_V3_Mock1_phase%d_angle%d"%(int(do_phase),int(do_angle))
     if do_angle:
-        angles=[1.,-1.,1.,-1.,1.,-1.]
+        angles = [1.,-1.,1.,-1.,1.,-1.]
     else:
-        angles=[0.,0.,0.,0.,0.,0.]
+        angles = [0.,0.,0.,0.,0.,0.]
 
-    phase_suffix=''
+    phase_suffix = ''
     if do_phase:
-        phase_suffix=''
+        phase_suffix = ''
     else:
-        phase_suffix='_0'
+        phase_suffix = '_0'
 
     phase_nu=['./data/phase_3layer_lf'+phase_suffix+'.txt',
               './data/phase_3layer_lf'+phase_suffix+'.txt',
@@ -22,12 +25,23 @@ def get_output_params(do_phase=False,do_angle=False):
               './data/phase_3layer_uhf'+phase_suffix+'.txt',
               './data/phase_3layer_uhf'+phase_suffix+'.txt']
 
+    if do_sinuous:
+        if do_phase:
+            print("wait fuck we don't know how to do phase and sinuous yet plz fix")
+            exit()
+        phase_nu = ['./data/sinuous.txt', 
+                    './data/sinuous.txt',
+                    './data/sinuous.txt', 
+                    './data/sinuous.txt', 
+                    './data/sinuous.txt', 
+                    './data/sinuous.txt']
+
     return prefix_out,phase_nu,angles
 
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-prefix_out,phase_nu,angles=get_output_params(do_phase=True, do_angle=False)
+prefix_out,phase_nu,angles=get_output_params(do_phase=False, do_angle=False, do_sinuous=False)
 
 
 #CMB spectrum
@@ -108,21 +122,26 @@ for i1,t1 in enumerate(map_names):
 
 
 #Foreground model
-A_sync_BB=2.0
-EB_sync=2.
-alpha_sync_EE=-0.6
-alpha_sync_BB=-0.4
-beta_sync=-3.
-nu0_sync=23.
+A_sync_BB = 10.
+#A_sync_BB = 2.0
+EB_sync = 2.
+alpha_sync_EE = -0.6
+alpha_sync_BB = -0.4
+beta_sync = -3.2
+#beta_sync = -3.
+nu0_sync = 23.
 
-A_dust_BB=5.0
-EB_dust=2.
-alpha_dust_EE=-0.42
-alpha_dust_BB=-0.2
-beta_dust=1.59
-temp_dust=19.6
-nu0_dust=353.
+#A_dust_BB = 5.0
+A_dust_BB = 25.
+EB_dust = 2.
+#alpha_dust_EE = -0.42
+alpha_dust_EE = -0.4
+alpha_dust_BB = -0.2
+beta_dust = 1.59
+temp_dust = 19.6
+nu0_dust = 353.
 
+fg_EB_intrinsic_fraction = 0.05
 Alens=1.
 
 #Bandpowers
@@ -139,7 +158,10 @@ for b,(l0,lf) in enumerate(zip(lbands[:-1],lbands[1:])):
 
 #Component power spectra
 def dl_plaw(A,alpha,ls):
-    return A*((ls+0.001)/80.)**alpha
+    mask = ls > 0
+    plaw = np.zeros(len(ls))
+    plaw[mask] = A * (ls[mask]/80.)**alpha
+    return plaw
 
 def read_camb(fname):
     l,dtt,dee,dbb,dte=np.loadtxt(fname,unpack=True)
