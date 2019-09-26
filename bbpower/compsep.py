@@ -19,8 +19,7 @@ class BBCompSep(PipelineStage):
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
     outputs = [('param_chains', NpzFile), ('config_copy', NpzFile)]
-    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
-                    'sampler':'emcee'}
+    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'sampler':'emcee'}
 
     def setup_compsep(self):
         """
@@ -412,22 +411,7 @@ class BBCompSep(PipelineStage):
         model_cls = self.model(params)
         return self.matrix_to_vector(model_cls).flatten()
     
-    def run_fisher(self):
-        import numdifftools as nd
-        hess = nd.Hessian(self.cheap_lnprob)
-        F = hess(self.params.p0)
-        self.F = F
-        self.fisher_cov = np.mat(F).I
-
-        names = self.params.p_free_names
-        N = len(names)
-        params0 = self.params.build_params(self.params.p0)
-        for k in range(N):
-            arg = names[k]
-            print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
-        return 
-
-    def run_fisher2(self, h=1.e-4):
+    def run_fisher(self, h=1.e-4):
         prior = self.params.lnprior(self.params.p0)
         params0 = self.params.build_params(self.params.p0)
         names = self.params.p_free_names
@@ -468,6 +452,20 @@ class BBCompSep(PipelineStage):
         for k in range(N):
             arg = names[k]
             print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
+
+        if use_nd:
+            import numdifftools as nd
+            hess = nd.Hessian(self.cheap_lnprob)
+            F = hess(self.params.p0)
+            self.F = F
+            self.fisher_cov = np.mat(F).I
+
+            names = self.params.p_free_names
+            N = len(names)
+            params0 = self.params.build_params(self.params.p0)
+            for k in range(N):
+                arg = names[k]
+                print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
         return
     
     def run(self):
@@ -505,10 +503,12 @@ class BBCompSep(PipelineStage):
             print("Total time:",sampler[0])
             print("Time per eval:",sampler[1])
         elif self.config.get('sampler')=='fisher': 
-            #self.run_fisher()
-            #self.run_fisher2(self.config.get('h'))
-            self.run_fisher2(1.e-6)
-            np.savez(self.get_output('fisher'), 
+            try:
+                h = self.config.get('h')
+            except:
+                pass
+            self.run_fisher(h)
+            np.savez(self.get_output('param_chains'), 
                      F=self.F, 
                      cov=self.fisher_cov, 
                      names=self.params.p_free_names, 

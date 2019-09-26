@@ -41,7 +41,8 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-prefix_out,phase_nu,angles=get_output_params(do_phase=False, do_angle=False, do_sinuous=False)
+do_intrinsic_eb = False
+prefix_out,phase_nu,angles = get_output_params(do_phase=False, do_angle=False, do_sinuous=False)
 
 
 #CMB spectrum
@@ -122,27 +123,34 @@ for i1,t1 in enumerate(map_names):
 
 
 #Foreground model
-A_sync_BB = 10.
 #A_sync_BB = 2.0
+A_sync_BB = 4.
 EB_sync = 2.
-alpha_sync_EE = -0.6
-alpha_sync_BB = -0.4
-beta_sync = -3.2
+#alpha_sync_EE = -0.6
+#alpha_sync_BB = -0.4
+alpha_sync_EE = -1.3
+alpha_sync_BB = -1.2
 #beta_sync = -3.
+beta_sync = -3.2
 nu0_sync = 23.
 
 #A_dust_BB = 5.0
-A_dust_BB = 25.
+A_dust_BB = 15.
 EB_dust = 2.
 #alpha_dust_EE = -0.42
-alpha_dust_EE = -0.4
-alpha_dust_BB = -0.2
-beta_dust = 1.59
+#alpha_dust_BB = -0.2
+alpha_dust_EE = -0.3
+alpha_dust_BB = -0.15
+#beta_dust = 1.59
+beta_dust = 1.53
 temp_dust = 19.6
 nu0_dust = 353.
 
-fg_EB_intrinsic_fraction = 0.05
-Alens=1.
+epsilon = 0.2
+fg_intrinsic_eb = 0.
+if do_intrinsic_eb:
+    fg_intrinsic_eb = 0.03
+Alens = 1.
 
 #Bandpowers
 dell=10
@@ -181,14 +189,31 @@ dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
 dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
 dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
 
-_,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
-dls_comp=np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
-dls_comp[0,0,0,0,:]=dls_cmb_ee
-dls_comp[0,1,0,1,:]=Alens*dls_cmb_bb
-dls_comp[1,0,1,0,:]=dls_sync_ee
-dls_comp[1,1,1,1,:]=dls_sync_bb
-dls_comp[2,0,2,0,:]=dls_dust_ee
-dls_comp[2,1,2,1,:]=dls_dust_bb
+_, dls_cmb_ee, dls_cmb_bb, _= read_camb("./data/camb_lens_nobb.dat")
+dls_comp = np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
+dls_comp[0,0,0,0] = dls_cmb_ee 
+dls_comp[0,1,0,1] = Alens*dls_cmb_bb
+
+dls_comp[1,0,1,0] = dls_sync_ee
+dls_comp[1,1,1,1] = dls_sync_bb
+dls_comp[1,0,1,1] = fg_intrinsic_eb * np.sqrt(dls_sync_ee * dls_sync_bb)
+dls_comp[1,1,1,0] = fg_intrinsic_eb * np.sqrt(dls_sync_ee * dls_sync_bb)
+
+dls_comp[2,0,2,0] = dls_dust_ee
+dls_comp[2,1,2,1] = dls_dust_bb
+dls_comp[2,0,2,1] = fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
+dls_comp[2,1,2,0] = fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
+
+dls_comp[1,0,2,0] = epsilon*np.sqrt(dls_sync_ee * dls_dust_ee)
+dls_comp[1,1,2,0] = epsilon*np.sqrt(dls_sync_bb * dls_dust_ee)
+dls_comp[1,0,2,1] = epsilon*np.sqrt(dls_sync_ee * dls_dust_bb)
+dls_comp[1,1,2,1] = epsilon*np.sqrt(dls_sync_bb * dls_dust_bb)
+
+dls_comp[2,0,1,0] = epsilon*np.sqrt(dls_dust_ee * dls_sync_ee)
+dls_comp[2,1,1,0] = epsilon*np.sqrt(dls_dust_bb * dls_sync_ee)
+dls_comp[2,0,1,1] = epsilon*np.sqrt(dls_dust_ee * dls_sync_bb)
+dls_comp[2,1,1,1] = epsilon*np.sqrt(dls_dust_bb * dls_sync_bb)
+
 
 #Convolve with windows
 bpw_comp=np.sum(dls_comp[:,:,:,:,None,:]*windows[None,None,None,None,:,:],axis=5)
