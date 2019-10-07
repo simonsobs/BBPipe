@@ -307,19 +307,29 @@ class BBCompSep(PipelineStage):
         for k in range(model_cls.shape[0]):
             C = model_cls[k] + self.bbnoise[k]
             X = self.h_and_l(C, self.observed_cls[k], self.Cfl_sqrt[k])
+            # sorry for this hack
+            if np.any(np.isinf(X)):
+                dx_vec = [np.inf]
+                break
             dx = self.matrix_to_vector(X).flatten()
             dx_vec = np.concatenate([dx_vec, dx])
         return dx_vec
 
     def h_and_l(self, C, Chat, Cfl_sqrt):
-        diag, U = np.linalg.eigh(C)
+        try:
+            diag, U = np.linalg.eigh(C)
+        except:
+            return [np.inf]
         rot = U.T.dot(Chat).dot(U)
         roots = np.sqrt(diag)
         for i, root in enumerate(roots):
             rot[i, :] /= root
             rot[:, i] /= root
         U.dot(rot.dot(U.T), rot)
-        diag, rot = np.linalg.eigh(rot)
+        try:
+            diag, rot = np.linalg.eigh(rot)
+        except:
+            return [np.inf]
         diag = np.sign(diag - 1) * np.sqrt(2 * np.maximum(0, diag - np.log(diag) - 1))
         Cfl_sqrt.dot(rot, U)
         for i, d in enumerate(diag):
@@ -337,6 +347,8 @@ class BBCompSep(PipelineStage):
         params = self.params.build_params(par)
         if self.use_handl:
             dx = self.h_and_l_dx(params)
+            if np.any(np.isinf(dx)):
+                return -np.inf
         else:
             dx = self.chi_sq_dx(params)
         like = -0.5 * np.einsum('i, ij, j',dx,self.invcov,dx)

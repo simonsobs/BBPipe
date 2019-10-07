@@ -42,7 +42,7 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
 do_intrinsic_eb = False
-prefix_out,phase_nu,angles = get_output_params(do_phase=False, do_angle=False, do_sinuous=False)
+prefix_out,phase_nu,angles = get_output_params(do_phase=False, do_angle=False, do_sinuous=True)
 
 
 #CMB spectrum
@@ -204,16 +204,20 @@ dls_comp[2,1,2,1] = dls_dust_bb
 dls_comp[2,0,2,1] = fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
 dls_comp[2,1,2,0] = fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
 
-dls_comp[1,0,2,0] = epsilon*np.sqrt(dls_sync_ee * dls_dust_ee)
-dls_comp[1,1,2,0] = epsilon*np.sqrt(dls_sync_bb * dls_dust_ee)
-dls_comp[1,0,2,1] = epsilon*np.sqrt(dls_sync_ee * dls_dust_bb)
-dls_comp[1,1,2,1] = epsilon*np.sqrt(dls_sync_bb * dls_dust_bb)
+dls_comp[1,0,2,0] = epsilon * np.sqrt(dls_sync_ee * dls_dust_ee)
+dls_comp[1,1,2,0] = epsilon * np.sqrt(dls_sync_bb * dls_dust_ee)
+dls_comp[1,0,2,1] = epsilon * np.sqrt(dls_sync_ee * dls_dust_bb)
+dls_comp[1,1,2,1] = epsilon * np.sqrt(dls_sync_bb * dls_dust_bb)
 
-dls_comp[2,0,1,0] = epsilon*np.sqrt(dls_dust_ee * dls_sync_ee)
-dls_comp[2,1,1,0] = epsilon*np.sqrt(dls_dust_bb * dls_sync_ee)
-dls_comp[2,0,1,1] = epsilon*np.sqrt(dls_dust_ee * dls_sync_bb)
-dls_comp[2,1,1,1] = epsilon*np.sqrt(dls_dust_bb * dls_sync_bb)
+dls_comp[2,0,1,0] = epsilon * np.sqrt(dls_dust_ee * dls_sync_ee)
+dls_comp[2,1,1,0] = epsilon * np.sqrt(dls_dust_bb * dls_sync_ee)
+dls_comp[2,0,1,1] = epsilon * np.sqrt(dls_dust_ee * dls_sync_bb)
+dls_comp[2,1,1,1] = epsilon * np.sqrt(dls_dust_bb * dls_sync_bb)
 
+dls_comp[1,0,2,1] = epsilon * fg_intrinsic_eb * np.sqrt(dls_sync_ee * dls_dust_bb)
+dls_comp[1,1,2,0] = epsilon * fg_intrinsic_eb * np.sqrt(dls_sync_bb * dls_dust_ee)
+dls_comp[2,0,1,1] = epsilon * fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_sync_bb)
+dls_comp[2,1,1,0] = epsilon * fg_intrinsic_eb * np.sqrt(dls_dust_bb * dls_sync_ee)
 
 #Convolve with windows
 bpw_comp=np.sum(dls_comp[:,:,:,:,None,:]*windows[None,None,None,None,:,:],axis=5)
