@@ -108,18 +108,22 @@ for i1,t1 in enumerate(map_names):
 
 
 #Foreground model
-EB_sync=1.
-EB_dust=2.
 A_sync_BB=2.0
-A_dust_BB=5.0
-alpha_sync=-0.6
-alpha_dust=-0.42
+EB_sync=2.
+alpha_sync_EE=-0.6
+alpha_sync_BB=-0.4
 beta_sync=-3.
+nu0_sync=23.
+
+A_dust_BB=5.0
+EB_dust=2.
+alpha_dust_EE=-0.42
+alpha_dust_BB=-0.2
 beta_dust=1.59
 temp_dust=19.6
 nu0_dust=353.
-nu0_sync=23.
-Alens=0.5
+
+Alens=1.
 
 #Bandpowers
 dell=10
@@ -148,10 +152,13 @@ def read_camb(fname):
     dlte=np.zeros(len(larr_all)); dlte[l]=dte[msk]
     return dltt,dlee,dlbb,dlte
 
-dls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync,larr_all)
-dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync,larr_all)
-dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust,larr_all)
-dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust,larr_all)
+
+dls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync_EE,larr_all)
+dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
+
+dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
+dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
+
 _,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
 dls_comp=np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
 dls_comp[0,0,0,0,:]=dls_cmb_ee

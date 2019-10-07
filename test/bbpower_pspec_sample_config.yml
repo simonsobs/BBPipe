@@ -1,7 +1,21 @@
 # These parameters are accessible to all stages
 global:
     nside: 512
-    compute_dell: True
+    compute_dell: False
+
+BBPowerSpecter:
+    # Bandpower definition
+    bpw_edges: "./examples/bpw_edges.txt"
+    purify_B: True
+    n_iter : 3
+
+BBPowerSummarizer:
+    # Covariance types
+    do_plots: True
+    nulls_covar_type: "diagonal"
+    nulls_covar_diag_order: 0
+    data_covar_type: "block_diagonal"
+    data_covar_diag_order: 3
 
 BBCompSep:
     # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
@@ -14,7 +28,7 @@ BBCompSep:
     # Likelihood type (choose 'chi2' or 'h&l')
     likelihood_type: 'h&l'
     # Which polarization channels do you want to include?
-    pol_channels: ['E','B']
+    pol_channels: ['B']
     # Scale cuts (will apply to all frequencies)
     l_min: 30
     l_max: 300
@@ -31,7 +45,7 @@ BBCompSep:
             # See below for the meaning of the different elements in the list.
             r_tensor: ['r_tensor', 'tophat', [0.00, 0.00, "inf"]]
             # Lensing amplitude
-            A_lens: ['A_lens', 'tophat', [0.00,0.5,2.00]]
+            A_lens: ['A_lens', 'tophat', [0.00,1.0,2.00]]
 
     # Foreground model
     fg_model:
@@ -99,53 +113,53 @@ BBCompSep:
                     alpha_s_bb: ['alpha', 'tophat', [-1., -0.6, 0.]]
                     l0_s_bb: ['ell0', 'fixed', [80.]]
 
-    # Add extra parameters for different systematics
-    systematics:
-        # Bandpass-related systematics
-        bandpasses:
-            # Add a section called bandpass_X for any bandpass you
-            # want to add extra information for. They will be matched
-            # with the tracers stored in the input SACC files.
-            bandpass_1:
-                # Add a file for a frequency-dependent polarization angle
-                # 2 columns: freq (GHz), phi (deg.).
-                # If not present, this effect will be ignored.
-                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
-                # Parametrize different bandpass systematics
-                parameters:
-                    # Relative shift in mean bandpass frequency.
-                    shift_1: ['shift', 'Gaussian', [0., 0.01]]
-                    # Relative gain variation.
-                    gain_1: ['gain', 'Gaussian', [1., 0.01]]
-                    # Polarization angle (prior in units of radians).
-                    angle_1: ['angle', 'fixed', [0., 0.017]]
-            bandpass_2:
-                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
-                parameters:
-                    shift_2: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_2: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_2: ['angle', 'fixed', [0., 0.017]]
-            bandpass_3:
-                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
-                parameters:
-                    shift_3: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_3: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_3: ['angle', 'fixed', [0., 0.017]]
-            bandpass_4:
-                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
-                parameters:
-                    shift_4: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_4: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_4: ['angle', 'fixed', [0., 0.017]]
-            bandpass_5:
-                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
-                parameters:
-                    shift_5: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_5: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_5: ['angle', 'fixed', [0., 0.017]]
-            bandpass_6:
-                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
-                parameters:
-                    shift_6: ['shift', 'Gaussian', [0., 0.01]]
-                    gain_6: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_6: ['angle', 'fixed', [0., 0.017]]
+#    # Add extra parameters for different systematics
+#    systematics:
+#        # Bandpass-related systematics
+#        bandpasses:
+#            # Add a section called bandpass_X for any bandpass you
+#            # want to add extra information for. They will be matched
+#            # with the tracers stored in the input SACC files.
+#            bandpass_1:
+#                # Add a file for a frequency-dependent polarization angle
+#                # 2 columns: freq (GHz), phi (deg.).
+#                # If not present, this effect will be ignored.
+#                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
+#                # Parametrize different bandpass systematics
+#                parameters:
+#                    # Relative shift in mean bandpass frequency.
+#                    shift_1: ['shift', 'Gaussian', [0., 0.01]]
+#                    # Relative gain variation.
+#                    gain_1: ['gain', 'Gaussian', [1., 0.01]]
+#                    # Polarization angle (prior in units of radians).
+#                    angle_1: ['angle', 'fixed', [0., 0.017]]
+#            bandpass_2:
+#                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
+#                parameters:
+#                    shift_2: ['shift', 'Gaussian', [0., 0.01]]
+#                    gain_2: ['gain', 'Gaussian', [1., 0.01]]
+#                    angle_2: ['angle', 'fixed', [0., 0.017]]
+#            bandpass_3:
+#                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
+#                parameters:
+#                    shift_3: ['shift', 'Gaussian', [0., 0.01]]
+#                    gain_3: ['gain', 'Gaussian', [1., 0.01]]
+#                    angle_3: ['angle', 'fixed', [0., 0.017]]
+#            bandpass_4:
+#                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
+#                parameters:
+#                    shift_4: ['shift', 'Gaussian', [0., 0.01]]
+#                    gain_4: ['gain', 'Gaussian', [1., 0.01]]
+#                    angle_4: ['angle', 'fixed', [0., 0.017]]
+#            bandpass_5:
+#                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
+#                parameters:
+#                    shift_5: ['shift', 'Gaussian', [0., 0.01]]
+#                    gain_5: ['gain', 'Gaussian', [1., 0.01]]
+#                    angle_5: ['angle', 'fixed', [0., 0.017]]
+#            bandpass_6:
+#                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
+#                parameters:
+#                    shift_6: ['shift', 'Gaussian', [0., 0.01]]
+#                    gain_6: ['gain', 'Gaussian', [1., 0.01]]
+#                    angle_6: ['angle', 'fixed', [0., 0.017]]

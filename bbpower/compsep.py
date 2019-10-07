@@ -3,7 +3,7 @@ import os
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
-from .types import NpzFile
+from .types import NpzFile, SACCFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
 from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
@@ -17,7 +17,7 @@ class BBCompSep(PipelineStage):
     The foreground model parameters are defined in the config.yml file. 
     """
     name = "BBCompSep"
-    inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
+    inputs = [('cells_coadded', SACCFile),('cells_noise', SACCFile),('cells_fiducial', SACCFile)]
     outputs = [('param_chains', NpzFile), ('config_copy', NpzFile)]
     config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
                     'sampler':'emcee'}
@@ -106,6 +106,10 @@ class BBCompSep(PipelineStage):
         mask_w = self.s.binning.windows[0].ls > 1
         self.bpw_l = self.s.binning.windows[0].ls[mask_w]
         self.n_ell = len(self.bpw_l)
+        # D_ell factor
+        self.dl2cl = 2 * np.pi / (self.bpw_l * (self.bpw_l + 1))
+        if self.config.get('compute_dell'):
+            self.dl2cl = 1.
         _,_,_,self.ell_b,_ = self.order[0]
         self.n_bpws = len(self.ell_b)
         self.windows = np.zeros([self.ncross, self.n_bpws, self.n_ell])
@@ -214,7 +218,7 @@ class BBCompSep(PipelineStage):
                 ip2 = self.pol_order[m2]
                 pspec_params = [params[comp['names_cl_dict'][cl_comb][k]]
                                 for k in clfunc.params]
-                fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params)
+                fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl
 
         # Off diagonals
         for i_c1, c_name1 in enumerate(self.fg_model.component_names):
@@ -231,9 +235,9 @@ class BBCompSep(PipelineStage):
         """
         Defines the total model and integrates over the bandpasses and windows. 
         """
-        cmb_cell = params['r_tensor'] * self.cmb_tens + \
-                   params['A_lens'] * self.cmb_lens + \
-                   self.cmb_scal  # [npol,npol,nell]
+        cmb_cell = (params['r_tensor'] * self.cmb_tens + \
+                    params['A_lens'] * self.cmb_lens + \
+                    self.cmb_scal) * self.dl2cl # [npol,npol,nell]
         fg_scaling, rot_m = self.integrate_seds(params)  # [nfreq, ncomp], [ncomp,nfreq,[matrix]]
         fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
 
