@@ -4,9 +4,9 @@ from noise_calc import Simons_Observatory_V3_SA_noise
 
 def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
     if do_sinuous:
-        prefix_out = "SO_V3_Mock1_sinuous"
+        prefix_out = "SO_V3_Mock1eb_sinuous"
     else:
-        prefix_out = "SO_V3_Mock1_phase%d_angle%d"%(int(do_phase),int(do_angle))
+        prefix_out = "SO_V3_Mock1eb_phase%d_angle%d"%(int(do_phase),int(do_angle))
     if do_angle:
         angles = [1.,-1.,1.,-1.,1.,-1.]
     else:
@@ -41,7 +41,7 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-do_intrinsic_eb = False
+do_intrinsic_eb = True
 prefix_out,phase_nu,angles = get_output_params(do_phase=False, do_angle=False, do_sinuous=True)
 
 

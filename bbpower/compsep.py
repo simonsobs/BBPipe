@@ -18,7 +18,7 @@ class BBCompSep(PipelineStage):
     """
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
-    outputs = [('param_chains', NpzFile), ('config_copy', NpzFile)]
+    outputs = [('param_chains', NpzFile), ('config_copy', YamlFile)]
     config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'sampler':'emcee'}
 
     def setup_compsep(self):
