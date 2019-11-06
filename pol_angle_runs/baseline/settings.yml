@@ -11,6 +11,6 @@ inputs:
     cells_noise: ./examples/SO_V3_Mock1eb_phase0_angle0_noise.sacc
 
 config: pol_angle_runs/baseline/config.yml
-output_dir: pol_angle_runs/baseline/twosidedeb
-log_dir: pol_angle_runs/baseline/twosidedeb
-pipeline_log: pol_angle_runs/baseline/twosidedeb/log.txt
+output_dir: pol_angle_runs/baseline/bonly
+log_dir: pol_angle_runs/baseline/bonly
+pipeline_log: pol_angle_runs/baseline/bonly/log.txt

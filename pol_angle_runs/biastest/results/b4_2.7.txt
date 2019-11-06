@@ -1,0 +1,16 @@
+Executing stage: BBCompSep
+Best fit:
+A_lens = 9.989E-01
+r_tensor = 1.055E-03
+beta_d = 1.528E+00
+epsilon_ds = 2.001E-01
+alpha_d_ee = -3.030E-01
+amp_d_ee = 3.994E+01
+alpha_d_bb = -1.364E-01
+amp_d_bb = 1.996E+01
+beta_s = -3.212E+00
+alpha_s_ee = -1.296E+00
+amp_s_ee = 8.057E+00
+alpha_s_bb = -1.208E+00
+amp_s_bb = 3.995E+00
+Chi2: 4.254E+03

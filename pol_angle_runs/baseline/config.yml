@@ -1,9 +1,7 @@
 BBCompSep:
-    # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing'
     sampler: 'emcee'
-    nwalkers: 512
-    n_iters: 100000
-    # Likelihood type (choose 'chi2' or 'h&l')
+    nwalkers: 256
+    n_iters: 40000
     likelihood_type: 'h&l'
     pol_channels: ['E','B']
     l_min: 30
@@ -23,7 +21,6 @@ BBCompSep:
             cl:
                 EE: ClPowerLaw
                 BB: ClPowerLaw
-                EB: ClPowerLaw
             sed_parameters:
                 beta_d: ['beta_d', 'tophat', [0.1, 1.5, 10.]]
                 temp_d: ['temp', 'fixed', [19.6]]
@@ -37,10 +34,6 @@ BBCompSep:
                    amp_d_bb: ['amp', 'tophat', [0., 1., "inf"]]
                    alpha_d_bb: ['alpha', 'tophat', [-5., -0.5, 0.]]
                    l0_d_bb: ['ell0', 'fixed', [80.]]
-                EB:
-                   amp_d_eb: ['amp', 'tophat', [-1.e3, 1., 1.e3]]
-                   alpha_d_eb: ['alpha', 'tophat', [-5., -0.5, 0.]]
-                   l0_d_eb: ['ell0', 'fixed', [80.]]
             cross:
                 epsilon_ds: ['component_2', 'tophat', [-1., 0., 1.]]
 
@@ -50,7 +43,6 @@ BBCompSep:
             cl:
                 EE: ClPowerLaw
                 BB: ClPowerLaw
-                EB: ClPowerLaw
             sed_parameters:
                 beta_s: ['beta_pl', 'tophat', [-10., -3., 0.]]
                 nu0_s: ['nu0', 'fixed', [23.]]
@@ -63,8 +55,4 @@ BBCompSep:
                     amp_s_bb: ['amp', 'tophat', [0., 1., "inf"]]
                     alpha_s_bb: ['alpha', 'tophat', [-5., -0.5, 0.]]
                     l0_s_bb: ['ell0', 'fixed', [80.]]
-                EB:
-                   amp_s_eb: ['amp', 'tophat', [-1.e3, 1., 1.e3]]
-                   alpha_s_eb: ['alpha', 'tophat', [-5., -0.5, 0.]]
-                   l0_s_eb: ['ell0', 'fixed', [80.]]
 

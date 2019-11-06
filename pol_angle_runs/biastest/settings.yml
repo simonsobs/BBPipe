@@ -1,0 +1,16 @@
+modules: bbpower
+launcher: local
+stages:
+    - name: BBCompSep
+      nprocess: 1
+resume: False
+
+inputs:
+    cells_coadded: ./examples/bias/SO_V3_Mock3_phase0_angle0.sacc
+    cells_fiducial: ./examples/bias/SO_V3_Mock3_phase0_angle0_fiducial.sacc
+    cells_noise: ./examples/bias/SO_V3_Mock3_phase0_angle0_noise.sacc
+
+config: pol_angle_runs/biastest/config.yml
+output_dir: pol_angle_runs/biastest/output
+log_dir: pol_angle_runs/biastest/output
+pipeline_log: pol_angle_runs/biastest/output/log.txt

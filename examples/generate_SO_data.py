@@ -4,11 +4,12 @@ from noise_calc import Simons_Observatory_V3_SA_noise
 
 def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
     if do_sinuous:
-        prefix_out = "SO_V3_Mock1eb_sinuous"
+        prefix_out = "./bias/SO_V3_Mock1eb_sinuous"
     else:
-        prefix_out = "SO_V3_Mock1eb_phase%d_angle%d"%(int(do_phase),int(do_angle))
+        prefix_out = "./bias/SO_V3_Mock3_phase%d_angle%d"%(int(do_phase),int(do_angle))
     if do_angle:
-        angles = [1.,-1.,1.,-1.,1.,-1.]
+        #angles = [1.,-1.,1.,-1.,1.,-1.]
+        angles = [0., 0., 0., 0., 0., 0.]
     else:
         angles = [0.,0.,0.,0.,0.,0.]
 
@@ -41,8 +42,8 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-do_intrinsic_eb = True
-prefix_out,phase_nu,angles = get_output_params(do_phase=False, do_angle=False, do_sinuous=True)
+do_intrinsic_eb = False
+prefix_out,phase_nu,angles = get_output_params(do_phase=False, do_angle=False, do_sinuous=False)
 
 
 #CMB spectrum
@@ -123,25 +124,18 @@ for i1,t1 in enumerate(map_names):
 
 
 #Foreground model
-#A_sync_BB = 2.0
 A_sync_BB = 4.
 EB_sync = 2.
-#alpha_sync_EE = -0.6
-#alpha_sync_BB = -0.4
 alpha_sync_EE = -1.3
-alpha_sync_BB = -1.2
-#beta_sync = -3.
+alpha_sync_BB = -1.1
 beta_sync = -3.2
 nu0_sync = 23.
 
 #A_dust_BB = 5.0
-A_dust_BB = 15.
+A_dust_BB = 20.
 EB_dust = 2.
-#alpha_dust_EE = -0.42
-#alpha_dust_BB = -0.2
 alpha_dust_EE = -0.3
-alpha_dust_BB = -0.15
-#beta_dust = 1.59
+alpha_dust_BB = -0.1
 beta_dust = 1.53
 temp_dust = 19.6
 nu0_dust = 353.
@@ -149,7 +143,7 @@ nu0_dust = 353.
 epsilon = 0.2
 fg_intrinsic_eb = 0.
 if do_intrinsic_eb:
-    fg_intrinsic_eb = 0.03
+    fg_intrinsic_eb = 0.2
 Alens = 1.
 
 #Bandpowers

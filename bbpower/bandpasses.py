@@ -64,7 +64,7 @@ class Bandpass(object):
         if self.do_dphi1:
             dphi1 = params[self.name_dphi1]
             normed_dphi1 = dphi1 * np.pi / 180. * (self.nu - self.nu_mean) / self.nu_mean
-            dphi1_phase = np.cos(2*normed_dphi1) + 1j * np.sin(2*normed_dphi1)
+            dphi1_phase = np.cos(2.*normed_dphi1) + 1j * np.sin(2.*normed_dphi1)
             self.bnu_dnu *= dphi1_phase
 
         conv_sed = np.sum(sed(self.nu + dnu) * self.bnu_dnu) * self.cmb_norm
@@ -82,9 +82,9 @@ class Bandpass(object):
 
     def get_rotation_matrix(self, params):
         if self.do_angle:
-            phi = params[self.name_angle]
-            c=np.cos(2*phi)
-            s=np.sin(2*phi)
+            phi = params[self.name_angle] * np.pi / 180.
+            c=np.cos(2.*phi)
+            s=np.sin(2.*phi)
             return np.array([[c,s],[-s,c]])
         else:
             return None

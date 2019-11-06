@@ -3,7 +3,7 @@ import os
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
-from .types import NpzFile
+from .types import NpzFile, YamlFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
 from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
