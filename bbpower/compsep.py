@@ -457,27 +457,13 @@ class BBCompSep(PipelineStage):
                 if params0[jname] == 0:
                     derivj = (flat_modelj - flat_model0) / h
                 F[i, j] = np.einsum('i, ij, j', derivi, self.invcov, derivj)
-        # lol check this inversion
+        # lol this inversion
         self.F = F
         self.fisher_cov = np.mat(F).I
 
         for k in range(N):
             arg = names[k]
             print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
-
-        if use_nd:
-            import numdifftools as nd
-            hess = nd.Hessian(self.cheap_lnprob)
-            F = hess(self.params.p0)
-            self.F = F
-            self.fisher_cov = np.mat(F).I
-
-            names = self.params.p_free_names
-            N = len(names)
-            params0 = self.params.build_params(self.params.p0)
-            for k in range(N):
-                arg = names[k]
-                print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
         return
     
     def run(self):
@@ -517,9 +503,9 @@ class BBCompSep(PipelineStage):
         elif self.config.get('sampler')=='fisher': 
             try:
                 h = self.config.get('h')
+                self.run_fisher(h)
             except:
-                pass
-            self.run_fisher(h)
+                self.run_fisher()
             np.savez(self.get_output('param_chains'), 
                      F=self.F, 
                      cov=self.fisher_cov, 

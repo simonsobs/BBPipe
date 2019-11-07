@@ -1,0 +1,20 @@
+
+A_sync_BB = 4.
+EB_sync = 2.
+alpha_sync_EE = -1.3
+alpha_sync_BB = -1.2
+beta_sync = -3.2
+nu0_sync = 23.
+
+A_dust_BB = 15.
+EB_dust = 2.
+alpha_dust_EE = -0.3
+alpha_dust_BB = -0.15
+beta_dust = 1.53
+temp_dust = 19.6
+nu0_dust = 353.
+
+epsilon = 0.2
+fg_intrinsic_eb = 0.
+Alens = 1.
+r = 0.
