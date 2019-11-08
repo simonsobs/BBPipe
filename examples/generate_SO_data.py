@@ -2,11 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from noise_calc import Simons_Observatory_V3_SA_noise
 
-def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
-    if do_sinuous:
-        prefix_out = "./bias/SO_V3_Mock1eb_sinuous"
-    else:
-        prefix_out = "./SO_V3_Mock3_phase%d_angle%d"%(int(do_phase),int(do_angle))
+def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=False):
+    prefix_out = "./data/SO_V3_Mock3_phase%d_angle%d_sinuous%d_eb%d"%(int(do_phase), 
+                    int(do_angle), int(do_sinuous), int(do_eb))
     if do_angle:
         #angles = [1.,-1.,1.,-1.,1.,-1.]
         angles = [0., 0., 0., 0., 0., 0.]
@@ -37,13 +35,15 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False):
                     './data/sinuous.txt', 
                     './data/sinuous.txt']
 
-    return prefix_out,phase_nu,angles
+    return prefix_out, phase_nu, angles, do_eb
 
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-do_intrinsic_eb = False
-prefix_out,phase_nu,angles = get_output_params(do_phase=False, do_angle=False, do_sinuous=False)
+prefix_out, phase_nu, angles, do_eb = get_output_params(do_phase=False, 
+                                                 do_angle=False, 
+                                                 do_sinuous=True, 
+                                                 do_eb=False)
 
 
 #CMB spectrum
@@ -83,7 +83,6 @@ class Bpass(object):
         self.bnu/=np.sum(self.dnu*self.bnu*self.nu**2*fcmb(self.nu))
         self.norm = 1./np.sum(self.dnu*self.bnu*self.phase*self.nu**2*fcmb(self.nu))
         self.angle=angle
-        print(self.angle)
         self.rot=np.array([[np.cos(2*self.angle),np.sin(2*self.angle)],
                            [-np.sin(2*self.angle),np.cos(2*self.angle)]])
 
@@ -126,9 +125,9 @@ for i1,t1 in enumerate(map_names):
 #Foreground model
 A_sync_BB = 5. 
 EB_sync = 2.
-alpha_sync_EE = -1.
-alpha_sync_BB = -0.8
-beta_sync = -3.2
+alpha_sync_EE = -0.8
+alpha_sync_BB = -0.6
+beta_sync = -3.1
 nu0_sync = 23.
 
 A_dust_BB = 20.
@@ -139,10 +138,10 @@ beta_dust = 1.53
 temp_dust = 19.6
 nu0_dust = 353.
 
-epsilon = -0.2
-fg_intrinsic_eb = 0.
-if do_intrinsic_eb:
-    fg_intrinsic_eb = 0.2
+epsilon = 0.2
+fg_eb = 0.
+if do_eb:
+    fg_eb = 0.1
 Alens = 1.
 
 #Bandpowers
@@ -189,13 +188,13 @@ dls_comp[0,1,0,1] = Alens*dls_cmb_bb
 
 dls_comp[1,0,1,0] = dls_sync_ee
 dls_comp[1,1,1,1] = dls_sync_bb
-dls_comp[1,0,1,1] = fg_intrinsic_eb * np.sqrt(dls_sync_ee * dls_sync_bb)
-dls_comp[1,1,1,0] = fg_intrinsic_eb * np.sqrt(dls_sync_ee * dls_sync_bb)
+dls_comp[1,0,1,1] = fg_eb * np.sqrt(dls_sync_ee * dls_sync_bb)
+dls_comp[1,1,1,0] = fg_eb * np.sqrt(dls_sync_ee * dls_sync_bb)
 
 dls_comp[2,0,2,0] = dls_dust_ee
 dls_comp[2,1,2,1] = dls_dust_bb
-dls_comp[2,0,2,1] = fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
-dls_comp[2,1,2,0] = fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
+dls_comp[2,0,2,1] = fg_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
+dls_comp[2,1,2,0] = fg_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
 
 dls_comp[1,0,2,0] = epsilon * np.sqrt(dls_sync_ee * dls_dust_ee)
 dls_comp[1,1,2,0] = epsilon * np.sqrt(dls_sync_bb * dls_dust_ee)
@@ -207,10 +206,10 @@ dls_comp[2,1,1,0] = epsilon * np.sqrt(dls_dust_bb * dls_sync_ee)
 dls_comp[2,0,1,1] = epsilon * np.sqrt(dls_dust_ee * dls_sync_bb)
 dls_comp[2,1,1,1] = epsilon * np.sqrt(dls_dust_bb * dls_sync_bb)
 
-dls_comp[1,0,2,1] = epsilon * fg_intrinsic_eb * np.sqrt(dls_sync_ee * dls_dust_bb)
-dls_comp[1,1,2,0] = epsilon * fg_intrinsic_eb * np.sqrt(dls_sync_bb * dls_dust_ee)
-dls_comp[2,0,1,1] = epsilon * fg_intrinsic_eb * np.sqrt(dls_dust_ee * dls_sync_bb)
-dls_comp[2,1,1,0] = epsilon * fg_intrinsic_eb * np.sqrt(dls_dust_bb * dls_sync_ee)
+dls_comp[1,0,2,1] = epsilon * fg_eb * np.sqrt(dls_sync_ee * dls_dust_bb)
+dls_comp[1,1,2,0] = epsilon * fg_eb * np.sqrt(dls_sync_bb * dls_dust_ee)
+dls_comp[2,0,1,1] = epsilon * fg_eb * np.sqrt(dls_dust_ee * dls_sync_bb)
+dls_comp[2,1,1,0] = epsilon * fg_eb * np.sqrt(dls_dust_bb * dls_sync_ee)
 
 #Convolve with windows
 bpw_comp=np.sum(dls_comp[:,:,:,:,None,:]*windows[None,None,None,None,:,:],axis=5)
@@ -338,8 +337,5 @@ s_n=sacc.SACC(tracers,bins,mean=v_noise,
               meta={'data_name':'SO_V3_Mock_no_noise_noise'})
 
 s_d.saveToHDF(prefix_out+".sacc")
-s_d.printInfo()
 s_f.saveToHDF(prefix_out+"_fiducial.sacc")
-s_f.printInfo()
 s_n.saveToHDF(prefix_out+"_noise.sacc")
-s_n.printInfo()

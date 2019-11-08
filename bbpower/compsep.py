@@ -18,8 +18,7 @@ class BBCompSep(PipelineStage):
     """
     name = "BBCompSep"
     inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
-    outputs = [('param_chains', NpzFile), ('config_copy', YamlFile)]
-    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'sampler':'emcee'}
+    outputs = [('sampler_out', NpzFile), ('config_copy', YamlFile)]
 
     def setup_compsep(self):
         """
@@ -351,7 +350,7 @@ class BBCompSep(PipelineStage):
                 return -np.inf
         else:
             dx = self.chi_sq_dx(params)
-        like = -0.5 * np.einsum('i, ij, j',dx,self.invcov,dx)
+        like = -0.5 * np.einsum('i, ij, j', dx, self.invcov, dx)
         return prior + like
 
     def emcee_sampler(self):
@@ -361,14 +360,16 @@ class BBCompSep(PipelineStage):
         import emcee
         from multiprocessing import Pool
         
-        fname_temp = self.get_output('param_chains')+'.h5'
-
-        backend = emcee.backends.HDFBackend(fname_temp)
+        # hmmm not exactly the right usage here
+        fname = self.get_output('sampler_out').split('.npz')[0] +'.h5'
+        param_fname = fname.split('sampler_out')[0] + 'paramnames'
+        np.savez(param_fname, self.params.p_free_names)
+        backend = emcee.backends.HDFBackend(fname)
 
         nwalkers = self.config['nwalkers']
         n_iters = self.config['n_iters']
         ndim = len(self.params.p0)
-        found_file = os.path.isfile(fname_temp)
+        found_file = os.path.isfile(fname)
 
         if not found_file:
             backend.reset(nwalkers,ndim)
@@ -465,21 +466,26 @@ class BBCompSep(PipelineStage):
             arg = names[k]
             print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
         return
-    
-    def run(self):
+
+    def save_settings(self):
         from shutil import copyfile
         copyfile(self.get_input('config'), self.get_output('config_copy')) 
+        print(self.get_input('cells_coadded'))
+        return
+    
+    def run(self):
+        self.save_settings()
         self.setup_compsep()
+
         if self.config.get('sampler')=='emcee':
             sampler = self.emcee_sampler()
-            np.savez(self.get_output('param_chains'),
-                     chain=sampler.chain,         
-                     names=self.params.p_free_names)
             print("Finished sampling")
+
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
             chi2 = -2*self.lnprob(sampler)
-            np.savez(self.get_output('param_chains'),
+
+            np.savez(self.get_output('sampler_out'),
                      params=sampler,
                      names=self.params.p_free_names,
                      chi2=chi2)
@@ -487,30 +493,33 @@ class BBCompSep(PipelineStage):
             for n,p in zip(self.params.p_free_names,sampler):
                 print(n+" = %.3lE" % p)
             print("Chi2: %.3lE" % chi2)
+
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
-            np.savez(self.get_output('param_chains'),
+
+            np.savez(self.get_output('sampler_out'),
                      chi2=sampler,
                      names=self.params.p_free_names)
             print("Chi^2:",sampler)
+
         elif self.config.get('sampler')=='timing':
             sampler = self.timing()
-            np.savez(self.get_output('param_chains'),
+
+            np.savez(self.get_output('sampler_out'),
                      timing=sampler[1],
                      names=self.params.p_free_names)
             print("Total time:",sampler[0])
             print("Time per eval:",sampler[1])
+
         elif self.config.get('sampler')=='fisher': 
-            try:
-                h = self.config.get('h')
-                self.run_fisher(h)
-            except:
-                self.run_fisher()
-            np.savez(self.get_output('param_chains'), 
+            self.run_fisher()
+
+            np.savez(self.get_output('sampler_out'), 
                      F=self.F, 
                      cov=self.fisher_cov, 
                      names=self.params.p_free_names, 
                      p0=self.params.p0)
+
         else:
             raise ValueError("Unknown sampler")
 

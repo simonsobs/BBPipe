@@ -1,0 +1,23 @@
+# Foreground model
+Alens = 1.
+
+A_dust_BB = 20.
+EB_dust = 2.
+alpha_dust_EE = -0.4
+alpha_dust_BB = -0.2
+beta_dust = 1.53
+temp_dust = 19.6
+nu0_dust = 353.
+
+A_sync_BB = 5. 
+EB_sync = 2.
+alpha_sync_EE = -0.8
+alpha_sync_BB = -0.6
+beta_sync = -3.1
+nu0_sync = 23.
+
+epsilon = 0.2
+fg_eb = 0.
+if do_eb:
+    fg_eb = 0.1
+

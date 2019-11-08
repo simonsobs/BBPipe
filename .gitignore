@@ -18,3 +18,6 @@ slurmjob.sl
 submit_job.sh
 test/sample_out/
 .bashrc
+pol_angle_runs/biastest/output/*
+updated_runs/
+examples/data/olddata/
