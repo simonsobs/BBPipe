@@ -47,6 +47,7 @@ def grabargs():
     parser.add_argument("--dust_marginalization", action='store_true',help = "marginalization of the cosmo likelihood over a dust template", default=False)
     parser.add_argument("--sync_marginalization", action='store_true', help = "marginalization of the cosmo likelihood over a sync template", default=False)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
+    parser.add_argument("--path_to_bbpipe", type=str, help = "path to bbpipe binary", default="/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe")
     parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
     parser.add_argument("--apotype", type=str, help = "apodization type", default='C1')
     parser.add_argument("--aposize", type=float, help = "apodization size", default=8.0)
@@ -139,6 +140,9 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
                 cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims='',
                 Nspec=0.0):
+    '''
+    function generating the config file
+    '''
 
     ndim = 1
     if dust_marginalization: ndim += 1
@@ -200,7 +204,9 @@ BBREstimation:
 ######################################################
 ## MAIN FUNCTION
 def main():
-
+    '''
+    main function
+    '''
     args = grabargs()
 
     # check for output directory
@@ -240,13 +246,13 @@ def main():
                 external_sky_sims=args.external_sky_sims, Nspec=args.Nspec)
         # submit call 
         # time.sleep(10*rank)
-        print("subprocess call = ", "/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe", os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
+        print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
         # p = subprocess.call("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"), shell=True, stdout=subprocess.PIPE)
         # p = subprocess.Popen("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"), shell=True, stdout=subprocess.PIPE)
         # p.communicate()[0]
         # p.wait()
         # p = subprocess.check_output("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
-        p = os.system("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
+        p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
 
     ####################
     barrier()
