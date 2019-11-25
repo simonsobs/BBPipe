@@ -48,6 +48,10 @@ def grabargs():
     parser.add_argument("--sync_marginalization", action='store_true', help = "marginalization of the cosmo likelihood over a sync template", default=False)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
     parser.add_argument("--path_to_bbpipe", type=str, help = "path to bbpipe binary", default="/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe")
+    parser.add_argument("--path_to_binary_mask", type=str, help = "path to binary mask", default="/global/cscratch1/sd/josquin/SO_sims/mask_hits.fits")
+    parser.add_argument("--path_to_norm_hits", type=str, help = "path to normed hits map", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/norm_nHits_SA_35FOV_G_nside512.fits")
+    parser.add_argument("--path_to_ClBBlens", type=str, help = "path to lensed BB angular spectrum", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_lensed_scalar.fits")
+    parser.add_argument("--path_to_ClBBprim", type=str, help = "path to primordial BB angular spectrum, assuming r=1", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits")
     parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
     parser.add_argument("--apotype", type=str, help = "apodization type", default='C1')
     parser.add_argument("--aposize", type=float, help = "apodization size", default=8.0)
@@ -79,7 +83,9 @@ def chunkIt(seq, num):
 
 ######################################
 #### TEST.YML
-def generate_pipe_yml(id_tag, path_to_temp_files='./', mask_apo=''):
+def generate_pipe_yml(id_tag, path_to_temp_files='./', mask_apo='', 
+        path_to_binary_mask='', path_to_norm_hits='', path_to_ClBBlens='',
+        path_to_ClBBprim=''):
     global_string = '''
 modules: test_mapbased_param
 
@@ -104,11 +110,11 @@ stages:
 # a previous stage must be defined here.  They are listed by tag.
 inputs:
     # binary_mask: /global/cscratch1/sd/josquin/SO_sims/mask_04000.fits
-    binary_mask: /global/cscratch1/sd/josquin/SO_sims/mask_hits.fits
+    binary_mask: '''+path_to_binary_mask+'''
     # mask_apo: '''+mask_apo+'''
-    norm_hits_map: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/norm_nHits_SA_35FOV_G_nside512.fits
-    Cl_BB_lens: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_lensed_scalar.fits
-    Cl_BB_prim_r1: /global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits
+    norm_hits_map: '''+path_to_norm_hits+'''
+    Cl_BB_lens: '''+path_to_ClBBlens+'''
+    Cl_BB_prim_r1: '''+path_to_ClBBprim+'''
 
 # Overall configuration file 
 config: '''+os.path.join(path_to_temp_files,'config_'+id_tag+'.yml')+'''
@@ -234,7 +240,9 @@ def main():
         id_tag_sim = format(sim, '05d')
         id_tag = args.tag+'_'+id_tag_rank+'_'+id_tag_sim
         # create test.yml
-        generate_pipe_yml(id_tag, path_to_temp_files=args.path_to_temp_files, mask_apo=args.mask_apo)
+        generate_pipe_yml(id_tag, path_to_temp_files=args.path_to_temp_files, mask_apo=args.mask_apo, 
+            path_to_binary_mask=args.path_to_binary_mask, path_to_norm_hits=args.path_to_norm_hits, 
+            path_to_ClBBlens=args.path_to_ClBBlens, path_to_ClBBprim=args.path_to_ClBBprim)
         # create config.yml
         generate_config_yml(id_tag, sensitivity_mode=args.sensitivity_mode, knee_mode=args.knee_mode,\
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
