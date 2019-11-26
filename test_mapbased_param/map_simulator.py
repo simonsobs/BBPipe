@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import FitsFile, TextFile
+from types_ import FitsFile, TextFile
 import numpy as np
 import matplotlib
 # matplotlib.use('agg')
@@ -7,8 +7,8 @@ import matplotlib
 import matplotlib.pyplot as pl
 import pysm
 from pysm.nominal import models
-from . import mk_noise_map2 as mknm
-from . import V3calc as V3
+import mk_noise_map2 as mknm
+import V3calc as V3
 import healpy as hp
 import copy
 import glob

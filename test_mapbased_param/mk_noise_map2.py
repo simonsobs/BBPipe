@@ -1,15 +1,15 @@
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
-from . import V3calc as v3
+import V3calc as v3
 import os
 
-def get_nhits(nside_out=64) :
+def get_nhits(nside_out=512) :
     """
     Generates an Nhits map in Galactic coordinates.
     nside_out : output resolution
     """
-    fname_out='norm_nHits_SA_35FOV_G.fits'
+    fname_out='norm_nHits_SA_35FOV_G_nside512.fits'
 
     if not os.path.isfile(fname_out) :
         fname_in='norm_nHits_SA_35FOV.fits'

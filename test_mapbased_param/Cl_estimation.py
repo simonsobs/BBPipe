@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import FitsFile, TextFile, NumpyFile
+from types_ import FitsFile, TextFile, NumpyFile
 import numpy as np
 import pylab as pl
 import pymaster as nmt
@@ -8,7 +8,7 @@ from fgbuster.cosmology import _get_Cl_cmb
 from fgbuster.mixingmatrix import MixingMatrix
 import scipy.constants as constants
 from astropy.cosmology import Planck15
-from . import mk_noise_map2 as mknm
+import mk_noise_map2 as mknm
 import scipy
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
