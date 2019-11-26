@@ -9,7 +9,7 @@ BBCompSep:
         cmb_templates: ["./examples/data/camb_lens_nobb.dat", 
                         "./examples/data/camb_lens_r1.dat"]
         params:
-            r_tensor: ['r_tensor', 'tophat', [-10., 1.e-5, 10.]]
+            r_tensor: ['r_tensor', 'tophat', [-10., 0., 10.]]
             A_lens: ['A_lens', 'tophat', [0., 1., "inf"]]
 
     fg_model:
@@ -26,14 +26,14 @@ BBCompSep:
             cl_parameters:
                 EE:
                    amp_d_ee: ['amp', 'tophat', [0., 40., "inf"]]
-                   alpha_d_ee: ['alpha', 'tophat', [-5., -0.3, 0.]]
+                   alpha_d_ee: ['alpha', 'tophat', [-5., -0.4, 0.]]
                    l0_d_ee: ['ell0', 'fixed', [80.]]
                 BB:
                    amp_d_bb: ['amp', 'tophat', [0., 20., "inf"]]
-                   alpha_d_bb: ['alpha', 'tophat', [-5., -0.1, 0.]]
+                   alpha_d_bb: ['alpha', 'tophat', [-5., -0.2, 0.]]
                    l0_d_bb: ['ell0', 'fixed', [80.]]
             cross:
-                epsilon_ds: ['component_2', 'tophat', [-1., 0.2, 1.]]
+                epsilon_ds: ['component_2', 'tophat', [-1., -0.2, 1.]]
 
         component_2:
             name: Synchrotron
@@ -47,11 +47,11 @@ BBCompSep:
             cl_parameters:
                 EE:
                     amp_s_ee: ['amp', 'tophat', [0., 8., "inf"]]
-                    alpha_s_ee: ['alpha', 'tophat', [-5., -1.3, 0.]]
+                    alpha_s_ee: ['alpha', 'tophat', [-5., -1., 0.]]
                     l0_s_ee: ['ell0', 'fixed', [80.]]
                 BB:
                     amp_s_bb: ['amp', 'tophat', [0., 4., "inf"]]
-                    alpha_s_bb: ['alpha', 'tophat', [-5., -1.1, 0.]]
+                    alpha_s_bb: ['alpha', 'tophat', [-5., -0.8, 0.]]
                     l0_s_bb: ['ell0', 'fixed', [80.]]
 
     systematics:
@@ -61,7 +61,7 @@ BBCompSep:
                 parameters:
                     shift_1: ['shift', 'fixed', [0.]]
                     gain_1: ['gain', 'fixed', [1.]]
-                    angle_1: ['angle', 'fixed', [0.]]
+                    angle_1: ['angle', 'fixed', [5.]]
                     dphi1_1: ['dphi1', 'fixed', [0.]]
             bandpass_2:
                 phase_nu: "./examples/data/phase_3layer_lf_0.txt"
@@ -76,14 +76,14 @@ BBCompSep:
                     shift_3: ['shift', 'fixed', [0.]]
                     gain_3: ['gain', 'fixed', [1.]]
                     angle_3: ['angle', 'fixed', [0.]]
-                    dphi1_3: ['dphi1', 'fixed', [0.1]]
+                    dphi1_3: ['dphi1', 'fixed', [0.]]
             bandpass_4:
                 phase_nu: "./examples/data/phase_3layer_mf_0.txt"
                 parameters:
                     shift_4: ['shift', 'fixed', [0.]]
                     gain_4: ['gain', 'fixed', [1.]]
-                    angle_4: ['angle', 'fixed', [0.]]
-                    dphi1_4: ['dphi1', 'fixed', [0.1]]
+                    angle_4: ['angle', 'fixed', [1.]]
+                    dphi1_4: ['dphi1', 'fixed', [0.]]
             bandpass_5:
                 phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
                 parameters:
