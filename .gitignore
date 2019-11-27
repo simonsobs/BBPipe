@@ -21,3 +21,4 @@ test/sample_out/
 pol_angle_runs/biastest/output/*
 updated_runs/
 examples/data/olddata/
+*.swp

@@ -26,7 +26,7 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=Fa
 
     if do_sinuous:
         if do_phase:
-            print("wait fuck we don't know how to do phase and sinuous yet plz fix")
+            print("we don't know how to do phase and sinuous yet. need to multiply those out still. ")
             exit()
         phase_nu = ['./data/sinuous.txt', 
                     './data/sinuous.txt',
