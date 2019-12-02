@@ -6,9 +6,10 @@ class Bandpass(object):
     def __init__(self, nu, dnu, bnu, bp_number, config, phi_nu=None):
         self.number = bp_number
         self.nu = nu
-        self.bnu_dnu = bnu * nu**2 * dnu
-        self.nu_mean = np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu * nu) / \
-                       np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu)
+        self.bnu_dnu = bnu * dnu
+        # do we need to shift the nu^2 term here also for bandpass shifts..................................
+        self.nu_mean = np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu * nu * nu**2) / \
+                       np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu * nu**2)
         field = 'bandpass_%d' % bp_number
 
         # Get frequency-dependent angle if necessary
@@ -52,12 +53,13 @@ class Bandpass(object):
                 self.name_angle = n
             if p[0] == 'dphi1':
                 self.do_dphi1 = True
+                self.is_complex = True
                 self.name_dphi1 = n
-        self.cmb_norm = 1./np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu)
         return
 
     def convolve_sed(self, sed, params):
         dnu = 0.
+        dphi1_phase = 1.
         if self.do_shift:
             dnu = params[self.name_shift] * self.nu_mean
         
@@ -65,9 +67,10 @@ class Bandpass(object):
             dphi1 = params[self.name_dphi1]
             normed_dphi1 = dphi1 * np.pi / 180. * (self.nu - self.nu_mean) / self.nu_mean
             dphi1_phase = np.cos(2.*normed_dphi1) + 1j * np.sin(2.*normed_dphi1)
-            self.bnu_dnu *= dphi1_phase
 
-        conv_sed = np.sum(sed(self.nu + dnu) * self.bnu_dnu) * self.cmb_norm
+        nu_prime = self.nu + dnu
+        cmb_norm = np.sum( CMB('K_RJ').eval(nu_prime) * self.bnu_dnu * nu_prime**2 )
+        conv_sed = np.sum( sed(nu_prime) * self.bnu_dnu * dphi1_phase * nu_prime**2 ) / cmb_norm
 
         if self.do_gain:
             conv_sed *= params[self.name_gain]

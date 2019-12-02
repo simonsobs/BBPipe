@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from noise_calc import Simons_Observatory_V3_SA_noise
 
 def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=False):
-    prefix_out = "./data/SO_V3_Mock3_phase%d_angle%d_sinuous%d_eb%d"%(int(do_phase), 
+    prefix_out = "./data/SO_V3_Mock3r0.01_phase%d_angle%d_sinuous%d_eb%d"%(int(do_phase), 
                     int(do_angle), int(do_sinuous), int(do_eb))
     if do_angle:
         #angles = [1.,-1.,1.,-1.,1.,-1.]
@@ -42,7 +42,7 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=Fa
 #  - A non-zero constant polarization angle (do_angle=True)
 prefix_out, phase_nu, angles, do_eb = get_output_params(do_phase=False, 
                                                  do_angle=False, 
-                                                 do_sinuous=True, 
+                                                 do_sinuous=False, 
                                                  do_eb=False)
 
 
@@ -143,6 +143,7 @@ fg_eb = 0.
 if do_eb:
     fg_eb = 0.1
 Alens = 1.
+r_tens = 0.01
 
 #Bandpowers
 dell=10
@@ -182,9 +183,14 @@ dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
 dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
 
 _, dls_cmb_ee, dls_cmb_bb, _= read_camb("./data/camb_lens_nobb.dat")
+_, dls_cmb_ee1, dls_cmb_bb1, _= read_camb("./data/camb_lens_r1.dat")
+
+cmb_ee = r_tens*(dls_cmb_ee1 - dls_cmb_ee) + dls_cmb_ee
+cmb_bb = r_tens*(dls_cmb_bb1 - dls_cmb_bb) + Alens * dls_cmb_bb
+
 dls_comp = np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
-dls_comp[0,0,0,0] = dls_cmb_ee 
-dls_comp[0,1,0,1] = Alens*dls_cmb_bb
+dls_comp[0,0,0,0] = cmb_ee
+dls_comp[0,1,0,1] = cmb_bb
 
 dls_comp[1,0,1,0] = dls_sync_ee
 dls_comp[1,1,1,1] = dls_sync_bb
