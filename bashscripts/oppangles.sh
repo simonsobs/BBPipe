@@ -1,43 +1,36 @@
 #~/usr/bin/bash
 
-fdir="./updated_runs/bias_shifts/opppair/"
+fdir="./updated_runs/bias_angles/opppair/"
+for j in 1 3 5
+do 
+    for ((k=1; k<=9; k++))
+    do
+        sed "s/angle\_$j: \['angle', 'fixed', \[0.\]\]/angle\_$j: \['angle', 'fixed', \[-0.$k\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
+        sed -i "s/angle\_$jj: \['angle', 'fixed', \[0.\]\]/angle\_$jj: \['angle', 'fixed', \[0.$k\]\]/" $fdir"runconfig.yml"
+        /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
+        cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_angle"$j$jj"_-0."$k"_0.$k.npz"
+    done
+
+    for ((k=1; k<=9; k++))
+    do
+        sed "s/angle\_$j: \['angle', 'fixed', \[0.\]\]/angle\_$j: \['angle', 'fixed', \[0.$k\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
+        sed -i "s/angle\_$jj: \['angle', 'fixed', \[0.\]\]/angle\_$jj: \['angle', 'fixed', \[-0.$k\]\]/" $fdir"runconfig.yml"
+        /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
+        cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_angle"$j$jj"_0."$k"_-0.$k.npz"
+    done
+
+done
+
 for j in 1 3 5
 do 
     jj=$((j+1))
-    sed "s/shift\_$j: \['shift', 'fixed', \[0.\]\]/shift\_$j: \['shift', 'fixed', \[-0.1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
-    sed -i "s/shift\_$jj: \['shift', 'fixed', \[0.\]\]/shift\_$jj: \['shift', 'fixed', \[0.1\]\]/" $fdir"runconfig.yml"
+    sed "s/angle\_$j: \['angle', 'fixed', \[0.\]\]/angle\_$j: \['angle', 'fixed', \[-1.\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
+    sed -i "s/angle\_$jj: \['angle', 'fixed', \[0.\]\]/angle\_$jj: \['angle', 'fixed', \[1.\]\]/" $fdir"runconfig.yml"
     /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-    cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_shift"$j$jj"_-0.1_0.1.npz"
+    cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_angle"$j$jj"_-1.0_1.0.npz"
 
-    sed "s/shift\_$j: \['shift', 'fixed', \[0.\]\]/shift\_$j: \['shift', 'fixed', \[0.1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
-    sed -i "s/shift\_$jj: \['shift', 'fixed', \[0.\]\]/shift\_$jj: \['shift', 'fixed', \[-0.1\]\]/" $fdir"runconfig.yml"
+    sed "s/angle\_$j: \['angle', 'fixed', \[0.\]\]/angle\_$j: \['angle', 'fixed', \[1.\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
+    sed -i "s/angle\_$jj: \['angle', 'fixed', \[0.\]\]/angle\_$jj: \['angle', 'fixed', \[-1.\]\]/" $fdir"runconfig.yml"
     /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-    cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_shift"$j$jj"_0.1_-0.1.npz"
-
-    sed "s/shift\_$j: \['shift', 'fixed', \[0.\]\]/shift\_$j: \['shift', 'fixed', \[0.1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
-    sed -i "s/shift\_$jj: \['shift', 'fixed', \[0.\]\]/shift\_$jj: \['shift', 'fixed', \[0.1\]\]/" $fdir"runconfig.yml"
-    /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-    cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_shift"$j$jj"_0.1_0.1$k.npz"
-
-    sed "s/shift\_$j: \['shift', 'fixed', \[0.\]\]/shift\_$j: \['shift', 'fixed', \[-0.1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
-    sed -i "s/shift\_$jj: \['shift', 'fixed', \[0.\]\]/shift\_$jj: \['shift', 'fixed', \[-0.1\]\]/" $fdir"runconfig.yml"
-    /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-    cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_shift"$j$jj"_-0.1_-0.1$k.npz"
-
-    for ((k=1; k<=9; k++))
-    do
-        sed "s/shift\_$j: \['shift', 'fixed', \[0.\]\]/shift\_$j: \['shift', 'fixed', \[-0.0$k\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
-        sed -i "s/shift\_$jj: \['shift', 'fixed', \[0.\]\]/shift\_$jj: \['shift', 'fixed', \[0.0$k\]\]/" $fdir"runconfig.yml"
-        /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-        cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_shift"$j$jj"_-0.0"$k"_0.0$k.npz"
-    done
-
-    for ((k=1; k<=9; k++))
-    do
-        sed "s/shift\_$j: \['shift', 'fixed', \[0.\]\]/shift\_$j: \['shift', 'fixed', \[0.0$k\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
-        sed -i "s/shift\_$jj: \['shift', 'fixed', \[0.\]\]/shift\_$jj: \['shift', 'fixed', \[-0.$k\]\]/" $fdir"runconfig.yml"
-        /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-        cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_shift"$j$jj"_0.0"$k"_-0.0$k.npz"
-    done
-
+    cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_angle"$j$jj"_1.0_-1.0.npz"
 done
