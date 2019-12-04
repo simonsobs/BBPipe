@@ -1,0 +1,16 @@
+modules: bbpower
+launcher: local
+stages:
+    - name: BBCompSep
+      nprocess: 1
+resume: False
+
+inputs:
+    cells_coadded: ./examples/data/SO_V3_Mock3_phase0_angle0_sinuous0_eb0.sacc
+    cells_fiducial: ./examples/data/SO_V3_Mock3_phase0_angle0_sinuous0_eb0_fiducial.sacc
+    cells_noise: ./examples/data/SO_V3_Mock3_phase0_angle0_sinuous0_eb0_noise.sacc
+
+config: updated_runs/bias_gains/perchannel/runconfig.yml
+output_dir: updated_runs/bias_gains/perchannel/output
+log_dir: updated_runs/bias_gains/perchannel/output
+pipeline_log: updated_runs/bias_gains/perchannel/output/log.txt
