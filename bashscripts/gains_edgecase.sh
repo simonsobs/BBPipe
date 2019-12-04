@@ -23,6 +23,7 @@ done
 fdir="./updated_runs/bias_gains/pairwise/"
 for j in 1 3 5
 do 
+    jj=$((j+1))
     sed "s/gain\_$j: \['gain', 'fixed', \[1.\]\]/gain\_$j: \['gain', 'fixed', \[1.1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
     sed -i "s/gain\_$jj: \['gain', 'fixed', \[1.\]\]/gain\_$jj: \['gain', 'fixed', \[1.1\]\]/" $fdir"runconfig.yml"
     /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
