@@ -16,6 +16,7 @@ do
         /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
         cp $fdir"output/sampler_out.npz" $fdir"autoresults/eb_gain"$j$jj"_0.9$k.npz"
     done
+
     for ((k=1; k<=9; k++))
     do
         sed "s/gain\_$j: \['gain', 'fixed', \[1.\]\]/gain\_$j: \['gain', 'fixed', \[1.0$k\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
