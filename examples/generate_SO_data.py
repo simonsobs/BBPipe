@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from noise_calc import Simons_Observatory_V3_SA_noise
 
 def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=False):
-    prefix_out = "./data/SO_V3_Mock3r0.01_phase%d_angle%d_sinuous%d_eb%d"%(int(do_phase), 
+    prefix_out = "./data/SO_V3_Mock4_phase%d_angle%d_sinuous%d_eb%d"%(int(do_phase), 
                     int(do_angle), int(do_sinuous), int(do_eb))
     if do_angle:
         #angles = [1.,-1.,1.,-1.,1.,-1.]
@@ -45,6 +45,9 @@ prefix_out, phase_nu, angles, do_eb = get_output_params(do_phase=False,
                                                  do_sinuous=False, 
                                                  do_eb=False)
 
+
+#gains = [0.98, 1.02, 1.01, 1.02, 0.99, 1.02]
+gains = np.ones(6)
 
 #CMB spectrum
 def fcmb(nu):
@@ -143,7 +146,8 @@ fg_eb = 0.
 if do_eb:
     fg_eb = 0.1
 Alens = 1.
-r_tens = 0.01
+#r_tens = 0.01
+r_tens = 0.0
 
 #Bandpowers
 dell=10
@@ -224,9 +228,9 @@ bpw_comp=np.sum(dls_comp[:,:,:,:,None,:]*windows[None,None,None,None,:,:],axis=5
 nfreqs=len(bpss)
 seds=np.zeros([3,nfreqs,2,2]) #[ncomp,n_nu]
 for ib,b in enumerate(bpss):
-    seds[0,ib]=b.convolve_sed(lambda nu : comp_sed(nu,None,None,None,'cmb'))
-    seds[1,ib]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_sync,beta_sync,None,'sync'))
-    seds[2,ib]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_dust,beta_dust,temp_dust,'dust'))
+    seds[0,ib]=b.convolve_sed(lambda nu : comp_sed(nu,None,None,None,'cmb')) * gains[ib]
+    seds[1,ib]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_sync,beta_sync,None,'sync')) * gains[ib]
+    seds[2,ib]=b.convolve_sed(lambda nu : comp_sed(nu,nu0_dust,beta_dust,temp_dust,'dust')) * gains[ib]
 
 def rotate_cells_mat(mat1, mat2, cls):
     if mat1 is not None:
@@ -246,7 +250,7 @@ for f1 in range(nfreqs):
         bpw_freq_sig[f1,:,f2,:,:]=clrot
 
 #Add noise
-sens=1
+sens=2
 knee=1
 ylf=1
 fsky=0.1
