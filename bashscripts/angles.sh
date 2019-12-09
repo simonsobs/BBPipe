@@ -22,19 +22,16 @@ for j in 1 3 5
 do 
     jj=$((j+1))
 
-    # symmetric
     for k in {0..20}
     do
+        # symmetric
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
         sed "s/angle\_$j: \['angle', 'fixed', \[0.\]\]/angle\_$j: \['angle', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
         sed -i "s/angle\_$jj: \['angle', 'fixed', \[0.\]\]/angle\_$jj: \['angle', 'fixed', \[$x1\]\]/" $fdir"runconfig.yml"
         /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
         cp $fdir"output/sampler_out.npz" $fdir"autoresults/symmetric_eb_angle"$j$jj"_$x1.npz"
-    done
 
-    # asymmetric
-    for k in {0..20}
-    do
+        # asymmetric
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
         x2=$(echo "scale=3; $xmax-$k*$dx" | bc)
         sed "s/angle\_$j: \['angle', 'fixed', \[0.\]\]/angle\_$j: \['angle', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"

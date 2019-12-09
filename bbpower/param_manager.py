@@ -6,7 +6,7 @@ class ParameterManager(object):
     def _add_parameter(self, p_name, p):
         # If fixed parameter, just add its name and value
         if p[1] == 'fixed':
-            self.p_fixed.append((p_name, p[2][0]))
+            self.p_fixed.append((p_name, float(p[2][0])))
             return  # Then move on
 
         # Otherwise it's free
@@ -18,9 +18,9 @@ class ParameterManager(object):
         self.p_free_priors.append(p)
         # Add fiducial value to initial vector
         if p[1] == 'tophat':
-            p0 = p[2][1]
+            p0 = float(p[2][1])
         elif p[1] == 'Gaussian':
-            p0 = p[2][0]
+            p0 = float(p[2][0])
         else:
             raise ValueError("Unknown prior type %s" % p[1])
         self.p0.append(p0)
