@@ -176,7 +176,7 @@ class BBClEstimation(PipelineStage):
         np.save('Cl_cov_clean', Cl_cov_freq_)
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
-        exit()
+        # exit()
 
 
         ### for comparison, compute the power spectrum of the noise after comp sep
