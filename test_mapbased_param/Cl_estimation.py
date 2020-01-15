@@ -8,7 +8,7 @@ from fgbuster.cosmology import _get_Cl_cmb
 from fgbuster.mixingmatrix import MixingMatrix
 import scipy.constants as constants
 from astropy.cosmology import Planck15
-import mk_noise_map2 as mknm
+from . import mk_noise_map2 as mknm
 import scipy
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
