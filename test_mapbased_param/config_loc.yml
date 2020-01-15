@@ -1,0 +1,34 @@
+global:
+    frequencies: [27,39,93,145,225,280]
+    fsky: 0.1
+    nside: 512
+    lmin: 30
+    lmax: 200
+    nlb: 5
+    custom_bins: True
+
+BBMapSim:
+    sensitivity_mode: 1
+    knee_mode: 1
+    ny_lf: 1.0
+    cmb_model: 'c1'
+    dust_model: 'd1'
+    sync_model: 's1'
+    tag: 'SO_sims'
+    noise_option: 'white_noise'
+
+BBMapParamCompSep:
+    nside_patch: 0
+
+BBClEstimation:
+    aposize: 10.0
+    apotype: 'C1'
+    purify_b: True
+    Cls_fiducial: '/Users/josquin1/Documents/Dropbox/CNRS-CR2/Simons_Observatory/SO_SAT_forecasting_tool/templates/Cls_Planck2018_lensed_scalar.fits'
+
+BBREstimation:
+    r_input: 0.000
+    A_lens: 1.0
+    dust_marginalization: False
+    ndim: 2
+    nwalkers: 500

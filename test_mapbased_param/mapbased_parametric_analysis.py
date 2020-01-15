@@ -96,7 +96,7 @@ class BBMapParamCompSep(PipelineStage):
             noise_cov__ = noise_cov_*1.0
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
 
-            res = fg.separation_recipies.weighted_comp_sep(components, instrument,
+            res = fg.separation_recipes.weighted_comp_sep(components, instrument,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
                             options=options, tol=tol, method=method)
 
