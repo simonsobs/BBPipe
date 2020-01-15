@@ -1,11 +1,11 @@
 from bbpipe import PipelineStage
-from types_ import FitsFile, TextFile, NumpyFile
+from .types import FitsFile, TextFile, NumpyFile
 import numpy as np
 import pylab as pl
 import fgbuster as fg
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
-from fgbuster.separation_recipies import weighted_comp_sep
+from fgbuster.separation_recipes import weighted_comp_sep
 from fgbuster.algebra import Wd
 
 class BBMapParamCompSep(PipelineStage):
