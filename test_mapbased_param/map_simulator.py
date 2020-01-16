@@ -132,6 +132,7 @@ class BBMapSim(PipelineStage):
         noise_cov[1::3,:] = nlev[:,np.newaxis]
         noise_cov[2::3,:] = nlev[:,np.newaxis]
         noise_cov *= binary_mask
+        noise_cov /=  hp.nside2resol(self.config['nside'], arcmin=True)
         if self.config['noise_option']!='white_noise' and self.config['noise_option']!='no_noise':
             noise_cov /= np.sqrt(nhits/np.amax(nhits))
         # we put it to square !
