@@ -80,7 +80,7 @@ class BBClEstimation(PipelineStage):
 
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))
-
+        obs_pix = np.where(mask!=0)[0]
         mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
 
         if ((self.config['noise_option']!='white_noise') 
@@ -149,20 +149,21 @@ class BBClEstimation(PipelineStage):
 
         #### compute the square root of the covariance 
         # first, reshape the covariance to be square 
+        """
         cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
         # second compute the square root of it
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
-        for p in range(cov_map.shape[-1]):
+        for p in obs_pix:
             cov_sq[:,:,p] = scipy.linalg.sqrtm(cov_map_reshaped[:,:,p])
 
         # perform N simulations of noise maps, with covariance cov
         Cl_cov_freq = [] 
-        for i_sim in range(10):
+        for i_sim in range(100):
             # generate noise following the covariance 
             noise_map_loc = np.zeros((cov_sq.shape[0],cov_sq.shape[-1]))
-            for p in range(cov_sq.shape[-1]):
+            for p in obs_pix:
                 noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
-            # take Fourier transform of the generated noise maps
+            # take power spectrum of the generated noise maps
             for c in range(int(cov_sq.shape[0]/2)):
                 # Q and U for each component: e,g, CMB, dust, sync
                 fn = get_field( mask*noise_map_loc[2*c,:], mask*noise_map_loc[2*c+1,:] )
@@ -177,6 +178,23 @@ class BBClEstimation(PipelineStage):
         # pl.loglog(Cl_cov_clean[1], 'r-')
         # pl.show()
         # exit()
+        """
+
+        # simpler approach is Eq. 31 from Stompor et al 2016, 1609.03807
+        # Cl_noise = 1/npix sum_pix ( AtNA_inv )
+        w_inv_Q = np.mean( [cov_map[0,0,p] for p in obs_pix] ) 
+        w_inv_U = np.mean( [cov_map[1,1,p] for p in obs_pix] ) 
+        # these quantities should be normalized to the pixel size
+        pixel_size_in_rad = np.nside2resol(self.config['nside'])
+        print('w_inv_Q = ', w_inv_Q)
+        print('w_inv_U = ', w_inv_U)
+        w_inv_Q /= pixel_size_in_rad
+        w_inv_U /= pixel_size_in_rad
+        print('w_inv_Q = ', w_inv_Q)
+        print('w_inv_U = ', w_inv_U)
+        print('Cl_cov_clean[1][0] = ', Cl_cov_clean[1][0])
+        import sys
+        sys.exit() 
 
 
         ### for comparison, compute the power spectrum of the noise after comp sep
