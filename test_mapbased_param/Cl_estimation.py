@@ -185,7 +185,7 @@ class BBClEstimation(PipelineStage):
         w_inv_Q = np.mean( cov_map_reshaped[0,0,obs_pix] )
         w_inv_U = np.mean( cov_map_reshaped[1,1,obs_pix] ) 
         # these quantities should be normalized to the pixel size
-        pixel_size_in_rad = np.nside2resol(self.config['nside'])
+        pixel_size_in_rad = hp.nside2resol(self.config['nside'])
         print('w_inv_Q = ', w_inv_Q)
         print('w_inv_U = ', w_inv_U)
         w_inv_Q /= pixel_size_in_rad
