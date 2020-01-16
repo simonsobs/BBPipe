@@ -182,11 +182,10 @@ class BBClEstimation(PipelineStage):
 
         # simpler approach is Eq. 31 from Stompor et al 2016, 1609.03807
         # Cl_noise = 1/npix sum_pix ( AtNA_inv )
-        pl.figure()
-        pl.semilogy(cov_map_reshaped[0,0,obs_pix] )
-        pl.semilogy(cov_map_reshaped[1,1,obs_pix] )
-        pl.show()
-
+        print(cov_map_reshaped[0,0,obs_pix] )
+        print('------')
+        print(cov_map_reshaped[1,1,obs_pix] )
+        print('------')
         w_inv_Q = np.mean( cov_map_reshaped[0,0,obs_pix] )
         w_inv_U = np.mean( cov_map_reshaped[1,1,obs_pix] ) 
         # these quantities should be normalized to the pixel size
