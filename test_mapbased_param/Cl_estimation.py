@@ -149,8 +149,8 @@ class BBClEstimation(PipelineStage):
 
         #### compute the square root of the covariance 
         # first, reshape the covariance to be square 
-        """
         cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
+        """
         # second compute the square root of it
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
         for p in obs_pix:
@@ -182,8 +182,8 @@ class BBClEstimation(PipelineStage):
 
         # simpler approach is Eq. 31 from Stompor et al 2016, 1609.03807
         # Cl_noise = 1/npix sum_pix ( AtNA_inv )
-        w_inv_Q = np.mean( [cov_map[0,0,p] for p in obs_pix] ) 
-        w_inv_U = np.mean( [cov_map[1,1,p] for p in obs_pix] ) 
+        w_inv_Q = np.mean( cov_map_reshaped[0,0,obs_pix] )
+        w_inv_U = np.mean( cov_map_reshaped[1,1,obs_pix] ) 
         # these quantities should be normalized to the pixel size
         pixel_size_in_rad = np.nside2resol(self.config['nside'])
         print('w_inv_Q = ', w_inv_Q)
