@@ -133,23 +133,24 @@ class BBClEstimation(PipelineStage):
 
         ##############################
         ### compute noise bias in the comp sep maps
-        if self.config['Nspec']==0.0:
-            Cl_cov_clean_loc = []
-            Cl_cov_freq = []
-            for f in range(len(self.config['frequencies'])):
-                fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
-                Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
-                Cl_cov_freq.append(compute_master(fn, fn, w)[3])
-            AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[0,:], np.array(Cl_cov_clean_loc), A_maxL[0,:])
-            inv_AtNA = np.linalg.inv(AtNA)
-            Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
-            Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
+        # if self.config['Nspec']==0.0:
+        Cl_cov_clean_loc = []
+        Cl_cov_freq = []
+        for f in range(len(self.config['frequencies'])):
+            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
+            Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
+            Cl_cov_freq.append(compute_master(fn, fn, w)[3])
+        # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[0,:], np.array(Cl_cov_clean_loc), A_maxL[0,:])
+        AtNA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL[:,:], axis=0), np.array(Cl_cov_clean_loc), np.mean(A_maxL[:,:], axis=0))
+        inv_AtNA = np.linalg.inv(AtNA)
+        Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
+        Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         
-        np.save('Cl_cov_clean_', Cl_cov_clean)
+        np.save('Cl_cov_clean', Cl_cov_clean)
 
         #### compute the square root of the covariance 
         # first, reshape the covariance to be square 
-        cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
+        # cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
         """
         # second compute the square root of it
         cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
@@ -182,24 +183,21 @@ class BBClEstimation(PipelineStage):
 
         # simpler approach is Eq. 31 from Stompor et al 2016, 1609.03807
         # Cl_noise = 1/npix sum_pix ( AtNA_inv )
+        """
         print(cov_map_reshaped[0,0,obs_pix] )
         print('------')
         print(cov_map_reshaped[1,1,obs_pix] )
         print('------')
-        w_inv_Q = np.min( cov_map_reshaped[0,0,obs_pix] )
-        w_inv_U = np.min( cov_map_reshaped[1,1,obs_pix] ) 
+        w_inv_Q = np.mean( cov_map_reshaped[0,0,obs_pix] )
+        w_inv_U = np.mean( cov_map_reshaped[1,1,obs_pix] ) 
         # these quantities should be normalized to the pixel size
         pixel_size_in_rad = hp.nside2resol(self.config['nside'])
-        print('w_inv_Q = ', w_inv_Q)
-        print('w_inv_U = ', w_inv_U)
-        w_inv_Q /= pixel_size_in_rad
-        w_inv_U /= pixel_size_in_rad
         print('w_inv_Q = ', w_inv_Q)
         print('w_inv_U = ', w_inv_U)
         print('Cl_cov_clean[1][0] = ', Cl_cov_clean[1][0])
         import sys
         sys.exit() 
-
+        """
 
         ### for comparison, compute the power spectrum of the noise after comp sep
         ### compute power spectra of the cleaned sky maps
