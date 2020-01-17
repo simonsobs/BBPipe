@@ -388,6 +388,19 @@ class BBCompSep(PipelineStage):
         res=minimize(chi2, self.params.p0, method="Powell")
         return res.x
 
+    def fisher(self):
+        """
+        Evaluate Fisher matrix
+        """
+        import numdifftools as nd
+        def lnprobd(p):
+            l = self.lnprob(p)
+            if l == -np.inf:
+                l = -1E100
+            return l
+        fisher = - nd.Hessian(lnprobd)(self.params.p0)
+        return fisher
+
     def singlepoint(self):
         """
         Evaluate at a single point
@@ -417,6 +430,15 @@ class BBCompSep(PipelineStage):
                      chain=sampler.chain,         
                      names=self.params.p_free_names)
             print("Finished sampling")
+        elif self.config.get('sampler')=='fisher':
+            fisher = self.fisher()
+            cov = np.linalg.inv(fisher)
+            for i,(n,p) in enumerate(zip(self.params.p_free_names,
+                                         self.params.p0)):
+                print(n+" = %.3lE +- %.3lE" % (p, np.sqrt(cov[i, i])))
+            np.savez(self.get_output('param_chains'),
+                     fisher=fisher,
+                     names=self.params.p_free_names)
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
             chi2 = -2*self.lnprob(sampler)

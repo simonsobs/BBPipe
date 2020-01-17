@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from noise_calc import Simons_Observatory_V3_SA_noise,Simons_Observatory_V3_SA_beams
 import sys
-import pymaster as nmt
+#import pymaster as nmt
 import healpy as hp
 import os
 import sacc
@@ -212,6 +212,11 @@ for b1 in range(nfreqs):
         bpw_model[b1,1,b2,1,:]+=bpw_sync_bb*seds[b1,1]*seds[b2,1]
         bpw_model[b1,0,b2,0,:]+=bpw_dust_ee*seds[b1,2]*seds[b2,2]
         bpw_model[b1,1,b2,1,:]+=bpw_dust_bb*seds[b1,2]*seds[b2,2]
+np.savez("c_ells_sky",
+         ls = ells_bpw,
+         cls_ee = bpw_model[:,0,:,0,:],
+         cls_bb = bpw_model[:,1,:,1,:])
+exit(1)         
 tracers=[]
 for b in range(nfreqs):
     T=sacc.Tracer("band%d"%(b+1),'CMBP',

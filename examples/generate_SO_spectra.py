@@ -27,7 +27,7 @@ def get_output_params(do_phase=False,do_angle=False):
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-prefix_out,phase_nu,angles=get_output_params(do_phase=True,do_angle=True)
+prefix_out,phase_nu,angles=get_output_params(do_phase=False,do_angle=False)
 
 
 #CMB spectrum
@@ -123,7 +123,9 @@ beta_dust=1.59
 temp_dust=19.6
 nu0_dust=353.
 
-Alens=1.
+prefix_out+="_2y_Al1p0"
+Alens=1.0
+nyears=2.
 
 #Bandpowers
 dell=10
@@ -205,6 +207,7 @@ cl2dl=larr_all*(larr_all+1)/(2*np.pi)
 nell=np.zeros([nfreqs,lmax+1])
 _,nell[:,2:],_=Simons_Observatory_V3_SA_noise(sens,knee,ylf,fsky,lmax+1,1)
 nell*=cl2dl[None,:]
+nell*=5./nyears
 n_bpw=np.sum(nell[:,None,:]*windows[None,:,:],axis=2)
 bpw_freq_noi=np.zeros_like(bpw_freq_sig)
 for ib,n in enumerate(n_bpw):
