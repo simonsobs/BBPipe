@@ -7,7 +7,6 @@ class Bandpass(object):
         self.number = bp_number
         self.nu = nu
         self.bnu_dnu = bnu * dnu
-        # do we need to shift the nu^2 term here also for bandpass shifts..................................
         self.nu_mean = np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu * nu * nu**2) / \
                        np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu * nu**2)
         field = 'bandpass_%d' % bp_number
