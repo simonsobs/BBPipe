@@ -1,0 +1,10 @@
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0001
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0002
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0003
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0004
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0005
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0006
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0007
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0008
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0009
+./examples/SO_V3_ns512_sens1_knee1_4split_Mock0010

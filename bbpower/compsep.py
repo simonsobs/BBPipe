@@ -3,7 +3,7 @@ import os
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
-from .types import NpzFile, YamlFile
+from .types import NpzFile, SACCFile, YamlFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
 from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
@@ -17,8 +17,10 @@ class BBCompSep(PipelineStage):
     The foreground model parameters are defined in the config.yml file. 
     """
     name = "BBCompSep"
-    inputs = [('cells_coadded', SACC),('cells_noise', SACC),('cells_fiducial', SACC)]
-    outputs = [('sampler_out', NpzFile), ('config_copy', YamlFile)]
+    inputs = [('cells_coadded', SACCFile),('cells_noise', SACCFile),('cells_fiducial', SACCFile)]
+    outputs = [('param_chains', NpzFile), ('config_copy', YamlFile)]
+    config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
+                    'sampler':'emcee'}
 
     def setup_compsep(self):
         """
@@ -104,6 +106,10 @@ class BBCompSep(PipelineStage):
         mask_w = self.s.binning.windows[0].ls > 1
         self.bpw_l = self.s.binning.windows[0].ls[mask_w]
         self.n_ell = len(self.bpw_l)
+        # D_ell factor
+        self.dl2cl = 2 * np.pi / (self.bpw_l * (self.bpw_l + 1))
+        if self.config.get('compute_dell'):
+            self.dl2cl = 1.
         _,_,_,self.ell_b,_ = self.order[0]
         self.n_bpws = len(self.ell_b)
         self.windows = np.zeros([self.ncross, self.n_bpws, self.n_ell])
@@ -212,9 +218,9 @@ class BBCompSep(PipelineStage):
                 ip2 = self.pol_order[m2]
                 pspec_params = [params[comp['names_cl_dict'][cl_comb][k]]
                                 for k in clfunc.params]
-                fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params)
+                fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl
                 if m1 != m2:
-                    fg_pspectra[i_c, i_c, ip2, ip1, :] = clfunc.eval(self.bpw_l, *pspec_params)
+                    fg_pspectra[i_c, i_c, ip2, ip1, :] = clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl
 
         # Off diagonals
         for i_c1, c_name1 in enumerate(self.fg_model.component_names):
@@ -231,9 +237,9 @@ class BBCompSep(PipelineStage):
         """
         Defines the total model and integrates over the bandpasses and windows. 
         """
-        cmb_cell = params['r_tensor'] * self.cmb_tens + \
-                   params['A_lens'] * self.cmb_lens + \
-                   self.cmb_scal  # [npol,npol,nell]
+        cmb_cell = (params['r_tensor'] * self.cmb_tens + \
+                    params['A_lens'] * self.cmb_lens + \
+                    self.cmb_scal) * self.dl2cl # [npol,npol,nell]
         fg_scaling, rot_m = self.integrate_seds(params)  # [nfreq, ncomp], [ncomp,nfreq,[matrix]]
         fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
 
@@ -360,16 +366,14 @@ class BBCompSep(PipelineStage):
         import emcee
         from multiprocessing import Pool
         
-        # hmmm not exactly the right usage here
-        fname = self.get_output('sampler_out').split('.npz')[0] +'.h5'
-        param_fname = fname.split('sampler_out')[0] + 'paramnames'
-        np.savez(param_fname, self.params.p_free_names)
-        backend = emcee.backends.HDFBackend(fname)
+        fname_temp = self.get_output('param_chains')+'.h5'
+
+        backend = emcee.backends.HDFBackend(fname_temp)
 
         nwalkers = self.config['nwalkers']
         n_iters = self.config['n_iters']
         ndim = len(self.params.p0)
-        found_file = os.path.isfile(fname)
+        found_file = os.path.isfile(fname_temp)
 
         if not found_file:
             backend.reset(nwalkers,ndim)
@@ -380,15 +384,11 @@ class BBCompSep(PipelineStage):
             pos = None
             nsteps_use = max(n_iters-len(backend.get_chain()), 0)
                                     
-        #import time
-        #start = time.time()
         with Pool() as pool:
-            #sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend, pool=pool)
             sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
             if nsteps_use > 0:
                 sampler.run_mcmc(pos, nsteps_use, store=True, progress=False);
-        #end = time.time()
-        #print("time: ", end-start)
+
         return sampler
 
     def minimizer(self):
@@ -401,6 +401,19 @@ class BBCompSep(PipelineStage):
             return c2
         res=minimize(chi2, self.params.p0, method="Powell")
         return res.x
+
+    def fisher(self):
+        """
+        Evaluate Fisher matrix
+        """
+        import numdifftools as nd
+        def lnprobd(p):
+            l = self.lnprob(p)
+            if l == -np.inf:
+                l = -1E100
+            return l
+        fisher = - nd.Hessian(lnprobd)(self.params.p0)
+        return fisher
 
     def singlepoint(self):
         """
@@ -420,58 +433,6 @@ class BBCompSep(PipelineStage):
         end = time.time()
         return end-start, (end-start)/n_eval
 
-    def cheap_lnprob(self, par):
-        params = self.params.build_params(par)
-        dx = self.cheap_chisq(params)
-        return -0.5 * np.einsum('i, ij, j', dx, self.invcov, dx)
-
-    def cheap_chisq(self, params):
-        model_cls = self.model(params)
-        return self.matrix_to_vector(model_cls).flatten()
-    
-    def run_fisher(self, h=1.e-4):
-        prior = self.params.lnprior(self.params.p0)
-        params0 = self.params.build_params(self.params.p0)
-        names = self.params.p_free_names
-        N = len(names)
-
-        model0 = self.model(params0)
-        flat_model0 = self.matrix_to_vector(model0).flatten()
-
-        # lol check this numerical derivative
-        F = np.zeros((N, N))
-        for i in range(N):
-            iname = names[i]
-            paramsi = params0.copy()
-            paramsi[iname] = (1. + h) * params0[iname]
-            if params0[iname] == 0:
-                paramsi[iname] = h
-            modeli = self.model(paramsi)
-            flat_modeli = self.matrix_to_vector(modeli).flatten()
-            derivi = (flat_modeli - flat_model0) / ( params0[iname] * h)
-            if params0[iname] == 0:
-                derivi = (flat_modeli - flat_model0) / h
-            for j in range(N):
-                jname = names[j]
-                paramsj = params0.copy()
-                paramsj[jname] = (1. + h) * params0[jname]
-                if params0[jname] == 0:
-                    paramsj[jname] = h
-                modelj = self.model(paramsj)
-                flat_modelj = self.matrix_to_vector(modelj).flatten()
-                derivj = (flat_modelj - flat_model0) / ( params0[jname] * h)
-                if params0[jname] == 0:
-                    derivj = (flat_modelj - flat_model0) / h
-                F[i, j] = np.einsum('i, ij, j', derivi, self.invcov, derivj)
-        # lol this inversion
-        self.F = F
-        self.fisher_cov = np.mat(F).I
-
-        for k in range(N):
-            arg = names[k]
-            print(arg, params0[arg], np.sqrt(self.fisher_cov[k, k]))
-        return
-
     def save_settings(self):
         from shutil import copyfile
         copyfile(self.get_input('config'), self.get_output('config_copy')) 
@@ -481,15 +442,24 @@ class BBCompSep(PipelineStage):
     def run(self):
         self.save_settings()
         self.setup_compsep()
-
         if self.config.get('sampler')=='emcee':
             sampler = self.emcee_sampler()
+            np.savez(self.get_output('param_chains'),
+                     chain=sampler.chain,         
+                     names=self.params.p_free_names)
             print("Finished sampling")
-
+        elif self.config.get('sampler')=='fisher':
+            fisher = self.fisher()
+            cov = np.linalg.inv(fisher)
+            for i,(n,p) in enumerate(zip(self.params.p_free_names,
+                                         self.params.p0)):
+                print(n+" = %.3lE +- %.3lE" % (p, np.sqrt(cov[i, i])))
+            np.savez(self.get_output('param_chains'),
+                     fisher=fisher,
+                     names=self.params.p_free_names)
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
             chi2 = -2*self.lnprob(sampler)
-
             np.savez(self.get_output('sampler_out'),
                      params=sampler,
                      names=self.params.p_free_names,
@@ -498,33 +468,19 @@ class BBCompSep(PipelineStage):
             for n,p in zip(self.params.p_free_names,sampler):
                 print(n+" = %.3lE" % p)
             print("Chi2: %.3lE" % chi2)
-
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
-
             np.savez(self.get_output('sampler_out'),
                      chi2=sampler,
                      names=self.params.p_free_names)
             print("Chi^2:",sampler)
-
         elif self.config.get('sampler')=='timing':
             sampler = self.timing()
-
             np.savez(self.get_output('sampler_out'),
                      timing=sampler[1],
                      names=self.params.p_free_names)
             print("Total time:",sampler[0])
             print("Time per eval:",sampler[1])
-
-        elif self.config.get('sampler')=='fisher': 
-            self.run_fisher()
-
-            np.savez(self.get_output('sampler_out'), 
-                     F=self.F, 
-                     cov=self.fisher_cov, 
-                     names=self.params.p_free_names, 
-                     p0=self.params.p0)
-
         else:
             raise ValueError("Unknown sampler")
 
