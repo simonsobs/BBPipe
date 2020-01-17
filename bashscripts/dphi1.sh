@@ -2,9 +2,9 @@
 
 fdir="./updated_runs/bias_dphi1/"
 
-xmin=-10
-xmax=10
-dx=0.5
+xmin=-40
+xmax=40
+dx=2
 
 # per channel
 for ((j=1; j<=6; j++))

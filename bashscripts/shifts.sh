@@ -4,12 +4,12 @@ fdir="./updated_runs/bias_shifts/"
 
 xmin=-0.02
 xmax=0.02
-dx=0.002
+dx=0.001
 
 # per channel
 for ((j=1; j<=6; j++))
 do 
-    for k in {0..20}
+    for k in {0..40}
     do
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
         sed "s/shift\_$j: \['shift', 'fixed', \[0.\]\]/shift\_$j: \['shift', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
@@ -22,7 +22,7 @@ for j in 1 3 5
 do 
     jj=$((j+1))
 
-    for k in {0..20}
+    for k in {0..40}
     do
         # symmetric
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)

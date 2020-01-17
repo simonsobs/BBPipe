@@ -380,10 +380,15 @@ class BBCompSep(PipelineStage):
             pos = None
             nsteps_use = max(n_iters-len(backend.get_chain()), 0)
                                     
+        #import time
+        #start = time.time()
         with Pool() as pool:
+            #sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend, pool=pool)
             sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
             if nsteps_use > 0:
                 sampler.run_mcmc(pos, nsteps_use, store=True, progress=False);
+        #end = time.time()
+        #print("time: ", end-start)
         return sampler
 
     def minimizer(self):
