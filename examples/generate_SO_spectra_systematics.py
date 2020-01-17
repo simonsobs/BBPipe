@@ -40,15 +40,10 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=Fa
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-<<<<<<< HEAD:examples/generate_SO_data.py
 prefix_out, phase_nu, angles, do_eb = get_output_params(do_phase=False, 
                                                  do_angle=False, 
                                                  do_sinuous=False, 
                                                  do_eb=False)
-
-=======
-prefix_out,phase_nu,angles=get_output_params(do_phase=False,do_angle=False)
->>>>>>> master:examples/generate_SO_spectra.py
 
 #gains = [0.98, 1.02, 1.01, 1.02, 0.99, 1.02]
 gains = np.ones(6)
@@ -130,7 +125,6 @@ for i1,t1 in enumerate(map_names):
 
 
 #Foreground model
-<<<<<<< HEAD:examples/generate_SO_data.py
 A_sync_BB = 5. 
 EB_sync = 2.
 alpha_sync_EE = -0.8
@@ -153,26 +147,7 @@ if do_eb:
 Alens = 1.
 #r_tens = 0.01
 r_tens = 0.0
-=======
-A_sync_BB=2.0
-EB_sync=2.
-alpha_sync_EE=-0.6
-alpha_sync_BB=-0.4
-beta_sync=-3.
-nu0_sync=23.
-
-A_dust_BB=5.0
-EB_dust=2.
-alpha_dust_EE=-0.42
-alpha_dust_BB=-0.2
-beta_dust=1.59
-temp_dust=19.6
-nu0_dust=353.
-
-prefix_out+="_2y_Al1p0"
-Alens=1.0
-nyears=2.
->>>>>>> master:examples/generate_SO_spectra.py
+nyears = 5.
 
 #Bandpowers
 dell=10
@@ -211,7 +186,6 @@ dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
 dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
 dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
 
-<<<<<<< HEAD:examples/generate_SO_data.py
 _, dls_cmb_ee, dls_cmb_bb, _= read_camb("./data/camb_lens_nobb.dat")
 _, dls_cmb_ee1, dls_cmb_bb1, _= read_camb("./data/camb_lens_r1.dat")
 
@@ -246,16 +220,6 @@ dls_comp[1,0,2,1] = epsilon * fg_eb * np.sqrt(dls_sync_ee * dls_dust_bb)
 dls_comp[1,1,2,0] = epsilon * fg_eb * np.sqrt(dls_sync_bb * dls_dust_ee)
 dls_comp[2,0,1,1] = epsilon * fg_eb * np.sqrt(dls_dust_ee * dls_sync_bb)
 dls_comp[2,1,1,0] = epsilon * fg_eb * np.sqrt(dls_dust_bb * dls_sync_ee)
-=======
-_,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
-dls_comp=np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
-dls_comp[0,0,0,0,:]=dls_cmb_ee
-dls_comp[0,1,0,1,:]=Alens*dls_cmb_bb
-dls_comp[1,0,1,0,:]=dls_sync_ee
-dls_comp[1,1,1,1,:]=dls_sync_bb
-dls_comp[2,0,2,0,:]=dls_dust_ee
-dls_comp[2,1,2,1,:]=dls_dust_bb
->>>>>>> master:examples/generate_SO_spectra.py
 
 #Convolve with windows
 bpw_comp=np.sum(dls_comp[:,:,:,:,None,:]*windows[None,None,None,None,:,:],axis=5)
