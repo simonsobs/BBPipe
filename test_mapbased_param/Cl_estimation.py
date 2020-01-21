@@ -52,14 +52,12 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     if mask_patches.shape[0] == self.config['Nspec']: Npatch = mask_patches.shape[0]
     else: Npatch = 1
     for i_patch in range(Npatch):
-        print('mask_patches.shape=',mask_patches.shape)
         obs_pix = np.where(mask_patches[i_patch,:]!=0)[0]
         # building the (possibly pixel-dependent) mixing matrix
         if self.config['Nspec']!=0: A_maxL_loc = A_maxL[i_patch]
         else: A_maxL_loc = A_maxL
 
         if i_patch == 0 : W = np.zeros((A_maxL_loc.shape[1], noise_cov.shape[0], 2, noise_cov.shape[-1]))
-        print('shape of W = ', W.shape)
         for p in obs_pix:
             for s in range(2):
                 noise_cov_inv = np.diag(1.0/noise_cov[:,s,p])
@@ -69,7 +67,8 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
 
     Cl_noise_bias = []
-    for i in range(self.conf['Nsims_bias']):
+    for i in range(self.config['Nsims_bias']):
+        print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
         # generating frequency-maps noise simulations
         nhits, noise_maps, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],

@@ -25,6 +25,7 @@ BBClEstimation:
     apotype: 'C1'
     purify_b: True
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
+    Nsims_bias: 100
 
 BBREstimation:
     r_input: 0.000
