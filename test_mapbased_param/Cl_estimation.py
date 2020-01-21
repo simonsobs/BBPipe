@@ -87,7 +87,7 @@ class BBClEstimation(PipelineStage):
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',NumpyFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
             ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),\
-            ('mask_patches', FitsFile)]
+            ('mask_patches', FitsFile),('noise_cov',FitsFile)]
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
                 ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
                     ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile)]
