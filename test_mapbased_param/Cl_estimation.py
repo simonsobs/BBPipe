@@ -49,18 +49,20 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     A_maxL and the noise covariance matrix
     """
     # output operator will be of size ncomp x npixels
-    W = np.zeros((A_maxL.shape[1], noise_cov.shape[-1]))
+    W = np.zeros((A_maxL.shape[1], noise_cov.shape[0], 2, noise_cov.shape[-1]))
     if mask_patches.shape[0] == self.config['Nspec']: Npatch = mask_patches.shape[0]
     else: Npatch = 1
     for i_patch in range(Npatch):
         print('mask_patches.shape=',mask_patches.shape)
         obs_pix = np.where(mask_patches[i_patch,:]!=0)[0]
         # building the (possibly pixel-dependent) mixing matrix
+        if self.config['Nspec']!=0: A_maxL_loc = A_maxL[i_patch]
+        else: A_maxL_loc = A_maxL
         for p in obs_pix:
             for s in range(2):
                 noise_cov_inv = np.diag(1.0/noise_cov[:,s,p])
-                inv_AtNA = np.linalg.inv(A_maxL[i_patch].T.dot(noise_cov_inv).dot(A_maxL[i_patch]))
-                W[:,p] = inv_AtNA.dot( A_maxL[i_patch].T ).dot(noise_cov_inv)
+                inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
+                W[:,:,s,p] = inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
 
     # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
 
@@ -72,7 +74,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                             nside_out=self.config['nside'], norm_hits_map=norm_hits_map,
                                 no_inh=self.config['no_inh'])
         # compute corresponding spectra
-        fn = get_field_func(mask*W.dot(noise_map[::2]), mask*W.dot(noise_map[1::2]), mask_apo)
+        fn = get_field_func(mask*np.einsum('cfp,fp->p', W[:,:,0,:], noise_map[::2]), masknp.einsum('cfp,fp->p', W[:,:,1,:],noise_map[1::2]), mask_apo)
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
 
     return Cl_noise_bias
