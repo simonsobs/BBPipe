@@ -81,8 +81,6 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
                 ind += 1
         noise_maps_ = noise_maps_[:,1:,:]
-        print('W.shape = ', W.shape)
-        print('noise_maps.shape = ', noise_maps_.shape)
         Q_noise_cmb = np.einsum('cfp,fp->p', W[:,:,0,:], noise_maps_[:,0])
         U_noise_cmb = np.einsum('cfp,fp->p', W[:,:,1,:], noise_maps_[:,1])
         # compute corresponding spectra
