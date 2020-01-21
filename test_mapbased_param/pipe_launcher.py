@@ -192,7 +192,7 @@ BBClEstimation:
     apotype:  \''''+str(apotype)+'''\'
     purify_b: True
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
-    Nsims_bias:  \''''+str(Nsims_bias)+'''\'
+    Nsims_bias:  '''+str(Nsims_bias)+'''
 
 BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
