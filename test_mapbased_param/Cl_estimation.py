@@ -72,7 +72,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         # generating frequency-maps noise simulations
         nhits, noise_maps, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
-                            nside_out=self.config['nside'], norm_hits_map=norm_hits_map,
+                            nside_out=self.config['nside'], norm_hits_map=nhits,
                                 no_inh=self.config['no_inh'])
         # compute corresponding spectra
         fn = get_field_func(mask*np.einsum('cfp,fp->p', W[:,:,0,:], noise_map[::2]), masknp.einsum('cfp,fp->p', W[:,:,1,:],noise_map[1::2]), mask_apo)
