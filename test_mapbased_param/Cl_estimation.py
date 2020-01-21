@@ -41,6 +41,41 @@ def KCMB2RJ(nu):
     return  dB(nu, Planck15.Tcmb(0).value) / (2. * (nu *1e9 / constants.c) ** 2 * constants.k)
 
 
+def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo, 
+                            w, noise_cov, mask_patches, A_maxL, nhits):
+    """
+    this function performs Nsims frequency-noise simulations
+    on which is applied the map-making operator estimated from
+    A_maxL and the noise covariance matrix
+    """
+    # output operator will be of size ncomp x npixels
+    W = np.zeros((A_maxL.shape[1], noise_cov.shape[-1]))
+    for i_patch in range(mask_patches.shape[0]):
+        obs_pix = np.where(mask_patches[i_patch,:]!=0)[0]
+        # building the (possibly pixel-dependent) mixing matrix
+        for p in obs_pix:
+            for s in range(2):
+                noise_cov_inv = np.diag(1.0/noise_cov[:,s,p])
+                inv_AtNA = np.linalg.inv(A_maxL[i_patch].T.dot(noise_cov_inv).dot(A_maxL[i_patch]))
+                W[:,p] = inv_AtNA.dot( A_maxL[i_patch].T ).dot(noise_cov_inv)
+
+    # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
+
+    Cl_noise_bias = []
+    for i in range(self.conf['Nsims_bias']):
+        # generating frequency-maps noise simulations
+        nhits, noise_maps, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+                        knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
+                            nside_out=self.config['nside'], norm_hits_map=norm_hits_map,
+                                no_inh=self.config['no_inh'])
+        # compute corresponding spectra
+        fn = get_field_func(mask*W.dot(noise_map[::2]), mask*W.dot(noise_map[1::2]), mask_apo)
+        Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
+
+    return Cl_noise_bias
+
+
+
 class BBClEstimation(PipelineStage):
     """
     Stage that performs estimate the angular power spectra of:
@@ -70,6 +105,20 @@ class BBClEstimation(PipelineStage):
         nhits = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
         nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
+
+        mask_patches = hp.read_map(self.get_input('mask_patches'), verbose=False, field=None)
+        noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
+        # reorganization of noise covariance 
+        instrument = {'frequencies':np.array(self.config['frequencies'])}
+        ind = 0
+        noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
+        for f in range(len(instrument['frequencies'])) : 
+            for i in range(3): 
+                noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
+                ind += 1
+        # removing I from all maps
+        noise_cov_ = noise_cov_[:,1:,:]
+
 
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
@@ -101,7 +150,7 @@ class BBClEstimation(PipelineStage):
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
 
-        def get_field(mp_q,mp_u,purify_e=False,purify_b=True) :
+        def get_field(mp_q, mp_u, mask_apo, purify_e=False, purify_b=True) :
             #This creates a spin-2 field with both pure E and B.
             f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=purify_e,purify_b=purify_b)
             return f2y
@@ -110,7 +159,7 @@ class BBClEstimation(PipelineStage):
         # if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
             # f2y0=get_field(mask_nh*mp_q_sim,mask_nh*mp_u_sim)
         # else:
-        f2y0=get_field(mp_q_sim,mp_u_sim)
+        f2y0=get_field(mp_q_sim,mp_u_sim,mask_apo)
         w.compute_coupling_matrix(f2y0,f2y0,b)
 
         #This wraps up the two steps needed to compute the power spectrum
@@ -137,7 +186,7 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean_loc = []
         Cl_cov_freq = []
         for f in range(len(self.config['frequencies'])):
-            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:])
+            fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:], mask_apo)
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
             Cl_cov_freq.append(compute_master(fn, fn, w)[3])
         # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[0,:], np.array(Cl_cov_clean_loc), A_maxL[0,:])
@@ -147,6 +196,11 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         
         np.save('Cl_cov_clean', Cl_cov_clean)
+
+
+        Cl_noise_bias = noise_bias_estimation(self, compute_master(), get_field(), mask, 
+                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits)
+
 
         #### compute the square root of the covariance 
         # first, reshape the covariance to be square 
@@ -218,9 +272,9 @@ class BBClEstimation(PipelineStage):
             ## signal spectra
             if comp_i > 1: purify_b_=False
             else: purify_b_=True
-            fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], purify_b=purify_b_)
+            fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], mask_apo, purify_b=purify_b_)
             # fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1], purify_b=purify_b_)
-            fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], purify_b=purify_b_)
+            fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], mask_apo, purify_b=purify_b_)
             # fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1], purify_b=purify_b_)
 
             Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
@@ -228,11 +282,11 @@ class BBClEstimation(PipelineStage):
             ## noise spectra
             # fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=True)
             # fyp_i_noise=get_field(mask_nh*post_compsep_noise[2*comp_i], mask_nh*post_compsep_noise[2*comp_i+1], purify_b=True)
-            fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], purify_b=True)
+            fyp_i_noise=get_field(mask*post_compsep_noise[2*comp_i], mask*post_compsep_noise[2*comp_i+1], mask_apo, purify_b=True)
             # fyp_i_noise=get_field(post_compsep_noise[2*comp_i], post_compsep_noise[2*comp_i+1], purify_b=True)
             # fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=True)
             # fyp_j_noise=get_field(mask_nh*post_compsep_noise[2*comp_j], mask_nh*post_compsep_noise[2*comp_j+1], purify_b=True)
-            fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], purify_b=True)
+            fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], mask_apo, purify_b=True)
             # fyp_j_noise=get_field(post_compsep_noise[2*comp_j], post_compsep_noise[2*comp_j+1], purify_b=True)
 
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
@@ -269,9 +323,9 @@ class BBClEstimation(PipelineStage):
                 if fi > fj:
                     Cl_fgs[fi, fj] = Cl_fgs[fj, fi]
                 else:
-                    fgs_i=get_field(mask*frequency_maps_[fi,0,:], mask*frequency_maps_[fi,1,:], purify_b=purify_b_)
+                    fgs_i=get_field(mask*frequency_maps_[fi,0,:], mask*frequency_maps_[fi,1,:], mask_apo, purify_b=purify_b_)
                     # fgs_i=get_field(frequency_maps_[fi,0,:], frequency_maps_[fi,1,:], purify_b=purify_b_)
-                    fgs_j=get_field(mask*frequency_maps_[fj,0,:], mask*frequency_maps_[fj,1,:], purify_b=purify_b_)
+                    fgs_j=get_field(mask*frequency_maps_[fj,0,:], mask*frequency_maps_[fj,1,:], mask_apo, purify_b=purify_b_)
                     # fgs_j=get_field(frequency_maps_[fj,0,:], frequency_maps_[fj,1,:], purify_b=purify_b_)
                     Cl_fgs[fi,fj,:] = compute_master(fgs_i, fgs_j, w)[3]
 
@@ -279,7 +333,7 @@ class BBClEstimation(PipelineStage):
 
         ########
         # estimation of the input CMB map cross spectrum
-        cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], purify_b=True)
+        cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], mask_apo, purify_b=True)
         # cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
         Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
         np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
