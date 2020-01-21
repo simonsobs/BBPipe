@@ -198,7 +198,7 @@ class BBClEstimation(PipelineStage):
         np.save('Cl_cov_clean', Cl_cov_clean)
 
 
-        Cl_noise_bias = noise_bias_estimation(self, compute_master(), get_field(), mask, 
+        Cl_noise_bias = noise_bias_estimation(self, compute_master, get_field, mask, 
                 mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits)
 
 
