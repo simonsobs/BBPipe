@@ -74,8 +74,12 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=nhits,
                                 no_inh=self.config['no_inh'])
+        print('W.shape = ', W.shape)
+        print('noise_maps.shape = ', noise_maps.shape)
+        Q_noise_cmb = np.einsum('cfp,fp->p', W[:,:,0,:], noise_maps[::2])
+        U_noise_cmb = np.einsum('cfp,fp->p', W[:,:,1,:], noise_maps[1::2])
         # compute corresponding spectra
-        fn = get_field_func(mask*np.einsum('cfp,fp->p', W[:,:,0,:], noise_maps[::2]), mask*np.einsum('cfp,fp->p', W[:,:,1,:],noise_maps[1::2]), mask_apo)
+        fn = get_field_func(mask*Q_noise_cmb, mask*U_noise_cmb, mask_apo)
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
 
     return Cl_noise_bias
