@@ -103,9 +103,11 @@ class BBClEstimation(PipelineStage):
             ('A_maxL',NumpyFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
             ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),\
             ('mask_patches', FitsFile),('noise_cov',FitsFile)]
+    
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
-                ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
-                    ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile)]
+             ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
+             ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile),
+             ('Cl_noise_bias', FitsFile)]
 
     def run(self):
 
@@ -317,6 +319,7 @@ class BBClEstimation(PipelineStage):
         hp.fitsfunc.write_cl(self.get_output('Cl_noise'), np.array(Cl_noise), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_clean'), np.array(Cl_cov_clean), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_freq'), np.array(Cl_cov_freq), overwrite=True)
+        hp.fitsfunc.write_cl(self.get_output('Cl_noise_bias'), np.array(Cl_noise_bias), overwrite=True)
 
         ###### 
         # cross power spectra of the input frequency maps 
