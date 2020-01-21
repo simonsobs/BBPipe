@@ -171,11 +171,11 @@ global:
     A_lens:  '''+str(AL_input)+'''
     no_inh: '''+str(no_inh)+'''
     Nspec: '''+str(Nspec)+'''
-
-BBMapSim:
     sensitivity_mode: '''+str(sensitivity_mode)+'''
     knee_mode: '''+str(knee_mode)+'''
     ny_lf: '''+str(ny_lf)+'''
+
+BBMapSim:
     cmb_model: 'c1'
     dust_model: 'd1'
     sync_model: 's1'
