@@ -75,6 +75,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                             nside_out=self.config['nside'], norm_hits_map=nhits,
                                 no_inh=self.config['no_inh'])
         noise_maps_ = np.zeros((noise_cov.shape[0], 3, W.shape[-1]))
+        ind = 0
         for f in range(noise_cov.shape[0]) : 
             for i in range(3): 
                 noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
