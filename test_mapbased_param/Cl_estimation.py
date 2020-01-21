@@ -58,7 +58,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         if self.config['Nspec']!=0: A_maxL_loc = A_maxL[i_patch]
         else: A_maxL_loc = A_maxL
 
-        if i_patch == 0 : W = np.zeros((A_maxL_loc.shape[0], noise_cov.shape[0], 2, noise_cov.shape[-1]))
+        if i_patch == 0 : W = np.zeros((A_maxL_loc.shape[1], noise_cov.shape[0], 2, noise_cov.shape[-1]))
         print('shape of W = ', W.shape)
         for p in obs_pix:
             for s in range(2):
