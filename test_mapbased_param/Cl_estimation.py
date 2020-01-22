@@ -213,7 +213,6 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         
-        np.save('Cl_cov_clean', Cl_cov_clean)
 
         Cl_noise_bias = noise_bias_estimation(self, compute_master, get_field, mask, 
                 mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits)
