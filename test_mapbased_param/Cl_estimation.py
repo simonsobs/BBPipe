@@ -50,7 +50,9 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     """
     # output operator will be of size ncomp x npixels
     if mask_patches.shape[0] == self.config['Nspec']: Npatch = mask_patches.shape[0]
-    else: Npatch = 1
+    else: 
+        Npatch = 1
+        mask_patches = mask_patches[np.newaxis,:]
     for i_patch in range(Npatch):
         obs_pix = np.where(mask_patches[i_patch,:]!=0)[0]
         # building the (possibly pixel-dependent) mixing matrix
