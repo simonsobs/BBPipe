@@ -207,16 +207,16 @@ class BBClEstimation(PipelineStage):
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
             Cl_cov_freq.append(compute_master(fn, fn, w)[3])
         # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[0,:], np.array(Cl_cov_clean_loc), A_maxL[0,:])
-        if self.config['Nspec']!=0 : AtNA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL[:,:], axis=0), np.array(Cl_cov_clean_loc), np.mean(A_maxL[:,:], axis=0))
-        else: AtNA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Cl_cov_clean_loc), A_maxL)
+        AtNA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL[:,:], axis=0), np.array(Cl_cov_clean_loc), np.mean(A_maxL[:,:], axis=0))
         inv_AtNA = np.linalg.inv(AtNA)
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         
-
+        ###############################
         Cl_noise_bias = noise_bias_estimation(self, compute_master, get_field, mask, 
                 mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits)
         Cl_noise_bias = np.vstack((ell_eff,np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
+
 
         #### compute the square root of the covariance 
         # first, reshape the covariance to be square 
