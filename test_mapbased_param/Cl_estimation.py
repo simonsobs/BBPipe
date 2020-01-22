@@ -82,8 +82,9 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
                 ind += 1
         noise_maps_ = noise_maps_[:,1:,:]
-        Q_noise_cmb = np.einsum('cfp,fp->p', W[:,:,0,:], noise_maps_[:,0])
-        U_noise_cmb = np.einsum('cfp,fp->p', W[:,:,1,:], noise_maps_[:,1])
+        print W[0,:,0,:].shape,  noise_maps_[:,0].shape
+        Q_noise_cmb = np.einsum('fp,fp->p', W[0,:,0,:], noise_maps_[:,0])
+        U_noise_cmb = np.einsum('fp,fp->p', W[0,:,1,:], noise_maps_[:,1])
         # compute corresponding spectra
         fn = get_field_func(mask*Q_noise_cmb, mask*U_noise_cmb, mask_apo)
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
@@ -207,17 +208,16 @@ class BBClEstimation(PipelineStage):
             fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:], mask_apo)
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
             Cl_cov_freq.append(compute_master(fn, fn, w)[3])
-        # AtNA = np.einsum('fi, fl, fj -> lij', A_maxL[0,:], np.array(Cl_cov_clean_loc), A_maxL[0,:])
         AtNA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL[:,:], axis=0), np.array(Cl_cov_clean_loc), np.mean(A_maxL[:,:], axis=0))
         inv_AtNA = np.linalg.inv(AtNA)
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
         
         ###############################
+
         Cl_noise_bias = noise_bias_estimation(self, compute_master, get_field, mask, 
                 mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits)
         Cl_noise_bias = np.vstack((ell_eff,np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
-
 
         #### compute the square root of the covariance 
         # first, reshape the covariance to be square 
@@ -293,7 +293,6 @@ class BBClEstimation(PipelineStage):
             # fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1], purify_b=purify_b_)
             fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], mask_apo, purify_b=purify_b_)
             # fyp_j=get_field(clean_map[2*comp_j], clean_map[2*comp_j+1], purify_b=purify_b_)
-
             Cl_clean.append(compute_master(fyp_i, fyp_j, w)[3])
 
             ## noise spectra
