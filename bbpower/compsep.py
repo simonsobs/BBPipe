@@ -6,7 +6,7 @@ from bbpipe import PipelineStage
 from .types import NpzFile, SACCFile, YamlFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
-from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
+from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat, decorrelated_bpass
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
@@ -18,7 +18,7 @@ class BBCompSep(PipelineStage):
     """
     name = "BBCompSep"
     inputs = [('cells_coadded', SACCFile),('cells_noise', SACCFile),('cells_fiducial', SACCFile)]
-    outputs = [('param_chains', NpzFile), ('config_copy', YamlFile)]
+    outputs = [('params_out', NpzFile), ('config_copy', YamlFile)]
     config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'sampler':'emcee'}
 
     def setup_compsep(self):
@@ -183,7 +183,7 @@ class BBCompSep(PipelineStage):
             self.cmb_scal[ind, ind] = cmb_lensingfile[:, 2][mask]
         return
 
-    def integrate_seds(self, params):
+    def integrate_seds_old(self, params):
         fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs])
         rot_matrices = []
 
@@ -201,7 +201,44 @@ class BBCompSep(PipelineStage):
                 fg_scaling[i_c, tn] = sed_b * units
                 rot_matrices[i_c].append(rot)
 
-        return fg_scaling.T,rot_matrices
+        return fg_scaling.T, rot_matrices
+
+    def integrate_seds(self, params):
+        fg_scaling = np.zeros([self.fg_model.n_components, self.fg_model.n_components, self.nfreqs, self.nfreqs])
+        # unclear what to do with rot matrix. come back later. 
+        rot_matrices = []
+
+        for c1, c1_name in enumerate(self.fg_model.component_names):
+            comp1 = self.fg_model.components[c1_name]
+            units1 = comp1['cmb_n0_norm']
+            sed_params1 = [params[comp1['names_sed_dict'][k]] 
+                          for k in comp1['sed'].params]
+            def sed1(nu):
+                return comp1['sed'].eval(nu, *sed_params1)
+
+            for c2, c2_name in enumerate(self.fg_model.component_names):
+                comp2 = self.fg_model.components[c2_name]
+                units2 = comp2['cmb_n0_norm']
+                sed_params2 = [params[comp2['names_sed_dict'][k]] 
+                              for k in comp2['sed'].params]
+                rot_matrices.append([])
+                def sed2(nu):
+                    return comp2['sed'].eval(nu, *sed_params2)
+                    
+                for tni in range(self.nfreqs):
+                    sed_bi, rot = self.bpss[tni].convolve_sed(sed, params)
+                    for tnj in range(self.nfreqs):
+                        sed_bj, rot = self.bpss[tnj].convolve_sed(sed, params)
+                        if self.fg_model.decorrelated:
+                            if c1==c2: 
+                                decorr_delta = params[comp1]['decorr']**(1./np.log(params[comp1]['decorr_nu0'])**2)
+                                sed_c1c2_ij, rot = decorrelated_bpass(self.bpss[tni], self.bpss[tnj], sed1, sed2, params, decorr_delta)
+                                fg_scaling[c1, c2, tni, tnj] = sed_c1c2_ij * units * units
+                        else: 
+                            fg_scaling[c1, c2, tni, tnj] = sed_bi * sed_bj * units * units
+                #rot_matrices[i_c].append(rot)
+
+        return fg_scaling.T, rot_matrices
 
     def evaluate_power_spectra(self, params):
         fg_pspectra = np.zeros([self.fg_model.n_components,
@@ -248,20 +285,20 @@ class BBCompSep(PipelineStage):
         cmb_cell = np.transpose(cmb_cell, axes = [2,0,1]) # [nell,npol,npol]
         for f1 in range(self.nfreqs):
             for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
-                cls=cmb_cell.copy()
+                cls = cmb_cell.copy()
 
                 # Loop over component pairs
                 for c1 in range(self.fg_model.n_components):
-                    mat1=rot_m[c1][f1]
-                    a1=fg_scaling[f1,c1]
+                    mat1 = rot_m[c1][f1]
+                    a1 = fg_scaling[f1,c1]
                     for c2 in range(self.fg_model.n_components):
-                        mat2=rot_m[c2][f2]
-                        a2=fg_scaling[f2,c2]
+                        mat2 = rot_m[c2][f2]
+                        a2 = fg_scaling[f2,c2]
                         # Rotate if needed
-                        clrot=rotate_cells_mat(mat2,mat1,fg_cell[c1,c2])
+                        clrot = rotate_cells_mat(mat2,mat1,fg_cell[c1,c2])
                         # Scale in frequency and add
                         cls += clrot*a1*a2
-                cls_array_fg[f1,f2]=cls
+                cls_array_fg[f1, f2] = cls
 
         # Window convolution
         cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
@@ -365,8 +402,7 @@ class BBCompSep(PipelineStage):
         import emcee
         from multiprocessing import Pool
         
-        fname_temp = self.get_output('param_chains')+'.h5'
-
+        fname_temp = self.get_output('params_out')+'.h5'
         backend = emcee.backends.HDFBackend(fname_temp)
 
         nwalkers = self.config['nwalkers']
@@ -386,8 +422,7 @@ class BBCompSep(PipelineStage):
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
             if nsteps_use > 0:
-                sampler.run_mcmc(pos, nsteps_use, store=True, progress=False);
-
+                sampler.run_mcmc(pos, nsteps_use, progress=False);
         return sampler
 
     def minimizer(self):
@@ -442,10 +477,10 @@ class BBCompSep(PipelineStage):
         self.save_settings()
         self.setup_compsep()
         if self.config.get('sampler')=='emcee':
+            np.savez(self.get_output('params_out'),
+                     names=self.params.p_free_names, 
+                     p0=self.params.p0)
             sampler = self.emcee_sampler()
-            np.savez(self.get_output('param_chains'),
-                     chain=sampler.chain,         
-                     names=self.params.p_free_names)
             print("Finished sampling")
         elif self.config.get('sampler')=='fisher':
             fisher = self.fisher()
@@ -453,13 +488,13 @@ class BBCompSep(PipelineStage):
             for i,(n,p) in enumerate(zip(self.params.p_free_names,
                                          self.params.p0)):
                 print(n+" = %.3lE +- %.3lE" % (p, np.sqrt(cov[i, i])))
-            np.savez(self.get_output('param_chains'),
+            np.savez(self.get_output('params_out'),
                      fisher=fisher,
                      names=self.params.p_free_names)
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
             chi2 = -2*self.lnprob(sampler)
-            np.savez(self.get_output('sampler_out'),
+            np.savez(self.get_output('params_out'),
                      params=sampler,
                      names=self.params.p_free_names,
                      chi2=chi2)
@@ -469,13 +504,13 @@ class BBCompSep(PipelineStage):
             print("Chi2: %.3lE" % chi2)
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
-            np.savez(self.get_output('sampler_out'),
+            np.savez(self.get_output('params_out'),
                      chi2=sampler,
                      names=self.params.p_free_names)
             print("Chi^2:",sampler)
         elif self.config.get('sampler')=='timing':
             sampler = self.timing()
-            np.savez(self.get_output('sampler_out'),
+            np.savez(self.get_output('params_out'),
                      timing=sampler[1],
                      names=self.params.p_free_names)
             print("Total time:",sampler[0])

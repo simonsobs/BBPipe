@@ -102,3 +102,53 @@ def rotate_cells(bp1, bp2, cls, params):
     m1=bp1.get_rotation_matrix(params)
     m2=bp2.get_rotation_matrix(params)
     return rotate_cells_mat(m1,m2,cls)
+
+def decorrelated_bpass(bpass1, bpass2, sed1, sed2, params, decorr_delta):
+    dnu1 = 0.
+    dphi1_phase1 = 1.
+    if bpass1.do_shift:
+        dnu1 = params[bpass1.name_shift] * bpass1.nu_mean
+    dnu2 = 0.
+    dphi1_phase2 = 1.
+    if bpass2.do_shift:
+        dnu2 = params[bpass2.name_shift] * bpass2.nu_mean
+    
+    if bpass1.do_dphi1:
+        dphi1_1 = params[bpass1.name_dphi1]
+        normed_dphi1_1 = dphi1_1 * np.pi / 180. * (bpass1.nu - bpass1.nu_mean) / bpass1.nu_mean
+        dphi1_phase_1 = np.cos(2.*normed_dphi1_1) + 1j * np.sin(2.*normed_dphi1_1)
+    if bpass2.do_dphi1:
+        dphi1_2 = params[bpass2.name_dphi1]
+        normed_dphi1_2 = dphi1_1 * np.pi / 180. * (bpass2.nu - bpass2.nu_mean) / bpass2.nu_mean
+        dphi1_phase_2 = np.cos(2.*normed_dphi1_2) + 1j * np.sin(2.*normed_dphi1_2)
+
+    nu_prime1 = bpass1.nu + dnu1
+    nu_prime2 = bpass2.nu + dnu2
+
+    cmb_norm1 = np.sum( CMB('K_RJ').eval(nu_prime1) * bpass1.bnu_dnu * nu_prime1**2 )
+    cmb_norm2 = np.sum( CMB('K_RJ').eval(nu_prime2) * bpass2.bnu_dnu * nu_prime2**2 )
+
+    # amazing conventions you have. 
+    bphi1 = bpass1.bnu_dnu * dphi1_phase_1 * nu_prime1**2 * sed1(nu_prime1)
+    bphi2 = bpass2.bnu_dnu * dphi1_phase_2 * nu_prime2**2 * sed2(nu_prime2)
+    nu1nu2 = np.outer(nu_prime1, 1./nu_prime2)
+    decorr_exp = decorr_delta**(np.log(nu1nu2)**2)
+    decorr_sed = np.einsum('i, ij, j', bphi1, decorr_exp, bphi2) / cmb_norm1 / cmb_norm2
+
+    if bpass1.do_gain:
+        decorr_sed *= params[bpass1.name_gain]
+    if bpass2.do_gain:
+        decorr_sed *= params[bpass2.name_gain]
+
+    # help
+    if self.is_complex:
+        mod = abs(decorr_sed)
+        cs = decorr_sed.real/mod
+        sn = decorr_sed.imag/mod
+        return mod, np.array([[cs,sn],[-sn,cs]])
+    else:
+        return decorr_sed, None
+    
+
+
+
