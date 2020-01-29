@@ -42,7 +42,7 @@ def KCMB2RJ(nu):
 
 
 def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo, 
-                            w, noise_cov, mask_patches, A_maxL, nhits):
+                            w, n_cov, mask_patches, A_maxL, nhits_raw):
     """
     this function performs Nsims frequency-noise simulations
     on which is applied the map-making operator estimated from
@@ -58,31 +58,35 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         # building the (possibly pixel-dependent) mixing matrix
         A_maxL_loc = A_maxL[i_patch]
 
-        if i_patch == 0 : W = np.zeros((A_maxL_loc.shape[1], noise_cov.shape[0], 2, noise_cov.shape[-1]))
+        if i_patch == 0: 
+            # W is of size {n_comp, n_freqs, n_stokes, n_pixels}
+            W = np.zeros((A_maxL_loc.shape[1], n_cov.shape[0], 2, n_cov.shape[-1]))
         for p in obs_pix:
             for s in range(2):
-                noise_cov_inv = np.diag(1.0/noise_cov[:,s,p])
+                noise_cov_inv = np.diag(1.0/n_cov[:,s,p])
                 inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
-                W[:,:,s,p] = inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
+                W[:,:,s,p] += inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
 
     # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
-
     Cl_noise_bias = []
     for i in range(self.config['Nsims_bias']):
+        # looping over simulations
         print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
         # generating frequency-maps noise simulations
-        nhits, noise_maps, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+        nhits, noise_maps_sim, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
-                            nside_out=self.config['nside'], norm_hits_map=nhits,
+                            nside_out=self.config['nside'], norm_hits_map=nhits_raw,
                                 no_inh=self.config['no_inh'])
+        # reformating the simulated noise maps 
         noise_maps_ = np.zeros((noise_cov.shape[0], 3, W.shape[-1]))
         ind = 0
-        for f in range(noise_cov.shape[0]) : 
+        for f in range(noise_cov.shape[0]): 
             for i in range(3): 
-                noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
+                noise_maps_[f,i,:] += noise_maps_sim[ind,:]*1.0
                 ind += 1
+        # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
-        print(W[0,:,0,:].shape,  noise_maps_[:,0].shape)
+        # propagate noise through the map-making equation
         Q_noise_cmb = np.einsum('fp,fp->p', W[0,:,0,:], noise_maps_[:,0])
         U_noise_cmb = np.einsum('fp,fp->p', W[0,:,1,:], noise_maps_[:,1])
         # compute corresponding spectra
@@ -90,7 +94,6 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
 
     return Cl_noise_bias
-
 
 
 class BBClEstimation(PipelineStage):
@@ -121,8 +124,8 @@ class BBClEstimation(PipelineStage):
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         CMB_template_150GHz = hp.read_map(self.get_input('CMB_template_150GHz'), field=None)
         
-        nhits = hp.read_map(self.get_input('norm_hits_map'))
-        nhits = hp.ud_grade(nhits,nside_out=self.config['nside'])
+        nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
+        nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
         nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
 
         mask_patches = hp.read_map(self.get_input('mask_patches'), verbose=False, field=None)
@@ -216,7 +219,7 @@ class BBClEstimation(PipelineStage):
         ###############################
 
         Cl_noise_bias = noise_bias_estimation(self, compute_master, get_field, mask, 
-                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits)
+                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw)
         Cl_noise_bias = np.vstack((ell_eff,np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
 
         #### compute the square root of the covariance 
