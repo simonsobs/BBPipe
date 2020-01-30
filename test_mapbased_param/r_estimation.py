@@ -117,7 +117,7 @@ class BBREstimation(PipelineStage):
         ## it would be nice to have this not hardcoded eventually 
         beta_maxL = np.zeros((self.config['Nspec'],2))
         Sigma =  np.zeros((self.config['Nspec'],2,2))
-        for i in self.config['Nspec']:
+        for i in range(self.config['Nspec']):
             beta_maxL[i,:] = p[i,:2]
             Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
         instrument = {'frequencies':np.array(self.config['frequencies'])}
