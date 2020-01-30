@@ -205,39 +205,30 @@ class BBCompSep(PipelineStage):
 
     def integrate_seds(self, params):
         fg_scaling = np.zeros([self.fg_model.n_components, self.fg_model.n_components, self.nfreqs, self.nfreqs])
-        # unclear what to do with rot matrix. come back later. 
-        rot_matrices = []
+        rot_matrices = np.zeros([self.fg_model.n_components, self.nfreq, 2, 2])
 
-        for c1, c1_name in enumerate(self.fg_model.component_names):
-            comp1 = self.fg_model.components[c1_name]
-            units1 = comp1['cmb_n0_norm']
-            sed_params1 = [params[comp1['names_sed_dict'][k]] 
-                          for k in comp1['sed'].params]
-            def sed1(nu):
-                return comp1['sed'].eval(nu, *sed_params1)
+        for f1 in range(self.nfreqs):
+            for f2 in range(f1, self.nfreqs):
+                for i_c, c_name in enumerate(self.fg_model.component_names):
+                    comp = self.fg_model.components[c_name]
+                    units = comp['cmb_n0_norm']
+                    sed_params = [params[comp['names_sed_dict'][k]] for k in comp['sed'].params]
 
-            for c2, c2_name in enumerate(self.fg_model.component_names):
-                comp2 = self.fg_model.components[c2_name]
-                units2 = comp2['cmb_n0_norm']
-                sed_params2 = [params[comp2['names_sed_dict'][k]] 
-                              for k in comp2['sed'].params]
-                rot_matrices.append([])
-                def sed2(nu):
-                    return comp2['sed'].eval(nu, *sed_params2)
-                    
-                for tni in range(self.nfreqs):
-                    sed_bi, rot = self.bpss[tni].convolve_sed(sed, params)
-                    for tnj in range(self.nfreqs):
-                        sed_bj, rot = self.bpss[tnj].convolve_sed(sed, params)
-                        if self.fg_model.decorrelated:
-                            if c1==c2: 
-                                decorr_delta = params[comp1]['decorr']**(1./np.log(params[comp1]['decorr_nu0'])**2)
-                                sed_c1c2_ij, rot = decorrelated_bpass(self.bpss[tni], self.bpss[tnj], sed1, sed2, params, decorr_delta)
-                                fg_scaling[c1, c2, tni, tnj] = sed_c1c2_ij * units * units
-                        else: 
-                            fg_scaling[c1, c2, tni, tnj] = sed_bi * sed_bj * units * units
-                #rot_matrices[i_c].append(rot)
+                    def sed(nu):
+                        return comp['sed'].eval(nu, *sed_params)
 
+                    if comp['decorr']:
+                        d_amp = params[comp['decorr_param_names']['decorr_amp']
+                        d_nu0 = params[comp['decorr_param_names']['decorr_nu0']
+                        decorr_delta = d_amp**(1./np.log(d_nu0)**2)
+                        sed_12, rot = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
+                        fg_scaling[i_c, i_c, f1, f2] = sed_12 * units * units
+                    else: 
+                        sed_b1, rot = self.bpss[f1].convolve_sed(sed, params)
+                        rot_matrices[i_c, f1] = rot
+                        sed_b2, rot = self.bpss[f2].convolve_sed(sed, params)
+                        rot_matrices[i_c, f2] = rot
+                        fg_scaling[i_c, i_c, f1, f2] = sed_b1 * sed_b2 * units * units
         return fg_scaling.T, rot_matrices
 
     def evaluate_power_spectra(self, params):
@@ -289,15 +280,13 @@ class BBCompSep(PipelineStage):
 
                 # Loop over component pairs
                 for c1 in range(self.fg_model.n_components):
-                    mat1 = rot_m[c1][f1]
-                    a1 = fg_scaling[f1,c1]
+                    mat1 = rot_m[c1, f1]
+                    #a1 = fg_scaling[f1,c1]
                     for c2 in range(self.fg_model.n_components):
-                        mat2 = rot_m[c2][f2]
-                        a2 = fg_scaling[f2,c2]
-                        # Rotate if needed
-                        clrot = rotate_cells_mat(mat2,mat1,fg_cell[c1,c2])
-                        # Scale in frequency and add
-                        cls += clrot*a1*a2
+                        mat2 = rot_m[c2, f2]
+                        #a2 = fg_scaling[f2,c2]
+                        clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1, c2])
+                        cls += clrot * fg_scaling[c1, c2, f1, f2]
                 cls_array_fg[f1, f2] = cls
 
         # Window convolution

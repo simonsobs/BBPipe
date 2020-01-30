@@ -80,7 +80,7 @@ class Bandpass(object):
             sn = conv_sed.imag/mod
             return mod, np.array([[cs,sn],[-sn,cs]])
         else:
-            return conv_sed, None
+            return conv_sed, np.identity(2)
 
     def get_rotation_matrix(self, params):
         if self.do_angle:
@@ -89,13 +89,11 @@ class Bandpass(object):
             s=np.sin(2.*phi)
             return np.array([[c,s],[-s,c]])
         else:
-            return None
+            return np.identity(2)
 
 def rotate_cells_mat(mat1, mat2, cls):
-    if mat1 is not None:
-        cls=np.einsum('ijk,lk',cls,mat1)
-    if mat2 is not None:
-        cls=np.einsum('jk,ikl',mat2,cls)
+    cls=np.einsum('ijk,lk',cls,mat1)
+    cls=np.einsum('jk,ikl',mat2,cls)
     return cls
 
 def rotate_cells(bp1, bp2, cls, params):
@@ -103,34 +101,23 @@ def rotate_cells(bp1, bp2, cls, params):
     m2=bp2.get_rotation_matrix(params)
     return rotate_cells_mat(m1,m2,cls)
 
-def decorrelated_bpass(bpass1, bpass2, sed1, sed2, params, decorr_delta):
-    dnu1 = 0.
-    dphi1_phase1 = 1.
-    if bpass1.do_shift:
-        dnu1 = params[bpass1.name_shift] * bpass1.nu_mean
-    dnu2 = 0.
-    dphi1_phase2 = 1.
-    if bpass2.do_shift:
-        dnu2 = params[bpass2.name_shift] * bpass2.nu_mean
-    
-    if bpass1.do_dphi1:
-        dphi1_1 = params[bpass1.name_dphi1]
-        normed_dphi1_1 = dphi1_1 * np.pi / 180. * (bpass1.nu - bpass1.nu_mean) / bpass1.nu_mean
-        dphi1_phase_1 = np.cos(2.*normed_dphi1_1) + 1j * np.sin(2.*normed_dphi1_1)
-    if bpass2.do_dphi1:
-        dphi1_2 = params[bpass2.name_dphi1]
-        normed_dphi1_2 = dphi1_1 * np.pi / 180. * (bpass2.nu - bpass2.nu_mean) / bpass2.nu_mean
-        dphi1_phase_2 = np.cos(2.*normed_dphi1_2) + 1j * np.sin(2.*normed_dphi1_2)
+def decorrelated_bpass(bpass1, bpass2, sed, params, decorr_delta):
+    def convolved_freqs(bpass):
+        dnu = 0.
+        dphi1_phase = 1.
+        if bpass.do_shift:
+            dnu = params[bpass.name_shift] * bpass.nu_mean
+        if bpass.do_dphi1:
+            dphi1 = params[bpass.name_dphi1]
+            normed_dphi1 = dphi1 * np.pi / 180. * (bpass.nu - bpass.nu_mean) / bpass.nu_mean
+            dphi1_phase = np.cos(2.*normed_dphi1) + 1j * np.sin(2.*normed_dphi1)
+        nu_prime = bpass.nu + dnu
+        cmb_norm = np.sum( CMB('K_RJ').eval(nu_prime) * bpass.bnu_dnu * nu_prime**2 )
+        bphi = bpass.bnu_dnu * dphi_phase_1 * nu_prime**2 * sed(nu_prime)
+        return nu_prime, cmb_norm, bphi
 
-    nu_prime1 = bpass1.nu + dnu1
-    nu_prime2 = bpass2.nu + dnu2
-
-    cmb_norm1 = np.sum( CMB('K_RJ').eval(nu_prime1) * bpass1.bnu_dnu * nu_prime1**2 )
-    cmb_norm2 = np.sum( CMB('K_RJ').eval(nu_prime2) * bpass2.bnu_dnu * nu_prime2**2 )
-
-    # amazing conventions you have. 
-    bphi1 = bpass1.bnu_dnu * dphi1_phase_1 * nu_prime1**2 * sed1(nu_prime1)
-    bphi2 = bpass2.bnu_dnu * dphi1_phase_2 * nu_prime2**2 * sed2(nu_prime2)
+    nu_prime1, cmb_norm1, bphi1 = convolved_freqs(bpass1)
+    nu_prime2, cmb_norm2, bphi2 = convolved_freqs(bpass2)
     nu1nu2 = np.outer(nu_prime1, 1./nu_prime2)
     decorr_exp = decorr_delta**(np.log(nu1nu2)**2)
     decorr_sed = np.einsum('i, ij, j', bphi1, decorr_exp, bphi2) / cmb_norm1 / cmb_norm2
@@ -147,7 +134,7 @@ def decorrelated_bpass(bpass1, bpass2, sed1, sed2, params, decorr_delta):
         sn = decorr_sed.imag/mod
         return mod, np.array([[cs,sn],[-sn,cs]])
     else:
-        return decorr_sed, None
+        return decorr_sed, np.identity(2)
     
 
 

@@ -23,6 +23,14 @@ class FGModel:
         for key, component in config['fg_model'].items():
             comp = {}
 
+            decorr = component.get('decorr')
+            comp['decorr'] = False
+            if decorr:
+                comp['decorr'] = True
+                comp['decorr_param_names'] = {}
+                for k, l in decorr.items():
+                    comp['decorr_param_names'][l[0]] = k
+
             comp['names_x_dict']={}
             d_x = component.get('cross')
             if d_x:
