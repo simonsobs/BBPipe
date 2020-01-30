@@ -40,6 +40,13 @@ def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN=None, i
     residuals from the input frequency cross spectra, Cl_fgs, 
     and the error bar covariance, Sigma
     """
+    if self.config['Nspec']!=0.0:
+        # there are several patches with independent betas
+        # we then decide to take the average of the estimated
+        # spectral indices 
+        beta_maxL = np.mean(beta_maxL, axis=0)
+        Sigma = np.mean(Sigma, axis=0)
+
     A = MixingMatrix(*components)
     A_ev = A.evaluator(instrument['frequencies'])
     A_dB_ev = A.diff_evaluator(instrument['frequencies'])
@@ -108,8 +115,11 @@ class BBREstimation(PipelineStage):
         ## = nparams + (nparams**2/2 + nparams/2)
         ## = nparams**2 /2 + nparams*3/2
         ## it would be nice to have this not hardcoded eventually 
-        beta_maxL = p[:2]
-        Sigma = np.array([[p[2],p[3]],[p[3],p[4]]])
+        beta_maxL = np.zeros((self.config['Nspec'],2))
+        Sigma =  np.zeros((self.config['Nspec'],2,2))
+        for i in self.config['Nspec']:
+            beta_maxL[i,:] = p[i,:2]
+            Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
         instrument = {'frequencies':np.array(self.config['frequencies'])}
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
         Cl_stat_res_model = Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, None, i_cmb=0)
