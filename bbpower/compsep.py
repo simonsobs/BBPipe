@@ -205,7 +205,7 @@ class BBCompSep(PipelineStage):
 
     def integrate_seds(self, params):
         fg_scaling = np.zeros([self.fg_model.n_components, self.fg_model.n_components, self.nfreqs, self.nfreqs])
-        rot_matrices = np.zeros([self.fg_model.n_components, self.nfreq, 2, 2])
+        rot_matrices = np.zeros([self.fg_model.n_components, self.nfreqs, 2, 2])
 
         for f1 in range(self.nfreqs):
             for f2 in range(f1, self.nfreqs):
@@ -218,8 +218,8 @@ class BBCompSep(PipelineStage):
                         return comp['sed'].eval(nu, *sed_params)
 
                     if comp['decorr']:
-                        d_amp = params[comp['decorr_param_names']['decorr_amp']
-                        d_nu0 = params[comp['decorr_param_names']['decorr_nu0']
+                        d_amp = params[comp['decorr_param_names']['decorr_amp']]
+                        d_nu0 = params[comp['decorr_param_names']['decorr_nu0']]
                         decorr_delta = d_amp**(1./np.log(d_nu0)**2)
                         sed_12, rot = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
                         fg_scaling[i_c, i_c, f1, f2] = sed_12 * units * units
@@ -229,7 +229,7 @@ class BBCompSep(PipelineStage):
                         sed_b2, rot = self.bpss[f2].convolve_sed(sed, params)
                         rot_matrices[i_c, f2] = rot
                         fg_scaling[i_c, i_c, f1, f2] = sed_b1 * sed_b2 * units * units
-        return fg_scaling.T, rot_matrices
+        return fg_scaling, rot_matrices
 
     def evaluate_power_spectra(self, params):
         fg_pspectra = np.zeros([self.fg_model.n_components,
@@ -274,19 +274,18 @@ class BBCompSep(PipelineStage):
         cls_array_fg = np.zeros([self.nfreqs,self.nfreqs,self.n_ell,self.npol,self.npol])
         fg_cell = np.transpose(fg_cell, axes = [0,1,4,2,3])  # [ncomp,ncomp,nell,npol,npol]
         cmb_cell = np.transpose(cmb_cell, axes = [2,0,1]) # [nell,npol,npol]
+
+        # SED scaling
         for f1 in range(self.nfreqs):
             for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
                 cls = cmb_cell.copy()
 
-                # Loop over component pairs
                 for c1 in range(self.fg_model.n_components):
                     mat1 = rot_m[c1, f1]
-                    #a1 = fg_scaling[f1,c1]
                     for c2 in range(self.fg_model.n_components):
                         mat2 = rot_m[c2, f2]
-                        #a2 = fg_scaling[f2,c2]
-                        clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1, c2])
-                        cls += clrot * fg_scaling[c1, c2, f1, f2]
+                        #clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1, c2])
+                        cls += fg_cell[c1, c2] * fg_scaling[c1, c2, f1, f2]
                 cls_array_fg[f1, f2] = cls
 
         # Window convolution
@@ -305,11 +304,11 @@ class BBCompSep(PipelineStage):
                             cls_array_list[:, f2, p2, f1, p1] = clband
 
         # Polarization angle rotation
-        for f1 in range(self.nfreqs):
-            for f2 in range(self.nfreqs):
-                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
-                                                           cls_array_list[:,f1,:,f2,:],
-                                                           params)
+        #for f1 in range(self.nfreqs):
+        #    for f2 in range(self.nfreqs):
+        #        cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
+        #                                                   cls_array_list[:,f1,:,f2,:],
+        #                                                   params)
 
         return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
 
@@ -399,6 +398,11 @@ class BBCompSep(PipelineStage):
         ndim = len(self.params.p0)
         found_file = os.path.isfile(fname_temp)
 
+        try:
+            nchain = len(backend.get_chain())
+        except AttributeError: 
+            found_file = False
+
         if not found_file:
             backend.reset(nwalkers,ndim)
             pos = [self.params.p0 + 1.e-3*np.random.randn(ndim) for i in range(nwalkers)]
@@ -407,7 +411,6 @@ class BBCompSep(PipelineStage):
             print("Restarting from previous run")
             pos = None
             nsteps_use = max(n_iters-len(backend.get_chain()), 0)
-                                    
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
             if nsteps_use > 0:

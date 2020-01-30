@@ -113,7 +113,7 @@ def decorrelated_bpass(bpass1, bpass2, sed, params, decorr_delta):
             dphi1_phase = np.cos(2.*normed_dphi1) + 1j * np.sin(2.*normed_dphi1)
         nu_prime = bpass.nu + dnu
         cmb_norm = np.sum( CMB('K_RJ').eval(nu_prime) * bpass.bnu_dnu * nu_prime**2 )
-        bphi = bpass.bnu_dnu * dphi_phase_1 * nu_prime**2 * sed(nu_prime)
+        bphi = bpass.bnu_dnu * dphi1_phase * nu_prime**2 * sed(nu_prime)
         return nu_prime, cmb_norm, bphi
 
     nu_prime1, cmb_norm1, bphi1 = convolved_freqs(bpass1)
@@ -127,14 +127,16 @@ def decorrelated_bpass(bpass1, bpass2, sed, params, decorr_delta):
     if bpass2.do_gain:
         decorr_sed *= params[bpass2.name_gain]
 
+    return decorr_sed, np.identity(2)
+
     # help
-    if self.is_complex:
-        mod = abs(decorr_sed)
-        cs = decorr_sed.real/mod
-        sn = decorr_sed.imag/mod
-        return mod, np.array([[cs,sn],[-sn,cs]])
-    else:
-        return decorr_sed, np.identity(2)
+#    if bpass1.is_complex:
+#        mod = abs(decorr_sed)
+#        cs = decorr_sed.real/mod
+#        sn = decorr_sed.imag/mod
+#        return mod, np.array([[cs,sn],[-sn,cs]])
+#    else:
+#        return decorr_sed, np.identity(2)
     
 
 
