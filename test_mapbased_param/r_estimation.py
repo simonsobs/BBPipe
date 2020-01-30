@@ -40,7 +40,7 @@ def Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, invN=None, i
     residuals from the input frequency cross spectra, Cl_fgs, 
     and the error bar covariance, Sigma
     """
-    if self.config['Nspec']!=0.0:
+    if len(beta_maxL)!=0.0:
         # there are several patches with independent betas
         # we then decide to take the average of the estimated
         # spectral indices 
