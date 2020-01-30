@@ -276,7 +276,9 @@ def main():
         sigma_all = []
         sigma_Ad_all = []
         for dir_ in list_output_dir:
-            r_, sigma_, Ad_, sigma_Ad_ = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+            estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+            if args.dust_marginalization: r_, sigma_, Ad_, sigma_Ad_=estimated_parameters
+            else: r_, sigma_=estimated_parameters
             r_all.append(r_)
             Ad_all.append(Ad_)
             sigma_all.append(sigma_)
