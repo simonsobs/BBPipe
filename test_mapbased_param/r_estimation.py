@@ -83,7 +83,7 @@ class BBREstimation(PipelineStage):
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), 
                 ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile), 
                     ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile),
-                        ('Cl_cov_freq', FitsFile)]
+                        ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
                 ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile), ('power_spectrum_post_comp_sep_v2', PdfFile)]
 
@@ -91,6 +91,7 @@ class BBREstimation(PipelineStage):
 
         Cl_clean = hp.read_cl(self.get_input('Cl_clean'))
         Cl_noise = hp.read_cl(self.get_input('Cl_noise'))
+        Cl_noise_bias = hp.read_cl(self.get_input('Cl_noise_bias'))
         Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
         Cl_cov_freq = hp.read_cl(self.get_input('Cl_cov_freq'))
         fsky_eff = np.loadtxt(self.get_input('fsky_eff'))
@@ -140,12 +141,17 @@ class BBREstimation(PipelineStage):
         ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
         if self.config['noise_option']!='no_noise': 
+            """
             if self.config['Nspec']!=0:
                 ClBB_model_other_than_prim += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
                 ClBB_model_other_than_prim_and_lens += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
             else:
                 ClBB_model_other_than_prim += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
                 ClBB_model_other_than_prim_and_lens += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            """
+            ClBB_model_other_than_prim += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            ClBB_model_other_than_prim_and_lens += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
+
         if self.config['include_stat_res']:
             ClBB_model_other_than_prim += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
             ClBB_model_other_than_prim_and_lens += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
@@ -200,8 +206,9 @@ class BBREstimation(PipelineStage):
                     if self.config['AL_marginalization']: pl.loglog( ell_v_loc, norm*AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
                     # estimated noise bias on CMB
-                    if self.config['Nspec']==0:
-                        pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                    # if self.config['Nspec']==0:
+                    # pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                    pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
                     # true noise bias on CMB
                     pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
