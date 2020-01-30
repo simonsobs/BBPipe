@@ -116,8 +116,10 @@ class BBREstimation(PipelineStage):
         ## = nparams + (nparams**2/2 + nparams/2)
         ## = nparams**2 /2 + nparams*3/2
         ## it would be nice to have this not hardcoded eventually 
-        beta_maxL = np.zeros((self.config['Nspec'],2))
-        Sigma =  np.zeros((self.config['Nspec'],2,2))
+        if self.config['Nspec'] == 0: Nspec=1
+        else: Nspec = self.config['Nspec']
+        beta_maxL = np.zeros((Nspec,2))
+        Sigma =  np.zeros((Nspec,2,2))
         for i in range(self.config['Nspec']):
             beta_maxL[i,:] = p[i,:2]
             Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
