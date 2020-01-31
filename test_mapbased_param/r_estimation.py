@@ -85,7 +85,7 @@ class BBREstimation(PipelineStage):
                     ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile),
                         ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
-                ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile), ('power_spectrum_post_comp_sep_v2', PdfFile)]
+                ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
     def run(self):
 
