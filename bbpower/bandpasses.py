@@ -80,7 +80,7 @@ class Bandpass(object):
             sn = conv_sed.imag/mod
             return mod, np.array([[cs,sn],[-sn,cs]])
         else:
-            return conv_sed, np.identity(2)
+            return conv_sed, None
 
     def get_rotation_matrix(self, params):
         if self.do_angle:
@@ -89,11 +89,13 @@ class Bandpass(object):
             s=np.sin(2.*phi)
             return np.array([[c,s],[-s,c]])
         else:
-            return np.identity(2)
+            return None
 
 def rotate_cells_mat(mat1, mat2, cls):
-    cls=np.einsum('ijk,lk',cls,mat1)
-    cls=np.einsum('jk,ikl',mat2,cls)
+    if mat1:
+        cls=np.einsum('ijk,lk',cls,mat1)
+    if mat2:
+        cls=np.einsum('jk,ikl',mat2,cls)
     return cls
 
 def rotate_cells(bp1, bp2, cls, params):
@@ -104,16 +106,12 @@ def rotate_cells(bp1, bp2, cls, params):
 def decorrelated_bpass(bpass1, bpass2, sed, params, decorr_delta):
     def convolved_freqs(bpass):
         dnu = 0.
-        dphi1_phase = 1.
         if bpass.do_shift:
             dnu = params[bpass.name_shift] * bpass.nu_mean
-        if bpass.do_dphi1:
-            dphi1 = params[bpass.name_dphi1]
-            normed_dphi1 = dphi1 * np.pi / 180. * (bpass.nu - bpass.nu_mean) / bpass.nu_mean
-            dphi1_phase = np.cos(2.*normed_dphi1) + 1j * np.sin(2.*normed_dphi1)
         nu_prime = bpass.nu + dnu
-        cmb_norm = np.sum( CMB('K_RJ').eval(nu_prime) * bpass.bnu_dnu * nu_prime**2 )
-        bphi = bpass.bnu_dnu * dphi1_phase * nu_prime**2 * sed(nu_prime)
+        bnu_prime = np.abs(bpass.bnu_dnu) * nu_prime**2 
+        cmb_norm = np.sum( CMB('K_RJ').eval(nu_prime) * bnu_prime)
+        bphi = bnu_prime * sed(nu_prime)
         return nu_prime, cmb_norm, bphi
 
     nu_prime1, cmb_norm1, bphi1 = convolved_freqs(bpass1)
@@ -126,14 +124,7 @@ def decorrelated_bpass(bpass1, bpass2, sed, params, decorr_delta):
         decorr_sed *= params[bpass1.name_gain]
     if bpass2.do_gain:
         decorr_sed *= params[bpass2.name_gain]
-
-    if bpass1.is_complex or bpass2.is_complex:
-        mod = abs(decorr_sed)
-        cs = decorr_sed.real/mod
-        sn = decorr_sed.imag/mod
-        return mod, np.array([[cs,sn],[-sn,cs]])
-    else:
-        return decorr_sed, np.identity(2)
+    return decorr_sed
     
 
 

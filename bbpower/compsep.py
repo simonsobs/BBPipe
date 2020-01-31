@@ -183,8 +183,9 @@ class BBCompSep(PipelineStage):
             self.cmb_scal[ind, ind] = cmb_lensingfile[:, 2][mask]
         return
 
-    def integrate_seds_old(self, params):
-        fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs])
+    def integrate_seds(self, params):
+        fg_scaling_single = np.zeros([self.fg_model.n_components, self.nfreqs])
+        fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs, self.nfreqs])
         rot_matrices = []
 
         for i_c, c_name in enumerate(self.fg_model.component_names):
@@ -193,45 +194,27 @@ class BBCompSep(PipelineStage):
             sed_params = [params[comp['names_sed_dict'][k]] 
                           for k in comp['sed'].params]
             rot_matrices.append([])
+
             def sed(nu):
                 return comp['sed'].eval(nu, *sed_params)
 
             for tn in range(self.nfreqs):
                 sed_b, rot = self.bpss[tn].convolve_sed(sed, params)
-                fg_scaling[i_c, tn] = sed_b * units
+                fg_scaling_single[i_c, tn] = sed_b * units
                 rot_matrices[i_c].append(rot)
 
-        return fg_scaling.T, rot_matrices
-
-    def integrate_seds(self, params):
-        fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs, self.nfreqs])
-        rot_matrices = np.zeros([self.fg_model.n_components, self.nfreqs, 2, 2])
-
-        for f1 in range(self.nfreqs):
-            for f2 in range(f1, self.nfreqs):
-                for i_c, c_name in enumerate(self.fg_model.component_names):
-                    comp = self.fg_model.components[c_name]
-                    units = comp['cmb_n0_norm']
-                    sed_params = [params[comp['names_sed_dict'][k]] for k in comp['sed'].params]
-
-                    def sed(nu):
-                        return comp['sed'].eval(nu, *sed_params)
-
-                    if comp['decorr']:
-                        d_amp = params[comp['decorr_param_names']['decorr_amp']]
-                        d_nu0 = params[comp['decorr_param_names']['decorr_nu0']]
-                        decorr_delta = d_amp**(1./np.log(d_nu0)**2)
-                        sed_12, rot = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
+            if comp['decorr']:
+                d_amp = params[comp['decorr_param_names']['decorr_amp']]
+                d_nu0 = params[comp['decorr_param_names']['decorr_nu0']]
+                decorr_delta = d_amp**(1./np.log(d_nu0)**2)
+                for f1 in range(self.nfreqs):
+                    for f2 in range(f1, self.nfreqs):
+                        sed_12 = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
                         fg_scaling[i_c, f1, f2] = sed_12 * units * units
-                        rot_matrices[i_c, f1] = rot
-                        
-                    else: 
-                        sed_b1, rot = self.bpss[f1].convolve_sed(sed, params)
-                        rot_matrices[i_c, f1] = rot
-                        sed_b2, rot = self.bpss[f2].convolve_sed(sed, params)
-                        rot_matrices[i_c, f2] = rot
-                        fg_scaling[i_c, f1, f2] = sed_b1 * sed_b2 * units * units
-        return fg_scaling, rot_matrices
+                        fg_scaling[i_c, f2, f1] = sed_12 * units * units
+            else: 
+                fg_scaling[i_c] = np.outer(fg_scaling_single[i_c], fg_scaling_single[i_c])
+        return fg_scaling, np.array(rot_matrices)
 
     def evaluate_power_spectra(self, params):
         fg_pspectra = np.zeros([self.fg_model.n_components,
