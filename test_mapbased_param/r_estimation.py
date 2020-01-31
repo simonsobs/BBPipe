@@ -507,6 +507,7 @@ class BBREstimation(PipelineStage):
                         pl.legend()
                         pl.xlabel('$\ell$', fontsize=20)
                         pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
+                        pl.ylim([1e-5,2e-1])
                         pl.savefig(self.get_output('power_spectrum_post_comp_sep'))
                         pl.close()
 
