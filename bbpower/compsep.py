@@ -204,7 +204,7 @@ class BBCompSep(PipelineStage):
         return fg_scaling.T, rot_matrices
 
     def integrate_seds(self, params):
-        fg_scaling = np.zeros([self.fg_model.n_components, self.fg_model.n_components, self.nfreqs, self.nfreqs])
+        fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs, self.nfreqs])
         rot_matrices = np.zeros([self.fg_model.n_components, self.nfreqs, 2, 2])
 
         for f1 in range(self.nfreqs):
@@ -222,13 +222,15 @@ class BBCompSep(PipelineStage):
                         d_nu0 = params[comp['decorr_param_names']['decorr_nu0']]
                         decorr_delta = d_amp**(1./np.log(d_nu0)**2)
                         sed_12, rot = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
-                        fg_scaling[i_c, i_c, f1, f2] = sed_12 * units * units
+                        fg_scaling[i_c, f1, f2] = sed_12 * units * units
+                        rot_matrices[i_c, f1] = rot
+                        
                     else: 
                         sed_b1, rot = self.bpss[f1].convolve_sed(sed, params)
                         rot_matrices[i_c, f1] = rot
                         sed_b2, rot = self.bpss[f2].convolve_sed(sed, params)
                         rot_matrices[i_c, f2] = rot
-                        fg_scaling[i_c, i_c, f1, f2] = sed_b1 * sed_b2 * units * units
+                        fg_scaling[i_c, f1, f2] = sed_b1 * sed_b2 * units * units
         return fg_scaling, rot_matrices
 
     def evaluate_power_spectra(self, params):
@@ -279,13 +281,15 @@ class BBCompSep(PipelineStage):
         for f1 in range(self.nfreqs):
             for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
                 cls = cmb_cell.copy()
-
                 for c1 in range(self.fg_model.n_components):
-                    mat1 = rot_m[c1, f1]
                     for c2 in range(self.fg_model.n_components):
-                        mat2 = rot_m[c2, f2]
-                        #clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1, c2])
-                        cls += fg_cell[c1, c2] * fg_scaling[c1, c2, f1, f2]
+                        if self.npol>1:
+                            mat1 = rot_m[c1, f1]
+                            mat2 = rot_m[c2, f2]
+                            clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1, c2])
+                            cls += clrot * np.sqrt(fg_scaling[c2, f1, f2] * fg_scaling[c1, f1, f2])
+                        else:
+                            cls += fg_cell[c1, c2] * np.sqrt(fg_scaling[c1, f1, f2] * fg_scaling[c2, f1, f2])
                 cls_array_fg[f1, f2] = cls
 
         # Window convolution
@@ -304,11 +308,12 @@ class BBCompSep(PipelineStage):
                             cls_array_list[:, f2, p2, f1, p1] = clband
 
         # Polarization angle rotation
-        #for f1 in range(self.nfreqs):
-        #    for f2 in range(self.nfreqs):
-        #        cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
-        #                                                   cls_array_list[:,f1,:,f2,:],
-        #                                                   params)
+        if self.npol>1:
+            for f1 in range(self.nfreqs):
+                for f2 in range(self.nfreqs):
+                    cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
+                                                               cls_array_list[:,f1,:,f2,:],
+                                                               params)
 
         return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
 
@@ -410,7 +415,8 @@ class BBCompSep(PipelineStage):
         else:
             print("Restarting from previous run")
             pos = None
-            nsteps_use = max(n_iters-len(backend.get_chain()), 0)
+            nsteps_use = max(n_iters-nchain, 0)
+
         with Pool() as pool:
             sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
             if nsteps_use > 0:
