@@ -458,7 +458,7 @@ class BBREstimation(PipelineStage):
             pl.savefig(self.get_output('likelihood_on_r'))
             pl.close()
 
-            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='_v2' )
+            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='' )
 
         else:
 
@@ -498,9 +498,10 @@ class BBREstimation(PipelineStage):
                         # pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
                                                     # label='modeled BB - modeled noise = tot BB + residuals', 
                                                     # color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+
                         pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
-                        
+
                         pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
                                         linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz')
                         pl.legend()
