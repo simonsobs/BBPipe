@@ -92,9 +92,9 @@ class Bandpass(object):
             return None
 
 def rotate_cells_mat(mat1, mat2, cls):
-    if mat1:
+    if mat1 is not None:
         cls=np.einsum('ijk,lk',cls,mat1)
-    if mat2:
+    if mat2 is not None:
         cls=np.einsum('jk,ikl',mat2,cls)
     return cls
 
