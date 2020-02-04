@@ -326,8 +326,7 @@ class BBCompSep(PipelineStage):
             X = self.h_and_l(C, self.observed_cls[k], self.Cfl_sqrt[k])
             # sorry for this hack
             if np.any(np.isinf(X)):
-                dx_vec = [np.inf]
-                break
+                return [np.inf]
             dx = self.matrix_to_vector(X).flatten()
             dx_vec = np.concatenate([dx_vec, dx])
         return dx_vec
@@ -400,10 +399,14 @@ class BBCompSep(PipelineStage):
             pos = None
             nsteps_use = max(n_iters-nchain, 0)
 
-        with Pool() as pool:
-            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
-            if nsteps_use > 0:
-                sampler.run_mcmc(pos, nsteps_use, progress=False);
+#        with Pool() as pool:
+#            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
+#            if nsteps_use > 0:
+#                sampler.run_mcmc(pos, nsteps_use, progress=False);
+
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
+        if nsteps_use > 0:
+            sampler.run_mcmc(pos, nsteps_use, progress=False);
         return sampler
 
     def minimizer(self):

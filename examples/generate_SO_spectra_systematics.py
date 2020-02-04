@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from noise_calc import Simons_Observatory_V3_SA_noise
 
 def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=False):
-    prefix_out = "./data/SO_V3_Mock4_phase%d_angle%d_sinuous%d_eb%d"%(int(do_phase), 
+    prefix_out = "./data/SO_V3_Mock4_r0.01_phase%d_angle%d_sinuous%d_eb%d"%(int(do_phase), 
                     int(do_angle), int(do_sinuous), int(do_eb))
     if do_angle:
         #angles = [1.,-1.,1.,-1.,1.,-1.]
@@ -145,8 +145,8 @@ fg_eb = 0.
 if do_eb:
     fg_eb = 0.1
 Alens = 1.
-#r_tens = 0.01
-r_tens = 0.0
+r_tens = 0.01
+#r_tens = 0.0
 nyears = 5.
 
 #Bandpowers

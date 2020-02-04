@@ -17,7 +17,7 @@ do
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
         sed "s/gain\_$j: \['gain', 'fixed', \[1.\]\]/gain\_$j: \['gain', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
         /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-        cp $fdir"output/sampler_out.npz" $fdir"autoresults/perchannel_eb_gain"$j"_$x1.npz"
+        cp $fdir"output/params_out.npz" $fdir"autoresultsr/perchannel_eb_gain"$j"_$x1.npz"
     done
 done
 
@@ -32,13 +32,13 @@ do
         sed "s/gain\_$j: \['gain', 'fixed', \[1.\]\]/gain\_$j: \['gain', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
         sed -i "s/gain\_$jj: \['gain', 'fixed', \[1.\]\]/gain\_$jj: \['gain', 'fixed', \[$x1\]\]/" $fdir"runconfig.yml"
         /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-        cp $fdir"output/sampler_out.npz" $fdir"autoresults/symmetric_eb_gain"$j$jj"_$x1.npz"
+        cp $fdir"output/params_out.npz" $fdir"autoresultsr/symmetric_eb_gain"$j$jj"_$x1.npz"
 
         # asymmetric
         x2=$(echo "scale=3; $xmax-$k*$dx" | bc)
         sed "s/gain\_$j: \['gain', 'fixed', \[1.\]\]/gain\_$j: \['gain', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
         sed -i "s/gain\_$jj: \['gain', 'fixed', \[1.\]\]/gain\_$jj: \['gain', 'fixed', \[$x2\]\]/" $fdir"runconfig.yml"
         /mnt/zfsusers/mabitbol/.local/lib/python3.6/site-packages/bbpipe $fdir"settings.yml"
-        cp $fdir"output/sampler_out.npz" $fdir"autoresults/asymmetric_eb_gain"$j$jj"_"$x1"_"$x2".npz"
+        cp $fdir"output/params_out.npz" $fdir"autoresultsr/asymmetric_eb_gain"$j$jj"_"$x1"_"$x2".npz"
     done
 done
