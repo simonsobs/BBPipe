@@ -115,7 +115,7 @@ stages:
 inputs:
     # binary_mask: /global/cscratch1/sd/josquin/SO_sims/mask_04000.fits
     binary_mask: '''+path_to_binary_mask+'''
-    # mask_apo: '''+mask_apo+'''
+    mask_apo: '''+mask_apo+'''
     norm_hits_map: '''+path_to_norm_hits+'''
     Cl_BB_lens: '''+path_to_ClBBlens+'''
     Cl_BB_prim_r1: '''+path_to_ClBBprim+'''
