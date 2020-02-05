@@ -87,7 +87,7 @@ def chunkIt(seq, num):
 
 ######################################
 #### TEST.YML
-def generate_pipe_yml(id_tag, path_to_temp_files='./', mask_apo='', 
+def generate_pipe_yml(id_tag, path_to_temp_files='./', 
         path_to_binary_mask='', path_to_norm_hits='', path_to_ClBBlens='',
         path_to_ClBBprim=''):
     global_string = '''
@@ -115,7 +115,6 @@ stages:
 inputs:
     # binary_mask: /global/cscratch1/sd/josquin/SO_sims/mask_04000.fits
     binary_mask: '''+path_to_binary_mask+'''
-    mask_apo: '''+mask_apo+'''
     norm_hits_map: '''+path_to_norm_hits+'''
     Cl_BB_lens: '''+path_to_ClBBlens+'''
     Cl_BB_prim_r1: '''+path_to_ClBBprim+'''
@@ -149,7 +148,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
                 cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims='',
-                Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False'):
+                Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', mask_apo='',):
     '''
     function generating the config file
     '''
@@ -198,6 +197,7 @@ BBClEstimation:
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
     Nsims_bias:  '''+str(Nsims_bias)+'''
     extra_apodization: '''+str(extra_apodization)+'''
+    mask_apo: '''+mask_apo+'''
 
 BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
@@ -247,7 +247,7 @@ def main():
         id_tag_sim = format(sim, '05d')
         id_tag = args.tag+'_'+id_tag_rank+'_'+id_tag_sim
         # create test.yml
-        generate_pipe_yml(id_tag, path_to_temp_files=args.path_to_temp_files, mask_apo=args.mask_apo, 
+        generate_pipe_yml(id_tag, path_to_temp_files=args.path_to_temp_files, 
             path_to_binary_mask=args.path_to_binary_mask, path_to_norm_hits=args.path_to_norm_hits, 
             path_to_ClBBlens=args.path_to_ClBBlens, path_to_ClBBprim=args.path_to_ClBBprim)
         # create config.yml
@@ -259,7 +259,8 @@ def main():
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
                 no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
                 external_sky_sims=args.external_sky_sims, Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
-                dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization)
+                dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
+                mask_apo=args.mask_apo)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
