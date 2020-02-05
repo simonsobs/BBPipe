@@ -50,7 +50,7 @@ def grabargs():
     parser.add_argument("--sync_marginalization", action='store_true', help = "marginalization of the cosmo likelihood over a sync template", default=False)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
     parser.add_argument("--path_to_bbpipe", type=str, help = "path to bbpipe binary", default="/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe")
-    parser.add_argument("--path_to_binary_mask", type=str, help = "path to binary mask", default="/global/cscratch1/sd/josquin/SO_sims/mask_04000.fits")
+    parser.add_argument("--path_to_binary_mask", type=str, help = "path to binary mask", default="/global/cscratch1/sd/josquin/SO_sims/norm_nHits_SA_35FOV_G_nside512_binary.fits")
     parser.add_argument("--path_to_norm_hits", type=str, help = "path to normed hits map", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/norm_nHits_SA_35FOV_G_nside512.fits")
     parser.add_argument("--path_to_ClBBlens", type=str, help = "path to lensed BB angular spectrum", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_lensed_scalar.fits")
     parser.add_argument("--path_to_ClBBprim", type=str, help = "path to primordial BB angular spectrum, assuming r=1", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits")
