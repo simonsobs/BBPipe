@@ -490,6 +490,8 @@ class BBREstimation(PipelineStage):
                         
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+                        
+                        pl.loglog( ell_v_loc, norm*(ClBB_obs-Cov_model), label='diff model - obs', color='k', linestyle=':', linewidth=2.0, alpha=0.8)
                         # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
                                                 # label='observed BB - actual noise = tot BB + residuals', 
                                                 # color='red', linestyle='-', linewidth=2.0, alpha=0.8)
@@ -511,8 +513,6 @@ class BBREstimation(PipelineStage):
                         pl.savefig(self.get_output('power_spectrum_post_comp_sep'))
                         pl.close()
 
-                    # logL = np.sum( (2*ell_v[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]+1)*fsky\
-                                        # *( np.log( Cov_model ) + ClBB_obs/Cov_model ))
 
                     logL = 0.0 
                     for b in range(len(ClBB_obs)):
