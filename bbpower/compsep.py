@@ -211,7 +211,6 @@ class BBCompSep(PipelineStage):
                     for f2 in range(f1, self.nfreqs):
                         sed_12 = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
                         fg_scaling[i_c, f1, f2] = sed_12 * units * units
-                        fg_scaling[i_c, f2, f1] = sed_12 * units * units
             else: 
                 fg_scaling[i_c] = np.outer(fg_scaling_single[i_c], fg_scaling_single[i_c])
         return fg_scaling, np.array(rot_matrices)
@@ -238,13 +237,68 @@ class BBCompSep(PipelineStage):
         for i_c1, c_name1 in enumerate(self.fg_model.component_names):
             for c_name2, epsname in self.fg_model.components[c_name1]['names_x_dict'].items():
                 i_c2 = self.fg_model.component_order[c_name2]
-                cl_x=np.sqrt(np.fabs(fg_pspectra[i_c1, i_c1]*
-                                     fg_pspectra[i_c2, i_c2])) * params[epsname]
+                cl_x = np.sqrt(np.fabs(fg_pspectra[i_c1, i_c1] *
+                                       fg_pspectra[i_c2, i_c2])) * params[epsname]
                 fg_pspectra[i_c1, i_c2] = cl_x
                 fg_pspectra[i_c2, i_c1] = cl_x
 
         return fg_pspectra
+
+    def integrate_seds_new(self, params):
+        single_sed = np.zeros([self.fg_model.n_components, self.nfreqs])
+        comp_scaling = np.zeros([self.fg_model.n_components, self.nfreqs, self.nfreqs])
+        fg_scaling = np.zeros([self.fg_model.n_components, self.fg_model.n_components, self.nfreqs, self.nfreqs])
+        rot_matrices = []
+
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            units = comp['cmb_n0_norm']
+            sed_params = [params[comp['names_sed_dict'][k]] 
+                          for k in comp['sed'].params]
+            rot_matrices.append([])
+
+            def sed(nu):
+                return comp['sed'].eval(nu, *sed_params)
+
+            for tn in range(self.nfreqs):
+                sed_b, rot = self.bpss[tn].convolve_sed(sed, params)
+                single_sed[i_c, tn] = sed_b * units
+                rot_matrices[i_c].append(rot)
+
+            if comp['decorr']:
+                d_amp = params[comp['decorr_param_names']['decorr_amp']]
+                d_nu0 = params[comp['decorr_param_names']['decorr_nu0']]
+                decorr_delta = d_amp**(1./np.log(d_nu0)**2)
+                for f1 in range(self.nfreqs):
+                    for f2 in range(f1, self.nfreqs):
+                        sed_12 = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
+                        comp_scaling[i_c, f1, f2] = sed_12 * units * units
+            else: 
+                comp_scaling[i_c] = np.outer(single_sed[i_c], single_sed[i_c])
+
+        for i_c1, c_name1 in enumerate(self.fg_model.component_names):
+            fg_scaling[i_c1, i_c1] = comp_scaling[i_c1]
+            for c_name2, epsname in self.fg_model.components[c_name1]['names_x_dict'].items():
+                i_c2 = self.fg_model.component_order[c_name2]
+                fg_scaling[i_c1, i_c2] = params[epsname] * np.outer(single_sed[i_c1], single_sed[i_c2])
+                fg_scaling[i_c2, i_c1] = params[epsname] * np.outer(single_sed[i_c2], single_sed[i_c1])
+        return fg_scaling, np.array(rot_matrices)
     
+    def evaluate_power_spectra_new(self, params):
+        fg_pspectra = np.zeros([self.fg_model.n_components, self.npol, self.npol, self.n_ell])
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            for cl_comb, clfunc in comp['cl'].items():
+                m1, m2 = cl_comb
+                ip1 = self.pol_order[m1]
+                ip2 = self.pol_order[m2]
+                pspec_params = [params[comp['names_cl_dict'][cl_comb][k]] for k in clfunc.params]
+                amp_spec = np.sqrt(clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl)
+                fg_pspectra[i_c, ip1, ip2] = amp_spec
+                if m1!=m2:
+                    fg_pspectra[i_c, ip2, ip1] = amp_spec
+        return fg_pspectra
+
     def model(self, params):
         """
         Defines the total model and integrates over the bandpasses and windows. 
@@ -252,12 +306,15 @@ class BBCompSep(PipelineStage):
         cmb_cell = (params['r_tensor'] * self.cmb_tens + \
                     params['A_lens'] * self.cmb_lens + \
                     self.cmb_scal) * self.dl2cl # [npol,npol,nell]
-        fg_scaling, rot_m = self.integrate_seds(params)  # [nfreq, ncomp], [ncomp,nfreq,[matrix]]
-        fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
+        #fg_scaling, rot_m = self.integrate_seds(params)  # [ncomp, nfreq, nfreq], [ncomp, nfreq,[matrix]]
+        #fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
+        fg_scaling, rot_m = self.integrate_seds_new(params)  # [ncomp, ncomp, nfreq, nfreq], [ncomp, nfreq,[matrix]]
+        fg_cell = self.evaluate_power_spectra_new(params)  # [ncomp,npol,npol,nell]
 
         # Add all components scaled in frequency (and HWP-rotated if needed)
-        cls_array_fg = np.zeros([self.nfreqs,self.nfreqs,self.n_ell,self.npol,self.npol])
-        fg_cell = np.transpose(fg_cell, axes = [0,1,4,2,3])  # [ncomp,ncomp,nell,npol,npol]
+        cls_array_fg = np.zeros([self.nfreqs,self.nfreqs,self.n_ell,self.npol,self.npol]) # [nfreq, nfreq, nell, npol, npol]
+        #fg_cell = np.transpose(fg_cell, axes = [0,1,4,2,3])  # [ncomp,ncomp,nell,npol,npol]
+        fg_cell = np.transpose(fg_cell, axes = [0,3,1,2])  # [ncomp,nell,npol,npol]
         cmb_cell = np.transpose(cmb_cell, axes = [2,0,1]) # [nell,npol,npol]
 
         # SED scaling
@@ -266,17 +323,15 @@ class BBCompSep(PipelineStage):
                 cls = cmb_cell.copy()
                 for c1 in range(self.fg_model.n_components):
                     for c2 in range(self.fg_model.n_components):
-                        if self.npol>1:
-                            mat1 = rot_m[c1, f1]
-                            mat2 = rot_m[c2, f2]
-                            clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1, c2])
-                            cls += clrot * np.sqrt(fg_scaling[c2, f1, f2] * fg_scaling[c1, f1, f2])
-                        else:
-                            cls += fg_cell[c1, c2] * np.sqrt(fg_scaling[c1, f1, f2] * fg_scaling[c2, f1, f2])
+                        mat1 = rot_m[c1, f1]
+                        mat2 = rot_m[c2, f2]
+                        clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1]*fg_cell[c2])
+                        #cls += clrot * np.sqrt(fg_scaling[c1, f1, f2] * fg_scaling[c2, f1, f2])
+                        cls += clrot * fg_scaling[c1, c2, f1, f2]
                 cls_array_fg[f1, f2] = cls
 
         # Window convolution
-        cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
+        cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol]) # nbpw_ell, nfreq, npol, nfreq, npol
         for f1 in range(self.nfreqs):
             for p1 in range(self.npol):
                 m1 = f1*self.npol+p1
@@ -291,12 +346,11 @@ class BBCompSep(PipelineStage):
                             cls_array_list[:, f2, p2, f1, p1] = clband
 
         # Polarization angle rotation
-        if self.npol>1:
-            for f1 in range(self.nfreqs):
-                for f2 in range(self.nfreqs):
-                    cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
-                                                               cls_array_list[:,f1,:,f2,:],
-                                                               params)
+        for f1 in range(self.nfreqs):
+            for f2 in range(self.nfreqs):
+                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
+                                                           cls_array_list[:,f1,:,f2,:],
+                                                           params)
 
         return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
 
@@ -399,14 +453,10 @@ class BBCompSep(PipelineStage):
             pos = None
             nsteps_use = max(n_iters-nchain, 0)
 
-#        with Pool() as pool:
-#            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
-#            if nsteps_use > 0:
-#                sampler.run_mcmc(pos, nsteps_use, progress=False);
-
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
-        if nsteps_use > 0:
-            sampler.run_mcmc(pos, nsteps_use, progress=False);
+        with Pool() as pool:
+            sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob, backend=backend)
+            if nsteps_use > 0:
+                sampler.run_mcmc(pos, nsteps_use, progress=False);
         return sampler
 
     def minimizer(self):
