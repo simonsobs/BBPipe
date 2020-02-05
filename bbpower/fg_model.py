@@ -38,6 +38,8 @@ class FGModel:
                     if par[0] not in config['fg_model'].keys():
                         raise KeyError("Component %s is not a valid component" % (par[0]) +
                                        "to correlate %s with" % key)
+                    if par[0] == key:
+                        raise KeyError("%s is cross correlated with itself." %par[0])
                     comp['names_x_dict'][par[0]] = pn
 
             # Loop through SED parameters.

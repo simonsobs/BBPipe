@@ -180,11 +180,11 @@ def read_camb(fname):
     return dltt,dlee,dlbb,dlte
 
 
-dls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync_EE,larr_all)
-dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
+dls_sync_ee = dl_plaw(A_sync_BB*EB_sync,alpha_sync_EE,larr_all)
+dls_sync_bb = dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
 
-dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
-dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
+dls_dust_ee = dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
+dls_dust_bb = dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
 
 _, dls_cmb_ee, dls_cmb_bb, _= read_camb("./data/camb_lens_nobb.dat")
 _, dls_cmb_ee1, dls_cmb_bb1, _= read_camb("./data/camb_lens_r1.dat")
@@ -207,13 +207,8 @@ dls_comp[2,0,2,1] = fg_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
 dls_comp[2,1,2,0] = fg_eb * np.sqrt(dls_dust_ee * dls_dust_bb)
 
 dls_comp[1,0,2,0] = epsilon * np.sqrt(dls_sync_ee * dls_dust_ee)
-dls_comp[1,1,2,0] = epsilon * np.sqrt(dls_sync_bb * dls_dust_ee)
-dls_comp[1,0,2,1] = epsilon * np.sqrt(dls_sync_ee * dls_dust_bb)
 dls_comp[1,1,2,1] = epsilon * np.sqrt(dls_sync_bb * dls_dust_bb)
-
 dls_comp[2,0,1,0] = epsilon * np.sqrt(dls_dust_ee * dls_sync_ee)
-dls_comp[2,1,1,0] = epsilon * np.sqrt(dls_dust_bb * dls_sync_ee)
-dls_comp[2,0,1,1] = epsilon * np.sqrt(dls_dust_ee * dls_sync_bb)
 dls_comp[2,1,1,1] = epsilon * np.sqrt(dls_dust_bb * dls_sync_bb)
 
 dls_comp[1,0,2,1] = epsilon * fg_eb * np.sqrt(dls_sync_ee * dls_dust_bb)

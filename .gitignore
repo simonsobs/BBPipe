@@ -12,6 +12,7 @@ runinfo
 *.out
 run.sh
 bbpipe.sh
+*.sh
 pol_angle_runs/*
 old/
 slurmjob.sl

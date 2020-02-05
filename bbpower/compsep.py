@@ -378,7 +378,6 @@ class BBCompSep(PipelineStage):
         for k in range(model_cls.shape[0]):
             C = model_cls[k] + self.bbnoise[k]
             X = self.h_and_l(C, self.observed_cls[k], self.Cfl_sqrt[k])
-            # sorry for this hack
             if np.any(np.isinf(X)):
                 return [np.inf]
             dx = self.matrix_to_vector(X).flatten()

@@ -1,4 +1,7 @@
 Alens = 1.
+r_tens = 0.01
+#r_tens = 0.0
+nyears = 5.
 
 A_dust_BB = 20.
 EB_dust = 2.
