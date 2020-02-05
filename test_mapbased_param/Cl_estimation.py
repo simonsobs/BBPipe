@@ -163,8 +163,11 @@ class BBClEstimation(PipelineStage):
                     # and (not self.config['no_inh'])):
             nh = hp.smoothing(nh, fwhm=1*np.pi/180.0, verbose=False) 
             nh /= nh.max()
-            mask_apo *= nh
-
+            #######
+            mask_apo = nh
+            # mask_apo *= nh
+            #######
+            
         fsky_eff = np.mean(mask_apo)
         print('fsky_eff = ', fsky_eff)
         np.savetxt(self.get_output('fsky_eff'), [fsky_eff])
