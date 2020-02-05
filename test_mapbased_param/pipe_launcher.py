@@ -197,7 +197,7 @@ BBClEstimation:
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
     Nsims_bias:  '''+str(Nsims_bias)+'''
     extra_apodization: '''+str(extra_apodization)+'''
-    mask_apo: '''+mask_apo+'''
+    mask_apo: \''''+mask_apo+'''\'
 
 BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
