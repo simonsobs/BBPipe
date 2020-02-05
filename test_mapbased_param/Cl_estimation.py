@@ -77,6 +77,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=nhits_raw,
                                 no_inh=self.config['no_inh'])
+
         # reformating the simulated noise maps 
         noise_maps_ = np.zeros((n_cov.shape[0], 3, W.shape[-1]))
         ind = 0
@@ -152,7 +153,10 @@ class BBClEstimation(PipelineStage):
         print('building mask ... ')
         mask =  hp.read_map(self.get_input('binary_mask_cut'))
         obs_pix = np.where(mask!=0)[0]
-        mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
+        
+        if self.config['extra_apodization']:
+            mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
+        else: mask_apo = mask*1.0
 
         if ((self.config['noise_option']!='white_noise') 
                 and (self.config['noise_option']!='no_noise')):

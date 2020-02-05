@@ -68,6 +68,7 @@ def grabargs():
     parser.add_argument("--mask_apo", type=str, help = "path to apodized mask", default='')
     parser.add_argument("--external_sky_sims", type=str, help = "path to the external, sky simulated, noise-free maps", default='')
     parser.add_argument("--Nsims_bias", type=int, help = "number of simulations performed to estimate the noise bias", default=100)
+    parser.add_argument("--extra_apodization", action='store_true', help = "perform an extra apodization of the mask, prior to rescaling by Nhits", default=False)
 
     args = parser.parse_args()
 
@@ -148,7 +149,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
                 cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims='',
-                Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1'):
+                Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False'):
     '''
     function generating the config file
     '''
@@ -177,6 +178,7 @@ global:
     knee_mode: '''+str(knee_mode)+'''
     ny_lf: '''+str(ny_lf)+'''
 
+
 BBMapSim:
     cmb_model: 'c1'
     dust_model: \''''+str(dust_model)+'''\'
@@ -195,6 +197,7 @@ BBClEstimation:
     purify_b: True
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
     Nsims_bias:  '''+str(Nsims_bias)+'''
+    extra_apodization: '''+str(extra_apodization)+'''
 
 BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
@@ -256,7 +259,7 @@ def main():
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
                 no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
                 external_sky_sims=args.external_sky_sims, Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
-                dust_model=args.dust_model, sync_model=args.sync_model)
+                dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
