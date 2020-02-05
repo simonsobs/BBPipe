@@ -44,6 +44,8 @@ def grabargs():
     parser.add_argument("--knee_mode", type=int, help = "SO V3 1/f knee mode", default=1)
     parser.add_argument("--ny_lf", type=float, help = "SO V3 low frequency integration time", default=1.0)
     parser.add_argument("--noise_option", type=str, help = "option for the noise generator", default='white_noise')
+    parser.add_argument("--dust_model", type=str, help = "PySM dust model", default='d1')
+    parser.add_argument("--sync_model", type=str, help = "PySM sync model", default='s1')
     parser.add_argument("--dust_marginalization", action='store_true',help = "marginalization of the cosmo likelihood over a dust template", default=False)
     parser.add_argument("--sync_marginalization", action='store_true', help = "marginalization of the cosmo likelihood over a sync template", default=False)
     parser.add_argument("--path_to_temp_files", type=str, help = "path to save temporary files, usually scratch at NERSC", default='/global/cscratch1/sd/josquin/SO_pipe/')
@@ -146,7 +148,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
                 cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims='',
-                Nspec=0.0, Nsims_bias=100):
+                Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1'):
     '''
     function generating the config file
     '''
@@ -177,8 +179,8 @@ global:
 
 BBMapSim:
     cmb_model: 'c1'
-    dust_model: 'd1'
-    sync_model: 's1'
+    dust_model: \''''+str(dust_model)+'''\'
+    sync_model: \''''+str(sync_model)+'''\'
     tag: 'SO_sims'
     cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
     external_sky_sims: \''''+str(external_sky_sims)+'''\'
@@ -253,7 +255,8 @@ def main():
                 apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res,\
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
                 no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
-                external_sky_sims=args.external_sky_sims, Nspec=args.Nspec, Nsims_bias=args.Nsims_bias)
+                external_sky_sims=args.external_sky_sims, Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
+                dust_model=args.dust_model, sync_model=args.sync_model)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
