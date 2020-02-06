@@ -14,7 +14,7 @@ def get_deriv(mp) :
                             
 ZER0=1E-3
 APOSCALE=10.
-nside=1024
+nside=512
 nh=hp.ud_grade(hp.read_map("norm_nHits_SA_35FOV.fits"),nside_out=nside)
 nhg=hp.smoothing(nh,fwhm=np.pi/180,verbose=False)
 nhg[nhg<0]=0

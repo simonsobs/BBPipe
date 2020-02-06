@@ -8,11 +8,10 @@ import os
 import sacc
 from scipy.interpolate import interp1d
 
-if len(sys.argv)!=7:
+if len(sys.argv) != 7:
     print("Usage: generate_SO_maps.py isim nside sens knee nsplits mask_type")
     exit(1)
-
-isim=int(sys.argv[1])
+isim=int(sys.argv[1]) 
 nside=int(sys.argv[2])
 sens=int(sys.argv[3])
 knee=int(sys.argv[4])
@@ -20,7 +19,7 @@ nsplits=int(sys.argv[5])
 mask_type=sys.argv[6]
 npix= hp.nside2npix(nside)
 
-prefix_out="/mnt/extraspace/damonge/SO/BBPipe/"
+prefix_out="/mnt/extraspace/susanna/SO/BBPipe/"
 prefix_out+="SO_V3_ns%d_sens%d_knee%d_%dsplit_Mask%s_Mock%04d" % (nside, sens, knee, nsplits, mask_type, isim)
 print(prefix_out)
 
@@ -153,9 +152,15 @@ def read_camb(fname):
 # Foreground power spectra
 dls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync_EE,larr_all)
 dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
+#added
+cls_sync_ee=dls_sync_ee*dlfac
+cls_sync_bb=dls_sync_bb*dlfac*Alens
 
 dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
 dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
+#added
+cls_dust_ee=dls_dust_ee*dlfac
+cls_dust_bb=dls_dust_bb*dlfac*Alens
 
 _,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
 cls_cmb_ee=dls_cmb_ee*dlfac
@@ -291,6 +296,12 @@ for f,b in enumerate(beams):
     for i in [0,1]:
         maps_freq[f,i,:] = hp.smoothing(maps_freq[f,i,:], fwhm=fwhm, verbose=False)
 
+print (maps_freq.shape)
+print (noimaps.shape)
+print (nhits.shape)
+
+exit()
+        
 print("Saving data")
 #hp.write_map(prefix_out+"/components_cmb.fits.gz",maps_comp[0], overwrite=True)
 #hp.write_map(prefix_out+"/components_sync.fits.gz",maps_comp[1], overwrite=True)
