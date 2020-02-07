@@ -270,32 +270,32 @@ def main():
         # p.wait()
         # p = subprocess.check_output("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
         p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml")
-        """
-        p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+str(rank)+".txt"))
 
-        fin = open("log_"+str(rank)+".txt", "rt")
-        fout = open("batch"+str(rank)+".txt", "wt")
+#         p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+str(rank)+".txt"))
 
-        fout.write("#!/bin/bash\n\
-#SBATCH -N 1\n\
-#SBATCH -C haswell\n\
-#SBATCH -q regular\n\
-#SBATCH -J test_BBpipe\n\
-#SBATCH -t 00:30:00\n\
-#OpenMP settings:\n\
-export OMP_NUM_THREADS=1\n\
-export OMP_PLACES=threads\n\
-export OMP_PROC_BIND=spread\n")
+#         fin = open("log_"+str(rank)+".txt", "rt")
+#         fout = open("batch"+str(rank)+".txt", "wt")
 
-        for line in fin.readlines():
-            if line != '\n':
-                fout.write('srun -n 1 -c 1 '+line)
-            else: fout.write(line)
-        fin.close()
-        fout.close()
+#         fout.write("#!/bin/bash\n\
+# #SBATCH -N 1\n\
+# #SBATCH -C haswell\n\
+# #SBATCH -q regular\n\
+# #SBATCH -J test_BBpipe\n\
+# #SBATCH -t 00:30:00\n\
+# #OpenMP settings:\n\
+# export OMP_NUM_THREADS=1\n\
+# export OMP_PLACES=threads\n\
+# export OMP_PROC_BIND=spread\n")
 
-        exit()
-        """
+#         for line in fin.readlines():
+#             if line != '\n':
+#                 fout.write('srun -n 1 -c 1 '+line)
+#             else: fout.write(line)
+#         fin.close()
+#         fout.close()
+
+#         exit()
+
 
 
 
