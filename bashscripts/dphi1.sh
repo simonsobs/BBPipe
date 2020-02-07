@@ -2,14 +2,14 @@
 
 fdir="./updated_runs/bias_dphi1/"
 
-xmin=-40
-xmax=40
-dx=2
+xmin=-80
+xmax=80
+dx=8
 
 # per channel
 for ((j=1; j<=6; j++))
 do 
-    for k in {0..40}
+    for k in {0..20}
     do
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
         sed "s/dphi1\_$j: \['dphi1', 'fixed', \[0.\]\]/dphi1\_$j: \['dphi1', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $fdir"runconfig.yml"
@@ -22,7 +22,7 @@ for j in 1 3 5
 do 
     jj=$((j+1))
 
-    for k in {0..40}
+    for k in {0..20}
     do
         # symmetric
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
