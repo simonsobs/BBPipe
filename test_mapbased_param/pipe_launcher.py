@@ -266,10 +266,22 @@ def main():
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
         # p = subprocess.call("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"), shell=True, stdout=subprocess.PIPE)
         # p = subprocess.Popen("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"), shell=True, stdout=subprocess.PIPE)
-        # p.communicate()[0]
+        # p.communicate()[0]z
         # p.wait()
         # p = subprocess.check_output("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
-        p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
+        p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+str(rank)+".txt"))
+
+        fin = open("log_"+str(rank)+".txt", "rt")
+        fout = open("batch"+str(rank)+".txt", "wt")
+
+        for line in fin.readlines():
+            if line != '\n':
+                fout.write('srun -n 1 -c 1 '+line)
+            else: fout.write(line)
+        fin.close()
+        fout.close()
+
+        exit()
 
     ####################
     barrier()
