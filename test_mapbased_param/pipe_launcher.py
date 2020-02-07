@@ -300,9 +300,7 @@ export OMP_PROC_BIND=spread\n")
 
         p = os.system('sbatch batch'+id_tag+".sh")
 
-        exit()
-
-
+        # exit()
 
 
     ####################
