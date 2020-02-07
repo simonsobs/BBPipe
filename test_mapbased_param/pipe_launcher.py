@@ -275,10 +275,10 @@ def main():
         # p = subprocess.check_output("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
 
         # p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
-        p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+str(rank)+".txt"))
+        p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+id_tag+".txt"))
 
-        fin = open("log_"+str(rank)+".txt", "rt")
-        fout = open("batch"+str(rank)+".sh", "wt")
+        fin = open("log_"+id_tag+".txt", "rt")
+        fout = open("batch"+id_tag+".sh", "wt")
 
         fout.write("#!/bin/bash\n\
 #SBATCH -N 1\n\
@@ -298,7 +298,7 @@ export OMP_PROC_BIND=spread\n")
         fin.close()
         fout.close()
 
-        p = os.system('sbatch batch'+str(rank)+".sh")
+        p = os.system('sbatch batch'+id_tag+".sh")
 
         exit()
 
