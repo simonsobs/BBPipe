@@ -242,7 +242,7 @@ def main():
     simulations_split = comm.bcast( simulations_split, root=0 )
 
 
-    print('rank = ', rank, ' and sim_splits = ', simulations_split)
+    print('rank = ', rank, ' and sim_splits = ', simulations_split[rank])
     print('#'*10)
     ####################
     for sim in simulations_split[rank]:
