@@ -269,6 +269,8 @@ def main():
         # p.communicate()[0]z
         # p.wait()
         # p = subprocess.check_output("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
+        p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml")
+        """
         p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+str(rank)+".txt"))
 
         fin = open("log_"+str(rank)+".txt", "rt")
@@ -277,9 +279,9 @@ def main():
         fout.write("#!/bin/bash\n\
 #SBATCH -N 1\n\
 #SBATCH -C haswell\n\
-#SBATCH -q debug\n\
+#SBATCH -q regular\n\
 #SBATCH -J test_BBpipe\n\
-#SBATCH -t 00:01:00\n\
+#SBATCH -t 00:30:00\n\
 #OpenMP settings:\n\
 export OMP_NUM_THREADS=1\n\
 export OMP_PLACES=threads\n\
@@ -293,6 +295,9 @@ export OMP_PROC_BIND=spread\n")
         fout.close()
 
         exit()
+        """
+
+
 
     ####################
     barrier()
