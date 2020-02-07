@@ -275,15 +275,15 @@ def main():
         fout = open("batch"+str(rank)+".txt", "wt")
 
         fout.write("#!/bin/bash\n\
-#SBATCH -N 1\
-#SBATCH -C haswell\
-#SBATCH -q debug\
-#SBATCH -J test_BBpipe\
-#SBATCH -t 00:01:00\
-#OpenMP settings:\
-export OMP_NUM_THREADS=1\
-export OMP_PLACES=threads\
-export OMP_PROC_BIND=spread")
+#SBATCH -N 1\n\
+#SBATCH -C haswell\n\
+#SBATCH -q debug\n\
+#SBATCH -J test_BBpipe\n\
+#SBATCH -t 00:01:00\n\
+#OpenMP settings:\n\
+export OMP_NUM_THREADS=1\n\
+export OMP_PLACES=threads\n\
+export OMP_PROC_BIND=spread\n")
 
         for line in fin.readlines():
             if line != '\n':
