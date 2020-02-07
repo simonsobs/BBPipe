@@ -249,6 +249,7 @@ def main():
         id_tag_rank = format(rank, '05d')
         id_tag_sim = format(sim, '05d')
         id_tag = args.tag+'_'+id_tag_rank+'_'+id_tag_sim
+        print('id_tag = ', id_tag)
         # create test.yml
         generate_pipe_yml(id_tag, path_to_temp_files=args.path_to_temp_files, 
             path_to_binary_mask=args.path_to_binary_mask, path_to_norm_hits=args.path_to_norm_hits, 
