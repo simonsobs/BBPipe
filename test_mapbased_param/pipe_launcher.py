@@ -285,7 +285,7 @@ def main():
 #SBATCH -C haswell\n\
 #SBATCH -q regular\n\
 #SBATCH -J test_BBpipe\n\
-#SBATCH -t 00:30:00\n\
+#SBATCH -t 01:00:00\n\
 #OpenMP settings:\n\
 export OMP_NUM_THREADS=1\n\
 export OMP_PLACES=threads\n\
