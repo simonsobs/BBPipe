@@ -13,7 +13,7 @@ do
     for k in {0..20}
     do
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
-        configfile=$fdir"configs/config_perchannel_angle_"$j"_$x1.yml"
+        configfile=$fdir"configs/config_perchannel_angle"$j"_$x1.yml"
         paramsfile=$fdir"autoresults/perchannel_angle"$j"_$x1.npz"
         sed "s/angle\_$j: \['angle', 'fixed', \[0.\]\]/angle\_$j: \['angle', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $configfile
         addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=updated_runs/multiruntest/output/config_copy.yml
@@ -34,7 +34,6 @@ do
         addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=updated_runs/multiruntest/output/config_copy.yml
 
         # asymmetric
-        x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
         x2=$(echo "scale=3; $xmax-$k*$dx" | bc)
         configfile=$fdir"configs/config_asymmetric_angle"$j$jj"_"$x1"_"$x2".yml"
         paramsfile=$fdir"autoresults/asymmetric_angle"$j$jj"_"$x1"_"$x2".npz"
