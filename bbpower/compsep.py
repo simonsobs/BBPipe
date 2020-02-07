@@ -1,14 +1,15 @@
-import numpy as np
 import os
+
+import numpy as np
+from sacc.sacc import SACC
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
-from .types import NpzFile, SACCFile, YamlFile
+from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat, decorrelated_bpass
 from .fg_model import FGModel
 from .param_manager import ParameterManager
-from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat, decorrelated_bpass
-from fgbuster.component_model import CMB 
-from sacc.sacc import SACC
+from .types import NpzFile, SACCFile, YamlFile
+
 
 class BBCompSep(PipelineStage):
     """
@@ -43,7 +44,7 @@ class BBCompSep(PipelineStage):
             mat = mat + mat.T - np.diag(mat.diagonal())
         elif vec.ndim==2:
             mat = np.zeros([len(vec), self.nmaps, self.nmaps])
-            mat[..., self.index_ut[0], self.index_ut[1]] = vec[...,:]
+            mat[..., self.index_ut[0], self.index_ut[1]] = vec[..., :]
             for i,m in enumerate(mat):
                 mat[i] = m + m.T - np.diag(m.diagonal())
         else:
@@ -54,18 +55,18 @@ class BBCompSep(PipelineStage):
         """
         Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
         """
-        #Decide if you're using H&L
+        # Decide if you're using H&L
         self.use_handl = self.config['likelihood_type'] == 'h&l'
 
-        #Read data
+        # Read data
         self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
         if self.use_handl:
-            s_fid = SACC.loadFromHDF(self.get_input('cells_fiducial'), \
+            s_fid = SACC.loadFromHDF(self.get_input('cells_fiducial'),
                                      precision_filename=self.get_input('cells_coadded'))
-            s_noi = SACC.loadFromHDF(self.get_input('cells_noise'), \
+            s_noi = SACC.loadFromHDF(self.get_input('cells_noise'),
                                      precision_filename=self.get_input('cells_coadded'))
 
-        #Keep only BB measurements
+        # Keep only BB measurements
         correlations=[]
         for m1 in self.config['pol_channels']:
             for m2 in self.config['pol_channels']:
@@ -89,7 +90,7 @@ class BBCompSep(PipelineStage):
         self.order = self.s.sortTracers()
         self.pol_order=dict(zip(self.config['pol_channels'],range(self.npol)))
 
-        #Collect bandpasses
+        # Collect bandpasses
         self.bpss = []
         for i_t, t in enumerate(self.s.tracers):
             nu = t.z
@@ -100,8 +101,8 @@ class BBCompSep(PipelineStage):
             bnu = t.Nz
             self.bpss.append(Bandpass(nu, dnu, bnu, i_t+1, self.config))
 
-        #Get ell sampling
-        #Avoid l<2
+        # Get ell sampling
+        # Avoid l<2
         mask_w = self.s.binning.windows[0].ls > 1
         self.bpw_l = self.s.binning.windows[0].ls[mask_w]
         self.n_ell = len(self.bpw_l)
@@ -113,13 +114,13 @@ class BBCompSep(PipelineStage):
         self.n_bpws = len(self.ell_b)
         self.windows = np.zeros([self.ncross, self.n_bpws, self.n_ell])
 
-        #Get power spectra and covariances
+        # Get power spectra and covariances
         v = self.s.mean.vector
         if len(v) != self.n_bpws * self.ncross:
             raise ValueError("C_ell vector's size is wrong")
         cv = self.s.precision.getCovarianceMatrix()
 
-        #Parse into the right ordering
+        # Parse into the right ordering
         v2d = np.zeros([self.n_bpws, self.ncross])
         if self.use_handl:
             v2d_noi = np.zeros([self.n_bpws, self.ncross])
@@ -148,7 +149,7 @@ class BBCompSep(PipelineStage):
                 ind_vecb=self.vector_indices[t1b*self.npol + ip1b, t2b*self.npol + ip2b]
                 cv2d[:, ind_vec, :, ind_vecb] = cv[ndx, :][:, ndxb]
 
-        #Store data
+        # Store data
         self.bbdata = self.vector_to_matrix(v2d)
         if self.use_handl:
             self.bbnoise = self.vector_to_matrix(v2d_noi)
@@ -184,67 +185,6 @@ class BBCompSep(PipelineStage):
         return
 
     def integrate_seds(self, params):
-        fg_scaling_single = np.zeros([self.fg_model.n_components, self.nfreqs])
-        fg_scaling = np.zeros([self.fg_model.n_components, self.nfreqs, self.nfreqs])
-        rot_matrices = []
-
-        for i_c, c_name in enumerate(self.fg_model.component_names):
-            comp = self.fg_model.components[c_name]
-            units = comp['cmb_n0_norm']
-            sed_params = [params[comp['names_sed_dict'][k]] 
-                          for k in comp['sed'].params]
-            rot_matrices.append([])
-
-            def sed(nu):
-                return comp['sed'].eval(nu, *sed_params)
-
-            for tn in range(self.nfreqs):
-                sed_b, rot = self.bpss[tn].convolve_sed(sed, params)
-                fg_scaling_single[i_c, tn] = sed_b * units
-                rot_matrices[i_c].append(rot)
-
-            if comp['decorr']:
-                d_amp = params[comp['decorr_param_names']['decorr_amp']]
-                d_nu0 = params[comp['decorr_param_names']['decorr_nu0']]
-                decorr_delta = d_amp**(1./np.log(d_nu0)**2)
-                for f1 in range(self.nfreqs):
-                    for f2 in range(f1, self.nfreqs):
-                        sed_12 = decorrelated_bpass(self.bpss[f1], self.bpss[f2], sed, params, decorr_delta)
-                        fg_scaling[i_c, f1, f2] = sed_12 * units * units
-            else: 
-                fg_scaling[i_c] = np.outer(fg_scaling_single[i_c], fg_scaling_single[i_c])
-        return fg_scaling, np.array(rot_matrices)
-
-    def evaluate_power_spectra(self, params):
-        fg_pspectra = np.zeros([self.fg_model.n_components,
-                                self.fg_model.n_components,
-                                self.npol, self.npol, self.n_ell])
-        
-        # Fill diagonal
-        for i_c, c_name in enumerate(self.fg_model.component_names):
-            comp = self.fg_model.components[c_name]
-            for cl_comb, clfunc in comp['cl'].items():
-                m1, m2 = cl_comb
-                ip1 = self.pol_order[m1]
-                ip2 = self.pol_order[m2]
-                pspec_params = [params[comp['names_cl_dict'][cl_comb][k]]
-                                for k in clfunc.params]
-                fg_pspectra[i_c, i_c, ip1, ip2, :] = clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl
-                if m1 != m2:
-                    fg_pspectra[i_c, i_c, ip2, ip1, :] = clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl
-
-        # Off diagonals
-        for i_c1, c_name1 in enumerate(self.fg_model.component_names):
-            for c_name2, epsname in self.fg_model.components[c_name1]['names_x_dict'].items():
-                i_c2 = self.fg_model.component_order[c_name2]
-                cl_x = np.sqrt(np.fabs(fg_pspectra[i_c1, i_c1] *
-                                       fg_pspectra[i_c2, i_c2])) * params[epsname]
-                fg_pspectra[i_c1, i_c2] = cl_x
-                fg_pspectra[i_c2, i_c1] = cl_x
-
-        return fg_pspectra
-
-    def integrate_seds_new(self, params):
         single_sed = np.zeros([self.fg_model.n_components, self.nfreqs])
         comp_scaling = np.zeros([self.fg_model.n_components, self.nfreqs, self.nfreqs])
         fg_scaling = np.zeros([self.fg_model.n_components, self.fg_model.n_components, self.nfreqs, self.nfreqs])
@@ -284,7 +224,7 @@ class BBCompSep(PipelineStage):
                 fg_scaling[i_c2, i_c1] = params[epsname] * np.outer(single_sed[i_c2], single_sed[i_c1])
         return fg_scaling, np.array(rot_matrices)
     
-    def evaluate_power_spectra_new(self, params):
+    def evaluate_power_spectra(self, params):
         fg_pspectra = np.zeros([self.fg_model.n_components, self.npol, self.npol, self.n_ell])
         for i_c, c_name in enumerate(self.fg_model.component_names):
             comp = self.fg_model.components[c_name]
@@ -306,14 +246,10 @@ class BBCompSep(PipelineStage):
         cmb_cell = (params['r_tensor'] * self.cmb_tens + \
                     params['A_lens'] * self.cmb_lens + \
                     self.cmb_scal) * self.dl2cl # [npol,npol,nell]
-        #fg_scaling, rot_m = self.integrate_seds(params)  # [ncomp, nfreq, nfreq], [ncomp, nfreq,[matrix]]
-        #fg_cell = self.evaluate_power_spectra(params)  # [ncomp,ncomp,npol,npol,nell]
-        fg_scaling, rot_m = self.integrate_seds_new(params)  # [ncomp, ncomp, nfreq, nfreq], [ncomp, nfreq,[matrix]]
-        fg_cell = self.evaluate_power_spectra_new(params)  # [ncomp,npol,npol,nell]
+        fg_scaling, rot_m = self.integrate_seds(params)  # [ncomp, ncomp, nfreq, nfreq], [ncomp, nfreq,[matrix]]
+        fg_cell = self.evaluate_power_spectra(params)  # [ncomp,npol,npol,nell]
 
-        # Add all components scaled in frequency (and HWP-rotated if needed)
         cls_array_fg = np.zeros([self.nfreqs,self.nfreqs,self.n_ell,self.npol,self.npol]) # [nfreq, nfreq, nell, npol, npol]
-        #fg_cell = np.transpose(fg_cell, axes = [0,1,4,2,3])  # [ncomp,ncomp,nell,npol,npol]
         fg_cell = np.transpose(fg_cell, axes = [0,3,1,2])  # [ncomp,nell,npol,npol]
         cmb_cell = np.transpose(cmb_cell, axes = [2,0,1]) # [nell,npol,npol]
 
@@ -326,7 +262,6 @@ class BBCompSep(PipelineStage):
                         mat1 = rot_m[c1, f1]
                         mat2 = rot_m[c2, f2]
                         clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1]*fg_cell[c2])
-                        #cls += clrot * np.sqrt(fg_scaling[c1, f1, f2] * fg_scaling[c2, f1, f2])
                         cls += clrot * fg_scaling[c1, c2, f1, f2]
                 cls_array_fg[f1, f2] = cls
 
