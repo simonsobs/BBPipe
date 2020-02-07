@@ -241,6 +241,9 @@ def main():
     barrier()
     simulations_split = comm.bcast( simulations_split, root=0 )
 
+
+    print('rank = ', rank, ' and sim_splits = ', simulations_split)
+    print('#'*10)
     ####################
     for sim in simulations_split[rank]:
         id_tag_rank = format(rank, '05d')
@@ -289,7 +292,7 @@ export OMP_PROC_BIND=spread\n")
 
         for line in fin.readlines():
             if line != '\n':
-                fout.write('srun -n 1 -c 1 '+line)
+                fout.write('srun -n 1 -c 2 '+line)
             else: fout.write(line)
         fin.close()
         fout.close()
