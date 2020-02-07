@@ -274,6 +274,17 @@ def main():
         fin = open("log_"+str(rank)+".txt", "rt")
         fout = open("batch"+str(rank)+".txt", "wt")
 
+        fout.write("#!/bin/bash\n\
+#SBATCH -N 1\
+#SBATCH -C haswell\
+#SBATCH -q debug\
+#SBATCH -J test_BBpipe\
+#SBATCH -t 00:01:00\
+#OpenMP settings:\
+export OMP_NUM_THREADS=1\
+export OMP_PLACES=threads\
+export OMP_PROC_BIND=spread")
+
         for line in fin.readlines():
             if line != '\n':
                 fout.write('srun -n 1 -c 1 '+line)
