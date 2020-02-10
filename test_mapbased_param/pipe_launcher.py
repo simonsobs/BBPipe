@@ -277,8 +277,8 @@ def main():
         # p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
 
         # if output directory does not exist, then create it
-        if not os.path.exists(args.path_to_temp_files):
-             os.mkdir(args.path_to_temp_files)
+        if not os.path.exists(+os.path.join(path_to_temp_files,'outputs_'+id_tag)):
+             os.mkdir(+os.path.join(path_to_temp_files,'outputs_'+id_tag))
 
         # the following lines are generating and submitting a bash job
         p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+id_tag+".txt"))
