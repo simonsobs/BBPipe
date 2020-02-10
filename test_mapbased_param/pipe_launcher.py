@@ -284,7 +284,7 @@ def main():
         p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+id_tag+".txt"))
 
         fin = open("log_"+id_tag+".txt", "rt")
-        fout = open("batch"+id_tag+".sh", "wt")
+        fout = open("batch_"+id_tag+".sh", "wt")
 
         fout.write("#!/bin/bash\n\
 #SBATCH -N 1\n\
@@ -300,11 +300,11 @@ export OMP_PROC_BIND=spread\n")
         for line in fin.readlines():
             if line != '\n':
                 fout.write('srun -n 1 -c 2 '+line)
-            else: fout.write(line)
+            # else: fout.write(line)
         fin.close()
         fout.close()
 
-        p = os.system('sbatch batch'+id_tag+".sh")
+        p = os.system('sbatch batch_'+id_tag+".sh")
 
         # exit()
 
