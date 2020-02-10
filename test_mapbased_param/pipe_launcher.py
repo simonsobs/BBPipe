@@ -299,7 +299,7 @@ export OMP_PROC_BIND=spread\n")
 
         for line in fin.readlines():
             if line != '\n':
-                fout.write('srun -n 1 -c 2 '+line)
+                fout.write('srun -n 1 -c 1 '+line)
             # else: fout.write(line)
         fin.close()
         fout.close()
