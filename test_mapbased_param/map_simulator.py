@@ -152,8 +152,6 @@ class BBMapSim(PipelineStage):
 
         column_names = []
         [ column_names.extend( ('I_'+str(ch)+'GHz','Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in freqs]
-        print(self.get_output('binary_mask_cut'))
-        
         hp.write_map(self.get_output('binary_mask_cut'), binary_mask, overwrite=True)
         hp.write_map(self.get_output('frequency_maps'), freq_maps, overwrite=True, column_names=column_names)
         hp.write_map(self.get_output('noise_cov'), noise_cov, overwrite=True, column_names=column_names)

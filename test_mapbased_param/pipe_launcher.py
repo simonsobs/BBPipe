@@ -275,6 +275,12 @@ def main():
         # p = subprocess.check_output("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
 
         # p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
+
+        # if output directory does not exist, then create it
+        if not os.path.exists(args.path_to_temp_files):
+             os.mkdir(args.path_to_temp_files)
+
+        # the following lines are generating and submitting a bash job
         p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml --dry-run > log_"+id_tag+".txt"))
 
         fin = open("log_"+id_tag+".txt", "rt")
