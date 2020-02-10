@@ -99,6 +99,7 @@ BBCompSep:
                     alpha_s_bb: ['alpha', 'tophat', [-1., -0.6, 0.]]
                     l0_s_bb: ['ell0', 'fixed', [80.]]
 
+
     # Add extra parameters for different systematics
     systematics:
         # Bandpass-related systematics
@@ -149,3 +150,11 @@ BBCompSep:
                     shift_6: ['shift', 'Gaussian', [0., 0.01]]
                     gain_6: ['gain', 'Gaussian', [1., 0.01]]
                     angle_6: ['angle', 'fixed', [0., 0.017]]
+
+
+    # Decide whether to use moments (choose 'True' or 'False')
+    moments : 'True'
+    
+    # Define gammas for varying spectral indices of components
+    gamma_beta_sync : -2.5
+    gamma_beta_dust : -3.5
