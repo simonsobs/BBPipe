@@ -95,7 +95,7 @@ class BBMapParamCompSep(PipelineStage):
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
-
+            print('actual component separation ... ')
             res = fg.separation_recipes.weighted_comp_sep(components, instrument,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
                             options=options, tol=tol, method=method)
@@ -112,7 +112,8 @@ class BBMapParamCompSep(PipelineStage):
             else: 
                 optI = 1
                 optQU = 1
-
+            
+            print('re-organizing outputs of the component separation ... ')
             A = MixingMatrix(*components)
             A_ev = A.evaluator(instrument['frequencies'])
             A_maxL = A_ev(res.x)
