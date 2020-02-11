@@ -6,16 +6,16 @@ global:
 
 BBCompSep:
     # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
-    sampler: 'emcee'
+    sampler: 'single_point'
     # If you chose emcee:
     # Number of walkers
     nwalkers: 128
     # Number of iterations per walker
     n_iters: 1000
     # Likelihood type (choose 'chi2' or 'h&l')
-    likelihood_type: 'h&l'
+    likelihood_type: 'chi2'
     # Which polarization channels do you want to include?
-    pol_channels: ['E','B']
+    pol_channels: ['B']
     # Scale cuts (will apply to all frequencies)
     l_min: 30
     l_max: 300
@@ -80,6 +80,9 @@ BBCompSep:
                 # In this case the list should contain:
                 # [component name, prior type, prior parameters]
                 epsilon_ds: ['component_2', 'tophat', [-1., 0., 1.]]
+            moments:
+              # Define gammas for varying spectral indices of components
+              gamma_beta : -3.5
 
         component_2:
             name: Synchrotron
@@ -99,6 +102,9 @@ BBCompSep:
                     amp_s_bb: ['amp', 'tophat', [0., 2., "inf"]]
                     alpha_s_bb: ['alpha', 'tophat', [-1., -0.6, 0.]]
                     l0_s_bb: ['ell0', 'fixed', [80.]]
+            moments:
+              # Define gammas for varying spectral indices of components
+              gamma_beta : -2.5
 
 
     # Add extra parameters for different systematics
@@ -112,7 +118,7 @@ BBCompSep:
                 # Add a file for a frequency-dependent polarization angle
                 # 2 columns: freq (GHz), phi (deg.).
                 # If not present, this effect will be ignored.
-                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
+                #phase_nu: "./examples/data/phase_3layer_lf_0.txt"
                 # Parametrize different bandpass systematics
                 parameters:
                     # Relative shift in mean bandpass frequency.
@@ -120,42 +126,39 @@ BBCompSep:
                     # Relative gain variation.
                     gain_1: ['gain', 'Gaussian', [1., 0.01]]
                     # Polarization angle (prior in units of radians).
-                    angle_1: ['angle', 'fixed', [0., 0.017]]
+                    #angle_1: ['angle', 'fixed', [0., 0.017]]
             bandpass_2:
-                phase_nu: "./examples/data/phase_3layer_lf_0.txt"
+                #phase_nu: "./examples/data/phase_3layer_lf_0.txt"
                 parameters:
                     shift_2: ['shift', 'Gaussian', [0., 0.01]]
                     gain_2: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_2: ['angle', 'fixed', [0., 0.017]]
+                    #angle_2: ['angle', 'fixed', [0., 0.017]]
             bandpass_3:
-                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
+                #phase_nu: "./examples/data/phase_3layer_mf_0.txt"
                 parameters:
                     shift_3: ['shift', 'Gaussian', [0., 0.01]]
                     gain_3: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_3: ['angle', 'fixed', [0., 0.017]]
+                    #angle_3: ['angle', 'fixed', [0., 0.017]]
             bandpass_4:
-                phase_nu: "./examples/data/phase_3layer_mf_0.txt"
+                #phase_nu: "./examples/data/phase_3layer_mf_0.txt"
                 parameters:
                     shift_4: ['shift', 'Gaussian', [0., 0.01]]
                     gain_4: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_4: ['angle', 'fixed', [0., 0.017]]
+                    #angle_4: ['angle', 'fixed', [0., 0.017]]
             bandpass_5:
-                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
+                #phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
                 parameters:
                     shift_5: ['shift', 'Gaussian', [0., 0.01]]
                     gain_5: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_5: ['angle', 'fixed', [0., 0.017]]
+                    #angle_5: ['angle', 'fixed', [0., 0.017]]
             bandpass_6:
-                phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
+                #phase_nu: "./examples/data/phase_3layer_uhf_0.txt"
                 parameters:
                     shift_6: ['shift', 'Gaussian', [0., 0.01]]
                     gain_6: ['gain', 'Gaussian', [1., 0.01]]
-                    angle_6: ['angle', 'fixed', [0., 0.017]]
+                    #angle_6: ['angle', 'fixed', [0., 0.017]]
 
 
     # Decide whether to use moments (choose 'True' or 'False')
     moments : 'True'
     
-    # Define gammas for varying spectral indices of components
-    gamma_beta_sync : -2.5
-    gamma_beta_dust : -3.5

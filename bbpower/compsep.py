@@ -53,7 +53,7 @@ class BBCompSep(PipelineStage):
                     big_w3j[:,ell1,ell2] = w3j_array
 
             big_w3j = big_w3j**2
-                    
+
         self.parse_sacc_file()
         self.load_cmb()
         self.fg_model = FGModel(self.config)
@@ -290,7 +290,46 @@ class BBCompSep(PipelineStage):
                         cls += clrot*a1*a2
                 cls_array_fg[f1,f2]=cls
 
-    def powerlaw(lmax, gamma):
+        if self.config['moments']:
+            fg_scaling_d1 = self.integrate_seds_d1(params)
+            print(fg_scaling_d1)
+            exit(1)
+            
+            cl_betas = []
+            for i_c, c_name in enumerate(self.fg_model.component_names):
+                comp = self.fg_model.components[c_name]
+                gamma = comp['names_moments_dict']['gamma_beta']
+                cl_betas.append(self.powerlaw(lmax=384, gamma=gamma))
+            cl_betas = np.array(cl_betas)
+            print('cls_betas shape is :', cl_betas.shape)
+            exit(1)
+        
+                
+        # Window convolution
+        cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
+        for f1 in range(self.nfreqs):
+            for p1 in range(self.npol):
+                m1 = f1*self.npol+p1
+                for f2 in range(f1,self.nfreqs):
+                    p0 = p1 if f1==f2 else 0
+                    for p2 in range(p0,self.npol):
+                        m2 = f2*self.npol+p2
+                        windows = self.windows[self.vector_indices[m1, m2]]
+                        clband = np.dot(windows, cls_array_fg[f1,f2,:,p1,p2])
+                        cls_array_list[:, f1, p1, f2, p2] = clband
+                        if m1!=m2:
+                            cls_array_list[:, f2, p2, f1, p1] = clband
+
+        # Polarization angle rotation
+        for f1 in range(self.nfreqs):
+            for f2 in range(self.nfreqs):
+                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
+                                                           cls_array_list[:,f1,:,f2,:],
+                                                           params)
+
+        return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
+                
+    def powerlaw(self, lmax, gamma):
         """
         Beta power spectrum as power law
         """
@@ -300,8 +339,6 @@ class BBCompSep(PipelineStage):
         c_ls = ((ls+0.001) / 80.)**gamma
         c_ls[ls<30]=c_ls[30] #at ls<30 take pspec const
         return c_ls                                                                                                                             
-    cls_betas = np.array([powerlaw(lmax=384, gamma=-3.5), powerlaw(lmax=384, gamma=-2.5)]) # [ncomp, nell]
-    print('cls_betas shape is :', cls_betas.shape)
 
 
     # Define the wignersum part of the 1x1 moment
@@ -332,15 +369,15 @@ class BBCompSep(PipelineStage):
                 for k in comp['sed'].params]
 
             # Set SED function with scaling beta
-            sed_fnc = get_function(fgc, component['sed'])
-            comp['sed'] = sed_fnc(**params_fgc, units='K_RJ')
+            #sed_fnc = get_function(fgc, component['sed'])
+            #comp['sed'] = sed_fnc(**params_fgc, units='K_RJ')
             #cls_betas = np.array([powerlaw(lmax, -3.5), powerlaw(lmax, -2.5)])
             def sed_d1(nu):
                 #return comp['sed'].diff(nu, cls_betas, *sed_params)
-                return comp['sed'].diff(nu,  *sed_params)
-            
+                return comp['sed'].diff(nu,  *sed_params)[0]
+
             for tn in range(self.nfreqs):
-                sed_b = self.bpss[tn].convolve_sed(sed, params)
+                sed_b = self.bpss[tn].convolve_sed(sed_d1, params)[0]
                 fg_scaling_d1[i_c, tn] = sed_b * units
                 
         return fg_scaling_d1.T
@@ -440,35 +477,13 @@ class BBCompSep(PipelineStage):
 
                         
         
-        # Window convolution
-        cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
-        for f1 in range(self.nfreqs):
-            for p1 in range(self.npol):
-                m1 = f1*self.npol+p1
-                for f2 in range(f1,self.nfreqs):
-                    p0 = p1 if f1==f2 else 0
-                    for p2 in range(p0,self.npol):
-                        m2 = f2*self.npol+p2
-                        windows = self.windows[self.vector_indices[m1, m2]]
-                        clband = np.dot(windows, cls_array_fg[f1,f2,:,p1,p2])
-                        cls_array_list[:, f1, p1, f2, p2] = clband
-                        if m1!=m2:
-                            cls_array_list[:, f2, p2, f1, p1] = clband
-
-        # Polarization angle rotation
-        for f1 in range(self.nfreqs):
-            for f2 in range(self.nfreqs):
-                cls_array_list[:,f1,:,f2,:] = rotate_cells(self.bpss[f2], self.bpss[f1],
-                                                           cls_array_list[:,f1,:,f2,:],
-                                                           params)
-
-        return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
-
     def chi_sq_dx(self, params):
         """
         Chi^2 likelihood. 
         """
         model_cls = self.model(params)
+        print(self.bbdata.shape)
+        print(model_cls.shape)
         return self.matrix_to_vector(self.bbdata - model_cls).flatten()
 
     def prepare_h_and_l(self):
