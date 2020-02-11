@@ -10,6 +10,11 @@ from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
+#import fgbuster.component_model as fgc
+from pyshtools.utils import Wigner3j
+from math import pi
+import scipy.special as sp #for the zeta function sp.zeta() in the 0x2 term
+
 class BBCompSep(PipelineStage):
     """
     Component separation stage
@@ -26,8 +31,29 @@ class BBCompSep(PipelineStage):
         """
         Pre-load the data, CMB BB power spectrum, and foreground models.
         """
+        lmax = 384
+        ells_w3j = np.arange(0, lmax)
         if self.config['moments']:
-            self.w3j = self.something()
+            w3j = np.zeros_like(ells_w3j, dtype=float)
+            big_w3j = np.zeros((lmax, lmax, lmax))
+            for ell1 in ells_w3j[1:]:
+                for ell2 in ells_w3j[1:]:
+                    w3j_array, ellmin, ellmax = Wigner3j(ell1, ell2, 0, 0, 0 )
+                    w3j_array = w3j_array[:ellmax - ellmin + 1]
+                    #make the w3j_array the same shape as the w3j
+                    if len(w3j_array) < len(ells_w3j):
+                        reference = np.zeros(len(w3j))
+                        reference[:w3j_array.shape[0]] = w3j_array
+                        w3j_array = reference
+                    
+                    w3j_array = np.concatenate([w3j[-ellmin:],w3j[:-ellmin]])
+                    w3j_array = w3j_array[:len(ells_w3j)]
+                    w3j_array[:ellmin] = 0
+
+                    big_w3j[:,ell1,ell2] = w3j_array
+
+            big_w3j = big_w3j**2
+                    
         self.parse_sacc_file()
         self.load_cmb()
         self.fg_model = FGModel(self.config)
@@ -264,22 +290,148 @@ class BBCompSep(PipelineStage):
                         cls += clrot*a1*a2
                 cls_array_fg[f1,f2]=cls
 
+    def powerlaw(lmax, gamma):
+        """
+        Beta power spectrum as power law
+        """
+        #self.lmax = (self.config['l_max'])
+        #lmax = 384
+        ls = np.arange(lmax+1)
+        c_ls = ((ls+0.001) / 80.)**gamma
+        c_ls[ls<30]=c_ls[30] #at ls<30 take pspec const
+        return c_ls                                                                                                                             
+    cls_betas = np.array([powerlaw(lmax=384, gamma=-3.5), powerlaw(lmax=384, gamma=-2.5)]) # [ncomp, nell]
+    print('cls_betas shape is :', cls_betas.shape)
+
+
+    # Define the wignersum part of the 1x1 moment
+    def get_wigner_sum(ells, params):
+        A, alpha, beta, gamma = params
+        self.lmax = (self.config['l_max'])
+        ls = np.arange(lmax+1)
+        long_ells = np.arange(len(ells))
+        amp_cls = powerlaw(long_ells, A, alpha)
+        beta_cls = bcls(long_ells, [beta, gamma])
+        f = 2*long_ells+1
+        w3j1 = w3j[:len(ells), :len(ells), :len(ells)]
+        wignersum = np.einsum("i,i,j,j,kij", f, amp_cls, f, beta_cls, w3j1, optimize=True)
+        return 1/(4*pi)*wignersum
+
+    
+
+    def integrate_seds_d1(self, params):
+        """
+        Define the first order derivative of the SED
+        """
+        fg_scaling_d1 = np.zeros([self.fg_model.n_components, self.nfreqs])
+
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            units = comp['cmb_n0_norm']
+            sed_params = [params[comp['names_sed_dict'][k]]
+                for k in comp['sed'].params]
+
+            # Set SED function with scaling beta
+            sed_fnc = get_function(fgc, component['sed'])
+            comp['sed'] = sed_fnc(**params_fgc, units='K_RJ')
+            #cls_betas = np.array([powerlaw(lmax, -3.5), powerlaw(lmax, -2.5)])
+            def sed_d1(nu):
+                #return comp['sed'].diff(nu, cls_betas, *sed_params)
+                return comp['sed'].diff(nu,  *sed_params)
+            
+            for tn in range(self.nfreqs):
+                sed_b = self.bpss[tn].convolve_sed(sed, params)
+                fg_scaling_d1[i_c, tn] = sed_b * units
+                
+        return fg_scaling_d1.T
+
+
+    def integrate_seds_d2(self, params):
+        """
+        Define the second order derivative of the SED
+        """
+        fg_scaling_d2 = np.zeros([self.fg_model.n_components, self.nfreqs])
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            units = comp['cmb_n0_norm']
+            sed_params = [params[comp['names_sed_dict'][k]]
+                for k in comp['sed'].params]
+            # Set SED function 
+            sed_fnc = get_function(fgc, component['sed'])
+            comp['sed'] = sed_fnc(**params_fgc, units='K_RJ')
+            #cls_betas = np.array([powerlaw(lmax, -3.5), powerlaw(lmax, -2.5)])
+            def sed_d2(nu):
+                #return comp['sed'].diff(nu, cls_betas, *sed_params)
+                return comp['sed'].diff_diff(nu,  *sed_params)
+            
+            for tn in range(self.nfreqs):
+                sed_b = self.bpss[tn].convolve_sed(sed, params)
+                fg_scaling_d2[i_c, tn] = sed_b * units
+                        
+        return fg_scaling_d2.T
+
+    def evaluate_1x1(self, nu, params):
+        """
+        Evaluate the 1x1 moment for auto-spectra
+        """
+        ells = np.arange(384)
+        fg_scaling  = self.integrate_seds(params)
+        if type(nu)==np.float64 or type(nu)==int or type(nu)==float:
+            freqs = np.array(nu)[np.newaxis]
+            moment1x1 = np.zeros((len(self.nfreqs),len(ells)))
+            wignersum = get_wigner_sum(ells, params)
+            for i in range(len(moment1x1[:])):
+                moment1x1[i] =  np.log(nu[i]/nu0)**2 * fg_scaling[i]**2 * wignersum
+                if len(nfreqs)==1:
+                    moment1x1 = moment1x1[0]
+                    return moment1x1
+                
+    def evaluate_0x2(self, nu, params):
+        """
+        Evaluate the 0x2 moment for auto-spectra
+        Assume power law for beta
+        """
+        ells = np.arange(384)
+        fg_scaling  = self.integrate_seds(params)
+        fg_cell = self.evaluate_power_spectra(params)
+        beta_cls =  np.array([powerlaw(lmax, -3.5), powerlaw(lmax, -2.5)])
+        if type(nu)==np.float64 or type(nu)==int or type(nu)==float:
+            freqs = np.array(nu)[np.newaxis]
+            moment0x2 = np.zeros((len(self.nfreqs),len(ells)))
+            #the sum part becomes
+            sum = 2 * sp.zeta(-gamma-1) + sp.zeta(-gamma) - 3
+            #multiply by the prefactors of the sum
+            #have to add due to rescaling the beta map to have same std.
+            A_beta = beta_cls[80]
+            sum = A_beta / (4 * pi * 80**gamma) * sum
+            for i in range(len(moment0x2[:])):
+                moment0x2[i] = np.log(nu[i]/nu0)**2 * fg_scaling[i]**2 * fg_cell * sum
+                if len(freqs)==1:
+                    moment0x2 = moment0x2[0]
+                    return moment0x2    
+                
         # Do moments if needed
         if self.config['moments']:
             # Evaluate 1st order SED derivatives.
-            fg_scaling_d1 = something # [nfreq, ncomp]
+            fg_scaling_d1 = self.integrate_seds_d1(params) # [nfreq, ncomp]
+            print('fg_scaling_d1 shape is :', fg_scaling_d1.shape)
+            print('Expected shape is :', self.nfreqs.shape, self.fg_model.n_components.shape)
             # Evaluate 2nd order SED derivatives.
-            fg_scaling_d2 = something # [nfreq, ncomp]
+            fg_scaling_d2 = self.integrate_seds_d2(params) # [nfreq, ncomp]
+            print('fg_scaling_d2 shape is :', fg_scaling_d2.shape)
+            print('Expected shape is :', self.nfreqs.shape, self.fg_model.n_components.shape)
             # Evaluate beta power spectra.
-            cls_betas = something # [ncomp, nell]
+            cls_betas = np.array([powerlaw(self.lmax, -3.5), powerlaw(self.lmax, -2.5)]) # [ncomp, nell]
             # Compute 1x1 for each component
-            cls_11 = something(fg_cell, cls_betas, self.w3j) # [ncomp, nell, npol, npol]
+            #cls_11 = something(fg_cell, cls_betas, self.w3j) # [ncomp, nell, npol, npol]
+            cls_11 = self.evaluate_1x1(nu,params)
             # Compute 0x2 for each component (essentially this is sigma_beta)
-            cls_02 = something(fg_cell, cls_betas) # [ncomp, nell, npol, npol]
+            #cls_02 = something(fg_cell, cls_betas) # [ncomp, nell, npol, npol]
+            cls_02 = self.evaluate_0x2(nu,params)
 
             for f1 in range(self.nfreqs):
                 for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
-                        cls = np.zeros([self.n_ell, self.npol, self.npol])
+                    cls = np.zeros([self.n_ell, self.npol, self.npol])
                     for c1 in range(self.fg_model.n_components):
                         cls += fg_scaling_d1[f1, c1] * fg_scaling_d1[f2, c1] * cls_11[c1]
                         cls += 0.5 * (fg_scaling_d2[f1, c1] * fg_scaling[f2, c1] +

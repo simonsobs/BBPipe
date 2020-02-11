@@ -36,4 +36,4 @@ output_dir: ./test/sample_out
 log_dir: ./test/sample_out
 
 # Put the log for the overall pipeline infrastructure in this file:
-pipeline_log: ./test/sample_out/log.txt
+#pipeline_log: ./test/sample_out/log.txt
