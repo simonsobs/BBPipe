@@ -83,6 +83,7 @@ BBCompSep:
             moments:
               # Define gammas for varying spectral indices of components
               gamma_beta : -3.5
+              amp_beta : 5.0E-8
 
         component_2:
             name: Synchrotron
@@ -105,7 +106,7 @@ BBCompSep:
             moments:
               # Define gammas for varying spectral indices of components
               gamma_beta : -2.5
-
+              amp_beta : 5.0E-8
 
     # Add extra parameters for different systematics
     systematics:
