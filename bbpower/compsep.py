@@ -290,11 +290,21 @@ class BBCompSep(PipelineStage):
                         cls += clrot*a1*a2
                 cls_array_fg[f1,f2]=cls
 
+        # Do moments if needed        
         if self.config['moments']:
-            fg_scaling_d1 = self.integrate_seds_d1(params)
-            print(fg_scaling_d1)
+            # Evaluate 2nd order SED derivatives.            
+            fg_scaling_d2 = self.integrate_seds_d2(params) # [nfreq, ncomp]
+            print(fg_scaling_d2)
+            print('fg_scaling_d2 shape is :', fg_scaling_d2.shape)
             exit(1)
-            
+
+            # Evaluate 1st order SED derivatives.
+            fg_scaling_d1 = self.integrate_seds_d1(params) # [nfreq, ncomp]
+            print(fg_scaling_d1)
+            print('fg_scaling_d1 shape is :', fg_scaling_d1.shape)
+            exit(1)
+
+            # Evaluate beta power spectra.
             cl_betas = []
             for i_c, c_name in enumerate(self.fg_model.component_names):
                 comp = self.fg_model.components[c_name]
@@ -303,7 +313,23 @@ class BBCompSep(PipelineStage):
             cl_betas = np.array(cl_betas)
             print('cls_betas shape is :', cl_betas.shape)
             exit(1)
-        
+
+            # Compute 1x1 for each component
+            #cls_11 = something(fg_cell, cls_betas, self.w3j) # [ncomp, nell, npol, npol]
+            cls_11 = self.evaluate_1x1(nu,params)
+            # Compute 0x2 for each component (essentially this is sigma_beta)
+            #cls_02 = something(fg_cell, cls_betas) # [ncomp, nell, npol, npol]
+            cls_02 = self.evaluate_0x2(nu,params)
+
+            for f1 in range(self.nfreqs):
+                for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
+                    cls = np.zeros([self.n_ell, self.npol, self.npol])
+                    for c1 in range(self.fg_model.n_components):
+                        cls += fg_scaling_d1[f1, c1] * fg_scaling_d1[f2, c1] * cls_11[c1]
+                        cls += 0.5 * (fg_scaling_d2[f1, c1] * fg_scaling[f2, c1] +
+                                      fg_scaling_d2[f2, c1] * fg_scaling[f1, c1]) * cls_02[c1]
+                    cls_array_fg[f1, f2] *= cls
+            
                 
         # Window convolution
         cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
@@ -340,7 +366,6 @@ class BBCompSep(PipelineStage):
         c_ls[ls<30]=c_ls[30] #at ls<30 take pspec const
         return c_ls                                                                                                                             
 
-
     # Define the wignersum part of the 1x1 moment
     def get_wigner_sum(ells, params):
         A, alpha, beta, gamma = params
@@ -374,10 +399,10 @@ class BBCompSep(PipelineStage):
             #cls_betas = np.array([powerlaw(lmax, -3.5), powerlaw(lmax, -2.5)])
             def sed_d1(nu):
                 #return comp['sed'].diff(nu, cls_betas, *sed_params)
-                return comp['sed'].diff(nu,  *sed_params)[0]
+                return comp['sed'].diff(nu,  *sed_params)[0] #only differentiate beta param
 
             for tn in range(self.nfreqs):
-                sed_b = self.bpss[tn].convolve_sed(sed_d1, params)[0]
+                sed_b = self.bpss[tn].convolve_sed(sed_d1, params)[0] #on
                 fg_scaling_d1[i_c, tn] = sed_b * units
                 
         return fg_scaling_d1.T
@@ -393,16 +418,13 @@ class BBCompSep(PipelineStage):
             units = comp['cmb_n0_norm']
             sed_params = [params[comp['names_sed_dict'][k]]
                 for k in comp['sed'].params]
-            # Set SED function 
-            sed_fnc = get_function(fgc, component['sed'])
-            comp['sed'] = sed_fnc(**params_fgc, units='K_RJ')
             #cls_betas = np.array([powerlaw(lmax, -3.5), powerlaw(lmax, -2.5)])
             def sed_d2(nu):
                 #return comp['sed'].diff(nu, cls_betas, *sed_params)
-                return comp['sed'].diff_diff(nu,  *sed_params)
+                return comp['sed'].diff_diff(nu,  *sed_params)[0] 
             
             for tn in range(self.nfreqs):
-                sed_b = self.bpss[tn].convolve_sed(sed, params)
+                sed_b = self.bpss[tn].convolve_sed(sed_d2, params)[0]
                 fg_scaling_d2[i_c, tn] = sed_b * units
                         
         return fg_scaling_d2.T
@@ -446,7 +468,8 @@ class BBCompSep(PipelineStage):
                 if len(freqs)==1:
                     moment0x2 = moment0x2[0]
                     return moment0x2    
-                
+
+
         # Do moments if needed
         if self.config['moments']:
             # Evaluate 1st order SED derivatives.
