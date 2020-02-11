@@ -1,3 +1,4 @@
+
 import numpy as np
 import os
 from scipy.linalg import sqrtm
@@ -10,7 +11,6 @@ from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
 from fgbuster.component_model import CMB 
 from sacc.sacc import SACC
 
-#import fgbuster.component_model as fgc
 from pyshtools.utils import Wigner3j
 from math import pi
 import scipy.special as sp #for the zeta function sp.zeta() in the 0x2 term
@@ -292,6 +292,16 @@ class BBCompSep(PipelineStage):
 
         # Do moments if needed        
         if self.config['moments']:
+            # Evaluate beta power spectra.
+            cl_betas = []
+            for i_c, c_name in enumerate(self.fg_model.component_names):
+                comp = self.fg_model.components[c_name]
+                gamma = comp['names_moments_dict']['gamma_beta']
+                cl_betas.append(self.bcls(lmax=384, gamma=gamma))
+            cl_betas = np.array(cl_betas)
+            print('cls_betas shape is :', cl_betas.shape)
+            exit(1)
+            
             # Evaluate 2nd order SED derivatives.            
             fg_scaling_d2 = self.integrate_seds_d2(params) # [nfreq, ncomp]
             print(fg_scaling_d2)
@@ -304,22 +314,12 @@ class BBCompSep(PipelineStage):
             print('fg_scaling_d1 shape is :', fg_scaling_d1.shape)
             exit(1)
 
-            # Evaluate beta power spectra.
-            cl_betas = []
-            for i_c, c_name in enumerate(self.fg_model.component_names):
-                comp = self.fg_model.components[c_name]
-                gamma = comp['names_moments_dict']['gamma_beta']
-                cl_betas.append(self.powerlaw(lmax=384, gamma=gamma))
-            cl_betas = np.array(cl_betas)
-            print('cls_betas shape is :', cl_betas.shape)
-            exit(1)
-
             # Compute 1x1 for each component
             #cls_11 = something(fg_cell, cls_betas, self.w3j) # [ncomp, nell, npol, npol]
-            cls_11 = self.evaluate_1x1(nu,params)
+            cls_11 = self.evaluate_1x1(nu, params)
             # Compute 0x2 for each component (essentially this is sigma_beta)
             #cls_02 = something(fg_cell, cls_betas) # [ncomp, nell, npol, npol]
-            cls_02 = self.evaluate_0x2(nu,params)
+            cls_02 = self.evaluate_0x2(nu, params)
 
             for f1 in range(self.nfreqs):
                 for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
@@ -359,12 +359,25 @@ class BBCompSep(PipelineStage):
         """
         Beta power spectrum as power law
         """
-        #self.lmax = (self.config['l_max'])
-        #lmax = 384
         ls = np.arange(lmax+1)
-        c_ls = ((ls+0.001) / 80.)**gamma
-        c_ls[ls<30]=c_ls[30] #at ls<30 take pspec const
-        return c_ls                                                                                                                             
+        #c_ls = ((ls+0.001) / 80.)**gamma
+        #c_ls[ls<30]=c_ls[30] #at ls<30 take pspec const
+        #return c_ls
+        c_ls = np.zeros(len(ls))
+        c_ls[2:] = (ls[2:] / 80.)**gamma
+        return c_ls
+        
+    def bcls(self, lmax, gamma):
+        ls = np.arange(lmax+1)
+        bcls = self.powerlaw(lmax, gamma)
+        crit = 2/np.log(10) #10 is the ratio between our highest and lowest frequency 300/30 GHz
+        sigma_default = crit/3 #want critical value (for convergence) =  3 sigma for the map
+        a = 4.16190627
+        b = -3.28619789
+        c = -2.56282892
+        std = a * (-gamma)**b * np.exp(c*gamma)
+        bcls *= (sigma_default/std)**2 
+        return bcls
 
     # Define the wignersum part of the 1x1 moment
     def get_wigner_sum(ells, params):
