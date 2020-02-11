@@ -291,7 +291,7 @@ def main():
 #SBATCH -C haswell\n\
 #SBATCH -q regular\n\
 #SBATCH -J test_BBpipe\n\
-#SBATCH -t 00:30:00\n\
+#SBATCH -t 01:00:00\n\
 \n")
 
         for line in fin.readlines():
