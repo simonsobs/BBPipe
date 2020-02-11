@@ -1,4 +1,3 @@
-
 import numpy as np
 import os
 from scipy.linalg import sqrtm
@@ -300,23 +299,25 @@ class BBCompSep(PipelineStage):
                 cl_betas.append(self.bcls(lmax=384, gamma=gamma))
             cl_betas = np.array(cl_betas)
             print('cls_betas shape is :', cl_betas.shape)
-            exit(1)
+            #exit(1)
             
             # Evaluate 2nd order SED derivatives.            
             fg_scaling_d2 = self.integrate_seds_d2(params) # [nfreq, ncomp]
             print(fg_scaling_d2)
             print('fg_scaling_d2 shape is :', fg_scaling_d2.shape)
-            exit(1)
+            #exit(1)
 
             # Evaluate 1st order SED derivatives.
             fg_scaling_d1 = self.integrate_seds_d1(params) # [nfreq, ncomp]
             print(fg_scaling_d1)
             print('fg_scaling_d1 shape is :', fg_scaling_d1.shape)
-            exit(1)
+            #exit(1)
 
             # Compute 1x1 for each component
             #cls_11 = something(fg_cell, cls_betas, self.w3j) # [ncomp, nell, npol, npol]
-            cls_11 = self.evaluate_1x1(nu, params)
+            cls_11 = self.evaluate_1x1(params, lmax=384)
+            exit(1)
+
             # Compute 0x2 for each component (essentially this is sigma_beta)
             #cls_02 = something(fg_cell, cls_betas) # [ncomp, nell, npol, npol]
             cls_02 = self.evaluate_0x2(nu, params)
@@ -357,7 +358,7 @@ class BBCompSep(PipelineStage):
                 
     def powerlaw(self, lmax, gamma):
         """
-        Beta power spectrum as power law
+        Define power spectrum as power law
         """
         ls = np.arange(lmax+1)
         #c_ls = ((ls+0.001) / 80.)**gamma
@@ -368,6 +369,9 @@ class BBCompSep(PipelineStage):
         return c_ls
         
     def bcls(self, lmax, gamma):
+        """
+        Define beta power spectrum (as power law)
+        """
         ls = np.arange(lmax+1)
         bcls = self.powerlaw(lmax, gamma)
         crit = 2/np.log(10) #10 is the ratio between our highest and lowest frequency 300/30 GHz
@@ -379,21 +383,31 @@ class BBCompSep(PipelineStage):
         bcls *= (sigma_default/std)**2 
         return bcls
 
-    # Define the wignersum part of the 1x1 moment
-    def get_wigner_sum(ells, params):
-        A, alpha, beta, gamma = params
-        self.lmax = (self.config['l_max'])
+    def get_wigner_sum(self, lmax, params):
+        """
+        Define the wignersum part of the 1x1 moment
+        """
+        #A, alpha, beta, gamma = params
+        ##self.lmax = (self.config['l_max'])
         ls = np.arange(lmax+1)
-        long_ells = np.arange(len(ells))
-        amp_cls = powerlaw(long_ells, A, alpha)
-        beta_cls = bcls(long_ells, [beta, gamma])
+        long_ells = np.arange(len(ls))
+        nside = int(len(long_ells)/3)
+        long_ell_max = 3*nside-1
+        amp_cls = []
+        cl_betas = []
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            gamma = comp['names_moments_dict']['gamma_beta']
+            cl_betas.append(self.bcls(long_ell_max, gamma=gamma))
+            amp_cls.append(self.powerlaw(long_ell_max, gamma=gamma))
+        beta_cls = np.array(cl_betas)
+        amp_cls = np.array(amp_cls)
         f = 2*long_ells+1
-        w3j1 = w3j[:len(ells), :len(ells), :len(ells)]
+        w3j1 = self.w3j[:len(ells), :len(ells), :len(ells)]
         wignersum = np.einsum("i,i,j,j,kij", f, amp_cls, f, beta_cls, w3j1, optimize=True)
         return 1/(4*pi)*wignersum
 
     
-
     def integrate_seds_d1(self, params):
         """
         Define the first order derivative of the SED
@@ -442,31 +456,37 @@ class BBCompSep(PipelineStage):
                         
         return fg_scaling_d2.T
 
-    def evaluate_1x1(self, nu, params):
+    def evaluate_1x1(self, params, lmax):
         """
         Evaluate the 1x1 moment for auto-spectra
         """
-        ells = np.arange(384)
-        fg_scaling  = self.integrate_seds(params)
-        if type(nu)==np.float64 or type(nu)==int or type(nu)==float:
-            freqs = np.array(nu)[np.newaxis]
-            moment1x1 = np.zeros((len(self.nfreqs),len(ells)))
-            wignersum = get_wigner_sum(ells, params)
-            for i in range(len(moment1x1[:])):
-                moment1x1[i] =  np.log(nu[i]/nu0)**2 * fg_scaling[i]**2 * wignersum
-                if len(nfreqs)==1:
-                    moment1x1 = moment1x1[0]
-                    return moment1x1
+        ls = np.arange(lmax+1)
+        fg_scaling_d1  = self.integrate_seds_d1(params)
+        fg_cell = self.evaluate_power_spectra(params)
+        #if type(nu)==np.float64 or type(nu)==int or type(nu)==float:
+        #    freqs = np.array(nu)[np.newaxis]
+        moment1x1 = np.zeros(((self.nfreqs),len(ls)))
+        wignersum = self.get_wigner_sum(lmax, params)
+        for i in range(len(moment1x1[:])):
+            moment1x1[i] = fg_scaling_d1[i] * wignersum * fg_cell
+        if len(self.nfreqs)==1:
+            moment1x1 = moment1x1[0]
+        return moment1x1
                 
     def evaluate_0x2(self, nu, params):
         """
         Evaluate the 0x2 moment for auto-spectra
         Assume power law for beta
         """
-        ells = np.arange(384)
-        fg_scaling  = self.integrate_seds(params)
+        ells = np.arange(lmax+1)
+        fg_scaling_d2  = self.integrate_seds_d2(params)
         fg_cell = self.evaluate_power_spectra(params)
-        beta_cls =  np.array([powerlaw(lmax, -3.5), powerlaw(lmax, -2.5)])
+        cl_betas = []
+        for i_c, c_name in enumerate(self.fg_model.component_names):
+            comp = self.fg_model.components[c_name]
+            gamma = comp['names_moments_dict']['gamma_beta']
+            cl_betas.append(self.bcls(lmax=384, gamma=gamma))
+            cl_betas = np.array(cl_betas)
         if type(nu)==np.float64 or type(nu)==int or type(nu)==float:
             freqs = np.array(nu)[np.newaxis]
             moment0x2 = np.zeros((len(self.nfreqs),len(ells)))
@@ -474,7 +494,7 @@ class BBCompSep(PipelineStage):
             sum = 2 * sp.zeta(-gamma-1) + sp.zeta(-gamma) - 3
             #multiply by the prefactors of the sum
             #have to add due to rescaling the beta map to have same std.
-            A_beta = beta_cls[80]
+            A_beta = cl_betas[80]
             sum = A_beta / (4 * pi * 80**gamma) * sum
             for i in range(len(moment0x2[:])):
                 moment0x2[i] = np.log(nu[i]/nu0)**2 * fg_scaling[i]**2 * fg_cell * sum
