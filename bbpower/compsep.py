@@ -289,7 +289,8 @@ class BBCompSep(PipelineStage):
                         cls += clrot*a1*a2
                 cls_array_fg[f1,f2]=cls
 
-        # Do moments if needed        
+        # Do moments if needed
+        # Start by assuming that there is no cross-correlation between components and betas
         if self.config['moments']:
             # Evaluate 2nd order SED derivatives.            
             fg_scaling_d2 = self.integrate_seds_d2(params) # [nfreq, ncomp]
@@ -302,10 +303,10 @@ class BBCompSep(PipelineStage):
             print('fg_scaling_d1 shape is :', fg_scaling_d1.shape)
 
             # Compute 1x1 for each component
-            #cls_11 = something(fg_cell, cls_betas, self.w3j) # [ncomp, nell, npol, npol]
+            # Compute 0x2 for each component (essentially this is sigma_beta)
             # Evaluate beta power spectra.
-            cls_11 = np.zeros([self.fg_model.n_components, self.n_ell])
-            cls_02 = np.zeros([self.fg_model.n_components, self.n_ell])
+            cls_11 = np.zeros([self.fg_model.n_components, self.n_ell]) # [ncomp, nell, npol, npol]
+            cls_02 = np.zeros([self.fg_model.n_components, self.n_ell]) # [ncomp, nell, npol, npol]
             for i_c, c_name in enumerate(self.fg_model.component_names):
                 comp = self.fg_model.components[c_name]
                 gamma = comp['names_moments_dict']['gamma_beta']
@@ -320,12 +321,18 @@ class BBCompSep(PipelineStage):
                                             cls_cc=cl_cc,
                                             cls_bb=cl_betas)
                 cls_02[i_c, :384] = cls_0x2
+                # Check difference if we introduce gamma param
+               # cls_0x2_a = self.evaluate_1x1(params, lmax=384,
+                                             # cls_cc=cl_cc,
+                                             # cls_bb=cl_betas,
+                                             # gamma=gamma)
+                #cls_02_a[i_c, :384] = cls_0x2_a
 
+                #print(cls_02/cls_02_a)
             exit(1)
-            # Compute 0x2 for each component (essentially this is sigma_beta)
-            #cls_02 = something(fg_cell, cls_betas) # [ncomp, nell, npol, npol]
-            cls_02 = self.evaluate_0x2(nu, params)
 
+
+            # Add components scaled in frequency 
             for f1 in range(self.nfreqs):
                 for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
                     cls = np.zeros([self.n_ell, self.npol, self.npol])
