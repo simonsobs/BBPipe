@@ -289,7 +289,7 @@ def main():
         fout.write("#!/bin/bash\n\
 #SBATCH -N 1\n\
 #SBATCH -C haswell\n\
-#SBATCH -q debug\n\
+#SBATCH -q regular\n\
 #SBATCH -J test_BBpipe\n\
 #SBATCH -t 00:30:00\n\
 \n")
