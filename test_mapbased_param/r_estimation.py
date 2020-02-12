@@ -491,7 +491,9 @@ class BBREstimation(PipelineStage):
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cov_model, label='modeled BB', color='k', linestyle='-', linewidth=2.0, alpha=0.8)
                         
-                        pl.loglog( ell_v_loc, norm*(ClBB_obs-Cov_model), label='diff model - obs', color='k', linestyle=':', linewidth=2.0, alpha=0.8)
+                        # pl.loglog( ell_v_loc, norm*(ClBB_obs-Cov_model), label='diff model - obs', color='k', linestyle=':', linewidth=2.0, alpha=0.8)
+                        pl.loglog( ell_v_loc, norm*(ClBB_obs-Cov_model+bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),\
+                                         label='diff obs - (model - prim BB)', color='k', linestyle=':', linewidth=2.0, alpha=0.8)
                         # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
                                                 # label='observed BB - actual noise = tot BB + residuals', 
                                                 # color='red', linestyle='-', linewidth=2.0, alpha=0.8)
