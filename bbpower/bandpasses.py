@@ -114,13 +114,13 @@ def decorrelated_bpass(bpass1, bpass2, sed, params, decorr_delta):
         nu_prime = bpass.nu + dnu
         bnu_prime = np.abs(bpass.bnu_dnu) * nu_prime**2 
         bphi = bnu_prime * sed(nu_prime)
-        return nu_prime, self.cmb_norm, bphi
+        return nu_prime, bphi
 
-    nu_prime1, cmb_norm1, bphi1 = convolved_freqs(bpass1)
-    nu_prime2, cmb_norm2, bphi2 = convolved_freqs(bpass2)
+    nu_prime1, bphi1 = convolved_freqs(bpass1)
+    nu_prime2, bphi2 = convolved_freqs(bpass2)
     nu1nu2 = np.outer(nu_prime1, 1./nu_prime2)
     decorr_exp = decorr_delta**(np.log(nu1nu2)**2)
-    decorr_sed = np.einsum('i, ij, j', bphi1, decorr_exp, bphi2) / cmb_norm1 / cmb_norm2
+    decorr_sed = np.einsum('i, ij, j', bphi1, decorr_exp, bphi2) / bpass1.cmb_norm / bpass2.cmb_norm
 
     if bpass1.do_gain:
         decorr_sed *= params[bpass1.name_gain]
