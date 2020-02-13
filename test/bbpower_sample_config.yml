@@ -2,7 +2,6 @@
 global:
     nside: 512
     compute_dell: True
-    lmax : 384
 
 BBCompSep:
     # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
