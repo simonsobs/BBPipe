@@ -88,8 +88,9 @@ class FGModel:
             comp['names_moments_dict'] = {}
             d = component.get('moments')
             if d:
-                for k, d in component['moments'].items():
-                    comp['names_moments_dict'][k]=d
+                comp['moments_pameters'] = component['moments']
+                for k, l in component['moments'].items():
+                    comp['names_moments_dict'][l[0]]=k
 
             # Set Cl functions
             comp['cl'] = {}

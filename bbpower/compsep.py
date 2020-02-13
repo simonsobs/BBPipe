@@ -294,43 +294,29 @@ class BBCompSep(PipelineStage):
         if self.config['moments']:
             # Evaluate 2nd order SED derivatives.            
             fg_scaling_d2 = self.integrate_seds_d2(params) # [nfreq, ncomp]
-            print(fg_scaling_d2)
-            print('fg_scaling_d2 shape is :', fg_scaling_d2.shape)
 
             # Evaluate 1st order SED derivatives.
             fg_scaling_d1 = self.integrate_seds_d1(params) # [nfreq, ncomp]
-            print(fg_scaling_d1)
-            print('fg_scaling_d1 shape is :', fg_scaling_d1.shape)
 
             # Compute 1x1 for each component
             # Compute 0x2 for each component (essentially this is sigma_beta)
             # Evaluate beta power spectra.
-            cls_11 = np.zeros([self.fg_model.n_components, self.n_ell]) # [ncomp, nell, npol, npol]
-            cls_02 = np.zeros([self.fg_model.n_components, self.n_ell]) # [ncomp, nell, npol, npol]
+            cls_11 = np.zeros([self.fg_model.n_components, self.n_ell, self.npol, self.npol]) # [ncomp, nell, npol, npol]
+            cls_02 = np.zeros([self.fg_model.n_components, self.n_ell, self.npol, self.npol]) # [ncomp, nell, npol, npol]
             for i_c, c_name in enumerate(self.fg_model.component_names):
                 comp = self.fg_model.components[c_name]
-                gamma = comp['names_moments_dict']['gamma_beta']
-                amp =  comp['names_moments_dict']['amp_beta']
+                gamma = params[comp['names_moments_dict']['gamma_beta']]
+                amp =  params[comp['names_moments_dict']['amp_beta']]
                 cl_betas = self.bcls(lmax=384, gamma=gamma, amp=amp)
-                cl_cc = fg_cell[i_c, i_c, :, 0, 0]
+                cl_cc = fg_cell[i_c, i_c, :]
                 cls_1x1 = self.evaluate_1x1(params, lmax=384,
                                             cls_cc=cl_cc,
                                             cls_bb=cl_betas)
-                cls_11[i_c, :384] = cls_1x1
-                cls_0x2 = self.evaluate_1x1(params, lmax=384,
+                cls_11[i_c, :384, :, :] = cls_1x1
+                cls_0x2 = self.evaluate_0x2(params, lmax=384,
                                             cls_cc=cl_cc,
                                             cls_bb=cl_betas)
-                cls_02[i_c, :384] = cls_0x2
-                # Check difference if we introduce gamma param
-               # cls_0x2_a = self.evaluate_1x1(params, lmax=384,
-                                             # cls_cc=cl_cc,
-                                             # cls_bb=cl_betas,
-                                             # gamma=gamma)
-                #cls_02_a[i_c, :384] = cls_0x2_a
-
-                #print(cls_02/cls_02_a)
-            exit(1)
-
+                cls_02[i_c, :384, :, :] = cls_0x2
 
             # Add components scaled in frequency 
             for f1 in range(self.nfreqs):
@@ -340,8 +326,7 @@ class BBCompSep(PipelineStage):
                         cls += fg_scaling_d1[f1, c1] * fg_scaling_d1[f2, c1] * cls_11[c1]
                         cls += 0.5 * (fg_scaling_d2[f1, c1] * fg_scaling[f2, c1] +
                                       fg_scaling_d2[f2, c1] * fg_scaling[f1, c1]) * cls_02[c1]
-                    cls_array_fg[f1, f2] *= cls
-            
+                    cls_array_fg[f1, f2] += cls
                 
         # Window convolution
         cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
@@ -431,12 +416,12 @@ class BBCompSep(PipelineStage):
         """
 
         ls = np.arange(lmax)
-        v_left = (2*ls+1) * cls_cc[:lmax]
+        v_left = (2*ls+1)[:, None, None] * cls_cc[:lmax, :, :]
         v_right = (2*ls+1) * cls_bb[:lmax]
 
         mat = self.big_w3j
 
-        moment1x1 = np.einsum('j,ijk,k',
+        moment1x1 = np.einsum('jlm,ijk,k',
                               v_left,
                               mat,
                               v_right) / (4 * np.pi)
@@ -451,9 +436,9 @@ class BBCompSep(PipelineStage):
         """
         ls = np.arange(lmax)
         if gamma is not None:
-            prefac = amp * (2 * zeta(-gamma-1) + zeta(-gamma) - 3) / (4 * np.pi * 80**gamma)
+            prefac = amp * (2 * sp.zeta(-gamma-1) + sp.zeta(-gamma) - 3) / (4 * np.pi * 80**gamma)
         else:
-            np.sum( (2 * ls + 1) * cls_bb) / (4*np.pi)
+            prefac = np.sum( (2 * ls + 1) * cls_bb) / (4*np.pi)
         return cls_cc[:lmax] * prefac
         
     def chi_sq_dx(self, params):
@@ -461,8 +446,6 @@ class BBCompSep(PipelineStage):
         Chi^2 likelihood. 
         """
         model_cls = self.model(params)
-        print(self.bbdata.shape)
-        print(model_cls.shape)
         return self.matrix_to_vector(self.bbdata - model_cls).flatten()
 
     def prepare_h_and_l(self):

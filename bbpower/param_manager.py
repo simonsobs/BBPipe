@@ -55,6 +55,9 @@ class ParameterManager(object):
                     # Add parameters only if we're using both polarization channels
                     if (p1 in config['pol_channels']) and (p2 in config['pol_channels']):
                         self._add_parameters(d)
+            dm = c.get('moments')
+            if dm: # Moments
+                self._add_parameters(dm)
 
         # Loop through different systematics
         if 'systematics' in config.keys():

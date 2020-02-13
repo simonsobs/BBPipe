@@ -6,7 +6,7 @@ global:
 
 BBCompSep:
     # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
-    sampler: 'single_point'
+    sampler: 'emcee'
     # If you chose emcee:
     # Number of walkers
     nwalkers: 128
@@ -82,8 +82,8 @@ BBCompSep:
                 epsilon_ds: ['component_2', 'tophat', [-1., 0., 1.]]
             moments:
               # Define gammas for varying spectral indices of components
-              gamma_beta : -3.5
-              amp_beta : 5.0E-8
+              gamma_d_beta : ['gamma_beta', 'tophat', [-6., -3.5, -2.]]
+              amp_d_beta : ['amp_beta', 'tophat', [0., 0., 1E-6]]
 
         component_2:
             name: Synchrotron
@@ -105,8 +105,8 @@ BBCompSep:
                     l0_s_bb: ['ell0', 'fixed', [80.]]
             moments:
               # Define gammas for varying spectral indices of components
-              gamma_beta : -2.5
-              amp_beta : 5.0E-8
+              gamma_s_beta : ['gamma_beta', 'tophat', [-6., -2.5, -2.]]
+              amp_s_beta : ['amp_beta', 'tophat', [0., 0., 1E-6]]
 
     # Add extra parameters for different systematics
     systematics:
@@ -161,5 +161,4 @@ BBCompSep:
 
 
     # Decide whether to use moments (choose 'True' or 'False')
-    moments : 'True'
-    
+    moments : True
