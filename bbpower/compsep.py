@@ -253,10 +253,21 @@ class BBCompSep(PipelineStage):
         fg_cell = np.transpose(fg_cell, axes = [0,3,1,2])  # [ncomp,nell,npol,npol]
         cmb_cell = np.transpose(cmb_cell, axes = [2,0,1]) # [nell,npol,npol]
 
+        cmb_scaling = np.ones(self.nfreqs)
+        cmb_rot = []
+
         # SED scaling
+        for f1 in range(self.nfreqs):
+            cs, crot = self.bpss[f1].convolve_sed(None, params)
+            cmb_scaling[f1] = cs
+            cmb_rot.append(crot)
+
+        print(cmb_scaling)
+
         for f1 in range(self.nfreqs):
             for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
                 cls = cmb_cell.copy()
+                cls = rotate_cells_mat(cmb_rot[f2], cmb_rot[f1], cls) * cmb_scaling[f1] * cmb_scaling[f2]
                 for c1 in range(self.fg_model.n_components):
                     for c2 in range(self.fg_model.n_components):
                         mat1 = rot_m[c1, f1]

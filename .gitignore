@@ -23,3 +23,5 @@ pol_angle_runs/biastest/output/*
 updated_runs/
 examples/data/olddata/
 *.swp
+.idea/
+.nfs*

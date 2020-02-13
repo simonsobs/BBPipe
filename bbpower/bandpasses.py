@@ -9,6 +9,7 @@ class Bandpass(object):
         self.bnu_dnu = bnu * dnu
         self.nu_mean = np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu * nu * nu**2) / \
                        np.sum(CMB('K_RJ').eval(self.nu) * self.bnu_dnu * nu**2)
+        self.cmb_norm = np.sum( CMB('K_RJ').eval(nu) * self.bnu_dnu * nu**2 )
         field = 'bandpass_%d' % bp_number
 
         # Get frequency-dependent angle if necessary
@@ -68,8 +69,10 @@ class Bandpass(object):
             dphi1_phase = np.cos(2.*normed_dphi1) + 1j * np.sin(2.*normed_dphi1)
 
         nu_prime = self.nu + dnu
-        cmb_norm = np.sum( CMB('K_RJ').eval(nu_prime) * self.bnu_dnu * nu_prime**2 )
-        conv_sed = np.sum( sed(nu_prime) * self.bnu_dnu * dphi1_phase * nu_prime**2 ) / cmb_norm
+        if sed is None: 
+            conv_sed = np.sum( CMB('K_RJ').eval(nu_prime) * self.bnu_dnu * dphi1_phase * nu_prime**2 ) / self.cmb_norm
+        else: 
+            conv_sed = np.sum( sed(nu_prime) * self.bnu_dnu * dphi1_phase * nu_prime**2 ) / self.cmb_norm
 
         if self.do_gain:
             conv_sed *= params[self.name_gain]
@@ -110,9 +113,8 @@ def decorrelated_bpass(bpass1, bpass2, sed, params, decorr_delta):
             dnu = params[bpass.name_shift] * bpass.nu_mean
         nu_prime = bpass.nu + dnu
         bnu_prime = np.abs(bpass.bnu_dnu) * nu_prime**2 
-        cmb_norm = np.sum( CMB('K_RJ').eval(nu_prime) * bnu_prime)
         bphi = bnu_prime * sed(nu_prime)
-        return nu_prime, cmb_norm, bphi
+        return nu_prime, self.cmb_norm, bphi
 
     nu_prime1, cmb_norm1, bphi1 = convolved_freqs(bpass1)
     nu_prime2, cmb_norm2, bphi2 = convolved_freqs(bpass2)
