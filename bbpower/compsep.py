@@ -233,10 +233,10 @@ class BBCompSep(PipelineStage):
                 ip1 = self.pol_order[m1]
                 ip2 = self.pol_order[m2]
                 pspec_params = [params[comp['names_cl_dict'][cl_comb][k]] for k in clfunc.params]
-                amp_spec = np.sqrt(clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl)
-                fg_pspectra[i_c, ip1, ip2] = amp_spec
+                p_spec = clfunc.eval(self.bpw_l, *pspec_params) * self.dl2cl
+                fg_pspectra[i_c, ip1, ip2] = p_spec
                 if m1!=m2:
-                    fg_pspectra[i_c, ip2, ip1] = amp_spec
+                    fg_pspectra[i_c, ip2, ip1] = p_spec
         return fg_pspectra
 
     def model(self, params):
@@ -263,13 +263,17 @@ class BBCompSep(PipelineStage):
 
         for f1 in range(self.nfreqs):
             for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
-                cls = cmb_cell.copy()
-                cls = rotate_cells_mat(cmb_rot[f2], cmb_rot[f1], cls) * cmb_scaling[f1] * cmb_scaling[f2]
+                cls = rotate_cells_mat(cmb_rot[f2], cmb_rot[f1], cmb_cell) * cmb_scaling[f1] * cmb_scaling[f2]
                 for c1 in range(self.fg_model.n_components):
                     for c2 in range(self.fg_model.n_components):
                         mat1 = rot_m[c1, f1]
                         mat2 = rot_m[c2, f2]
-                        clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1]*fg_cell[c2])
+                        if c1==c2:
+                            clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1])
+                        else:
+                            cl1 = np.array([fg_cell[c1,:,i,i] for i in range(self.npol)]).T
+                            cl2 = np.array([fg_cell[c2,:,i,i] for i in range(self.npol)]).T
+                            clrot = rotate_cells_mat(mat2, mat1, cl1[:,:, None]*cl2[:, None, :])
                         cls += clrot * fg_scaling[c1, c2, f1, f2]
                 cls_array_fg[f1, f2] = cls
 

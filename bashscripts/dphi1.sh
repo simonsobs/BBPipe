@@ -3,14 +3,14 @@
 fdir="/mnt/zfsusers/mabitbol/BBPipe/updated_runs/multiruntest/"
 exdir="/mnt/zfsusers/mabitbol/BBPipe/examples/data/"
 
-xmin=-80
-xmax=80
-dx=8
+xmin=-180
+xmax=180
+dx=5
 
 # per channel
 for ((j=1; j<=6; j++))
 do 
-    for k in {0..20}
+    for k in {0..72}
     do
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
         configfile=$fdir"configs/config_perchannel_dphi1"$j"_$x1.yml"
@@ -23,8 +23,7 @@ done
 for j in 1 3 5
 do 
     jj=$((j+1))
-
-    for k in {0..20}
+    for k in {0..72}
     do
         # symmetric
         x1=$(echo "scale=3; $xmin+$k*$dx" | bc)
