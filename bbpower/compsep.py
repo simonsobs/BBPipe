@@ -268,6 +268,7 @@ class BBCompSep(PipelineStage):
                     for c2 in range(self.fg_model.n_components):
                         mat1 = rot_m[c1, f1]
                         mat2 = rot_m[c2, f2]
+                        # Careful with EB
                         if c1==c2:
                             clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1])
                         else:

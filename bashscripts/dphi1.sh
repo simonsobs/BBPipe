@@ -1,6 +1,6 @@
 #~/usr/bin/bash
 
-fdir="/mnt/zfsusers/mabitbol/BBPipe/updated_runs/multiruntest/"
+fdir="/mnt/zfsusers/mabitbol/BBPipe/final_runs/biases/"
 exdir="/mnt/zfsusers/mabitbol/BBPipe/examples/data/"
 
 xmin=-180
@@ -16,7 +16,7 @@ do
         configfile=$fdir"configs/config_perchannel_dphi1"$j"_$x1.yml"
         paramsfile=$fdir"autoresults/perchannel_dphi1"$j"_$x1.npz"
         sed "s/dphi1\_$j: \['dphi1', 'fixed', \[0.\]\]/dphi1\_$j: \['dphi1', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $configfile
-        addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=updated_runs/multiruntest/output/config_copy.yml
+        addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=final_runs/biases/output/config_copy.yml
     done
 done
 
@@ -31,7 +31,7 @@ do
         paramsfile=$fdir"autoresults/symmetric_dphi1"$j$jj"_$x1.npz"
         sed "s/dphi1\_$j: \['dphi1', 'fixed', \[0.\]\]/dphi1\_$j: \['dphi1', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $configfile
         sed -i "s/dphi1\_$jj: \['dphi1', 'fixed', \[0.\]\]/dphi1\_$jj: \['dphi1', 'fixed', \[$x1\]\]/" $configfile
-        addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=updated_runs/multiruntest/output/config_copy.yml
+        addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=final_runs/biases/output/config_copy.yml
 
         # asymmetric
         x2=$(echo "scale=3; $xmax-$k*$dx" | bc)
@@ -39,7 +39,7 @@ do
         paramsfile=$fdir"autoresults/asymmetric_dphi1"$j$jj"_"$x1"_"$x2".npz"
         sed "s/dphi1\_$j: \['dphi1', 'fixed', \[0.\]\]/dphi1\_$j: \['dphi1', 'fixed', \[$x1\]\]/" $fdir"config.yml" > $configfile
         sed -i "s/dphi1\_$jj: \['dphi1', 'fixed', \[0.\]\]/dphi1\_$jj: \['dphi1', 'fixed', \[$x2\]\]/" $configfile
-        addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=updated_runs/multiruntest/output/config_copy.yml
+        addqueue -q cmb -c "1 day" -m 4 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0.sacc"   --cells_noise=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_noise.sacc"   --cells_fiducial=$exdir"SO_V3_Mock4_r0.01_phase0_angle0_sinuous0_eb0_fiducial.sacc"   --config=$configfile   --params_out=$paramsfile   --config_copy=final_runs/biases/output/config_copy.yml
     done
 done
 
