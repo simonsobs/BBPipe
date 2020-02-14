@@ -165,7 +165,6 @@ class BBClEstimation(PipelineStage):
 
             if ((self.config['noise_option']!='white_noise') 
                     and (self.config['noise_option']!='no_noise')):
-                        # and (not self.config['no_inh'])):
                 nh = hp.smoothing(nh, fwhm=1*np.pi/180.0, verbose=False) 
                 nh /= nh.max()
                 mask_apo *= nh
@@ -281,6 +280,12 @@ class BBClEstimation(PipelineStage):
         import sys
         sys.exit() 
         """
+        ### delensing if bmodes_template is provided
+        if self.config['bmodes_template'] != '':
+            bmodes_template = hp.read_map(self.config['bmodes_template'])
+            bmodes_template = hp.ud_grade(bmodes_template, nside_out=self.config['nside'])
+            clean_map[0] -= bmodes_template[0]
+            clean_map[1] -= bmodes_template[1]
 
         ### for comparison, compute the power spectrum of the noise after comp sep
         ### compute power spectra of the cleaned sky maps
