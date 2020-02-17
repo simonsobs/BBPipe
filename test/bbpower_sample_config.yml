@@ -160,4 +160,4 @@ BBCompSep:
 
 
     # Decide whether to use moments (choose 'True' or 'False')
-    moments : True
+    moments : False
