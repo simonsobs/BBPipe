@@ -115,7 +115,7 @@ class BBMapParamCompSep(PipelineStage):
                 ind = 0
                 for patch in range(len(n)-1):
                     pix = np.where((Bd_template[obs_pix] >= bins[ind]) & (Bd_template[obs_pix] < bins[ind+1]) )[0]
-                    mask_patches[ind,pix] = 1.0
+                    mask_patches[ind,obs_pix[pix]] = 1.0
                     ind += 1
 
         else:
