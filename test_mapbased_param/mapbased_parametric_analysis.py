@@ -97,6 +97,8 @@ class BBMapParamCompSep(PipelineStage):
                         Npix_in_this_slice = len(pix_in_slice)
                     ind += 1
 
+                print(pix_in_slice)
+                print(len(pix_in_slice))
                 ind = 0
                 for patch in pix_in_slice:
                     mask_patches[ind,obs_pix[patch]] = 1.0
