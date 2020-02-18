@@ -102,10 +102,7 @@ class BBMapParamCompSep(PipelineStage):
 
                 # print(pix_in_slice)
                 # print(len(pix_in_slice))
-                # ind = 0
-                # for patch in pix_in_slice:
-                #     mask_patches[ind,obs_pix[patch]] = 1.0
-                #     ind += 1
+
                 def histedges_equalN(x, nbin):
                     npt = len(x)
                     return np.interp(np.linspace(0, npt, nbin + 1),
@@ -113,11 +110,13 @@ class BBMapParamCompSep(PipelineStage):
                                      np.sort(x))
 
                 
-                n, bins, patches = pl.hist(Bd_template[obs_pix], histedges_equalN(Bd_template[obs_pix], self.config['Nspec']))
-                print(n)
-                print(bins)
-                print(patches)
-                exit()
+                n, bins, _ = pl.hist(Bd_template[obs_pix], histedges_equalN(Bd_template[obs_pix], self.config['Nspec']))
+
+                ind = 0
+                for patch in range(len(n)-1):
+                    pix = np.where((Bd_template[obs_pix] >= bins[ind]) & (Bd_template[obs_pix] < bins[ind+1]) )[0]
+                    mask_patches[ind,pix] = 1.0
+                    ind += 1
 
         else:
             mask_patches = binary_mask[np.newaxis,:]
