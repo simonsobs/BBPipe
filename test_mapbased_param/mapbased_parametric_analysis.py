@@ -90,6 +90,7 @@ class BBMapParamCompSep(PipelineStage):
 
             mask_patch_ = mask_patches[i_patch]
 
+            print('making mollview of the mask !!!')
             hp.mollview(mask_patch_, title=str(i_patch))
             pl.show()
 
