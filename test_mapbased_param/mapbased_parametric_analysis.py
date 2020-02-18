@@ -77,36 +77,46 @@ class BBMapParamCompSep(PipelineStage):
                     pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
                     mask_patches[i,obs_pix[pix_within_patch]] = 1
             else:
-                # the number of pixels within each slice will be constant
-                Npix_in_slice = int(len(Bd_template[obs_pix])*1.0/self.config['Nspec'])
-                # generic slices of the template Bd
-                Nsteps=1000
-                step = (np.max(Bd_template[obs_pix]) - np.min(Bd_template[obs_pix]))/Nsteps
-                delta_Bd_slices = np.linspace(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix])*(1+step), num=Nsteps)
+                # # the number of pixels within each slice will be constant
+                # Npix_in_slice = int(len(Bd_template[obs_pix])*1.0/self.config['Nspec'])
+                # # generic slices of the template Bd
+                # Nsteps=1000
+                # step = (np.max(Bd_template[obs_pix]) - np.min(Bd_template[obs_pix]))/Nsteps
+                # delta_Bd_slices = np.linspace(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix])*(1+step), num=Nsteps)
 
-                # loop over the histogram bins
-                ind = 0
-                Npix_in_this_slice = 0
-                pix_in_slice = []#np.zeros(self.config['Nspec'])
-                for b in delta_Bd_slices[:-1]:
-                    if Npix_in_this_slice < Npix_in_slice: 
-                        if len(pix_in_slice) == 0:
-                            pix_in_slice += list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0])
-                        else:
-                            print(pix_in_slice[-1])
-                            pix_in_slice[-1] += list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0])
-                        Npix_in_this_slice += len(pix_in_slice)
-                    else:
-                        pix_in_slice.append(list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0]))
-                        Npix_in_this_slice = len(pix_in_slice)
-                    ind += 1
+                # # loop over the histogram bins
+                # ind = 0
+                # Npix_in_this_slice = 0
+                # pix_in_slice = []#np.zeros(self.config['Nspec'])
+                # for b in delta_Bd_slices[:-1]:
+                #     if Npix_in_this_slice < Npix_in_slice: 
+                #         if len(pix_in_slice) == 0:
+                #             pix_in_slice += list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0])
+                #         else:
+                #             pix_in_slice[-1] += list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0])
+                #         Npix_in_this_slice += len(pix_in_slice)
+                #     else:
+                #         pix_in_slice.append(list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0]))
+                #         Npix_in_this_slice = len(pix_in_slice)
+                #     ind += 1
 
-                print(pix_in_slice)
-                print(len(pix_in_slice))
-                ind = 0
-                for patch in pix_in_slice:
-                    mask_patches[ind,obs_pix[patch]] = 1.0
-                    ind += 1
+                # print(pix_in_slice)
+                # print(len(pix_in_slice))
+                # ind = 0
+                # for patch in pix_in_slice:
+                #     mask_patches[ind,obs_pix[patch]] = 1.0
+                #     ind += 1
+                def histedges_equalN(x, nbin):
+                    npt = len(x)
+                    return np.interp(np.linspace(0, npt, nbin + 1),
+                                     np.arange(npt),
+                                     np.sort(x))
+
+                
+                n, bins, patches = plt.hist(Bd_template[obs_pix], histedges_equalN(Bd_template[obs_pix], self.config['Nspec']))
+                print(n)
+                print(bins)
+                exit()
 
         else:
             mask_patches = binary_mask[np.newaxis,:]
