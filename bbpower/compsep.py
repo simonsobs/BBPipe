@@ -30,6 +30,7 @@ class BBCompSep(PipelineStage):
         """
         Pre-load the data, CMB BB power spectrum, and foreground models.
         """
+
         lmax = 384
         ells_w3j = np.arange(0, lmax)
         if self.config['moments']:
@@ -306,7 +307,7 @@ class BBCompSep(PipelineStage):
             for i_c, c_name in enumerate(self.fg_model.component_names):
                 comp = self.fg_model.components[c_name]
                 gamma = params[comp['names_moments_dict']['gamma_beta']]
-                amp =  params[comp['names_moments_dict']['amp_beta']]
+                amp =  params[comp['names_moments_dict']['amp_beta']] * 1E-6
                 cl_betas = self.bcls(lmax=384, gamma=gamma, amp=amp)
                 cl_cc = fg_cell[i_c, i_c, :]
                 cls_1x1 = self.evaluate_1x1(params, lmax=384,
@@ -327,7 +328,7 @@ class BBCompSep(PipelineStage):
                         cls += 0.5 * (fg_scaling_d2[f1, c1] * fg_scaling[f2, c1] +
                                       fg_scaling_d2[f2, c1] * fg_scaling[f1, c1]) * cls_02[c1]
                     cls_array_fg[f1, f2] += cls
-                
+
         # Window convolution
         cls_array_list = np.zeros([self.n_bpws, self.nfreqs, self.npol, self.nfreqs, self.npol])
         for f1 in range(self.nfreqs):
@@ -543,6 +544,19 @@ class BBCompSep(PipelineStage):
         res=minimize(chi2, self.params.p0, method="Powell")
         return res.x
 
+    def fisher(self):
+        """
+        Evaluate Fisher matrix
+        """
+        import numdifftools as nd
+        def lnprobd(p):
+            l = self.lnprob(p)
+            if l == -np.inf:
+                l = -1E100
+            return l
+        fisher = - nd.Hessian(lnprobd)(self.params.p0)
+        return fisher
+
     def singlepoint(self):
         """
         Evaluate at a single point
@@ -572,6 +586,15 @@ class BBCompSep(PipelineStage):
                      chain=sampler.chain,         
                      names=self.params.p_free_names)
             print("Finished sampling")
+        elif self.config.get('sampler')=='fisher':
+            fisher = self.fisher()
+            cov = np.linalg.inv(fisher)
+            for i,(n,p) in enumerate(zip(self.params.p_free_names,
+                                         self.params.p0)):
+                print(n+" = %.3lE +- %.3lE" % (p, np.sqrt(cov[i, i])))
+            np.savez(self.get_output('param_chains'),
+                     fisher=fisher,
+                     names=self.params.p_free_names)
         elif self.config.get('sampler')=='maximum_likelihood':
             sampler = self.minimizer()
             chi2 = -2*self.lnprob(sampler)
