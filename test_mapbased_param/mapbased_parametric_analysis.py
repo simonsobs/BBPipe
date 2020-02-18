@@ -113,7 +113,7 @@ class BBMapParamCompSep(PipelineStage):
                                      np.sort(x))
 
                 
-                n, bins, patches = plt.hist(Bd_template[obs_pix], histedges_equalN(Bd_template[obs_pix], self.config['Nspec']))
+                n, bins, patches = pl.hist(Bd_template[obs_pix], histedges_equalN(Bd_template[obs_pix], self.config['Nspec']))
                 print(n)
                 print(bins)
                 exit()
