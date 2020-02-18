@@ -116,6 +116,7 @@ class BBMapParamCompSep(PipelineStage):
                 n, bins, patches = pl.hist(Bd_template[obs_pix], histedges_equalN(Bd_template[obs_pix], self.config['Nspec']))
                 print(n)
                 print(bins)
+                print(patches)
                 exit()
 
         else:
