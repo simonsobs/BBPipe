@@ -80,12 +80,12 @@ class BBMapParamCompSep(PipelineStage):
                 # the number of pixels within each slice will be constant
                 Npix_in_slice = int(len(Bd_template[obs_pix])*1.0/self.config['Nspec'])
                 # generic slices of the template Bd
-                delta_Bd_slices = np.linspace(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix]), num=len(obs_pix))
+                delta_Bd_slices = np.linspace(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix])*(1.0+1.0/len(obs_pix)), num=len(obs_pix))
 
                 # loop over the histogram bins
                 ind = 0
                 Npix_in_this_slice = 0
-                pix_in_this_slice = []
+                pix_in_slice = []
                 for b in delta_Bd_slices:
                     if Npix_in_this_slice < Npix_in_slice: 
                         pix_in_slice += np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0]
