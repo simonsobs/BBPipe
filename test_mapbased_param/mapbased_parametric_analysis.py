@@ -92,7 +92,8 @@ class BBMapParamCompSep(PipelineStage):
 
             print('making mollview of the mask !!!')
             hp.mollview(mask_patch_, title=str(i_patch))
-            pl.show()
+            pl.savefig('mask_patch_'+str(i_patch)+'.pdf')
+            pl.close()
 
             # filtering masked regions of the patch ... 
             frequency_maps__ = frequency_maps_*1.0
