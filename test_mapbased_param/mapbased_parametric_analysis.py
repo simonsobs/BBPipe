@@ -68,13 +68,38 @@ class BBMapParamCompSep(PipelineStage):
             mask_patches = np.zeros((self.config['Nspec'], len(Bd_template)))
             # observed patches
             obs_pix = np.where(binary_mask!=0.0)[0]
-            # thickness of the corresponding patches
-            delta_Bd_patch = np.abs(np.max(Bd_template[obs_pix])-np.min(Bd_template[obs_pix]))/(self.config['Nspec'])
-            # definition of slices so that it includes the max of Bd as the last step
-            slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix])+delta_Bd_patch/10.0, delta_Bd_patch )
-            for i in range(self.config['Nspec']):
-                pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
-                mask_patches[i,obs_pix[pix_within_patch]] = 1
+            if self.config['fixed_delta_beta_slicing']:
+                # thickness of the corresponding patches
+                delta_Bd_patch = np.abs(np.max(Bd_template[obs_pix])-np.min(Bd_template[obs_pix]))/(self.config['Nspec'])
+                # definition of slices so that it includes the max of Bd as the last step
+                slices = np.arange(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix])+delta_Bd_patch/10.0, delta_Bd_patch )
+                for i in range(self.config['Nspec']):
+                    pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
+                    mask_patches[i,obs_pix[pix_within_patch]] = 1
+            else:
+                # the number of pixels within each slice will be constant
+                Npix_in_slice = int(len(Bd_template[obs_pix])*1.0/self.config['Nspec'])
+                # generic slices of the template Bd
+                delta_Bd_slices = np.linspace(np.min(Bd_template[obs_pix]), np.max(Bd_template[obs_pix]), num=len(obs_pix))
+
+                # loop over the histogram bins
+                ind = 0
+                Npix_in_this_slice = 0
+                pix_in_this_slice = []
+                for b in delta_Bd_slices:
+                    if Npix_in_this_slice < Npix_in_slice: 
+                        pix_in_slice += np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0]
+                        Npix_in_this_slice += len(pix_in_slice)
+                    else:
+                        pix_in_slice = list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0])
+                        Npix_in_this_slice = len(pix_in_slice)
+                    ind += 1
+
+                ind = 0
+                for patch in pix_in_slice:
+                    mask_patches[ind,obs_pix[patch]] = 1.0
+                    ind += 1
+
         else:
             mask_patches = binary_mask[np.newaxis,:]
 

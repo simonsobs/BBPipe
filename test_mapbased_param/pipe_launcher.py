@@ -70,6 +70,7 @@ def grabargs():
     parser.add_argument("--bmodes_template", type=str, help = "path to an estimated B-modes template, for delensing purposes", default='')
     parser.add_argument("--Nsims_bias", type=int, help = "number of simulations performed to estimate the noise bias", default=100)
     parser.add_argument("--extra_apodization", action='store_true', help = "perform an extra apodization of the mask, prior to rescaling by Nhits", default=False)
+    parser.add_argument("--fixed_delta_beta_slicing", action='store_true', help = "when Nspec!=0, regions are defined by constant delta(Bd)", default=False)
 
     args = parser.parse_args()
 
@@ -150,7 +151,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
                 cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, external_sky_sims='',
                 Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', 
-                mask_apo='',bmodes_template=''):
+                mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False):
     '''
     function generating the config file
     '''
@@ -192,6 +193,7 @@ BBMapSim:
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
     smart_multipatch: False
+    fixed_delta_beta_slicing: '''+str(fixed_delta_beta_slicing)+'''
 
 BBClEstimation:
     aposize:  '''+str(aposize)+'''
@@ -267,7 +269,7 @@ def main():
                 no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
                 external_sky_sims=args.external_sky_sims, Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
-                mask_apo=args.mask_apo, bmodes_template=args.bmodes_template)
+                mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
