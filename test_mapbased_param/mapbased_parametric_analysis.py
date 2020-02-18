@@ -89,12 +89,11 @@ class BBMapParamCompSep(PipelineStage):
                 Npix_in_this_slice = 0
                 pix_in_slice = []#np.zeros(self.config['Nspec'])
                 for b in delta_Bd_slices[:-1]:
-                    print(Npix_in_this_slice, Npix_in_slice)
                     if Npix_in_this_slice < Npix_in_slice: 
                         pix_in_slice += list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0])
                         Npix_in_this_slice += len(pix_in_slice)
                     else:
-                        pix_in_slice = list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0])
+                        pix_in_slice.append(list(np.where((Bd_template[obs_pix] >= delta_Bd_slices[ind]) & (Bd_template[obs_pix] < delta_Bd_slices[ind+1]) )[0]))
                         Npix_in_this_slice = len(pix_in_slice)
                     ind += 1
 
