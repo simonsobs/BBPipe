@@ -82,7 +82,7 @@ BBCompSep:
             moments:
               # Define gammas for varying spectral indices of components
               gamma_d_beta : ['gamma_beta', 'tophat', [-6., -3.5, -2.]]
-              amp_d_beta : ['amp_beta', 'tophat', [0., 0., 1E-6]]
+              amp_d_beta : ['amp_beta', 'tophat', [0., 0., 1]]
 
         component_2:
             name: Synchrotron
@@ -105,7 +105,7 @@ BBCompSep:
             moments:
               # Define gammas for varying spectral indices of components
               gamma_s_beta : ['gamma_beta', 'tophat', [-6., -2.5, -2.]]
-              amp_s_beta : ['amp_beta', 'tophat', [0., 0., 1E-6]]
+              amp_s_beta : ['amp_beta', 'tophat', [0., 0., 1]]
 
     # Add extra parameters for different systematics
     systematics:
