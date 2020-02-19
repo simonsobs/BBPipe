@@ -274,7 +274,8 @@ class BBCompSep(PipelineStage):
                         else:
                             cl1 = np.array([fg_cell[c1,:,i,i] for i in range(self.npol)]).T
                             cl2 = np.array([fg_cell[c2,:,i,i] for i in range(self.npol)]).T
-                            clrot = rotate_cells_mat(mat2, mat1, cl1[:,:, None]*cl2[:, None, :])
+                            clrot = rotate_cells_mat(mat2, mat1, np.sqrt(cl1[:,:, None]*cl2[:, None, :]))
+                            #clrot = rotate_cells_mat(mat2, mat1, np.sqrt(np.outer(cl1, cl2)))
                         cls += clrot * fg_scaling[c1, c2, f1, f2]
                 cls_array_fg[f1, f2] = cls
 
