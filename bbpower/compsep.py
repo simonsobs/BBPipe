@@ -422,11 +422,9 @@ class BBCompSep(PipelineStage):
 
         mat = self.big_w3j
 
-        moment1x1 = np.einsum('jlm,ijk,k',
-                              v_left,
-                              mat,
-                              v_right) / (4 * np.pi)
-        # moment1x1 = np.dot(np.dot(mat, v_right), v_left)
+
+        v_left = np.transpose(v_left, axes=[1, 0, 2])
+        moment1x1 = np.dot(np.dot(mat, v_right), v_left)
         return moment1x1
 
     def evaluate_0x2(self, params, lmax, cls_cc, cls_bb,
