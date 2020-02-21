@@ -260,7 +260,6 @@ class BBCompSep(PipelineStage):
             cs, crot = self.bpss[f1].convolve_sed(None, params)
             cmb_scaling[f1] = cs
             cmb_rot.append(crot)
-        cmb_scaling = np.zeros(self.nfreqs)
 
         for f1 in range(self.nfreqs):
             for f2 in range(f1,self.nfreqs):  # Note that we only need to fill in half of the frequencies
@@ -272,13 +271,11 @@ class BBCompSep(PipelineStage):
                         if c1==c2:
                             clrot = rotate_cells_mat(mat2, mat1, fg_cell[c1])
                         else:
-                            #cl1 = np.array([fg_cell[c1,:,i,i] for i in range(self.npol)]).T
-                            #cl2 = np.array([fg_cell[c2,:,i,i] for i in range(self.npol)]).T
+                            # For cross component, enforcing EB term is zero. 
                             cl_cross = np.zeros((self.n_ell, self.npol, self.npol))
                             for i in range(self.npol):
                                 cl_cross[:, i, i] = np.sqrt(fg_cell[c1,:,i,i] * fg_cell[c2,:,i,i])
                             clrot = rotate_cells_mat(mat2, mat1, cl_cross)
-                            #clrot = rotate_cells_mat(mat2, mat1, np.sqrt(cl1[:,:, None]*cl2[:, None, :]))
                         cls += clrot * fg_scaling[c1, c2, f1, f2]
                 cls_array_fg[f1, f2] = cls
         
@@ -296,8 +293,6 @@ class BBCompSep(PipelineStage):
                         cls_array_list[:, f1, p1, f2, p2] = clband
                         if m1!=m2:
                             cls_array_list[:, f2, p2, f1, p1] = clband
-
-        #np.save('/mnt/zfsusers/mabitbol/notebooks/simons_observatory/model', cls_array_list)
 
         # Polarization angle rotation
         for f1 in range(self.nfreqs):
