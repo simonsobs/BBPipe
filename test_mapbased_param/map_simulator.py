@@ -29,9 +29,14 @@ class BBMapSim(PipelineStage):
                             nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
                                 no_inh=self.config['no_inh'])
 
-        binary_mask = hp.read_map(self.get_input('binary_mask'))
-        binary_mask = hp.ud_grade(binary_mask, nside_out=self.config['nside'])
-        binary_mask[np.where(nhits<1e-6)[0]] = 0.0
+
+        if self.config['external_binary_mask']:
+            binary_mask = hp.read_map(self.get_input('external_binary_mask'))
+        else:
+            binary_mask = hp.read_map(self.get_input('binary_mask'))
+            binary_mask = hp.ud_grade(binary_mask, nside_out=self.config['nside'])
+            binary_mask[np.where(nhits<1e-6)[0]] = 0.0
+
         # GENERATE CMB AND FOREGROUNDS
         d_config = models(self.config['dust_model'], self.config['nside'])
         s_config = models(self.config['sync_model'], self.config['nside'])
@@ -107,8 +112,6 @@ class BBMapSim(PipelineStage):
             list_of_files = sorted(glob.glob(self.config['external_sky_sims']))   
             for f in range(len(list_of_files)):
                 freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
-                if self.config['cmb_sim_no_pysm']:
-                    freq_maps[3*f:3*(f+1),:] += cmb_sky[:,:]
         # adding noise
         if self.config['noise_option']=='white_noise':
             nlev_map = freq_maps*0.0
@@ -120,6 +123,13 @@ class BBMapSim(PipelineStage):
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='no_noise': 
             pass
+        elif self.config['external_noise_sims']!='':
+            noise_maps *= 0.0
+            print('EXTERNAL NOISE-ONLY MAPS LOADED')
+            list_of_files = sorted(glob.glob(self.config['external_noise_sims']))   
+            for f in range(len(list_of_files)):
+                noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
+            freq_maps += noise_maps*binary_mask
         else: 
             freq_maps += noise_maps*binary_mask
 
@@ -127,29 +137,25 @@ class BBMapSim(PipelineStage):
         noise_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         # noise covariance 
-        noise_cov = freq_maps*0.0
-        noise_cov[::3,:] = nlev[:,np.newaxis]/np.sqrt(2.0)
-        noise_cov[1::3,:] = nlev[:,np.newaxis]
-        noise_cov[2::3,:] = nlev[:,np.newaxis]
-        noise_cov *= binary_mask
-        # divind by the pixel size in arcmin
-        noise_cov /=  hp.nside2resol(self.config['nside'], arcmin=True)
-        if self.config['noise_option']!='white_noise' and self.config['noise_option']!='no_noise':
-            noise_cov /= np.sqrt(nhits/np.amax(nhits))
-        # we put it to square !
-        noise_cov *= noise_cov
-        # noise_cov *= binary_mask
-        # noise_cov[:,np.where(binary_mask==0)[0]] = 1.0
+        if self.config['external_noise_cov']:
+            noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
+        else:
+            noise_cov = freq_maps*0.0
+            nlev /= hp.nside2resol(self.config['nside'], arcmin=True)
+            noise_cov[::3,:] = nlev[:,np.newaxis]/np.sqrt(2.0)
+            noise_cov[1::3,:] = nlev[:,np.newaxis]
+            noise_cov[2::3,:] = nlev[:,np.newaxis]
+            noise_cov *= binary_mask
+            # divind by the pixel size in arcmin
+            noise_cov /=  hp.nside2resol(self.config['nside'], arcmin=True)
+            if self.config['noise_option']!='white_noise' and self.config['noise_option']!='no_noise':
+                noise_cov /= np.sqrt(nhits/np.amax(nhits))
+            # we put it to square !
+            noise_cov *= noise_cov
+
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         # save on disk frequency maps, noise maps, noise_cov, binary_mask
-        # tag = '_nside'+str(self.config['nside'])
-        # tag += '_sens'+str(self.config['sensitivity_mode'])
-        # tag += '_knee'+str(self.config['knee_mode'])
-        # tag += '_nylf'+str(self.config['low_freq_year'])
-        # if self.config['noise_option']=='white_noise': tag += '_white_noise'
-        # if  self.config['noise_option']=='no_noise': tag += '_no_noise'
-
         column_names = []
         [ column_names.extend( ('I_'+str(ch)+'GHz','Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in freqs]
         hp.write_map(self.get_output('binary_mask_cut'), binary_mask, overwrite=True)
