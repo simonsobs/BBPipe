@@ -154,6 +154,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
                 cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, \
                 external_sky_sims='', external_noise_sims='',
+                external_binary_mask='', external_noise_cov='',
                 Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', 
                 mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False):
     '''
@@ -194,6 +195,8 @@ BBMapSim:
     cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
     external_sky_sims: \''''+str(external_sky_sims)+'''\'
     external_noise_sims: \''''+str(external_noise_sims)+'''\'
+    external_binary_mask: \''''+str(external_binary_mask)+'''\'
+    external_noise_cov: \''''+str(external_noise_cov)+'''\'
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
@@ -273,6 +276,7 @@ def main():
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
                 no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
                 external_sky_sims=args.external_sky_sims, external_noise_sims=args.external_noise_sims, \
+                external_binary_mask=args.external_binary_mask, external_noise_cov=args.external_noise_cov, \
                 Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing)
