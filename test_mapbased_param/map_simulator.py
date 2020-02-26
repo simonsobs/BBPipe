@@ -112,6 +112,7 @@ class BBMapSim(PipelineStage):
             print('EXTERNAL SKY-ONLY MAPS LOADED')
             list_of_files = sorted(glob.glob(self.config['external_sky_sims']))   
             for f in range(len(list_of_files)):
+                print('loading ... ', list_of_files[f])
                 freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
         # adding noise
         if self.config['noise_option']=='white_noise':
@@ -139,7 +140,7 @@ class BBMapSim(PipelineStage):
 
         # noise covariance 
         if self.config['external_noise_cov']:
-            noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
+            noise_cov = hp.read_map(self.config['external_noise_cov'], field=None), 
         else:
             noise_cov = freq_maps*0.0
             nlev /= hp.nside2resol(self.config['nside'], arcmin=True)

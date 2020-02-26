@@ -186,7 +186,6 @@ global:
     ny_lf: '''+str(ny_lf)+'''
     bmodes_template: \''''+str(bmodes_template)+'''\'
 
-
 BBMapSim:
     cmb_model: 'c1'
     dust_model: \''''+str(dust_model)+'''\'
