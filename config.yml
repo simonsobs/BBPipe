@@ -1,0 +1,10 @@
+global:
+    nside: 512
+   
+BB_HILC:
+    verbose: True
+
+BB_Cl_Process:
+    pol: True
+    verbose: True
+    Nsimul: 10
