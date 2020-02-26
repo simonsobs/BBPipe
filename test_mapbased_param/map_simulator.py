@@ -150,7 +150,7 @@ class BBMapSim(PipelineStage):
 
         # noise covariance 
         if self.config['external_noise_cov']:
-            noise_cov = hp.read_map(self.config['external_noise_cov'], field=None), 
+            noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
         else:
             noise_cov = freq_maps*0.0
             nlev /= hp.nside2resol(self.config['nside'], arcmin=True)
