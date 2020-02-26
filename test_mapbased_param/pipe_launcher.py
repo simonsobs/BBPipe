@@ -157,7 +157,8 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 external_sky_sims='', external_noise_sims='',
                 external_binary_mask='', external_noise_cov='',
                 Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', 
-                mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, instrument='SO'):
+                mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, instrument='SO', \
+                frequencies=[27,39,93,145,225,280]):
     '''
     function generating the config file
     '''
@@ -169,7 +170,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
 
     global_string = '''
 global:
-    frequencies: [27,39,93,145,225,280]
+    frequencies: '''+str(frequencies)+'''
     fsky: 0.1
     nside: '''+str(nside)+'''
     lmin: 30
@@ -256,6 +257,14 @@ def main():
     simulations_split = comm.bcast( simulations_split, root=0 )
 
 
+    if args.instrument == 'SO':
+        frequencies = [27,39,93,145,225,280]
+    elif args.instrument == 'CMBS4':
+        frequencies = [20, 30, 40, 85, 95, 145, 155, 220, 270]
+    else:
+        print('I do not know this instrumental configuration')
+        sys.exit()
+
     print('rank = ', rank, ' and sim_splits = ', simulations_split[rank])
     print('#'*10)
     ####################
@@ -281,7 +290,7 @@ def main():
                 Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing,\
-                instrument=args.instrument)
+                instrument=args.instrument, frequencies=frequencies)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
