@@ -31,7 +31,7 @@ class BBMapSim(PipelineStage):
 
 
         if self.config['external_binary_mask']:
-            binary_mask = hp.read_map(self.get_input('external_binary_mask'))
+            binary_mask = hp.read_map(self.config['external_binary_mask'])
             binary_mask = hp.ud_grade(binary_mask, nside_out=self.config['nside'])
         else:
             binary_mask = hp.read_map(self.get_input('binary_mask'))
