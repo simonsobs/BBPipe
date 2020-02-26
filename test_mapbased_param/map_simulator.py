@@ -68,8 +68,16 @@ class BBMapSim(PipelineStage):
         sky_sync = pysm.Sky(sky_config_sync)
 
         # DEFINE INSTRUMENT AND SCAN SKY
-        fwhm = V3.so_V3_SA_beams()
-        freqs = V3.so_V3_SA_bands()
+        if self.config['instrument'] == 'SO':
+            fwhm = V3.so_V3_SA_beams()
+            freqs = V3.so_V3_SA_bands()
+        elif self.config['instrument'] == 'CMBS4':
+            fwhm = np.array([11, 72.8, 72.8, 25.5, 22.7, 25.5, 22.7, 13, 13])
+            freqs = np.array([20, 30, 40, 85, 95, 145, 155, 220, 270])
+            nlev = np.array([6.09, 2.44, 3.09, 0.61, 0.54, 0.85, 0.91, 2.34, 4.02])
+        else:
+            print('I do not know this instrument')
+            sys.exit()
         instrument_config = {
             'nside' : self.config['nside'],
             'frequencies' : freqs, 
