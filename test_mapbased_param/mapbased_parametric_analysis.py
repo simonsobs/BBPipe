@@ -33,6 +33,21 @@ class BBMapParamCompSep(PipelineStage):
 
         # reorganization of maps
         instrument = {'frequencies':np.array(self.config['frequencies'])}
+        if self.config['bandpass']:
+            if self.config['instrument'] == 'SO':
+                bandpass = 0.3*instrument['frequencies']
+            elif self.config['instrument'] == 'CMBS4':
+                bandpass = np.array([5.0, 9.0, 12.0, 20.4, 22.8, 31.9, 34.1, 48.4, 59.4])
+            # convert and renormalize bandpasses 
+            convert_facts = [np.array(bandpass_convert_units('uK_CMB', channel)) for channel in instr_['channels'] ]
+            inst_freq=[]
+            [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
+                        (1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
+                        /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
+                     for i in range(len(instr_['frequencies'])) ] 
+            # redefining frequencies entry to dictionary
+            instrument['frequencies'] = inst_freq
+
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         noise_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
