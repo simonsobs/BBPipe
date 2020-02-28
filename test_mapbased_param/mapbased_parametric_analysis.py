@@ -51,6 +51,7 @@ class BBMapParamCompSep(PipelineStage):
             instrument['frequencies'] = inst_freq
             instrument['channels'] = inst_freq
             instrument['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
+            instrument['use_bandpass'] = True
             instrument = pysm.Instrument(instrument)
 
 

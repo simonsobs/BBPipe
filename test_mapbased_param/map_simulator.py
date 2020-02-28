@@ -88,7 +88,7 @@ class BBMapSim(PipelineStage):
             'sens_I' : nlev/np.sqrt(2),
             'sens_P' : nlev,
             'noise_seed' : 1234,
-            'use_bandpass' : False,
+            'use_bandpass' : self.config['bandpass'],
             'output_units' : 'uK_CMB',
             'output_directory' : './',
             'output_prefix' : self.config['tag'],
