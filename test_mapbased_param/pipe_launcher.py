@@ -74,6 +74,7 @@ def grabargs():
     parser.add_argument("--Nsims_bias", type=int, help = "number of simulations performed to estimate the noise bias", default=100)
     parser.add_argument("--extra_apodization", action='store_true', help = "perform an extra apodization of the mask, prior to rescaling by Nhits", default=False)
     parser.add_argument("--fixed_delta_beta_slicing", action='store_true', help = "when Nspec!=0, regions are defined by constant delta(Bd)", default=False)
+    parser.add_argument("--bandpass", action='store_true', help = "include non-zero bandpasses in the component separation", default=False)
     parser.add_argument("--instrument", type=str, help = "specifies the instrument bbpipe should consider, SO, CMBS4, etc.", default='SO')
 
     args = parser.parse_args()
@@ -158,7 +159,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 external_binary_mask='', external_noise_cov='',
                 Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', 
                 mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, instrument='SO', \
-                frequencies=[27,39,93,145,225,280]):
+                frequencies=[27,39,93,145,225,280], bandpass=False):
     '''
     function generating the config file
     '''
@@ -202,6 +203,7 @@ BBMapSim:
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
+    bandpass: '''+str(bandpass)+'''
     smart_multipatch: False
     fixed_delta_beta_slicing: '''+str(fixed_delta_beta_slicing)+'''
 
@@ -290,7 +292,7 @@ def main():
                 Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing,\
-                instrument=args.instrument, frequencies=frequencies)
+                instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass)
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
