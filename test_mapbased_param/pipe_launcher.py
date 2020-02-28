@@ -188,6 +188,7 @@ global:
     knee_mode: '''+str(knee_mode)+'''
     ny_lf: '''+str(ny_lf)+'''
     bmodes_template: \''''+str(bmodes_template)+'''\'
+    instrument: \''''+str(instrument)+'''\'
 
 BBMapSim:
     cmb_model: 'c1'
@@ -199,7 +200,6 @@ BBMapSim:
     external_noise_sims: \''''+str(external_noise_sims)+'''\'
     external_binary_mask: \''''+str(external_binary_mask)+'''\'
     external_noise_cov: \''''+str(external_noise_cov)+'''\'
-    instrument: \''''+str(instrument)+'''\'
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
