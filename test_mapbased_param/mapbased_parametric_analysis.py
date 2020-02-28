@@ -40,7 +40,6 @@ class BBMapParamCompSep(PipelineStage):
             elif self.config['instrument'] == 'CMBS4':
                 bandpass = np.array([5.0, 9.0, 12.0, 20.4, 22.8, 31.9, 34.1, 48.4, 59.4])
             # convert and renormalize bandpasses 
-            convert_facts = [np.array(bandpass_convert_units('uK_CMB', channel)) for channel in instrument['frequencies'] ]
             inst_freq=[]
             num_steps = 100
             [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
