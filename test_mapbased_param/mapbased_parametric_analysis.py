@@ -7,6 +7,7 @@ from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
 from fgbuster.separation_recipes import weighted_comp_sep
 from fgbuster.algebra import Wd
+import pysm
 from pysm.common import bandpass_convert_units, K_RJ2Jysr, K_CMB2Jysr, convert_units
 
 class BBMapParamCompSep(PipelineStage):
@@ -48,6 +49,10 @@ class BBMapParamCompSep(PipelineStage):
                      for i in range(len(instrument['frequencies'])) ] 
             # redefining frequencies entry to dictionary
             instrument['frequencies'] = inst_freq
+            instrument['channels'] = inst_freq
+            instrument['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
+            instrument = pysm.Instrument(instrument)
+
 
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
