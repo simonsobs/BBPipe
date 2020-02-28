@@ -7,6 +7,7 @@ from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
 from fgbuster.separation_recipes import weighted_comp_sep
 from fgbuster.algebra import Wd
+from pysm.common import bandpass_convert_units, K_RJ2Jysr, K_CMB2Jysr, convert_units
 
 class BBMapParamCompSep(PipelineStage):
     """
