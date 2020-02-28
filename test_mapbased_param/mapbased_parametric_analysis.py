@@ -48,12 +48,14 @@ class BBMapParamCompSep(PipelineStage):
                         /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
                      for i in range(len(instrument['frequencies'])) ] 
             # redefining frequencies entry to dictionary
-            instrument['frequencies'] = inst_freq
-            instrument['channels'] = inst_freq
-            instrument['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
-            instrument['use_bandpass'] = True
-            instrument = pysm.Instrument(instrument)
-
+            instr_ = copy.deepcopy(instrument)
+            instr_['frequencies'] = inst_freq
+            instr_['channels'] = inst_freq
+            instr_['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
+            instr_['use_bandpass'] = True
+            instrument_ = pysm.Instrument(instr_)
+        else:
+            instrument_ = copy.deepcopy(instrument)
 
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
@@ -136,7 +138,7 @@ class BBMapParamCompSep(PipelineStage):
             noise_cov__ = noise_cov_*1.0
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             print('actual component separation ... ')
-            res = fg.separation_recipes.weighted_comp_sep(components, instrument,
+            res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
                             options=options, tol=tol, method=method)
 
