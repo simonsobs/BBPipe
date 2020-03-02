@@ -189,6 +189,7 @@ global:
     ny_lf: '''+str(ny_lf)+'''
     bmodes_template: \''''+str(bmodes_template)+'''\'
     instrument: \''''+str(instrument)+'''\'
+    bandpass: '''+str(bandpass)+'''
 
 BBMapSim:
     cmb_model: 'c1'
@@ -203,7 +204,6 @@ BBMapSim:
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
-    bandpass: '''+str(bandpass)+'''
     smart_multipatch: False
     fixed_delta_beta_slicing: '''+str(fixed_delta_beta_slicing)+'''
 
