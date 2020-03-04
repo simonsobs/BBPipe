@@ -1,7 +1,7 @@
 import numpy as np
 import healpy as hp
 import matplotlib.pyplot as plt
-import V3calc as v3
+from . import V3calc as v3
 import os
 
 def get_nhits(nside_out=512) :
