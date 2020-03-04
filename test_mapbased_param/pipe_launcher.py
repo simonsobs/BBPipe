@@ -5,7 +5,6 @@
 
 
 import argparse
-from mpi4py import MPI
 import os
 import subprocess
 import random
@@ -17,19 +16,26 @@ import pylab as pl
 
 ######################################################################################################
 # MPI VARIABLES
-comm=MPI.COMM_WORLD
-size=comm.Get_size()
-rank=comm.rank
-barrier=comm.barrier
-root=0
+try:
+    from mpi4py import MPI
+    comm=MPI.COMM_WORLD
+    size=comm.Get_size()
+    rank=comm.rank
+    barrier=comm.barrier
+    root=0
+    mpi = True
+except ModuleNotFoundError:
+    # Error handling
+    mpi = False
+    rank=0
+    pass
 
 ######################################################################################################
 ## JUST GENERATING A RANDOM STRING ;) 
 rand_string = ''*10
 if rank==0:
 	rand_string = ''.join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10) )
-barrier()
-rand_string = comm.bcast( rand_string, root=0 )
+if mpi: rand_string = comm.bcast( rand_string, root=0 )
 
 ######################################################################################################
 ## INPUT ARGUMENTS
@@ -248,16 +254,18 @@ def main():
     #     print('have you changed the CMB simulator accordingly?')
     #     exit()
 
-    simulations_split = []
-    if rank == 0 :
-        print('Nsims = ', args.Nsims)
-        print('size = ', size)
-        simulations_split = chunkIt(list(range(args.Nsims)), size)
-        print('simulations_split = ', simulations_split)
-        print(simulations_split)
-    barrier()
-    simulations_split = comm.bcast( simulations_split, root=0 )
-
+    if mpi:
+        simulations_split = []
+        if rank == 0 :
+            print('Nsims = ', args.Nsims)
+            print('size = ', size)
+            simulations_split = chunkIt(list(range(args.Nsims)), size)
+            print('simulations_split = ', simulations_split)
+            print(simulations_split)
+        barrier()
+        simulations_split = comm.bcast( simulations_split, root=0 )
+    else:
+        simulations_split = [range(args.Nsims)]
 
     if args.instrument == 'SO':
         frequencies = [27,39,93,145,225,280]
@@ -335,7 +343,7 @@ def main():
 
 
     ####################
-    barrier()
+    if mpi: barrier()
     # grab all results and analyze them
     if rank ==0 :
         # list all the output directories
@@ -367,7 +375,7 @@ def main():
         pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         pl.close()
     
-    barrier()
+    if mpi: barrier()
     
     exit()
 
