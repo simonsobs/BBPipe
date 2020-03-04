@@ -86,7 +86,7 @@ class BBMapParamCompSep(PipelineStage):
             print('Nspec != 0 !! building and analysis independent Bd regions ... ')
             # read the template used to produce simulation
             # in practice, we would use the Bd map estimated from data sets.
-            Bd_template = hp.read_map(self.config['dust_template'])
+            Bd_template = hp.read_map(self.config['path_to_dust_template'])
             # upgrade the map to the actual working resolution
             Bd_template = hp.ud_grade(Bd_template, nside_out=self.config['nside'])
             # make slices through this map. Define the regions of interest
