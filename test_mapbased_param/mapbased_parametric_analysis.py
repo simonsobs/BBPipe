@@ -212,6 +212,10 @@ class BBMapParamCompSep(PipelineStage):
             # reshaping and saving the covariance matrix (reorganization of the invAtNA matrix)
             # so that it is (n_stokes x n_components )^2 for each sky pixel
             cov_estimated_ = np.zeros(((res.s.shape[0]*res.s.shape[1],res.s.shape[0]*res.s.shape[1], res.s.shape[2])))
+            print('res.invAtNA.shape = ', res.invAtNA.shape)
+            print('res.s.shape = ', res.s.shape)
+            print('len(obs_pix) = ', len(obs_pix))
+            print('obs_pix = ', obs_pix)
             ind0=0
             # loop over sky components
             for c1 in range(res.invAtNA.shape[0]):
@@ -223,7 +227,7 @@ class BBMapParamCompSep(PipelineStage):
                         # res.invAtNA[c1,c2,s1,np.where(res.invAtNA[c1,c2,s1,:]==hp.UNSEEN)[0]] = 0.0
                         # loop over stokes parameter
                         for s2 in range(res.invAtNA.shape[2]):
-                            if s1==s2: cov_estimated_[ind0,ind1,:] = res.invAtNA[c1,c2,s1,:]*1.0
+                            if s1==s2: cov_estimated_[ind0,ind1,obs_pix] = res.invAtNA[c1,c2,s1,:]*1.0
                             ind1+=1
                     ind0+=1
             cov_estimated += cov_estimated_
