@@ -233,7 +233,8 @@ class BBMapParamCompSep(PipelineStage):
             print('producing map of the noise covariance')
             pl.figure()
             hp.mollview(cov_estimated[0,0,:])
-            pl.show()
+            pl.savefig('noise_covariance_'+str(i_patch)+'.pdf')
+            pl.close()
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
