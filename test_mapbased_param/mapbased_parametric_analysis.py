@@ -234,7 +234,7 @@ class BBMapParamCompSep(PipelineStage):
             # print('cov_estimated[0,0,:] = ', cov_estimated[0,0,:])
             print('producing map of the noise covariance')
             # pl.figure()
-            # cov_estimated[0,0,np.where(cov_estimated[0,0,:]==0.0)[0]]=hp.UNSEEN
+            cov_estimated[0,0,np.where(cov_estimated[0,0,:]==0.0)[0]]=hp.UNSEEN
             # hp.mollview(cov_estimated[0,0,:])
             # pl.savefig('noise_covariance_'+str(i_patch)+'.pdf')
             # pl.close()
