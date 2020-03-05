@@ -137,7 +137,7 @@ class BBMapParamCompSep(PipelineStage):
             frequency_maps__ = frequency_maps_*1.0
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
-            noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            # noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             print('actual component separation ... ')
             res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
@@ -162,6 +162,7 @@ class BBMapParamCompSep(PipelineStage):
             A_maxL = A_ev(res.x)
 
             if i_patch == 0 :
+                # defined output mixing matrix as {npatch, ncomp, nfreq}
                 A_maxL_v = np.zeros((mask_patches.shape[0], A_maxL.shape[0], A_maxL.shape[1]))
             A_maxL_v[i_patch,:,:] = A_maxL*1.0
 
@@ -208,31 +209,27 @@ class BBMapParamCompSep(PipelineStage):
                     ress[i,j,np.where(ress[i,j,:]==hp.UNSEEN)[0]] = 0.0
             maps_estimated += ress.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
 
-            # reshaping and saving the covariance matrix
-            '''
-            cov_estimated_ = res.invAtNA[:,:,:,:].diagonal().swapaxes(-1,0).swapaxes(-1,1)
-            cov_estimated_reshaped = cov_estimated_.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
-            for i in range(cov_estimated_reshaped.shape[0]):
-                cov_estimated_reshaped[i,np.where(cov_estimated_reshaped[i,:]==hp.UNSEEN)[0]] = 0.0
-            cov_estimated += cov_estimated_reshaped
-            '''
-            # reorganization of the invAtNA matrix
+            # reshaping and saving the covariance matrix (reorganization of the invAtNA matrix)
             # so that it is (n_stokes x n_components )^2 for each sky pixel
             cov_estimated_ = np.zeros(((res.s.shape[0]*res.s.shape[1],res.s.shape[0]*res.s.shape[1], res.s.shape[2])))
             ind0=0
+            # loop over sky components
             for c1 in range(res.invAtNA.shape[0]):
+                # loop over stokes parameter
                 for s1 in range(res.invAtNA.shape[2]):
                     ind1=0
+                    # loop over sky components
                     for c2 in range(res.invAtNA.shape[1]):
-                        res.invAtNA[c1,c2,s1,np.where(res.invAtNA[c1,c2,s1,:]==hp.UNSEEN)[0]] = 0.0
+                        # res.invAtNA[c1,c2,s1,np.where(res.invAtNA[c1,c2,s1,:]==hp.UNSEEN)[0]] = 0.0
+                        # loop over stokes parameter
                         for s2 in range(res.invAtNA.shape[2]):
-                            if s1==s2: cov_estimated_[ind0,ind1,obs_pix] = res.invAtNA[c1,c2,s1,obs_pix]*1.0
+                            if s1==s2: cov_estimated_[ind0,ind1,:] = res.invAtNA[c1,c2,s1,:]*1.0
                             ind1+=1
                     ind0+=1
             cov_estimated += cov_estimated_
             print('producing map of the noise covariance')
             pl.figure()
-            cov_estimated[0,0,np.where(cov_estimated[0,0,:]==0.0)[0]]=hp.UNSEEN
+            # cov_estimated[0,0,np.where(cov_estimated[0,0,:]==0.0)[0]]=hp.UNSEEN
             hp.mollview(cov_estimated[0,0,:], norm='hist')
             pl.savefig('noise_covariance_'+str(i_patch)+'.pdf')
             pl.close()
