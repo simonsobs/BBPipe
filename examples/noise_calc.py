@@ -247,7 +247,7 @@ def Simons_Observatory_V3_SA_beams():
     return(np.array([beam_SAT_27,beam_SAT_39,beam_SAT_93,beam_SAT_145,beam_SAT_225,beam_SAT_280]))
 
 def Simons_Observatory_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAT_yrs_LF,f_sky,ell_max,delta_ell,
-                                   include_kludge=True):
+                                   include_kludge=True, beam_stuff=False):
     ## returns noise curves in polarization only, including the impact of the beam, for the SO small aperture telescopes
     ## noise curves are polarization only
     # sensitivity_mode
@@ -356,16 +356,17 @@ def Simons_Observatory_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAT_yrs_LF,f
     N_ell_P_145  = (W_T_145 * np.sqrt(2))**2.* A_SR * AN_P_145
     N_ell_P_225  = (W_T_225 * np.sqrt(2))**2.* A_SR * AN_P_225
     N_ell_P_280  = (W_T_280 * np.sqrt(2))**2.* A_SR * AN_P_280
-    
-    ## include the impact of the beam
-    SA_beams = Simons_Observatory_V3_SA_beams() / np.sqrt(8. * np.log(2)) /60. * np.pi/180.
-    ## SAT beams as a sigma expressed in radians
-    N_ell_P_27  *= np.exp( ell*(ell+1)* SA_beams[0]**2. )
-    N_ell_P_39  *= np.exp( ell*(ell+1)* SA_beams[1]**2. )
-    N_ell_P_93  *= np.exp( ell*(ell+1)* SA_beams[2]**2. )
-    N_ell_P_145 *= np.exp( ell*(ell+1)* SA_beams[3]**2. )
-    N_ell_P_225 *= np.exp( ell*(ell+1)* SA_beams[4]**2. )
-    N_ell_P_280 *= np.exp( ell*(ell+1)* SA_beams[5]**2. )
+
+    if beam_stuff:
+        ## include the impact of the beam
+        SA_beams = Simons_Observatory_V3_SA_beams() / np.sqrt(8. * np.log(2)) /60. * np.pi/180.
+        ## SAT beams as a sigma expressed in radians
+        N_ell_P_27  *= np.exp( ell*(ell+1)* SA_beams[0]**2. )
+        N_ell_P_39  *= np.exp( ell*(ell+1)* SA_beams[1]**2. )
+        N_ell_P_93  *= np.exp( ell*(ell+1)* SA_beams[2]**2. )
+        N_ell_P_145 *= np.exp( ell*(ell+1)* SA_beams[3]**2. )
+        N_ell_P_225 *= np.exp( ell*(ell+1)* SA_beams[4]**2. )
+        N_ell_P_280 *= np.exp( ell*(ell+1)* SA_beams[5]**2. )
     
     ## make an array of noise curves for P
     N_ell_P_SA = np.array([N_ell_P_27,N_ell_P_39,N_ell_P_93,N_ell_P_145,N_ell_P_225,N_ell_P_280])

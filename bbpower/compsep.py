@@ -310,10 +310,12 @@ class BBCompSep(PipelineStage):
                 amp =  params[comp['names_moments_dict']['amp_beta']] * 1E-6
                 cl_betas = self.bcls(lmax=384, gamma=gamma, amp=amp)
                 cl_cc = fg_cell[i_c, i_c, :]
+                #cls_1x1 = 0
                 cls_1x1 = self.evaluate_1x1(params, lmax=384,
                                             cls_cc=cl_cc,
                                             cls_bb=cl_betas)
                 cls_11[i_c, :384, :, :] = cls_1x1
+                #cls_0x2 = 0
                 cls_0x2 = self.evaluate_0x2(params, lmax=384,
                                             cls_cc=cl_cc,
                                             cls_bb=cl_betas)
@@ -352,7 +354,7 @@ class BBCompSep(PipelineStage):
                                                            params)
 
         return cls_array_list.reshape([self.n_bpws, self.nmaps, self.nmaps])
-        
+
     def bcls(self, lmax, gamma, amp):
         ls = np.arange(lmax)
         bcls = np.zeros(len(ls))
@@ -609,7 +611,7 @@ class BBCompSep(PipelineStage):
             np.savez(self.get_output('param_chains'),
                      chi2=sampler,
                      names=self.params.p_free_names)
-            print("Chi^2:",sampler)
+            print("Chi^2:",sampler, len(self.matrix_to_vector(self.bbdata).flatten()))
         elif self.config.get('sampler')=='timing':
             sampler = self.timing()
             np.savez(self.get_output('param_chains'),

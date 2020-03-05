@@ -45,7 +45,7 @@ BBCompSep:
             # See below for the meaning of the different elements in the list.
             r_tensor: ['r_tensor', 'tophat', [-1, 0.00, 1]]
             # Lensing amplitude
-            A_lens: ['A_lens', 'tophat', [0.00,1.0,2.00]]
+            A_lens: ['A_lens', 'tophat', [0.00,0.5,2.00]]
 
     # Foreground model
     fg_model:
