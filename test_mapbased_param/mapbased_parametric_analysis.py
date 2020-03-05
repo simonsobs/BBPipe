@@ -227,10 +227,11 @@ class BBMapParamCompSep(PipelineStage):
                         # res.invAtNA[c1,c2,s1,np.where(res.invAtNA[c1,c2,s1,:]==hp.UNSEEN)[0]] = 0.0
                         # loop over stokes parameter
                         for s2 in range(res.invAtNA.shape[2]):
-                            if s1==s2: cov_estimated_[ind0,ind1,obs_pix] = res.invAtNA[c1,c2,s1,:]*1.0
+                            if s1==s2: cov_estimated_[ind0,ind1,obs_pix] = res.invAtNA[c1,c2,s1,obs_pix]*1.0
                             ind1+=1
                     ind0+=1
             cov_estimated += cov_estimated_
+            print('cov_estimated[0,0,:] = ', cov_estimated[0,0,:])
             print('producing map of the noise covariance')
             pl.figure()
             # cov_estimated[0,0,np.where(cov_estimated[0,0,:]==0.0)[0]]=hp.UNSEEN
