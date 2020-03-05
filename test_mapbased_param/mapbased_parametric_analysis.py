@@ -212,10 +212,10 @@ class BBMapParamCompSep(PipelineStage):
             # reshaping and saving the covariance matrix (reorganization of the invAtNA matrix)
             # so that it is (n_stokes x n_components )^2 for each sky pixel
             cov_estimated_ = np.zeros(((res.s.shape[0]*res.s.shape[1],res.s.shape[0]*res.s.shape[1], res.s.shape[2])))
-            print('res.invAtNA.shape = ', res.invAtNA.shape)
-            print('res.s.shape = ', res.s.shape)
-            print('len(obs_pix) = ', len(obs_pix))
-            print('obs_pix = ', obs_pix)
+            # print('res.invAtNA.shape = ', res.invAtNA.shape)
+            # print('res.s.shape = ', res.s.shape)
+            # print('len(obs_pix) = ', len(obs_pix))
+            # print('obs_pix = ', obs_pix)
             ind0=0
             # loop over sky components
             for c1 in range(res.invAtNA.shape[0]):
@@ -231,13 +231,13 @@ class BBMapParamCompSep(PipelineStage):
                             ind1+=1
                     ind0+=1
             cov_estimated += cov_estimated_
-            print('cov_estimated[0,0,:] = ', cov_estimated[0,0,:])
+            # print('cov_estimated[0,0,:] = ', cov_estimated[0,0,:])
             print('producing map of the noise covariance')
-            pl.figure()
+            # pl.figure()
             # cov_estimated[0,0,np.where(cov_estimated[0,0,:]==0.0)[0]]=hp.UNSEEN
-            hp.mollview(cov_estimated[0,0,:])
-            pl.savefig('noise_covariance_'+str(i_patch)+'.pdf')
-            pl.close()
+            # hp.mollview(cov_estimated[0,0,:])
+            # pl.savefig('noise_covariance_'+str(i_patch)+'.pdf')
+            # pl.close()
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
