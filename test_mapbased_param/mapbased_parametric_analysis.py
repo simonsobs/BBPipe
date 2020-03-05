@@ -230,6 +230,9 @@ class BBMapParamCompSep(PipelineStage):
                             ind1+=1
                     ind0+=1
             cov_estimated += cov_estimated_
+            pl.figure()
+            hp.mollview(cov_estimated[0,0,:])
+            pl.show()
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
