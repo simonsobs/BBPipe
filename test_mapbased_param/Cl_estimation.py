@@ -99,9 +99,9 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     return Cl_noise_bias
 
 
-def Cl_stat_res_model_func(self, freq_maps, Sigma, components, instrument, beta_maxL,
+def Cl_stat_res_model_func(self, freq_maps, Sigma, beta_maxL,
                             Cl_func, get_field_func, mask, mask_apo, 
-                            w, n_cov, mask_patches, i_cmb=0, ):
+                            w, n_cov, mask_patches, i_cmb=0):
     
 
     if mask_patches.shape[0] == self.config['Nspec']: Npatch = mask_patches.shape[0]
@@ -167,7 +167,7 @@ class BBClEstimation(PipelineStage):
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',NumpyFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
             ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),\
-            ('mask_patches', FitsFile),('noise_cov',FitsFile)]
+            ('mask_patches', FitsFile),('noise_cov',FitsFile), ('fitted_spectral_parameters', TextFile)]
     
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
              ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
@@ -187,6 +187,8 @@ class BBClEstimation(PipelineStage):
         nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
         nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
+        
+        p = np.loadtxt(self.get_input('fitted_spectral_parameters'))
 
         mask_patches = hp.read_map(self.get_input('mask_patches'), verbose=False, field=None)
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
@@ -431,14 +433,17 @@ class BBClEstimation(PipelineStage):
         Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
         np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
 
-
-
+        ########
+        # estimation of the modeled statistical residuals, from simulation
         if self.config['include_stat_res']:
-            Cl_stat_res_model = Cl_stat_res_model_func()
+            Cl_stat_res_model = Cl_stat_res_model_func(self, freq_maps, Sigma, beta_maxL,
+                            Cl_func, get_field_func, mask, mask_apo, 
+                            w, noise_cov_, mask_patches, i_cmb=0)
+        else: Cl_stat_res_model = 0.0
+        hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
 
-
-
-
+        ########
+        # outputting apodized mask
         hp.write_map(self.get_output('mask_apo'), mask_apo, overwrite=True)
 
 
