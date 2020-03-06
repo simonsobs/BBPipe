@@ -99,7 +99,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     return Cl_noise_bias
 
 
-def Cl_stat_res_model_func(self, freq_maps, Sigma, beta_maxL,
+def Cl_stat_res_model_func(self, freq_maps, p,
                             Cl_func, get_field_func, mask, mask_apo, 
                             w, n_cov, mask_patches, i_cmb=0):
     
@@ -435,8 +435,8 @@ class BBClEstimation(PipelineStage):
         ########
         # estimation of the modeled statistical residuals, from simulation
         if self.config['include_stat_res']:
-            Cl_stat_res_model = Cl_stat_res_model_func(self, frequency_maps_, Sigma, beta_maxL,
-                            Cl_func, get_field_func, mask, mask_apo, 
+            Cl_stat_res_model = Cl_stat_res_model_func(self, frequency_maps_, p,
+                            compute_master, get_field, mask, mask_apo, 
                             w, noise_cov_, mask_patches, i_cmb=0)
         else: Cl_stat_res_model = 0.0
         hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
