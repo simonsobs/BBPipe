@@ -99,10 +99,24 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     return Cl_noise_bias
 
 
-def Cl_stat_res_model_func(self, freq_maps, Sigma, components, instrument, beta_maxL, invN=None, i_cmb=0, 
+def Cl_stat_res_model_func(self, freq_maps, Sigma, components, instrument, beta_maxL,
                             Cl_func, get_field_func, mask, mask_apo, 
-                            w, n_cov, mask_patches,):
+                            w, n_cov, mask_patches, i_cmb=0, ):
     
+
+    if mask_patches.shape[0] == self.config['Nspec']: Npatch = mask_patches.shape[0]
+    else: 
+        Npatch = 1
+        mask_patches = mask_patches[np.newaxis,:]
+
+    noise_cov_inv = np.zeros_like(n_cov)
+    for p in range(Npatches):
+        obs_pix = np.where(mask_patches[p,:]!=0)[0]
+        for p in obs_pix:
+            for s in range(2):
+                noise_cov_inv[:,s,p] = np.diag(1.0/n_cov[:,s,p])
+
+
     if self.config['Nspec'] == 0: Nspec=1
     else: Nspec = self.config['Nspec']
     beta_maxL = np.zeros((Nspec,2))
@@ -118,7 +132,6 @@ def Cl_stat_res_model_func(self, freq_maps, Sigma, components, instrument, beta_
     A_dB_ev = A.diff_evaluator(instrument['frequencies'])
     comp_of_dB = A.comp_of_dB
 
-    Npatches = beta_maxL.shape[0]
     Cl_stat_res_model = []
     for i in range(self.config['Nsims_bias']):
         res_map = np.zeros((6,freq_maps.shape[1]))
@@ -126,11 +139,15 @@ def Cl_stat_res_model_func(self, freq_maps, Sigma, components, instrument, beta_
             # build the matrix dW/dB
             A_maxL = A_ev(beta_maxL[p])
             A_dB_maxL = A_dB_ev(beta_maxL[p])
-            W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
+            W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=noise_cov_inv)[:, i_cmb]
+            print('W_dB_maxL.shape = ', W_dB_maxL.shape)
+            print('freq_maps.shape = ', freq_maps.shape)
             # build Y which should be nbeta x npix operator
             Y = _mm(W_dB_maxL, freq_maps)
-            # simulate 
+            print('Y.shape = ', Y.shape)
+            # simulate delta beta from the error covariance Sigma
             delta_beta = np.random.normal(np.zeros_like(Sigma[p]), scipy.linalg.sqrtm(Sigma[p]), size=Sigma[p].shape)
+            print('delta_beta.shape', delta_beta.shape)
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
