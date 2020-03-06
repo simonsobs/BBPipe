@@ -10,6 +10,8 @@ import scipy.constants as constants
 from astropy.cosmology import Planck15
 from . import mk_noise_map2 as mknm
 import scipy
+from fgbuster.algebra import W_dB, _mmm
+from fgbuster.component_model import CMB, Dust, Synchrotron
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     if custom_bins:
@@ -95,6 +97,46 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
 
     return Cl_noise_bias
+
+
+def Cl_stat_res_model_func(self, freq_maps, Sigma, components, instrument, beta_maxL, invN=None, i_cmb=0, 
+                            Cl_func, get_field_func, mask, mask_apo, 
+                            w, n_cov, mask_patches,):
+    
+    if self.config['Nspec'] == 0: Nspec=1
+    else: Nspec = self.config['Nspec']
+    beta_maxL = np.zeros((Nspec,2))
+    Sigma =  np.zeros((Nspec,2,2))
+    for i in range(self.config['Nspec']):
+        beta_maxL[i,:] = p[i,:2]
+        Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
+    instrument = {'frequencies':np.array(self.config['frequencies'])}
+    components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
+
+    A = MixingMatrix(*components)
+    A_ev = A.evaluator(instrument['frequencies'])
+    A_dB_ev = A.diff_evaluator(instrument['frequencies'])
+    comp_of_dB = A.comp_of_dB
+
+    Npatches = beta_maxL.shape[0]
+    Cl_stat_res_model = []
+    for i in range(self.config['Nsims_bias']):
+        res_map = np.zeros((6,freq_maps.shape[1]))
+        for p in range(Npatches):
+            # build the matrix dW/dB
+            A_maxL = A_ev(beta_maxL[p])
+            A_dB_maxL = A_dB_ev(beta_maxL[p])
+            W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
+            # build Y which should be nbeta x npix operator
+            Y = _mm(W_dB_maxL, freq_maps)
+            # simulate 
+            delta_beta = np.random.normal(np.zeros_like(Sigma[p]), scipy.linalg.sqrtm(Sigma[p]), size=Sigma[p].shape)
+            if p == 0: res_map = np.diag(delta_beta).dot(Y)
+            else: res_map += np.diag(delta_beta).dot(Y)
+        fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
+        Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
+
+    return Cl_stat_res_model
 
 
 class BBClEstimation(PipelineStage):
@@ -371,6 +413,14 @@ class BBClEstimation(PipelineStage):
         # cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
         Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
         np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
+
+
+
+        if self.config['include_stat_res']:
+            Cl_stat_res_model = Cl_stat_res_model_func()
+
+
+
 
         hp.write_map(self.get_output('mask_apo'), mask_apo, overwrite=True)
 
