@@ -116,7 +116,6 @@ def Cl_stat_res_model_func(self, freq_maps, Sigma, beta_maxL,
             for s in range(2):
                 noise_cov_inv[:,s,p] = np.diag(1.0/n_cov[:,s,p])
 
-
     if self.config['Nspec'] == 0: Nspec=1
     else: Nspec = self.config['Nspec']
     beta_maxL = np.zeros((Nspec,2))
@@ -436,7 +435,7 @@ class BBClEstimation(PipelineStage):
         ########
         # estimation of the modeled statistical residuals, from simulation
         if self.config['include_stat_res']:
-            Cl_stat_res_model = Cl_stat_res_model_func(self, freq_maps, Sigma, beta_maxL,
+            Cl_stat_res_model = Cl_stat_res_model_func(self, frequency_maps_, Sigma, beta_maxL,
                             Cl_func, get_field_func, mask, mask_apo, 
                             w, noise_cov_, mask_patches, i_cmb=0)
         else: Cl_stat_res_model = 0.0
