@@ -175,7 +175,7 @@ class BBClEstimation(PipelineStage):
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
              ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
              ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile),
-             ('Cl_noise_bias', FitsFile)]
+             ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile)]
 
     def run(self):
 
