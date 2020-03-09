@@ -10,7 +10,7 @@ import scipy.constants as constants
 from astropy.cosmology import Planck15
 from . import mk_noise_map2 as mknm
 import scipy
-from fgbuster.algebra import W_dB, _mmm
+from fgbuster.algebra import W_dB, _mmm, _mm
 from fgbuster.component_model import CMB, Dust, Synchrotron
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
