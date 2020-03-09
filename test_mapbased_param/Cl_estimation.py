@@ -110,7 +110,7 @@ def Cl_stat_res_model_func(self, freq_maps, p,
         mask_patches = mask_patches[np.newaxis,:]
 
     noise_cov_inv = np.zeros_like(n_cov)
-    for p in range(Npatches):
+    for p in range(Npatch):
         obs_pix = np.where(mask_patches[p,:]!=0)[0]
         for p in obs_pix:
             for s in range(2):
@@ -134,7 +134,7 @@ def Cl_stat_res_model_func(self, freq_maps, p,
     Cl_stat_res_model = []
     for i in range(self.config['Nsims_bias']):
         res_map = np.zeros((6,freq_maps.shape[1]))
-        for p in range(Npatches):
+        for p in range(Npatch):
             # build the matrix dW/dB
             A_maxL = A_ev(beta_maxL[p])
             A_dB_maxL = A_dB_ev(beta_maxL[p])
@@ -438,7 +438,8 @@ class BBClEstimation(PipelineStage):
             Cl_stat_res_model = Cl_stat_res_model_func(self, frequency_maps_, p,
                             compute_master, get_field, mask, mask_apo, 
                             w, noise_cov_, mask_patches, i_cmb=0)
-        else: Cl_stat_res_model = 0.0
+        else: Cl_stat_res_model = [0.0]
+        Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0), np.std(Cl_stat_res_model, axis=0)))
         hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
 
         ########
