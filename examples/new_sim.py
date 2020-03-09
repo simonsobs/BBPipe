@@ -1,7 +1,7 @@
 import healpy as hp
 import numpy as np
 import matplotlib.pyplot as plt
-from noise_calc import Simons_Observatory_V3_SA_noise,Simons_Observatory_V3_SA_beams # /Users/susannaazzoni/Desktop/Software/BBPipe/examples/noise_calc.py
+from noise_calc import Simons_Observatory_V3_SA_noise,Simons_Observatory_V3_SA_beams 
 import sys
 import os
 import scipy.constants as constants
@@ -12,35 +12,36 @@ from pysm.nominal import models
 import warnings
 warnings.simplefilter("ignore")
 
-if len(sys.argv) != 6:
-    print("Usage: new_sim.py seed nside simulate pysm_sed plot")
+if len(sys.argv) != 7:
+    print("Usage: new_sim.py seed nside simulate pysm_sed plot do_Cls")
     exit(1)
 seed = int(sys.argv[1])
 nside = int(sys.argv[2])
 do_simulation = int(sys.argv[3])
 use_pysm = int(sys.argv[4])
 do_plots = int(sys.argv[5])
+do_Cls = int(sys.argv[6])
 
 np.random.seed(seed)
 
 # Dust
 A_dust_BB=5.0
-EB_dust=2.
-alpha_dust_EE=-0.42
-alpha_dust_BB=-0.2
-nu0_dust=353. 
-beta_dust = 1.59
+EB_dust=2.  # ratio between B and E modes from Planck IX 2018, B_to_E = 0.5, i.e. E_to_B=2
+alpha_dust_EE=-0.42 # spectral tilt from Planck IX 2018, alpha = -0.42
+alpha_dust_BB=-0.42
+nu0_dust=353. #corresponds to nu_0_P' : 353. # Set as default for d2
+beta_dust = 1.59 # spectral index and temperature from Planck IX 2018, beta = 1.53, T=19.6 K #Constant
 temp_dust = 19.6
 
 # Sync
 A_sync_BB=2.0
 EB_sync=2.
 alpha_sync_EE=-0.6
-alpha_sync_BB=-0.4
-nu0_sync=23.
-beta_sync=-3.
+alpha_sync_BB=-0.6
+nu0_sync=23. #nu_0_P # Set as default
+beta_sync=-3. # spectral index #Const
 
-nu = np.array([27., 39., 93., 145., 225., 280.]) 
+nu = np.array([27., 39., 93., 145., 225., 280.]) # elements [0,1,2,3,4,5]
 
 # SED
 def fcmb(nu):
@@ -170,13 +171,14 @@ for i,n in enumerate(nu):
 beams=Simons_Observatory_V3_SA_beams() 
 
 # Simulations
-Npix = hp.nside2npix(nside)
 
+Npix = hp.nside2npix(nside)
 if do_simulation:
     if use_pysm:
         d2 = models("d2", nside) # dust: modified black body model 
         s1 = models("s1", nside) # synchrotron: simple power law with no curved index (curvature = 0)
         c1 = models("c1", nside) # cmb: lensed CMB realisation computed using Taylens
+
         # Generate amplitude maps of components
         map_I_dust,map_Q_dust,map_U_dust = hp.synfast([cl_dust_tt, cl_dust_ee, cl_dust_bb, cl_dust_te],
                                                       nside=nside, new=True) # Dust
@@ -189,7 +191,7 @@ if do_simulation:
         if do_plots:
             plt.figure()
             # Dust
-            hp.mollview(map_Q_dust, title = 'map_Q dust', sub = (321))
+            hp.mollview(map_Q_dust, title = 'map_Q dust', sub = (321)) # 3 rows 2 columns
             hp.mollview(map_U_dust, title = 'map_U dust', sub = (322))
             # Sync
             hp.mollview(map_Q_sync, title = 'map_Q sync', sub = (323))
@@ -205,7 +207,7 @@ if do_simulation:
         d2[0]['A_Q'] = map_Q_dust
         d2[0]['A_U'] = map_U_dust
         d2[0]['spectral_index'] = beta_dust
-        d2[0]['temp'] = temp_dust * np.ones(d2[0]['temp'].size)
+        d2[0]['temp'] = temp_dust * np.ones(d2[0]['temp'].size) #need array, no const value for temp with PySM
 
         # Sync
         s1[0]['A_I'] = map_I_sync
@@ -217,7 +219,7 @@ if do_simulation:
         c1[0]['A_I'] = map_I_cmb
         c1[0]['A_Q'] = map_Q_cmb
         c1[0]['A_U'] = map_U_cmb
-        
+
         sky_config = {
             'dust' : d2,
             'synchrotron' : s1,
@@ -228,19 +230,19 @@ if do_simulation:
 
         instrument_config = {
             'nside' : nside,
-            'frequencies' : nu, #Expected in GHz # not needed if use_bpass true
+            'frequencies' : nu, #Expected in GHz 
             'use_smoothing' : False,
-            'beams' : beams, #Expected beam fwhm in arcmin #Only used if use_smoothing is True
+            'beams' : beams, #Expected in arcmin 
             'add_noise' : False,
-            'sens_I' : None, #Expected in units uK_RJ #Only used if add_noise is True
-            'sens_P' : None,  #channel sensitivities in uK_CMB amin #Only used if add_noise is True
+            'sens_I' : None, #Expected in units uK_RJ 
+            'sens_P' : None,  #channel sensitivities in uK_CMB amin 
             'noise_seed' : 1234,
             'use_bandpass' : False,
             'channel_names' : ['LF1', 'LF2', 'MF1', 'MF2', 'UHF1', 'UHF2'],
             'output_units' : 'uK_RJ',
             'output_directory' :"/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples",
             'output_prefix' : 'test_deltabpass_',
-            'pixel_indices' : None, # added to dictionary for partial sky
+            'pixel_indices' : None, 
         }
 
         sky = pysm.Sky(sky_config)
@@ -255,20 +257,13 @@ if do_simulation:
         maps_comp[2,:,:] = hp.synfast([cl_sync_tt, cl_sync_ee, cl_sync_bb, cl_sync_te, cl_sync_eb, cl_sync_tb], nside, new=True)[1:] # Sync
         sed_comp = np.array([f_cmb, f_dust, f_sync]).T
         maps_signal = np.sum(maps_comp[None, :,:,:]*sed_comp[:,:,None,None], axis=1)
-
+        
         # Beam-convolution
         for f,b in enumerate(beams):
             fwhm = b * np.pi/180./60.
             for i in [0,1]:
                 maps_signal[f,i,:] = hp.smoothing(maps_signal[f,i,:], fwhm=fwhm, verbose=False)
-        
-    # Deconvolve noise from beam
-    for i,(n,b) in enumerate(zip(nell,beams)):
-        sig = b * np.pi/180./60/2.355
-        bl = np.exp(-sig**2*ells*(ells+1)) 
-        n *= bl 
-        n[:2]=n[2]
-        
+
     # Mask
     nhits=hp.ud_grade(hp.read_map("norm_nHits_SA_35FOV.fits",  verbose=False),nside_out=nside)
     nhits/=np.amax(nhits) 
@@ -277,143 +272,156 @@ if do_simulation:
     inv_sqrtnhits=np.zeros_like(nhits)
     inv_sqrtnhits[nhits>1E-3]=1./np.sqrt(nhits[nhits>1E-3])
     nhits_binary[nhits>1E-3]=1 
-    
+
     # Splits
     nsplits=4
     
     maps_noise = np.zeros([nsplits,6,2,Npix])
     for s in range(nsplits):
-        for i in range(len(nu)):
+        for i in range(6):
             nell_ee = N_ells_sky[i, 0, i, 0, :]*dl2cl
             nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl
             nell_00 = nell_ee * 0
-            maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00] * nsplits, nside, new=True)[1:] * inv_sqrtnhits
+            maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00][i]*nsplits, nside, new=True) * inv_sqrtnhits
+            #maps_noise = maps_noise[:, :, :1 ]
+            #print(maps_noise.shape)
+    noi_coadd = np.mean(maps_noise, axis=0)
 
-    def map2cl(maps):
-        cl_out = np.zeros([6,2,6,2,len(ells)])
-        for i in range(6):
-            m1 = np.zeros([3, Npix])
-            m1[1:,:]=maps[i, :, :]
-            for j in range(i,6):
-                print(i,j)
-                m2 = np.zeros([3, Npix])
-                m2[1:,:]=maps[j, :, :]
-
-\                cl = hp.anafast(m1, m2, iter=0)
-                cl_out[i, 0, j, 0] = cl[1] * cl2dl #EE
-                cl_out[i, 1, j, 1] = cl[2] * cl2dl #BB
-                #cl_out[i, 0, j, 1] = cl[4] * cl2dl #EB
-                #cl_out[i, 1, j, 0] = cl[4] * cl2dl #BE
-                if j!=i:
-                    cl_out[j, 0, i, 0] = cl[1] * cl2dl
-                    cl_out[j, 1, i, 1] = cl[2] * cl2dl
-                    #cl_out[j, 0, i, 1] = cl[4] * cl2dl
-                    #cl_out[j, 1, i, 0] = cl[4] * cl2dl
-        return cl_out
-
-    S_ells_sim = map2cl(maps_signal+maps_noise)-N_ells_sky
+    if do_Cls:
+        def map2cl(maps):
+            cl_out = np.zeros([6,2,6,2,len(ells)])
+            for i in range(6):
+                m1 = np.zeros([3, Npix])
+                m1[1:,:]=maps[i, :, :]
+                for j in range(i,6):
+                    print(i,j)
+                    m2 = np.zeros([3, Npix])
+                    m2[1:,:]=maps[j, :, :]
+                    cl = hp.anafast(m1, m2, iter=0)
+                    cl_out[i, 0, j, 0] = cl[1] * cl2dl #EE
+                    cl_out[i, 1, j, 1] = cl[2] * cl2dl #BB
+                    #cl_out[i, 0, j, 1] = cl[4] * cl2dl #EB
+                    #cl_out[i, 1, j, 0] = cl[4] * cl2dl #BE
+                    if j!=i:
+                        cl_out[j, 0, i, 0] = cl[1] * cl2dl
+                        cl_out[j, 1, i, 1] = cl[2] * cl2dl
+                        #cl_out[j, 0, i, 1] = cl[4] * cl2dl
+                        #cl_out[j, 1, i, 0] = cl[4] * cl2dl
+            return cl_out
+        
+        for i in range(nsplits):
+            S_ells_sim = map2cl(maps_signal+maps_noise[i])-N_ells_sky
+    else:
+        # Save maps
+        hp.write_map(prefix_out+"/maps_sky_signal.fits", maps_signal.reshape([len(nu)*2,Npix]) ,
+                     overwrite=True)
+        hp.write_map(prefix_out+"/obs_coadd.fits", ((maps_signal+noi_coadd)*nhits_binary).reshape([len(nu)*2,Npix]),
+                     overwrite=True)
+                
 else:
     S_ells_sim = C_ells_sky
 N_ells_sim = N_ells_sky
 C_ells_sim = C_ells_sky + N_ells_sky
-        
-# Bandpowers
-delta_ell = 10
-N_bins = (len(ells)-2)//delta_ell
-W = np.zeros([N_bins, len(ells)])
-for i in range(N_bins):
-    W[i, 2+i*delta_ell:2+(i+1)*delta_ell] = 1. / delta_ell
 
-# Bandpower averaging    
-avg_bp = np.dot(ells, W.T)
-C_s = np.dot(S_ells_sim, W.T)
-C_n = np.dot(N_ells_sim, W.T)
-C_t = np.dot(C_ells_sim, W.T)
+if do_Cls:
+    # Bandpowers
+    delta_ell = 10
+    N_bins = (len(ells)-2)//delta_ell
+    W = np.zeros([N_bins, len(ells)])
+    for i in range(N_bins):
+        W[i, 2+i*delta_ell:2+(i+1)*delta_ell] = 1. / delta_ell
 
-# Vectorize bandpowers
-ind = np.triu_indices(6*2)
-C_s = C_s.reshape([6*2, 6*2, N_bins])
-C_n = C_n.reshape([6*2, 6*2, N_bins])
-C_t = C_t.reshape([6*2, 6*2, N_bins])
+    # Bandpower averaging    
+    avg_bp = np.dot(ells, W.T)
+    C_s = np.dot(S_ells_sim, W.T)
+    C_n = np.dot(N_ells_sim, W.T)
+    C_t = np.dot(C_ells_sim, W.T)
 
-# Compute Covariance matrix
-ncross = len(ind[0])
-bpw_tot=np.zeros([ncross,N_bins])
-bpw_sig=np.zeros([ncross,N_bins])
-bpw_noi=np.zeros([ncross,N_bins])
-cov_bpw=np.zeros([ncross,N_bins,ncross,N_bins])
-factor_modecount=1./((2*avg_bp+1)*delta_ell*fsky)
-for ii,(i1,i2) in enumerate(zip(ind[0],ind[1])):
-    bpw_tot[ii,:]=C_t[i1,i2,:]
-    bpw_sig[ii,:]=C_s[i1,i2,:]
-    bpw_noi[ii,:]=C_n[i1,i2,:]
-    for jj,(j1,j2) in enumerate(zip(ind[0],ind[1])):
-        covar=(C_t[i1,j1,:]*C_t[i2,j2,:]+
-               C_t[i1,j2,:]*C_t[i2,j1,:])*factor_modecount
-        cov_bpw[ii,:,jj,:]=np.diag(covar)
-bpw_tot=bpw_tot.flatten()
-bpw_sig=bpw_sig.flatten()
-bpw_noi=bpw_noi.flatten()
-cov_bpw=cov_bpw.reshape([ncross*N_bins,ncross*N_bins])
+    # Vectorize bandpowers
+    nmaps=2*(len(nu))
+    ind = np.triu_indices(nmaps)
+    C_s = C_s.reshape([nmaps, nmaps, N_bins])
+    C_n = C_n.reshape([nmaps, nmaps, N_bins])
+    C_t = C_t.reshape([nmaps, nmaps, N_bins])
 
-#Write in SACC format
-import sacc
+    # Compute Covariance matrix
+    ncross = len(ind[0])
+    bpw_tot=np.zeros([ncross,N_bins])
+    bpw_sig=np.zeros([ncross,N_bins])
+    bpw_noi=np.zeros([ncross,N_bins])
+    cov_bpw=np.zeros([ncross,N_bins,ncross,N_bins])
+    factor_modecount=1./((2*avg_bp+1)*delta_ell*fsky)
+    for ii,(i1,i2) in enumerate(zip(ind[0],ind[1])):
+        bpw_tot[ii,:]=C_t[i1,i2,:]
+        bpw_sig[ii,:]=C_s[i1,i2,:]
+        bpw_noi[ii,:]=C_n[i1,i2,:]
+        for jj,(j1,j2) in enumerate(zip(ind[0],ind[1])):
+            covar=(C_t[i1,j1,:]*C_t[i2,j2,:]+
+                   C_t[i1,j2,:]*C_t[i2,j1,:])*factor_modecount
+            cov_bpw[ii,:,jj,:]=np.diag(covar)
+    bpw_tot=bpw_tot.flatten()
+    bpw_sig=bpw_sig.flatten()
+    bpw_noi=bpw_noi.flatten()
+    cov_bpw=cov_bpw.reshape([ncross*N_bins,ncross*N_bins])
 
-#Tracers
-tracers=[]
-for n in nu:
-    nus= np.array([n-1 ,n ,n+1])
-    bnus=np.array([0, 1, 0])
-    name = '%d' %n
-    tracers.append(sacc.Tracer(name, "spin2", nus, bnus, 'SO_SAT'))
+    #Write in SACC format
+    import sacc
+    
+    #Tracers
+    tracers=[]
+    for n in nu:
+        nus= np.array([n-1 ,n ,n+1])
+        bnus=np.array([0, 1, 0])
+        name = '%d' %n
+        tracers.append(sacc.Tracer(name, "spin2", nus, bnus, 'SO_SAT'))
 
-#Vectors
-v_signoi=sacc.MeanVec(bpw_tot)
-v_signal=sacc.MeanVec(bpw_sig)
-v_noise=sacc.MeanVec(bpw_noi)
+    #Vectors
+    v_signoi=sacc.MeanVec(bpw_tot)
+    v_signal=sacc.MeanVec(bpw_sig)
+    v_noise=sacc.MeanVec(bpw_noi)
 
-#Covariance
-precis=sacc.Precision(cov_bpw,is_covariance=True)
+    #Covariance
+    precis=sacc.Precision(cov_bpw,is_covariance=True)
 
-#Ordering
-typ_arr=[]
-ls_arr=[]
-t1_arr=[]
-t2_arr=[]
-q1_arr=[]
-q2_arr=[]
-w_arr=[]
-pol_names = ['E', 'B']
-for ii,(i1,i2) in enumerate(zip(ind[0],ind[1])):
-    i_nu1 = i1//2
-    i_nu2 = i2//2
-    i_p1 = i1%2
-    i_p2 = i2%2
-    p1 = pol_names[i_p1]
-    p2 = pol_names[i_p2]
-    t1_arr += N_bins * [i_nu1]
-    t2_arr += N_bins * [i_nu2]
-    q1_arr += N_bins * [p1]
-    q2_arr += N_bins * [p2]
-    typ_arr += N_bins*[p1+p2]
-    for ib,w in enumerate(W):
-        lmean=avg_bp[ib]
-        win=sacc.Window(ells,w)
-        ls_arr.append(lmean)
-        w_arr.append(win)    
-bins=sacc.Binning(typ_arr,ls_arr,t1_arr,q1_arr,t2_arr,q2_arr,windows=w_arr)
+    #Ordering
+    typ_arr=[]
+    ls_arr=[]
+    t1_arr=[]
+    t2_arr=[]
+    q1_arr=[]
+    q2_arr=[]
+    w_arr=[]
+    pol_names = ['E', 'B']
+    for ii,(i1,i2) in enumerate(zip(ind[0],ind[1])):
+        i_nu1 = i1//2
+        i_nu2 = i2//2
+        i_p1 = i1%2
+        i_p2 = i2%2
+        p1 = pol_names[i_p1]
+        p2 = pol_names[i_p2]
+        t1_arr += N_bins * [i_nu1]
+        t2_arr += N_bins * [i_nu2]
+        q1_arr += N_bins * [p1]
+        q2_arr += N_bins * [p2]
+        typ_arr += N_bins*[p1+p2]
+        for ib,w in enumerate(W):
+            lmean=avg_bp[ib]
+            win=sacc.Window(ells,w)
+            ls_arr.append(lmean)
+            w_arr.append(win)    
+        bins=sacc.Binning(typ_arr,ls_arr,t1_arr,q1_arr,t2_arr,q2_arr,windows=w_arr)
 
-#Write
-s_d=sacc.SACC(tracers,bins,mean=v_signal,precision=precis,
-              meta={'data_name':'Mock_no_noise_data'})
-s_f=sacc.SACC(tracers,bins,mean=v_signal,
-              meta={'data_name':'Mock_no_noise_fiducial'})
-s_n=sacc.SACC(tracers,bins,mean=v_noise,
-              meta={'data_name':'Mock_no_noise_noise'})
-
-s_d.saveToHDF(dirname+"/dataCl.sacc")
-s_d.printInfo()
-s_n.saveToHDF(dirname+"/noiseCl.sacc")
-s_n.printInfo()
-s_f.saveToHDF(dirname+"/fiducialCl.sacc")
-s_f.printInfo()
+    #Write
+    s_d=sacc.SACC(tracers,bins,mean=v_signal,precision=precis,
+                  meta={'data_name':'Mock_no_noise_data'})
+    s_f=sacc.SACC(tracers,bins,mean=v_signal,
+                  meta={'data_name':'Mock_no_noise_fiducial'})
+    s_n=sacc.SACC(tracers,bins,mean=v_noise,
+                  meta={'data_name':'Mock_no_noise_noise'})
+    
+    s_d.saveToHDF(dirname+"/dataCl.sacc")
+    s_d.printInfo()
+    s_n.saveToHDF(dirname+"/noiseCl.sacc")
+    s_n.printInfo()
+    s_f.saveToHDF(dirname+"/fiducialCl.sacc")
+    s_f.printInfo()
