@@ -166,10 +166,12 @@ for i,n in enumerate(nu):
     for j in [0,1]:
         N_ells_sky[i, j, i, j, :] = nell[i]
 
-
+# import beam [amin]
+beams=Simons_Observatory_V3_SA_beams() 
 
 # Simulations
 Npix = hp.nside2npix(nside)
+
 if do_simulation:
     if use_pysm:
         d2 = models("d2", nside) # dust: modified black body model 
@@ -187,7 +189,7 @@ if do_simulation:
         if do_plots:
             plt.figure()
             # Dust
-            hp.mollview(map_Q_dust, title = 'map_Q dust', sub = (321)) # 3 rows 2 columns
+            hp.mollview(map_Q_dust, title = 'map_Q dust', sub = (321))
             hp.mollview(map_U_dust, title = 'map_U dust', sub = (322))
             # Sync
             hp.mollview(map_Q_sync, title = 'map_Q sync', sub = (323))
@@ -203,7 +205,7 @@ if do_simulation:
         d2[0]['A_Q'] = map_Q_dust
         d2[0]['A_U'] = map_U_dust
         d2[0]['spectral_index'] = beta_dust
-        d2[0]['temp'] = temp_dust * np.ones(d2[0]['temp'].size) #need array, no const value for temp with PySM
+        d2[0]['temp'] = temp_dust * np.ones(d2[0]['temp'].size)
 
         # Sync
         s1[0]['A_I'] = map_I_sync
@@ -215,7 +217,7 @@ if do_simulation:
         c1[0]['A_I'] = map_I_cmb
         c1[0]['A_Q'] = map_Q_cmb
         c1[0]['A_U'] = map_U_cmb
-
+        
         sky_config = {
             'dust' : d2,
             'synchrotron' : s1,
@@ -228,7 +230,7 @@ if do_simulation:
             'nside' : nside,
             'frequencies' : nu, #Expected in GHz # not needed if use_bpass true
             'use_smoothing' : False,
-            'beams' : None, #Expected beam fwhm in arcmin #Only used if use_smoothing is True
+            'beams' : beams, #Expected beam fwhm in arcmin #Only used if use_smoothing is True
             'add_noise' : False,
             'sens_I' : None, #Expected in units uK_RJ #Only used if add_noise is True
             'sens_P' : None,  #channel sensitivities in uK_CMB amin #Only used if add_noise is True
@@ -253,13 +255,39 @@ if do_simulation:
         maps_comp[2,:,:] = hp.synfast([cl_sync_tt, cl_sync_ee, cl_sync_bb, cl_sync_te, cl_sync_eb, cl_sync_tb], nside, new=True)[1:] # Sync
         sed_comp = np.array([f_cmb, f_dust, f_sync]).T
         maps_signal = np.sum(maps_comp[None, :,:,:]*sed_comp[:,:,None,None], axis=1)
+
+        # Beam-convolution
+        for f,b in enumerate(beams):
+            fwhm = b * np.pi/180./60.
+            for i in [0,1]:
+                maps_signal[f,i,:] = hp.smoothing(maps_signal[f,i,:], fwhm=fwhm, verbose=False)
         
-    maps_noise = np.zeros([6,2,Npix])
-    for i in range(6):
-        nell_ee = N_ells_sky[i, 0, i, 0, :]*dl2cl
-        nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl
-        nell_00 = nell_ee * 0
-        maps_noise[i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00], nside, new=True)[1:]
+    # Deconvolve noise from beam
+    for i,(n,b) in enumerate(zip(nell,beams)):
+        sig = b * np.pi/180./60/2.355
+        bl = np.exp(-sig**2*ells*(ells+1)) 
+        n *= bl 
+        n[:2]=n[2]
+        
+    # Mask
+    nhits=hp.ud_grade(hp.read_map("norm_nHits_SA_35FOV.fits",  verbose=False),nside_out=nside)
+    nhits/=np.amax(nhits) 
+    fsky_msk=np.mean(nhits) 
+    nhits_binary=np.zeros_like(nhits) 
+    inv_sqrtnhits=np.zeros_like(nhits)
+    inv_sqrtnhits[nhits>1E-3]=1./np.sqrt(nhits[nhits>1E-3])
+    nhits_binary[nhits>1E-3]=1 
+    
+    # Splits
+    nsplits=4
+    
+    maps_noise = np.zeros([nsplits,6,2,Npix])
+    for s in range(nsplits):
+        for i in range(len(nu)):
+            nell_ee = N_ells_sky[i, 0, i, 0, :]*dl2cl
+            nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl
+            nell_00 = nell_ee * 0
+            maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00] * nsplits, nside, new=True)[1:] * inv_sqrtnhits
 
     def map2cl(maps):
         cl_out = np.zeros([6,2,6,2,len(ells)])
@@ -271,7 +299,7 @@ if do_simulation:
                 m2 = np.zeros([3, Npix])
                 m2[1:,:]=maps[j, :, :]
 
-                cl = hp.anafast(m1, m2, iter=0)
+\                cl = hp.anafast(m1, m2, iter=0)
                 cl_out[i, 0, j, 0] = cl[1] * cl2dl #EE
                 cl_out[i, 1, j, 1] = cl[2] * cl2dl #BB
                 #cl_out[i, 0, j, 1] = cl[4] * cl2dl #EB
