@@ -114,7 +114,7 @@ def Cl_stat_res_model_func(self, freq_maps, p,
         obs_pix = np.where(mask_patches[p,:]!=0)[0]
         for p in obs_pix:
             for s in range(2):
-                noise_cov_inv[:,s,p] = np.diag(1.0/n_cov[:,s,p])
+                noise_cov_inv[:,s,p] = 1.0/n_cov[:,s,p]
 
     if self.config['Nspec'] == 0: Nspec=1
     else: Nspec = self.config['Nspec']
