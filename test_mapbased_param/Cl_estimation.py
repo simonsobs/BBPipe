@@ -99,7 +99,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     return Cl_noise_bias
 
 
-def Cl_stat_res_model_func(self, freq_maps, p,
+def Cl_stat_res_model_func(self, freq_maps, param_beta,
                             Cl_func, get_field_func, mask, mask_apo, 
                             w, n_cov, mask_patches, i_cmb=0):
     
@@ -121,8 +121,8 @@ def Cl_stat_res_model_func(self, freq_maps, p,
     beta_maxL = np.zeros((Nspec,2))
     Sigma =  np.zeros((Nspec,2,2))
     for i in range(self.config['Nspec']):
-        beta_maxL[i,:] = p[i,:2]
-        Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
+        beta_maxL[i,:] = param_beta[i,:2]
+        Sigma[i,:,:] = np.array([[param_beta[i,2],param_beta[i,3]],[param_beta[i,3],param_beta[i,4]]])
     instrument = {'frequencies':np.array(self.config['frequencies'])}
     components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
