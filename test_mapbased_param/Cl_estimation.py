@@ -138,7 +138,8 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             # build the matrix dW/dB
             A_maxL = A_ev(beta_maxL[p])
             A_dB_maxL = A_dB_ev(beta_maxL[p])
-            W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=noise_cov_inv)[:, i_cmb]
+            # W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=noise_cov_inv)[:, i_cmb]
+            W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
             print('W_dB_maxL.shape = ', W_dB_maxL.shape)
             print('freq_maps.shape = ', freq_maps.shape)
             # build Y which should be nbeta x npix operator
