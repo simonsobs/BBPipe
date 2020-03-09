@@ -149,9 +149,10 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             # delta_beta = np.random.normal(np.zeros_like(Sigma[p]), 
                                 # np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))),
                                      # size=Sigma[p].shape)
-            delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p]),
+            delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p].shape[0]),
                                  np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
-                                 size=Sigma[p].shape )
+                                 size=Sigma[p].shape[0] )
+
             print('delta_beta.shape', delta_beta.shape)
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
