@@ -143,13 +143,14 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             print('W_dB_maxL.shape = ', W_dB_maxL.shape)
             print('freq_maps.shape = ', freq_maps.shape)
             # build Y which should be nbeta x npix operator
-            Y = _mm(W_dB_maxL, freq_maps)
+            Y = np.einsum('ij,jkl->ikl', W_dB_maxL, freq_maps)
             print('Y.shape = ', Y.shape)
             # simulate delta beta from the error covariance Sigma
             delta_beta = np.random.normal(np.zeros_like(Sigma[p]), scipy.linalg.sqrtm(Sigma[p]), size=Sigma[p].shape)
             print('delta_beta.shape', delta_beta.shape)
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
+            print('res_map.shape', res_map.shape)
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
         Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
 
