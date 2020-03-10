@@ -84,8 +84,8 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         noise_maps_ = np.zeros((n_cov.shape[0], 3, W.shape[-1]))
         ind = 0
         for f in range(n_cov.shape[0]): 
-            for i in range(3): 
-                noise_maps_[f,i,:] += noise_maps_sim[ind,:]*1.0
+            for i_ in range(3): 
+                noise_maps_[f,i_,:] += noise_maps_sim[ind,:]*1.0
                 ind += 1
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
@@ -304,7 +304,7 @@ class BBClEstimation(PipelineStage):
         
         ###############################
 
-        Cl_noise_bias = noise_bias_estimation(self, compute_master, get_field, mask, 
+        Cl_noise_bias, Cl_noise_freq = noise_bias_estimation(self, compute_master, get_field, mask, 
                 mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw, ell_eff)
         Cl_noise_bias = np.vstack((ell_eff,np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
 
@@ -455,7 +455,7 @@ class BBClEstimation(PipelineStage):
         if self.config['include_stat_res']:
             Cl_stat_res_model = Cl_stat_res_model_func(self, frequency_maps_, p,
                             compute_master, get_field, mask, mask_apo, 
-                            w, noise_cov_, mask_patches, i_cmb=0)
+                            w, noise_cov_, mask_patches, Cl_noise_freq, i_cmb=0)
         else: Cl_stat_res_model = [0.0]
         np.save('Cl_stat_res_model', Cl_stat_res_model)
         Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0), np.std(Cl_stat_res_model, axis=0)))
