@@ -155,9 +155,9 @@ class BBREstimation(PipelineStage):
             ClBB_model_other_than_prim += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
             ClBB_model_other_than_prim_and_lens += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
-        if self.config['include_stat_res']:
-            ClBB_model_other_than_prim += Cl_stat_res_model[1][(ell_v>=lmin)&(ell_v<=lmax)]
-            ClBB_model_other_than_prim_and_lens += Cl_stat_res_model[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        # if self.config['include_stat_res']:
+        #     ClBB_model_other_than_prim += Cl_stat_res_model[1][(ell_v>=lmin)&(ell_v<=lmax)]
+        #     ClBB_model_other_than_prim_and_lens += Cl_stat_res_model[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['dust_marginalization']:
 
