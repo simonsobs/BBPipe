@@ -448,6 +448,7 @@ class BBClEstimation(PipelineStage):
                             compute_master, get_field, mask, mask_apo, 
                             w, noise_cov_, mask_patches, i_cmb=0)
         else: Cl_stat_res_model = [0.0]
+        np.save('Cl_stat_res_model', Cl_stat_res_model)
         Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0), np.std(Cl_stat_res_model, axis=0)))
         hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
 
