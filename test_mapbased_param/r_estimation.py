@@ -503,7 +503,9 @@ class BBREstimation(PipelineStage):
                         # pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
                                                     # label='modeled BB - modeled noise = tot BB + residuals', 
                                                     # color='k', linestyle='-', linewidth=2.0, alpha=0.8)
-
+                        if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])
+                                            &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
+                                                linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
 
