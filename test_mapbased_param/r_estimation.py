@@ -83,7 +83,7 @@ class BBREstimation(PipelineStage):
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), 
                 ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile), 
                     ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile),
-                        ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile)]
+                        ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
                 ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
@@ -92,6 +92,7 @@ class BBREstimation(PipelineStage):
         Cl_clean = hp.read_cl(self.get_input('Cl_clean'))
         Cl_noise = hp.read_cl(self.get_input('Cl_noise'))
         Cl_noise_bias = hp.read_cl(self.get_input('Cl_noise_bias'))
+        Cl_stat_res_model = hp.read_cl(self.get_input('Cl_stat_res_model'))
         Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
         Cl_cov_freq = hp.read_cl(self.get_input('Cl_cov_freq'))
         fsky_eff = np.loadtxt(self.get_input('fsky_eff'))
@@ -125,7 +126,7 @@ class BBREstimation(PipelineStage):
             Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
         instrument = {'frequencies':np.array(self.config['frequencies'])}
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
-        Cl_stat_res_model = Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, None, i_cmb=0)
+        # Cl_stat_res_model = Cl_stat_model(Cl_fgs, Sigma, components, instrument, beta_maxL, None, i_cmb=0)
         ################
 
         # model 
@@ -155,8 +156,8 @@ class BBREstimation(PipelineStage):
             ClBB_model_other_than_prim_and_lens += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['include_stat_res']:
-            ClBB_model_other_than_prim += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
-            ClBB_model_other_than_prim_and_lens += Cl_stat_res_model[(ell_v>=lmin)&(ell_v<=lmax)]
+            ClBB_model_other_than_prim += Cl_stat_res_model[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            ClBB_model_other_than_prim_and_lens += Cl_stat_res_model[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['dust_marginalization']:
 
@@ -244,7 +245,7 @@ class BBREstimation(PipelineStage):
                                                 # color='red', linestyle=':', linewidth=2.0, alpha=0.8)
 
                     # including statistical foregrounds residuals
-                    if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[(ell_v>=self.config['lmin'])
+                    if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
                                                 linewidth=2.0, alpha=0.8)
                     # including true CMB template @ 150GHz
