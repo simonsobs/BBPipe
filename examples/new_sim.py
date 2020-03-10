@@ -26,11 +26,11 @@ np.random.seed(seed)
 
 # Dust
 A_dust_BB=5.0
-EB_dust=2.  # ratio between B and E modes from Planck IX 2018, B_to_E = 0.5, i.e. E_to_B=2
-alpha_dust_EE=-0.42 # spectral tilt from Planck IX 2018, alpha = -0.42
+EB_dust=2. 
+alpha_dust_EE=-0.42
 alpha_dust_BB=-0.42
-nu0_dust=353. #corresponds to nu_0_P' : 353. # Set as default for d2
-beta_dust = 1.59 # spectral index and temperature from Planck IX 2018, beta = 1.53, T=19.6 K #Constant
+nu0_dust=353.
+beta_dust = 1.59 
 temp_dust = 19.6
 
 # Sync
@@ -38,10 +38,10 @@ A_sync_BB=2.0
 EB_sync=2.
 alpha_sync_EE=-0.6
 alpha_sync_BB=-0.6
-nu0_sync=23. #nu_0_P # Set as default
-beta_sync=-3. # spectral index #Const
+nu0_sync=23. 
+beta_sync=-3.
 
-nu = np.array([27., 39., 93., 145., 225., 280.]) # elements [0,1,2,3,4,5]
+nu = np.array([27., 39., 93., 145., 225., 280.])
 
 # SED
 def fcmb(nu):
@@ -162,7 +162,6 @@ _,nell[:,2:],_=Simons_Observatory_V3_SA_noise(sens,knee,ylf,fsky,lmax+1,1)
 nell*=cl2dl[None,:]
 
 N_ells_sky = np.zeros([6, 2, 6, 2, len(ells)])
-# noise diagonal in freqs and maps
 for i,n in enumerate(nu):
     for j in [0,1]:
         N_ells_sky[i, j, i, j, :] = nell[i]
@@ -180,13 +179,21 @@ if do_simulation:
         c1 = models("c1", nside) # cmb: lensed CMB realisation computed using Taylens
 
         # Generate amplitude maps of components
-        map_I_dust,map_Q_dust,map_U_dust = hp.synfast([cl_dust_tt, cl_dust_ee, cl_dust_bb, cl_dust_te],
-                                                      nside=nside, new=True) # Dust
-        map_I_sync,map_Q_sync,map_U_sync = hp.synfast([cl_sync_tt, cl_sync_ee, cl_sync_bb, cl_sync_te],
-                                                      nside=nside, new=True) # Sync
-        map_I_cmb,map_Q_cmb,map_U_cmb = hp.synfast([cl_cmb_tt, cl_cmb_ee, cl_cmb_bb, cl_cmb_te],
-                                                   nside=nside, new=True) # cmb
+        maps_comp = np.zeros([3, 3, Npix]) #ncomp, IQU, npix
+        maps_comp[1, :, :] = hp.synfast([cl_dust_tt, cl_dust_ee, cl_dust_bb, cl_dust_te, cl_dust_eb,
+                                         cl_dust_tb], nside=nside, new=True) # Dust
+        map_I_dust, map_Q_dust, map_U_dust = maps_comp[1,:,:]
 
+        maps_comp[2, :, :] = hp.synfast([cl_sync_tt, cl_sync_ee, cl_sync_bb, cl_sync_te, cl_sync_eb,
+                                         cl_sync_tb], nside=nside, new=True) # Sync
+        map_I_sync, map_Q_sync, map_U_sync = maps_comp[2,:,:]
+
+        #maps_comp[0, 0, :], maps_comp[0, 1, :], maps_comp[0, 2, :] =
+        maps_comp[0, :, :] = hp.synfast([cl_cmb_tt, cl_cmb_ee, cl_cmb_bb,
+                                         cl_cmb_te, cl_cmb_eb, cl_cmb_tb],
+                                        nside=nside, new=True) # cmb
+        map_I_cmb,map_Q_cmb,map_U_cmb = maps_comp[0,:,:]
+        
         prefix_out=dirname
         if do_plots:
             plt.figure()
@@ -231,7 +238,7 @@ if do_simulation:
         instrument_config = {
             'nside' : nside,
             'frequencies' : nu, #Expected in GHz 
-            'use_smoothing' : False,
+            'use_smoothing' : True,
             'beams' : beams, #Expected in arcmin 
             'add_noise' : False,
             'sens_I' : None, #Expected in units uK_RJ 
@@ -240,8 +247,8 @@ if do_simulation:
             'use_bandpass' : False,
             'channel_names' : ['LF1', 'LF2', 'MF1', 'MF2', 'UHF1', 'UHF2'],
             'output_units' : 'uK_RJ',
-            'output_directory' :"/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples",
-            'output_prefix' : 'test_deltabpass_',
+            'output_directory' : dirname,
+            'output_prefix' : '/test_deltabpass_',
             'pixel_indices' : None, 
         }
 
@@ -250,6 +257,7 @@ if do_simulation:
         maps_signal, _ = instrument.observe(sky, write_outputs=False)
         maps_signal = maps_signal[:,1:,:]
         maps_signal = maps_signal/f_cmb_RJ[:,None,None]
+        maps_comp = maps_comp[:,1:,:]
     else:
         maps_comp = np.zeros([3, 2, Npix]) # (ncomp, npol, npix)
         maps_comp[0,:,:] = hp.synfast([cl_cmb_tt, cl_cmb_ee, cl_cmb_bb, cl_cmb_te, cl_cmb_eb, cl_cmb_tb], nside, new=True)[1:] # CMB
@@ -317,6 +325,10 @@ if do_simulation:
                      overwrite=True)
         hp.write_map(prefix_out+"/obs_coadd.fits", ((maps_signal+noi_coadd)*nhits_binary).reshape([len(nu)*2,Npix]),
                      overwrite=True)
+        hp.write_map(prefix_out+"/maps_comp_cmb.fits", maps_comp[0],overwrite=True)
+        hp.write_map(prefix_out+"/maps_comp_dust.fits", maps_comp[1], overwrite=True)
+        hp.write_map(prefix_out+"/maps_comp_dust.fits", maps_comp[2], overwrite=True)
+        # add splits
                 
 else:
     S_ells_sim = C_ells_sky
