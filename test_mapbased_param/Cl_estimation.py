@@ -44,7 +44,7 @@ def KCMB2RJ(nu):
 
 
 def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo, 
-                            w, n_cov, mask_patches, A_maxL, nhits_raw):
+                            w, n_cov, mask_patches, A_maxL, nhits_raw, ell_eff):
     """
     this function performs Nsims frequency-noise simulations
     on which is applied the map-making operator estimated from
@@ -89,6 +89,12 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 ind += 1
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
+        # compute Cl_noise for each frequency
+        print('        -> computing noise power spectrum for each frequency map')
+        if i == 0 : Cl_noise_freq = np.zeros((self.config['Nsims_bias'],noise_maps_.shape[0],len(ell_eff)))
+        for f in range(noise_maps_.shape[0]):
+            fn = get_field_func(mask*noise_maps_[f,0,:], mask*noise_maps_[f,1,:], mask_apo)
+            Cl_noise_freq[i,f,:] = (Cl_func(fn, fn, w)[3] )
         # propagate noise through the map-making equation
         Q_noise_cmb = np.einsum('fp,fp->p', W[0,:,0,:], noise_maps_[:,0])
         U_noise_cmb = np.einsum('fp,fp->p', W[0,:,1,:], noise_maps_[:,1])
@@ -96,12 +102,12 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         fn = get_field_func(mask*Q_noise_cmb, mask*U_noise_cmb, mask_apo)
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
 
-    return Cl_noise_bias
+    return Cl_noise_bias, np.mean(Cl_noise_freq, axis=0)
 
 
 def Cl_stat_res_model_func(self, freq_maps, param_beta,
                             Cl_func, get_field_func, mask, mask_apo, 
-                            w, n_cov, mask_patches, i_cmb=0):
+                            w, n_cov, mask_patches, Cl_noise_freq, i_cmb=0):
     '''
     This function simulate statistical foregrounds residuals
     given the noisy frequency maps and the error bar covariance, Sigma
@@ -154,6 +160,16 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
         Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
     
+    # debias fgs residuals from the noise
+    # Cl_YY = _mmm(W_dB_maxL, Cl_fgs.T, W_dB_maxL.T)  
+    # and finally, using the covariance of error bars on spectral indices
+    # we compute the model for the statistical foregrounds residuals, 
+    # cf. Errard et al 2018
+    # tr_SigmaYY = np.einsum('ij, lji -> l', Sigma, Cl_YY)
+    print(Cl_noise_freq)
+    exit()
+
+
     return Cl_stat_res_model
 
 
@@ -289,7 +305,7 @@ class BBClEstimation(PipelineStage):
         ###############################
 
         Cl_noise_bias = noise_bias_estimation(self, compute_master, get_field, mask, 
-                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw)
+                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw, ell_eff)
         Cl_noise_bias = np.vstack((ell_eff,np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
 
         #### compute the square root of the covariance 
