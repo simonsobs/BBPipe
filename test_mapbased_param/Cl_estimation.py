@@ -132,8 +132,10 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     comp_of_dB = A.comp_of_dB
 
     Cl_stat_res_model = []
+    delta_beta_tot = []
     for i in range(self.config['Nsims_bias']):
         res_map = np.zeros((6,freq_maps.shape[1]))
+        delta_beta_tot_ = []
         for p in range(Npatch):
             # build the matrix dW/dB
             A_maxL = A_ev(beta_maxL[p])
@@ -153,14 +155,15 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
                                  np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
                                  size=Sigma[p].shape[0] )
-
+            delta_beta_tot_.append(delta_beta)
             print('delta_beta.shape', delta_beta.shape)
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
             print('res_map.shape', res_map.shape)
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
         Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
-
+        delta_beta_tot.append(delta_beta_tot_)
+    np.save('delta_beta_tot', delta_beta_tot)
     return Cl_stat_res_model
 
 
