@@ -153,7 +153,7 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
                                      # size=Sigma[p].shape)
             # print('Sigma[p][0,:].shape = ', Sigma[p][0,:].shape)
             delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
-                                 np.diag(scipy.linalg.sqrtm(Sigma[p])), 
+                                 np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
                                  size=Sigma[p].shape[0] )
             # delta_beta_tot_.append(delta_beta)
             # print('delta_beta.shape', delta_beta.shape)
