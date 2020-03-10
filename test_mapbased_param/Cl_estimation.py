@@ -132,38 +132,38 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     comp_of_dB = A.comp_of_dB
 
     Cl_stat_res_model = []
-    delta_beta_tot = []
+    # delta_beta_tot = []
     for i in range(self.config['Nsims_bias']):
         res_map = np.zeros((6,freq_maps.shape[1]))
-        delta_beta_tot_ = []
+        # delta_beta_tot_ = []
         for p in range(Npatch):
             # build the matrix dW/dB
             A_maxL = A_ev(beta_maxL[p])
             A_dB_maxL = A_dB_ev(beta_maxL[p])
             # W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=noise_cov_inv)[:, i_cmb]
             W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
-            print('W_dB_maxL.shape = ', W_dB_maxL.shape)
-            print('freq_maps.shape = ', freq_maps.shape)
+            # print('W_dB_maxL.shape = ', W_dB_maxL.shape)
+            # print('freq_maps.shape = ', freq_maps.shape)
             # build Y which should be nbeta x npix operator
             Y = np.einsum('ij,jkl->ikl', W_dB_maxL, freq_maps)
-            print('Y.shape = ', Y.shape)
+            # print('Y.shape = ', Y.shape)
             # simulate delta beta from the error covariance Sigma
             # delta_beta = np.random.normal(np.zeros_like(Sigma[p]), 
                                 # np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))),
                                      # size=Sigma[p].shape)
-            print('Sigma[p][0,:].shape = ', Sigma[p][0,:].shape)
+            # print('Sigma[p][0,:].shape = ', Sigma[p][0,:].shape)
             delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
-                                 np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
+                                 np.diag(scipy.linalg.sqrtm(Sigma[p])), 
                                  size=Sigma[p].shape[0] )
-            delta_beta_tot_.append(delta_beta)
-            print('delta_beta.shape', delta_beta.shape)
+            # delta_beta_tot_.append(delta_beta)
+            # print('delta_beta.shape', delta_beta.shape)
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
-            print('res_map.shape', res_map.shape)
+            # print('res_map.shape', res_map.shape)
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
         Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
-        delta_beta_tot.append(delta_beta_tot_)
-    np.save('delta_beta_tot', delta_beta_tot)
+        # delta_beta_tot.append(delta_beta_tot_)
+    # np.save('delta_beta_tot', delta_beta_tot)
     return Cl_stat_res_model
 
 
