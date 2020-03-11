@@ -183,7 +183,7 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     print('W_dB_maxL_av.shape = ', W_dB_maxL_av.shape)
     print('Sigma_av.shape = ', Sigma_av.shape)
     Cl_YY = np.einsum('af,fl,bf->abl', W_dB_maxL_av, Cl_noise_freq, W_dB_maxL_av)
-    tr_SigmaYY = np.einsum('ij, lji -> l', Sigma_av, Cl_YY)
+    tr_SigmaYY = np.einsum('ij, ijl -> l', Sigma_av, Cl_YY)
 
     return Cl_stat_res_model, tr_SigmaYY
 
