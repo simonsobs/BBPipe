@@ -160,8 +160,12 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
             if i ==0:
-                W_dB_maxL_av.append(W_dB_maxL)
-                Sigma_av.append(Sigma[p])
+                if p == 0 :
+                    W_dB_maxL_av = W_dB_maxL
+                    Sigma_av = Sigma[p]
+                else:
+                    W_dB_maxL_av += W_dB_maxL
+                    Sigma_av += Sigma[p]
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
         Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
 
@@ -172,8 +176,8 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     # cf. Errard et al 2018
     print('W_dB_maxL_av = ', W_dB_maxL_av)
     print('Sigma_av = ', Sigma_av)
-    W_dB_maxL_av = np.mean(W_dB_maxL_av)
-    Sigma_av = np.mean(Sigma_av)
+    W_dB_maxL_av /= Npatch
+    Sigma_av /= Npatch
     print('W_dB_maxL_av = ', W_dB_maxL_av)
     print('Sigma_av = ', Sigma_av)
     print('W_dB_maxL_av.shape = ', W_dB_maxL_av.shape)
