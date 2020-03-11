@@ -141,6 +141,8 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     comp_of_dB = A.comp_of_dB
 
     Cl_stat_res_model = []
+    W_dB_maxL_av = []
+    Sigma_av = []
     for i in range(self.config['Nsims_bias']):
         print('stat res simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
         res_map = np.zeros((6,freq_maps.shape[1]))
@@ -157,20 +159,29 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
                                  size=Sigma[p].shape[0] )
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
+            if i ==0:
+                W_dB_maxL_av.append(W_dB_maxL)
+                Sigma_av.append(Sigma[p])
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
         Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
-    
+
+    ###########    
     # debias fgs residuals from the noise
-    # Cl_YY = _mmm(W_dB_maxL, Cl_fgs.T, W_dB_maxL.T)  
     # and finally, using the covariance of error bars on spectral indices
     # we compute the model for the statistical foregrounds residuals, 
     # cf. Errard et al 2018
-    # tr_SigmaYY = np.einsum('ij, lji -> l', Sigma, Cl_YY)
-    print(Cl_noise_freq)
-    exit()
+    print('W_dB_maxL_av = ', W_dB_maxL_av)
+    print('Sigma_av = ', Sigma_av)
+    W_dB_maxL_av = np.mean(W_dB_maxL_av)
+    Sigma_av = np.mean(Sigma_av)
+    print('W_dB_maxL_av = ', W_dB_maxL_av)
+    print('Sigma_av = ', Sigma_av)
+    print('W_dB_maxL_av.shape = ', W_dB_maxL_av.shape)
+    print('Sigma_av.shape = ', Sigma_av.shape)
+    Cl_YY = np.einsum('af,fl,bf->abl', W_dB_maxL_av, Cl_noise_freq, W_dB_maxL_av)
+    tr_SigmaYY = np.einsum('ij, lji -> l', Sigma_av, Cl_YY)
 
-
-    return Cl_stat_res_model
+    return Cl_stat_res_model, tr_SigmaYY
 
 
 class BBClEstimation(PipelineStage):
@@ -453,12 +464,15 @@ class BBClEstimation(PipelineStage):
         ########
         # estimation of the modeled statistical residuals, from simulation
         if self.config['include_stat_res']:
-            Cl_stat_res_model = Cl_stat_res_model_func(self, frequency_maps_, p,
+            Cl_stat_res_model, Cl_stat_res_noise_bias = Cl_stat_res_model_func(self, frequency_maps_, p,
                             compute_master, get_field, mask, mask_apo, 
                             w, noise_cov_, mask_patches, Cl_noise_freq, i_cmb=0)
-        else: Cl_stat_res_model = [0.0]
+        else: 
+            Cl_stat_res_model = np.array([0.0])
+            Cl_stat_res_noise_bias = np.array([0.0])
         np.save('Cl_stat_res_model', Cl_stat_res_model)
-        Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0), np.std(Cl_stat_res_model, axis=0)))
+        np.save('Cl_stat_res_noise_bias', Cl_stat_res_noise_bias)
+        Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0) - Cl_stat_res_noise_bias, np.std(Cl_stat_res_model, axis=0)))
         hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
 
         ########
