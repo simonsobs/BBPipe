@@ -137,7 +137,6 @@ cl_cmb_tb = 0 * cl_cmb_bb
 cl_cmb_eb = 0 * cl_cmb_bb
 cl_cmb_te = 0 * cl_cmb_bb
 
-
 # Power spectra as template x sed
 # Raw sky power spectra
 C_ells_sky = np.zeros([6, 2, 6, 2, len(ells)])
@@ -188,7 +187,6 @@ if do_simulation:
                                          cl_sync_tb], nside=nside, new=True) # Sync
         map_I_sync, map_Q_sync, map_U_sync = maps_comp[2,:,:]
 
-        #maps_comp[0, 0, :], maps_comp[0, 1, :], maps_comp[0, 2, :] =
         maps_comp[0, :, :] = hp.synfast([cl_cmb_tt, cl_cmb_ee, cl_cmb_bb,
                                          cl_cmb_te, cl_cmb_eb, cl_cmb_tb],
                                         nside=nside, new=True) # cmb
@@ -207,7 +205,6 @@ if do_simulation:
             hp.mollview(map_Q_cmb, title = 'map_Q cmb', sub = (325))
             hp.mollview(map_U_cmb, title = 'map_U cmb', sub = (326))
             plt.savefig(prefix_out+'/datamap_amplitudes.png')
-            plt.show()
 
         # Dust
         d2[0]['A_I'] = map_I_dust
@@ -286,11 +283,11 @@ if do_simulation:
     
     maps_noise = np.zeros([nsplits,6,2,Npix])
     for s in range(nsplits):
-        for i in range(6):
+        for i in range(len(nu)):
             nell_ee = N_ells_sky[i, 0, i, 0, :]*dl2cl
             nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl
             nell_00 = nell_ee * 0
-            maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00][i]*nsplits, nside, new=True) * inv_sqrtnhits
+            maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00][i]*nsplits, nside, pol=False, new=True) * inv_sqrtnhits
             #maps_noise = maps_noise[:, :, :1 ]
             #print(maps_noise.shape)
     noi_coadd = np.mean(maps_noise, axis=0)
@@ -320,7 +317,7 @@ if do_simulation:
         for i in range(nsplits):
             S_ells_sim = map2cl(maps_signal+maps_noise[i])-N_ells_sky
     else:
-        # Save maps
+        # Save maps 
         hp.write_map(prefix_out+"/maps_sky_signal.fits", maps_signal.reshape([len(nu)*2,Npix]) ,
                      overwrite=True)
         hp.write_map(prefix_out+"/obs_coadd.fits", ((maps_signal+noi_coadd)*nhits_binary).reshape([len(nu)*2,Npix]),
@@ -328,12 +325,34 @@ if do_simulation:
         hp.write_map(prefix_out+"/maps_comp_cmb.fits", maps_comp[0],overwrite=True)
         hp.write_map(prefix_out+"/maps_comp_dust.fits", maps_comp[1], overwrite=True)
         hp.write_map(prefix_out+"/maps_comp_dust.fits", maps_comp[2], overwrite=True)
-        # add splits
+
+    # Save splits maps
+    for s in range(nsplits):
+        hp.write_map(dirname+"/obs_split%dof%d.fits.gz" % (s+1, nsplits),
+                     ((maps_signal[:,:,:]+maps_noise[s,:,:,:])*nhits_binary).reshape([len(nu)*2,Npix]),
+                     overwrite=True)
+
+    # Write splits list
+    f=open(dirname+"/splits_list.txt","w")
+    stout=""
+    for i in range(nsplits):
+        stout += dirname+'/obs_split%dof%d.fits.gz\n' % (i+1, nsplits)
+    f.write(stout)
+    f.close()
                 
 else:
     S_ells_sim = C_ells_sky
 N_ells_sim = N_ells_sky
 C_ells_sim = C_ells_sky + N_ells_sky
+
+# Save Cls 
+for f in range(len(nu)):
+    np.savetxt(prefix_out + "/cls_noise_b%d.txt" % (f+1),np.transpose([ells,nell[f]]))
+np.savetxt(prefix_out + "/cls_cmb.txt",np.transpose([ells, cl_cmb_ee, cl_cmb_bb, cl_cmb_tt]))
+np.savetxt(prefix_out + "/cls_sync.txt",np.transpose([ells, cl_sync_ee, cl_sync_bb, cl_sync_tt]))
+np.savetxt(prefix_out + "/cls_dust.txt",np.transpose([ells, cl_dust_ee, cl_dust_bb, cl_dust_tt]))
+#np.savetxt(prefix_out + "/seds.txt", np.transpose(seds))
+        
 
 if do_Cls:
     # Bandpowers
