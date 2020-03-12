@@ -64,6 +64,11 @@ def main():
         tag7 = 'knee0_newmask_apo10_nlb5' ## DONE
         tag8 = 'WN_external_gaussian_sims' ## QUEUEING [0%]
         tags = [tag5, tag2, tag4, tag3, tag8]
+        tag0 = 'outputs_knee2_apo8_nlb10_sens1_Nspec0_d0s0_new_cmb_sim_00000_00000'
+        tag1 = 'outputs_knee2_apo8_nlb10_sens1_Nspec0_d1s1_new_cmb_sim_00000_00000'
+        tag2 = 'outputs_knee1_apo8_nlb10_sens1_Nspec0_d0s0_new_cmb_sim_00000_00000'
+        tag3 = 'outputs_knee1_apo8_nlb10_sens1_Nspec0_d1s1_new_cmb_sim_00000_00000'
+        tag4 = 'outputs_knee0_apo8_nlb10_sens1_Nspec0_d0s0_new_cmb_sim_00000_00000'
         # tags = [tag7, tag6, tag1, tag0 ]
         # tags = [tag2]
     else:

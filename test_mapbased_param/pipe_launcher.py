@@ -269,7 +269,7 @@ def main():
         simulations_split = [range(args.Nsims)]
 
     if args.instrument == 'SO':
-        frequencies = [27,39,93,145,225,280]
+        frequencies = [27, 39, 93, 145, 225, 280]
     elif args.instrument == 'CMBS4':
         frequencies = [20, 30, 40, 85, 95, 145, 155, 220, 270]
     else:

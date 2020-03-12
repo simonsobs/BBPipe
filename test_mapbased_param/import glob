@@ -1,0 +1,11 @@
+import glob
+import numpy as np
+import os
+
+dstag = 'd0s0'
+kneetag = 'knee2'
+
+for i in range(10):
+	if not os.path.exists(outputs_'+kneetag+'_apo8_nlb10_sens1_Nspec0_'+dstag+'_new_cmb_sim_00000_0000'+str(i)'):
+
+	os.system(scp -r josquin@cori.nersc.gov:/global/cscratch1/sd/josquin/SO_pipe/results_Feb20/outputs_knee2_apo8_nlb10_sens1_Nspec0_d1s1_new_cmb_sim_00000_0000'+str(i)'/estimated_cosmo_params outputs_knee2_apo8_nlb10_sens1_Nspec0_d1s1_new_cmb_sim_00000_0000'+str(i)')

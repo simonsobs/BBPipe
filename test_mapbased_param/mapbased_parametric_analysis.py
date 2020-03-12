@@ -51,8 +51,8 @@ class BBMapParamCompSep(PipelineStage):
             # redefining frequencies entry to dictionary
             instr_ = copy.deepcopy(instrument)
             instr_['frequencies'] = inst_freq
-            instr_['channels'] = inst_freq
-            instr_['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
+            instr_['Channels'] = inst_freq
+            instr_['Channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
             instr_['use_bandpass'] = True
             instrument_ = pysm.Instrument(instr_)
         else:

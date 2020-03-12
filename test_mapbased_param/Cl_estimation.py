@@ -174,14 +174,8 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     # and finally, using the covariance of error bars on spectral indices
     # we compute the model for the statistical foregrounds residuals, 
     # cf. Errard et al 2018
-    print('W_dB_maxL_av = ', W_dB_maxL_av)
-    print('Sigma_av = ', Sigma_av)
     W_dB_maxL_av /= Npatch
     Sigma_av /= Npatch
-    print('W_dB_maxL_av = ', W_dB_maxL_av)
-    print('Sigma_av = ', Sigma_av)
-    print('W_dB_maxL_av.shape = ', W_dB_maxL_av.shape)
-    print('Sigma_av.shape = ', Sigma_av.shape)
     Cl_YY = np.einsum('af,fl,bf->abl', W_dB_maxL_av, Cl_noise_freq, W_dB_maxL_av)
     tr_SigmaYY = np.einsum('ij, ijl -> l', Sigma_av, Cl_YY)
 
