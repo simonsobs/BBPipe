@@ -146,7 +146,7 @@ class BBMapSim(PipelineStage):
         elif self.config['noise_option']=='no_noise': 
             pass
         elif self.config['external_noise_sims']!='':
-            noise_maps *= 0.0
+            freq_maps *= 0.0
             print('noise_maps.shape = ', noise_maps.shape)
             print('EXTERNAL NOISE-ONLY MAPS LOADED')
             list_of_files = sorted(glob.glob(self.config['external_noise_sims']))   
