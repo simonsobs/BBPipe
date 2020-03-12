@@ -80,8 +80,8 @@ class BBMapSim(PipelineStage):
             sys.exit()
 
         channels = []
-        for f in freqs:
-            channels.append((np.array([f-1,f,f+1]),np.array([0.0, 1.0, 0.0])))
+        for f_ in freqs:
+            channels.append((np.array([f_-1,f_,f_+1]),np.array([0.0, 1.0, 0.0])))
         print('channels = ', channels)
 
         instrument_config = {
@@ -95,7 +95,7 @@ class BBMapSim(PipelineStage):
             'noise_seed' : 1234,
             'use_bandpass' : False,
             'channels': channels,
-            'channel_names': [str(f) for f in freqs],
+            'channel_names': [str(f_) for f_ in freqs],
             'output_units' : 'uK_CMB',
             'output_directory' : './',
             'output_prefix' : self.config['tag'],
