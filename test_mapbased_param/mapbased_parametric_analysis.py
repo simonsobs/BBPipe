@@ -54,10 +54,7 @@ class BBMapParamCompSep(PipelineStage):
             instr_['channels'] = inst_freq
             instr_['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
             instr_['use_bandpass'] = True
-            print(instr_)
             instrument_ = pysm.Instrument(instr_)
-            print(instrument_)
-            exit()
         else:
             instrument_ = copy.deepcopy(instrument)
 
