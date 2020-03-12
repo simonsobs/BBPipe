@@ -81,7 +81,8 @@ class BBMapSim(PipelineStage):
 
         channels = []
         for f in freqs:
-            channels.append((f,1.0))
+            channels.append((np.array([f]),np.array([1.0])))
+        print('channels = ', channels)
 
         instrument_config = {
             'nside' : self.config['nside'],
