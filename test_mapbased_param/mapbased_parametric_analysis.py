@@ -10,6 +10,7 @@ from fgbuster.algebra import Wd
 import pysm
 from pysm.common import bandpass_convert_units, K_RJ2Jysr, K_CMB2Jysr, convert_units
 import copy 
+import sys
 
 class BBMapParamCompSep(PipelineStage):
     """
