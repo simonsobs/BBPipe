@@ -41,22 +41,22 @@ class BBMapParamCompSep(PipelineStage):
             if self.config['instrument'] == 'SO':
                 bandpass = 0.3*instrument['frequencies']
             elif self.config['instrument'] == 'CMBS4':
-                bandpass = np.array([5.0, 9.0, 12.0, 20.4, 22.8, 31.9, 34.1, 48.4, 59.4])*2.0
+                bandpass = np.array([5.0, 9.0, 12.0, 20.4, 22.8, 31.9, 34.1, 48.4, 59.4])
             # convert and renormalize bandpasses 
             inst_freq=[]
             num_steps = 100
-            [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
-                        (1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
-                        /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
-                     for i in range(len(instrument['frequencies'])) ]
+            # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
+            #             (1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
+            #             /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
+            #          for i in range(len(instrument['frequencies'])) ]
             # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
             #             (1.0/num_steps*np.ones(num_steps)*convert_units('uK_RJ','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
             #             /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_RJ','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
             #          for i in range(len(instrument['frequencies'])) ]
-            # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
-            #             (1.0/num_steps*np.ones(num_steps)))\
-            #             /np.sum( 1.0/num_steps*np.ones(num_steps)*(bandpass[i]/(num_steps-1))))\
-            #          for i in range(len(instrument['frequencies'])) ]
+            [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
+                        (1.0/num_steps*np.ones(num_steps)))\
+                        /np.sum( 1.0/num_steps*np.ones(num_steps)*(bandpass[i]/(num_steps-1))))\
+                     for i in range(len(instrument['frequencies'])) ]
             # redefining frequencies entry to dictionary
             instr_ = copy.deepcopy(instrument)
             instr_['frequencies'] = inst_freq
