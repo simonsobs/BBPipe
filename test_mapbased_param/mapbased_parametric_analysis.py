@@ -50,7 +50,7 @@ class BBMapParamCompSep(PipelineStage):
                      for i in range(len(instrument['frequencies'])) ] 
             # redefining frequencies entry to dictionary
             instr_ = copy.deepcopy(instrument)
-            instr_['frequencies'] = inst_freq
+            instr_['frequencies'] = np.array(inst_freq)
             instr_['channels'] = inst_freq
             instr_['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
             instr_['use_bandpass'] = True
