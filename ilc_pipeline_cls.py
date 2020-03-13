@@ -7,7 +7,8 @@ from types_mine import FitsFile,TextFile,DummyFile,NpzFile
 class BB_Cl_Process(PipelineStage):
 	name 			= 'BB_Cl_Process'
 	inputs			= [('freq_maps_list',TextFile),('cl_cmb',FitsFile),('ilc_weights',NpzFile),('ell_bins_list',TextFile),('freqs_list',TextFile),('masks',TextFile),('noise_sims_list',TextFile)]
-	outputs			= [('cls_binned',TextFile),('nl_c_array',NpzFile)]
+#	outputs			= [('cls_binned',TextFile),('nl_c_array',NpzFile)]
+	outputs			= [('bandpowers',TextFile),('bandpowers_noise',NpzFile)]
 	
 	def init_params(self):
 		self.nside 		= self.config['nside']
@@ -50,13 +51,14 @@ class BB_Cl_Process(PipelineStage):
 		#for i in range(len(ells)):
 		#	print(ells[i],bpws[i])
 		self.bins		= nmt.NmtBin(self.nside,ells=ells,bpws=bpws,weights=weights,is_Dell=True)
+		self.Nbins		= c
 	
 	def read_1map(self):
 		# This is for reading only 1 frequency map, to calculate the coupling matrix
 		f		= open(self.get_input('freq_maps_list'),'r')
 		line	= f.readline()
-		self.SingleMap_s0 = nmt.NmtField(self.mask, [hp.read_map(line.strip(), field=0, verbose=False)])
-		self.SingleMap_s2 = nmt.NmtField(self.mask, hp.read_map(line.strip(), field=(1,2), verbose=False))
+		self.SingleMap_s0 = nmt.NmtField(self.mask, [hp.read_map(line.strip(), field=0, verbose=False,nest=False)])
+		self.SingleMap_s2 = nmt.NmtField(self.mask, hp.read_map(line.strip(), field=(1,2), verbose=False,nest=False))
 		
 	def read_cmb_cls(self):
 		# Fill in for 7 cls
@@ -74,12 +76,24 @@ class BB_Cl_Process(PipelineStage):
 		self.workspace	= nmt.NmtWorkspace()
 		self.workspace.compute_coupling_matrix(self.SingleMap_s0,self.SingleMap_s2,bins=self.bins,is_teb=True)
 	
-	def compute_binned_cl(self):
+	def compute_bandpowers(self):
 		# cmb_cls has TT,EE and BB spectra
-		cmb_cls_binned	= self.workspace.decouple_cell(self.cmb_cls)
-		return cmb_cls_binned
+		bandpowers	= self.workspace.decouple_cell(self.cmb_cls)
+		return bandpowers
 	
-	def save_binned_cls_to_file(self,cl,fname):
+	def compute_bandpowers_noise(self,fname):
+		# compute the bandpowers for each of the Nsimul noise Cell
+		bandpowers_noise	= np.zeros((self.Nsimul,7,self.Nbins))
+		for n in range(self.Nsimul):
+			Nell					= np.zeros((7,3*self.nside))
+			Nell[0]					= self.nl_c_array_T[n,0]
+			Nell[1]					= self.nl_c_array_P[n,0]
+			Nell[2]					= self.nl_c_array_P[n,1]
+			bandpowers_noise[n,:,:]	= self.workspace.decouple_cell(Nell)
+		# now save to a npz file
+		np.savez(fname,bandpowers_noise=bandpowers_noise)
+	
+	def save_bandpowers_to_file(self,cl,fname):
 		print('Saving to file ...'+fname)
 		f		= open(fname,'w')
 		Nbin	= self.bins.get_n_bands()
@@ -89,51 +103,77 @@ class BB_Cl_Process(PipelineStage):
 			ell_high	= ells_in_bin[-1]
 			f.write('%i\t%i\t%E\t%E\t%E\t%E\t%E\t%E\t%E\n'%(ell_low,ell_high,cl[0,i],cl[1,i],cl[2,i],cl[3,i],cl[4,i],cl[5,i],cl[6,i]))
 		f.close()
-	def get_noise_sims(self):
-		f	= open(self.get_input('noise_sims_list'),'r')
-		noise_sims_array = []
-		for n in range(self.Nsimul):
-			noise_sims_arr_n	= []
-			for line in f:
-				noise_tqumap 	= hp.read_map(line.replace('\n',''),field=(0,1,2),nest=False)
-				noise_sims_arr_n.append(noise_tqumap)
-			noise_sims_array.append(noise_sims_arr_n)
-		return noise_sims_array
 	
-	def calculate_noise_bias(self,noise_sims_maps):
+	def calculate_noise_bias(self,pol_nb=False):
 		# noise_sims_maps should have a size N_sims, inside there should be an array of size Nfreqs, and inside an array of size 3 with T,Q,U map
 		# this will receive the noise simulations and calculate a noise bias
 		def comp_alm_nmt(mp,pol=False):
 			if pol :
 				return nmt.NmtField(self.mask,[mp[1],mp[2]],purify_b=False)
 			else :
-				return nmt.NmtField(self.mask,[mp])
+				return nmt.NmtField(self.mask,[mp[0]])
 		def comp_pspec_nmt(alm1,alm2) :
 			cls=nmt.compute_coupled_cell(alm1,alm2)
 			if len(alm1.get_maps())==2 :
 				return np.array([cls[0],cls[3],cls[1]])
 			else :
 				return cls		
-		
-		n_ells		= np.zeros([self.Nsimul,2,self.Nfreqs,self.Nfreqs,3*self.nside]) #Noise power spectrum (fg-full)
-		nl_c_array	= np.zeros((self.Nsimul,2,3*self.nside))
-		for i in range(self.Nsimul):
-			# run Nsimul cases
-			alms	= np.array([comp_alm_nmt(n,pol=True) for n in noise_sims_maps[i]])
-			for inu1 in range(self.Nfreqs) :
-				for inu2 in range(inu1,self.Nfreqs):
-					cls=comp_pspec_nmt(alms[inu1],alms[inu2])
-					for ip in np.arange(2) :
-						n_ells[i,ip,inu1,inu2,:]=cls[ip]
+		# we do everything in place to not waste memory 
+		f				= open(self.get_input('noise_sims_list'),'r').readlines()
+		if pol_nb:
+			# polarization
+			counter				= 0
+			n_ells				= np.zeros([self.Nsimul,2,self.Nfreqs,self.Nfreqs,3*self.nside]) #Noise power spectrum (fg-full)
+			self.nl_c_array_P	= np.zeros((self.Nsimul,2,3*self.nside))
+			for i in range(self.Nsimul):
+				# run Nsimul cases
+				noise_sims_maps 	= np.zeros((self.Nfreqs,3,12*self.nside**2))
+				for nf,freq in enumerate(self.freqs):
+					for t in range(3):
+						noise_sims_maps[nf,t,:] 	= hp.read_map(f[counter+nf].replace('\n',''),field=t,nest=False,verbose=False)
+				# we raise the counter for the next simulation
+				counter = counter + self.Nfreqs
+				alms	= np.array([comp_alm_nmt(n,pol=True) for n in noise_sims_maps])
+				for inu1 in range(self.Nfreqs) :
+					for inu2 in range(inu1,self.Nfreqs):
+						cls=comp_pspec_nmt(alms[inu1],alms[inu2])
+						for ip in np.arange(2) :
+							n_ells[i,ip,inu1,inu2,:]=cls[ip]
+							if inu1!=inu2 :
+								n_ells[i,ip,inu2,inu1,:]=cls[ip]
+				nl_c=np.sum(self.ilc_w_P*np.sum(n_ells[i,:,:,:,:]*self.ilc_w_P[:,None,:,:],axis=2),axis=1)
+				self.nl_c_array_P[i,:,:] = nl_c
+			# Now we calculate the average noise bias along the Nsimul simulations
+			# along the axis 0
+			nl_c_mean = np.mean(self.nl_c_array_P,axis=0)
+		else:
+			# temperature
+			counter				= 0
+			n_ells				= np.zeros([self.Nsimul,1,self.Nfreqs,self.Nfreqs,3*self.nside]) #Noise power spectrum (fg-full)
+			self.nl_c_array_T	= np.zeros((self.Nsimul,1,3*self.nside))
+			for i in range(self.Nsimul):
+				# run Nsimul cases
+				noise_sims_maps 	= np.zeros((self.Nfreqs,3,12*self.nside**2))
+				for nf,freq in enumerate(self.freqs):
+					for t in range(3):
+						noise_sims_maps[nf,t,:] 	= hp.read_map(f[counter+nf].replace('\n',''),field=t,nest=False,verbose=False)
+				# we raise the counter for the next simulation
+				counter = counter + self.Nfreqs
+				alms	= np.array([comp_alm_nmt(n,pol=False) for n in noise_sims_maps])
+				for inu1 in range(self.Nfreqs) :
+					for inu2 in range(inu1,self.Nfreqs):
+						cls=comp_pspec_nmt(alms[inu1],alms[inu2])
+						n_ells[i,0,inu1,inu2,:]=cls
 						if inu1!=inu2 :
-							n_ells[i,ip,inu2,inu1,:]=cls[ip]
-			nl_c=np.sum(self.ilc_w_P*np.sum(n_ells[i,:,:,:,:]*self.ilc_w_P[:,None,:,:],axis=2),axis=1)
-			nl_c_array[i,:,:] = nl_c
-		# Now we calculate the average noise bias along the Nsimul simulations
-		# along the 
-		nl_c_mean = np.mean(nl_c_array,axis=0)
+							n_ells[i,0,inu2,inu1,:]=cls
+				nl_c=np.sum(self.ilc_w_T*np.sum(n_ells[i,:,:,:,:]*self.ilc_w_T[:,None,:,:],axis=2),axis=1)
+				self.nl_c_array_T[i,:,:] = nl_c
+			# Now we calculate the average noise bias along the Nsimul simulations
+			# along the axis 0
+			nl_c_mean = np.mean(self.nl_c_array_T,axis=0)
+		
 		return nl_c_mean
-	
+		
 	def subtract_noise_bias(self,noise_bias):
 		# this will subtract the noise bias to the cl estimated by HILC, the noise is calculated ONLY for polarization an has shape (2,Nell) , with the 2 corresponding to EE and BB
 		# this function will modify self.cmb_cls in place
@@ -141,8 +181,8 @@ class BB_Cl_Process(PipelineStage):
 		for i in [1,2]:
 			# the i -1 is because 0,1 in noise bias corresponds to 1,2 in cl_c
 			self.cmb_cls[i,:] = self.cmb_cls[i,:] - noise_bias[i-1,:]	
-	def save_to_npz(self,fname,nl_c_array):
-		np.savez(fname,nl_c_array=nl_c_array)
+	def save_to_npz(self,fname,bandpowers_noise):
+		np.savez(fname,bandpowers_noise=bandpowers_noise)
 
 	def run(self):
 		self.init_params()
@@ -151,19 +191,19 @@ class BB_Cl_Process(PipelineStage):
 		
 		# calculate Nell
 		self.read_ilcweights()
-		noise_sims_array 	= self.get_noise_sims()
-		nl_c_mean 			= self.calculate_noise_bias(noise_sims_array)
-		#self.save_to_npz(self.get_output('nl_c_array'),nl_c_array)
+		nl_c_mean_P 	= self.calculate_noise_bias(pol_nb=True)		
+		nl_c_mean_T 	= self.calculate_noise_bias(pol_nb=False)
 		
 		# coupling matrix and binning
 		self.read_ell_bins()
 		self.read_1map()
 		self.read_cmb_cls()
-		self.subtract_noise_bias(nl_c_mean)
+		self.subtract_noise_bias(nl_c_mean_P)
 		
 		self.create_nmt_Workspace()
-		cls_binned	= self.compute_binned_cl()
-		self.save_binned_cls_to_file(cls_binned,self.get_output('cls_binned'))
+		bandpowers	= self.compute_bandpowers()
+		self.compute_bandpowers_noise(self.get_output('bandpowers_noise'))
+		self.save_bandpowers_to_file(bandpowers,self.get_output('bandpowers'))
 
 if __name__ == '__main__':
 	cls = PipelineStage.main()
