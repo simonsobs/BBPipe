@@ -45,9 +45,13 @@ class BBMapParamCompSep(PipelineStage):
             # convert and renormalize bandpasses 
             inst_freq=[]
             num_steps = 100
+            # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
+                        # (1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
+                        # /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
+                     # for i in range(len(instrument['frequencies'])) ]
             [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
-                        (1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
-                        /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
+                        (1.0/num_steps*np.ones(num_steps)*convert_units('uK_RJ','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
+                        /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_RJ','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
                      for i in range(len(instrument['frequencies'])) ]
             # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
             #             (1.0/num_steps*np.ones(num_steps)))\
