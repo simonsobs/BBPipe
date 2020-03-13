@@ -49,7 +49,7 @@ class BBMapParamCompSep(PipelineStage):
                         /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
                      for i in range(len(instrument['frequencies'])) ] 
             # redefining frequencies entry to dictionary
-            print('inst_freq = ', instr_freq)
+            print('inst_freq = ', inst_freq)
             sys.exit()
             instr_ = copy.deepcopy(instrument)
             instr_['frequencies'] = np.array(inst_freq)
