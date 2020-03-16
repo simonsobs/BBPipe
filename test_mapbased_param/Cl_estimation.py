@@ -118,12 +118,12 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
         Npatch = 1
         mask_patches = mask_patches[np.newaxis,:]
 
-    noise_cov_inv = np.zeros_like(n_cov)
-    for p in range(Npatch):
-        obs_pix = np.where(mask_patches[p,:]!=0)[0]
-        for p in obs_pix:
-            for s in range(2):
-                noise_cov_inv[:,s,p] = 1.0/n_cov[:,s,p]
+    # noise_cov_inv = np.zeros_like(n_cov)
+    # for p in range(Npatch):
+    #     obs_pix = np.where(mask_patches[p,:]!=0)[0]
+    #     for p in obs_pix:
+    #         for s in range(2):
+    #             noise_cov_inv[:,s,p] = 1.0/n_cov[:,s,p]
 
     if self.config['Nspec'] == 0: Nspec=1
     else: Nspec = self.config['Nspec']
@@ -152,7 +152,7 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             A_dB_maxL = A_dB_ev(beta_maxL[p])
             W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
             # build Y which should be nbeta x npix operator
-            Y = np.einsum('ij,jkl->ikl', W_dB_maxL, freq_maps)
+            Y = np.einsum('ij,jkl->ikl', W_dB_maxL, freq_maps*mask_patches[i,:])
             # simulate delta beta from the error covariance Sigma
             delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
                                  np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
