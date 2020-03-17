@@ -152,7 +152,7 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             A_dB_maxL = A_dB_ev(beta_maxL[p])
             W_dB_maxL = W_dB(A_maxL, A_dB_maxL, comp_of_dB, invN=None)[:, i_cmb]
             # build Y which should be nbeta x npix operator
-            Y = np.einsum('ij,jkl->ikl', W_dB_maxL, freq_maps*mask_patches[i,:])
+            Y = np.einsum('ij,jkl->ikl', W_dB_maxL, freq_maps*mask_patches[p,:])
             # simulate delta beta from the error covariance Sigma
             delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
                                  np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
