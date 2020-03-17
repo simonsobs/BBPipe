@@ -468,8 +468,8 @@ class BBClEstimation(PipelineStage):
         else: 
             Cl_stat_res_model = np.array([0.0])
             Cl_stat_res_noise_bias = np.array([0.0])
-        np.save('Cl_stat_res_model', Cl_stat_res_model)
-        np.save('Cl_stat_res_noise_bias', Cl_stat_res_noise_bias)
+        # np.save('Cl_stat_res_model', Cl_stat_res_model)
+        # np.save('Cl_stat_res_noise_bias', Cl_stat_res_noise_bias)
         Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0) - Cl_stat_res_noise_bias, np.std(Cl_stat_res_model, axis=0)))
         hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
 
