@@ -154,8 +154,11 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             # build Y which should be nbeta x npix operator
             Y = np.einsum('ij,jkl->ikl', W_dB_maxL, freq_maps*mask_patches[p,:])
             # simulate delta beta from the error covariance Sigma
+            # delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
+                                 # np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
+                                 # size=Sigma[p].shape[0] )
             delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
-                                 np.diag(np.diag(scipy.linalg.sqrtm(Sigma[p]))), 
+                                 Sigma[p], 
                                  size=Sigma[p].shape[0] )
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
