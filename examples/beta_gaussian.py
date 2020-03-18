@@ -34,8 +34,8 @@ map_beta_sync = map_beta(ells, gamma_beta_sync, -3.)
 map_beta_dust = map_beta(ells, gamma_beta_dust, 1.6)
 
 prefix_out = "."
-hp.write_map(prefix_out+"/map_beta_sync2.fits", map_beta_sync,  overwrite=True)
-hp.write_map(prefix_out+"/map_beta_dust2.fits", map_beta_dust, overwrite=True) 
+hp.write_map(prefix_out+"/map_beta_sync.fits", map_beta_sync,  overwrite=True)
+hp.write_map(prefix_out+"/map_beta_dust.fits", map_beta_dust, overwrite=True) 
 
 map_beta_sync_fin = hp.synfast(cl_betaSync, nside, new=True, verbose=False) - map_beta_sync
 map_beta_dust_fin = hp.synfast(cl_betaDust, nside, new=True, verbose=False) - map_beta_dust

@@ -12,19 +12,35 @@ from pysm.nominal import models
 import warnings
 warnings.simplefilter("ignore")
 
-if len(sys.argv) != 7:
-    print("Usage: new_sim.py seed simulate nside pysm do_cl beta_var")
-    exit(1)
-seed = int(sys.argv[1])
-do_simulation = int(sys.argv[2])
-nside = int(sys.argv[3])
-use_pysm = int(sys.argv[4])
-do_Cls =  int(sys.argv[5])
-beta_var =  int(sys.argv[6])
+from optparse import OptionParser
+
+parser = OptionParser()
+
+parser.add_option('--seed', dest='seed',  default=1300, type=int,
+                  help='Set to define seed, default=1300')
+parser.add_option('--nside', dest='nside', default=256, type=int,
+                  help='Set to define Nside parameter, default=256')
+parser.add_option('--simulate', dest='do_simulation', default=True, action='store_true',
+                  help='Simulation step, default=True')
+parser.add_option('--pysm', dest='use_pysm', default=False, action='store_true',
+                  help='Set to use PySM for simulations, default=False')
+parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true',
+                  help='Calculate power spectra and covariance matrix, default=True')
+parser.add_option('--beta-var', dest='beta_var', default=False,  action='store_true',
+                  help='Set to include gaussian spectral indices, default=False')
+
+(o, args) = parser.parse_args()
+
+nside = o.nside
+seed = o.seed
+
+if len(args) != 7:
+        #parser.error
+        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var")
+
 np.random.seed(seed)
 
 prefix_in='/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/'
-#'/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/template_PySM/'
 prefix_out="./"
 
 # Dust
@@ -34,8 +50,8 @@ alpha_dust_EE=-0.42
 alpha_dust_BB=-0.2
 nu0_dust=353. 
 temp_dust = 19.6
-if beta_var:
-    beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust2.fits', verbose=False), nside_out=nside)
+if o.beta_var:
+    beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust.fits', verbose=False), nside_out=nside)
 else:
     beta_dust = 1.59
 
@@ -45,8 +61,8 @@ EB_sync=2.
 alpha_sync_EE=-0.6
 alpha_sync_BB=-0.4
 nu0_sync=23. 
-if beta_var:
-    beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync2.fits', verbose=False), nside_out=nside)  
+if o.beta_var:
+    beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync.fits', verbose=False), nside_out=nside)  
 else:
     beta_sync=-3.
 
@@ -57,7 +73,7 @@ def fcmb(nu):
     ex=np.exp(x)
     return ex*(x/(ex-1))**2
 
-if use_pysm:
+if o.use_pysm:
     d2 = models("d2", nside) 
     s1 = models("s1", nside) 
     c1 = models("c1", nside)
@@ -79,7 +95,7 @@ if use_pysm:
     def dust_sed(nu, nu0, beta, t):
         return power_law(nu, nu0, beta-2)*black_body(nu, nu0, t)
 
-    if beta_var:
+    if o.beta_var:
         dirname = prefix_out+"/new_sim_ns%d_seed%d_pysm_betaVar"%(nside, seed)
         for i in beta_dust:
             f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
@@ -103,7 +119,7 @@ else:
             return (nu/nu0)**beta
         return None
 
-    if beta_var:
+    if o.beta_var:
         dirname = prefix_out+"/new_sim_ns%d_seed%d_bbsim_betaVar"%(nside, seed)
         for i in beta_dust:
             f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
@@ -196,7 +212,7 @@ for i,n in enumerate(nu):
         N_ells_sky[i, j, i, j, :] = nell[i]
 
 Npix = hp.nside2npix(nside)
-if do_simulation:
+if o.do_simulation:
     maps_comp = np.zeros([3, 2, Npix])
     maps_comp[0,:,:] = hp.synfast([cl_cmb_tt, cl_cmb_ee, cl_cmb_bb, cl_cmb_te, cl_cmb_eb, cl_cmb_tb], nside, new=True)[1:]
     maps_comp[1,:,:] = hp.synfast([cl_dust_tt, cl_dust_ee, cl_dust_bb, cl_dust_te, cl_dust_eb, cl_dust_tb], nside, new=True)[1:]
@@ -211,7 +227,7 @@ if do_simulation:
         nell_00 = nell_ee * 0
         maps_noise[i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00], nside, new=True)[1:]
 
-    if do_Cls:
+    if o.do_Cls:
         def map2cl(maps):
             cl_out = np.zeros([6,2,6,2,len(ells)])
             for i in range(6):
@@ -246,7 +262,7 @@ else:
 N_ells_sim = N_ells_sky
 C_ells_sim = C_ells_sky + N_ells_sky
 
-if do_Cls:
+if o.do_Cls:
     # Bandpowers
     delta_ell = 10
     N_bins = (len(ells)-2)//delta_ell
