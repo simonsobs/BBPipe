@@ -28,15 +28,20 @@ parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true',
                   help='Calculate power spectra and covariance matrix, default=True')
 parser.add_option('--beta-var', dest='beta_var', default=False,  action='store_true',
                   help='Set to include gaussian spectral indices, default=False')
+parser.add_option('--A-dust', dest='A_dust_BB', default=5,  type=int,
+                  help='Modify dust amplitude, default=5')
+parser.add_option('--A-sync', dest='A_sync_BB', default=2,  type=int,
+                  help='Modify sync amplitude, default=2')
 
 (o, args) = parser.parse_args()
 
 nside = o.nside
 seed = o.seed
 
-if len(args) != 7:
+if len(args) != 9:
         #parser.error
-        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var")
+        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --A-dust --A-sync")
+        print("Check with <script> -h")
 
 np.random.seed(seed)
 
@@ -44,7 +49,7 @@ prefix_in='/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/'
 prefix_out="./"
 
 # Dust
-A_dust_BB=5.0
+A_dust_BB=o.A_dust_BB
 EB_dust=2.  
 alpha_dust_EE=-0.42 
 alpha_dust_BB=-0.2
@@ -56,7 +61,7 @@ else:
     beta_dust = 1.59
 
 # Sync
-A_sync_BB=2.0
+A_sync_BB=o.A_sync_BB
 EB_sync=2.
 alpha_sync_EE=-0.6
 alpha_sync_BB=-0.4
@@ -96,13 +101,19 @@ if o.use_pysm:
         return power_law(nu, nu0, beta-2)*black_body(nu, nu0, t)
 
     if o.beta_var:
-        dirname = prefix_out+"/new_sim_ns%d_seed%d_pysm_betaVar"%(nside, seed)
+        if A_dust_BB > 5 and A_sync >= 2:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_pysm_betaVar"%(nside, seed, A_dust_BB, A_sync_BB)
+        else:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_pysm_betaVar"%(nside, seed)
         for i in beta_dust:
             f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
         for j in beta_sync:
             f_sync = power_law(nu, nu0_sync, j)
     else:
-        dirname = prefix_out+"/new_sim_ns%d_seed%d_pysm"%(nside, seed)
+        if A_dust_BB > 5 and A_sync >= 2:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_pysm"%(nside, seed, A_dust_BB, A_sync_BB)
+        else:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_pysm"%(nside, seed)
         f_dust = dust_sed(nu, nu0_dust, beta_dust, temp_dust)
         f_sync = power_law(nu, nu0_sync, beta_sync)
 
@@ -120,13 +131,19 @@ else:
         return None
 
     if o.beta_var:
-        dirname = prefix_out+"/new_sim_ns%d_seed%d_bbsim_betaVar"%(nside, seed)
+        if A_dust_BB >= 5 and A_sync >= 2:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_bbsim_betaVar"%(nside, seed, A_dust_BB, A_sync_BB)
+        else:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_bbsim_betaVar"%(nside, seed)
         for i in beta_dust:
             f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
         for j in beta_sync:
             f_sync = comp_sed(nu, nu0_sync, j, None, 'sync')
     else:
-        dirname = prefix_out+"/new_sim_ns%d_seed%d_bbsim"%(nside, seed)
+        if A_dust_BB >= 5 and A_sync >= 2:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_bbsim"%(nside, seed, A_dust_BB, A_sync_BB)
+        else:
+                dirname = prefix_out+"/new_sim_ns%d_seed%d_bbsim"%(nside, seed)
         f_dust = comp_sed(nu, nu0_dust, beta_dust, temp_dust, 'dust')
         f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
 
