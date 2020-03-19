@@ -28,10 +28,10 @@ parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true',
                   help='Calculate power spectra and covariance matrix, default=True')
 parser.add_option('--beta-var', dest='beta_var', default=False,  action='store_true',
                   help='Set to include gaussian spectral indices, default=False')
-parser.add_option('--A-dust', dest='A_dust_BB', default=5,  type=int,
-                  help='Modify dust amplitude, default=5')
-parser.add_option('--A-sync', dest='A_sync_BB', default=2,  type=int,
-                  help='Modify sync amplitude, default=2')
+parser.add_option('--A-bd', dest='A_beta_dust', default=1, type=int,
+                  help='Modify dust amplitude, default=1')
+parser.add_option('--A-bs', dest='A_beta_sync', default=1, type=int,
+                  help='Modify sync amplitude, default=1')
 
 (o, args) = parser.parse_args()
 
@@ -40,38 +40,42 @@ seed = o.seed
 
 if len(args) != 9:
         #parser.error
-        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --A-dust --A-sync")
+        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --A-bd --A-bs")
         print("Check with <script> -h")
 
 np.random.seed(seed)
 
 prefix_in='/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/'
 prefix_out="./"
+#o.A_beta_dust  = np.arange(0, 55, 5) ; o.A_beta_dust[0]=1
+A_bd = o.A_beta_dust
+A_bs = o.A_beta_sync
 
 # Dust
-A_dust_BB=o.A_dust_BB
+A_dust_BB=5
 EB_dust=2.  
 alpha_dust_EE=-0.42 
 alpha_dust_BB=-0.2
 nu0_dust=353. 
 temp_dust = 19.6
 if o.beta_var:
-    beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust.fits', verbose=False), nside_out=nside)
+        #print('map_beta_dust_Ad%d.fits'%(A_bd))
+        beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust_Ad%d.fits'%(A_bd), verbose=False), nside_out=nside)
 else:
     beta_dust = 1.59
 
 # Sync
-A_sync_BB=o.A_sync_BB
+A_sync_BB=2
 EB_sync=2.
 alpha_sync_EE=-0.6
 alpha_sync_BB=-0.4
 nu0_sync=23. 
 if o.beta_var:
-    beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync.fits', verbose=False), nside_out=nside)  
+        beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_As%d.fits'%(A_bs), verbose=False), nside_out=nside)
 else:
     beta_sync=-3.
 
-nu = np.array([27., 39., 93., 145., 225., 280.]) # elements [0,1,2,3,4,5]
+nu = np.array([27., 39., 93., 145., 225., 280.]) 
 
 def fcmb(nu):
     x=0.017608676067552197*nu
@@ -100,20 +104,14 @@ if o.use_pysm:
     def dust_sed(nu, nu0, beta, t):
         return power_law(nu, nu0, beta-2)*black_body(nu, nu0, t)
 
-    if o.beta_var:
-        if A_dust_BB > 5 and A_sync >= 2:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_pysm_betaVar"%(nside, seed, A_dust_BB, A_sync_BB)
-        else:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_pysm_betaVar"%(nside, seed)
+    if o.beta_var:    
+        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betaVar_Ad%dAs%d"%(nside, seed, A_bd, A_bs)
         for i in beta_dust:
-            f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
+                f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
         for j in beta_sync:
-            f_sync = power_law(nu, nu0_sync, j)
+                f_sync = power_law(nu, nu0_sync, j)
     else:
-        if A_dust_BB > 5 and A_sync >= 2:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_pysm"%(nside, seed, A_dust_BB, A_sync_BB)
-        else:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_pysm"%(nside, seed)
+        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm"%(nside, seed)
         f_dust = dust_sed(nu, nu0_dust, beta_dust, temp_dust)
         f_sync = power_law(nu, nu0_sync, beta_sync)
 
@@ -131,19 +129,13 @@ else:
         return None
 
     if o.beta_var:
-        if A_dust_BB >= 5 and A_sync >= 2:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_bbsim_betaVar"%(nside, seed, A_dust_BB, A_sync_BB)
-        else:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_bbsim_betaVar"%(nside, seed)
+        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_betaVar_Ad%dAs%d"%(nside, seed, A_bd, A_bs)
         for i in beta_dust:
             f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
         for j in beta_sync:
             f_sync = comp_sed(nu, nu0_sync, j, None, 'sync')
     else:
-        if A_dust_BB >= 5 and A_sync >= 2:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_Ad%d_As%d_bbsim"%(nside, seed, A_dust_BB, A_sync_BB)
-        else:
-                dirname = prefix_out+"/new_sim_ns%d_seed%d_bbsim"%(nside, seed)
+        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim"%(nside, seed)
         f_dust = comp_sed(nu, nu0_dust, beta_dust, temp_dust, 'dust')
         f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
 
@@ -380,3 +372,5 @@ if o.do_Cls:
     s_n.printInfo()
     s_f.saveToHDF(dirname+"/fiducialCl.sacc")
     s_f.printInfo()
+
+print(dirname)
