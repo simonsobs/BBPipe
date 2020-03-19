@@ -1,62 +1,64 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from IPython.display import display, Math
-from getdist import plots, MCSamples, loadMCSamples
 import emcee
 from fsettings import alllabels
+import glob
 
-def check_chains(fdir, savename):
+allfs = ['/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bicep_bands_gauss/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_A5/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_ee/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_gauss1/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_ell/output/']
+
+
+def save_cleaned_chains(fdir):
+    outf = fdir+'chain_info.txt'
     reader = emcee.backends.HDFBackend(fdir+'params_out.npz.h5')
     x = np.load(fdir+'params_out.npz')
     labels = ['$%s$' %alllabels[k] for k in x['names']]
-    try:
-        tau = reader.get_autocorr_time()
-        burnin = int(10.*np.max(tau))
-        thin = int(0.5*np.min(tau))
-        print(burnin, thin)
-    except Exception as e:
-        print(e)
-        burnin = 1500
-        thin = 20
+
+    tau = reader.get_autocorr_time(tol=0)
+    burnin = int(10. * np.mean(tau))
+    thin = int(0.5 * np.mean(tau))
+
+    chains = reader.get_chain()
     samples = reader.get_chain(discard=burnin, flat=True, thin=thin) 
+
+    N = chains.shape[0]
+    M = chains.shape[1]
+    chain_mean = np.mean(chains, axis=0)
+    chain_var = np.var(chains, axis=0)
+    samp_mean = np.mean(chains, axis=(0,1))
+    B = N / (M-1) * np.sum( (chain_mean-samp_mean)**2, axis=0 ) 
+    W = (1./M) * np.sum(chain_var, axis=0)
+    Vbar = (N-1)/N * W + (M+1)/(M*N) * B
+    GR = Vbar/W
+    
+    with open(outf, 'w') as of:
+        inds = int((N/np.mean(tau)))
+        print("chains: ", chains.shape, file=of)
+        print("tau: ", np.mean(tau), np.min(tau), np.max(tau), np.std(tau), file=of)
+        print("burnin: %d, thin: %d" %(burnin, thin), file=of)
+        print("independent samps per chain: %d" %inds, file=of)
+        if np.any(GR > 1.1):
+            print("FAILED GR", file=of)
+        if inds < 50: 
+            print("POTENTIALLY BAD TAU", file=of)
     np.savez(fdir+'cleaned_chains', samples=samples, names=x['names'], labels=labels, p0=x['p0'])
     return
 
-fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/dphi/sinuous0/'
-sname = 'dphi_sinuous_noangle'
-check_chains(fdir, sname)
+for af in allfs:
+    save_cleaned_chains(af)
 
-fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/all/final/'
-sname = 'all'
-check_chains(fdir, sname)
-
-fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/all/finaleb/'
-sname = 'all_eb'
-check_chains(fdir, sname)
-
-if False:
-    fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/bandpass/r01/'
-    sname = 'bandpass_r0.01'
-    check_chains(fdir, sname)
-
-    fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/bandpass/r01decorr/'
-    sname = 'bandpass_r0.01_decorr'
-    check_chains(fdir, sname)
-
-    fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/dphi/r01/'
-    sname = 'dphi_r0.01'
-    check_chains(fdir, sname)
-
-    fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/dphi/r01eb/'
-    sname = 'dphi_r0.01_eb'
-    check_chains(fdir, sname)
-
-    fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/dphi/sinuous/'
-    sname = 'dphi_sinuous'
-    check_chains(fdir, sname)
-
-
-    fdir = '/mnt/zfsusers/mabitbol/BBPipe/final_runs/dphi/sinuousdphi1/'
-    sname = 'dphi_sinuous_dphi1'
-    check_chains(fdir, sname)
+allfs0 = ['/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_decorr/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_decorr/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_decorr/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_ee/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_r0/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_r0rpos/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/dphi/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/dphi_decorr/output/',
+ '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/dphi_eb/output/']
 
