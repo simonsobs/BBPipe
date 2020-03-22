@@ -494,7 +494,7 @@ class BBREstimation(PipelineStage):
                         
                         # pl.loglog( ell_v_loc, norm*(ClBB_obs-Cov_model), label='diff model - obs', color='k', linestyle=':', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*(ClBB_obs-Cov_model+bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),\
-                                         label='diff obs - (model - prim BB)', color='k', linestyle=':', linewidth=2.0, alpha=0.8)
+                                         label='obs - (model w/o prim BB)', color='k', linestyle=':', linewidth=2.0, alpha=0.8)
                         # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
                                                 # label='observed BB - actual noise = tot BB + residuals', 
                                                 # color='red', linestyle='-', linewidth=2.0, alpha=0.8)
@@ -503,6 +503,15 @@ class BBREstimation(PipelineStage):
                         # pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
                                                     # label='modeled BB - modeled noise = tot BB + residuals', 
                                                     # color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+                        # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
+                        #                             label='observed BB - actual noise = tot BB + residuals', 
+                        #                             color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                        # modeled noise-debiased BB spectrum
+                        # which should correspond to primordial BB + lensing BB + foregrounds residuals
+                        pl.loglog( ell_v_loc, norm*np.abs(Cl_noise_bias[1] - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
+                                                    label='|modeled noise - actual noise|', 
+                                                    color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+
                         if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
                                                 linewidth=2.0, alpha=0.8)
