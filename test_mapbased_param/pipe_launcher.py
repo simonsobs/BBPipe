@@ -229,7 +229,6 @@ BBREstimation:
     AL_marginalization: '''+str(AL_marginalization)+'''
     ndim: '''+str(ndim)+'''
     nwalkers: 500
-    include_stat_res: True
     '''
 
     text_file = open(os.path.join(path_to_temp_files, "config_"+id_tag+".yml"), "w")
