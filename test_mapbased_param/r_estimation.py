@@ -520,6 +520,8 @@ class BBREstimation(PipelineStage):
 
                         pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
                                         linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz')
+                        pl.loglog( ell_v_loc, norm*np.abs((Cl_CMB_template_150GHz - Cl_BB_lens_bin)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), linestyle='-', color='red', 
+                                        linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz - theoretical lensing ')
                         pl.legend()
                         pl.xlabel('$\ell$', fontsize=20)
                         pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
