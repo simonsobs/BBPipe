@@ -470,7 +470,14 @@ class BBREstimation(PipelineStage):
                     -2logL = sum_ell [ (2l+1)fsky * ( log(C) + C^-1.D  ) ]
                         cf. eg. Tegmark 1998
                     '''    
-                    Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                    if self.config['AL_marginalization']:
+                        r_loc, AL_loc = r_loc
+                        Cl_BB_lens_bin = bins.bin_cell(AL_loc*Cl_BB_lens[:3*self.config['nside']])
+                        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
+                        Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                                                + ClBB_model_other_than_prim
+                    else:
+                        Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                                 + ClBB_model_other_than_prim
                     if make_figure:
                         pl.figure( figsize=(10,7), facecolor='w', edgecolor='k' )
@@ -536,46 +543,69 @@ class BBREstimation(PipelineStage):
                     return logL
 
                 # gridding -2log(L)
-                logL = r_v*0.0
-                for ir in range(len(r_v)):
-                    logL[ir] = likelihood_on_r_computation( r_v[ir] )
-                    # ind = ir*100.0/len(r_v)
-                    # sys.stdout.write("\r  .......... gridding the likelihood on tensor-to-scalar ratio >>>  %d %% " % ind )
-                    # sys.stdout.flush()
+                if self.config['AL_marginalization']:
+                    AL_v = np.linspace(0.0, 2.0, num=len(r_v))
+                    logL = np.zeros((len(r_v), len(AL_v)))
+                    for ir in range(len(r_v)):
+                        for ia in range(len(AL_v)):
+                            logL[ir,ia] = likelihood_on_r_computation( [r_v[ir], AL_v[ia]] )
+                else:
+                    logL = r_v*0.0
+                    for ir in range(len(r_v)):
+                        logL[ir] = likelihood_on_r_computation( r_v[ir] )
+   
                 # sys.stdout.write("\n")
                 # renormalizing logL 
                 chi2 = (logL - np.min(logL))
                 # computing the likelihood itself, for plotting purposes
                 likelihood_on_r = np.exp( - chi2 )/np.max(np.exp( - chi2 ))
                 # estimated r is given by:
-                r_fit = r_v[np.argmin(logL)]
-                # if r_fit == 1e-5: r_fit = 0.0
-                # and the 1-sigma error bar by (numerical recipies)
-                ind_sigma = np.argmin(np.abs( (logL[np.argmin(logL):] - logL[np.argmin(logL)]) - 1.00 ))    
-                sigma_r_fit =  r_v[ind_sigma+np.argmin(logL)] - r_fit
+                if self.config['AL_marginalization']:
+                    ind = np.unravel_index(np.argmin(logL, axis=None), logL.shape)
+                    r_fit = r_v[ind[0]]
+                    AL_fit = r_v[ind[1]]
+                    ind_sigma_r = np.argmin(np.abs( (logL[ind[0]:,ind[1]] - logL[np.argmin(logL[ind[0]:,ind[1]])]) - 2.3 ))    
+                    ind_sigma_AL = np.argmin(np.abs( (logL[ind[0],ind[1]:] - logL[np.argmin(logL[ind[0],ind[1]:])]) - 2.3 ))    
+                    sigma_r_fit =  r_v[ind_sigma_r+ind[0]] - r_fit
+                    sigma_AL_fit =  AL_v[ind_sigma_AL+ind[1]] - AL_fit
+                    r_fit = [r_fit,AL_fit]
+                    sigma_r_fit = [sigma_r_fit,sigma_AL_fit]
+                else:
+                    r_fit = r_v[np.argmin(logL)]
+                    # and the 1-sigma error bar by (numerical recipies)
+                    ind_sigma = np.argmin(np.abs( (logL[np.argmin(logL):] - logL[np.argmin(logL)]) - 1.00 ))    
+                    sigma_r_fit =  r_v[ind_sigma+np.argmin(logL)] - r_fit
 
                 likelihood_on_r_computation( r_fit, make_figure=True )
 
-                print('NB: sigma(r) is ', sigma_r_fit, ' ( +/- ', r_v[ind_sigma+np.argmin(logL)-1] - r_fit, ' , ', r_v[ind_sigma+np.argmin(logL)+1] - r_fit, ' ) ')
-                print('-----')
 
                 return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
-            r_v = np.logspace(-5,0,num=1000)
+            if self.config['AL_marginalization']:
+                r_v = np.logspace(-5,0,num=50)
+            else:
+                r_v = np.logspace(-5,0,num=1000)
 
             r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
                                 ell_v, Cl_BB_prim_r1,
                                        ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
-            pl.figure()
-            pl.semilogx(r_v, gridded_likelihood)
-            pl.savefig(self.get_output('likelihood_on_r'))
+            if self.config['AL_marginalization']:
+                pl.figure()
+                X,Y = np.meshgrid(r_v, AL_v)
+                levels=[np.min(gridded_chi2), np.min(gridded_chi2)+2.3,np.min(gridded_chi2)+6.17,np.min(gridded_chi2)+11.8]
+                cs = pl.contourf(X, Y, gridded_chi2.T, levels)
+                pl.savefig(self.get_output('likelihood_on_r'))
+            else:
+                pl.figure()
+                pl.semilogx(r_v, gridded_likelihood)
+                pl.savefig(self.get_output('likelihood_on_r'))
             # pl.show()
 
         print('r_fit = ', r_fit)
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r', 'L(r)']
         if self.config['dust_marginalization']:
-            to_be_saved = np.hstack((r_fit,  sigma_r_fit, Ad_fit, sigma_Ad_fit))
+            to_be_saved = np.hstack((r_fit, sigma_r_fit, Ad_fit, sigma_Ad_fit))
         else:
             to_be_saved = np.hstack((r_fit,  sigma_r_fit))
         np.savetxt(self.get_output('estimated_cosmo_params'), to_be_saved, comments=column_names)
