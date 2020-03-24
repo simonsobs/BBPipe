@@ -544,7 +544,8 @@ class BBREstimation(PipelineStage):
 
                 # gridding -2log(L)
                 if self.config['AL_marginalization']:
-                    AL_v = np.linspace(0.0, 2.0, num=len(r_v))
+                    r_v = r_v[0]
+                    AL_v = r_v[1]
                     logL = np.zeros((len(r_v), len(AL_v)))
                     for ir in range(len(r_v)):
                         for ia in range(len(AL_v)):
@@ -583,12 +584,14 @@ class BBREstimation(PipelineStage):
 
             if self.config['AL_marginalization']:
                 r_v = np.logspace(-5,0,num=50)
+                AL_v = np.linspace(0.0, 2.0, num=len(r_v))
+                r_v = [r_v, AL_v]
             else:
                 r_v = np.logspace(-5,0,num=1000)
 
             r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
-                                ell_v, Cl_BB_prim_r1,
-                                       ClBB_model_other_than_prim, r_v, bins, Cl_BB_lens_bin)
+                                ell_v, Cl_BB_prim_r1, ClBB_model_other_than_prim, r_v, bins, 
+                                    Cl_BB_lens_bin)
             if self.config['AL_marginalization']:
                 pl.figure()
                 X,Y = np.meshgrid(r_v, AL_v)
