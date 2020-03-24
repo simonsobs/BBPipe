@@ -565,7 +565,7 @@ class BBREstimation(PipelineStage):
                 if self.config['AL_marginalization']:
                     ind = np.unravel_index(np.argmin(logL, axis=None), logL.shape)
                     r_fit = r_v[ind[0]]
-                    AL_fit = r_v[ind[1]]
+                    AL_fit = AL_v[ind[1]]
                     ind_sigma_r = np.argmin(np.abs( (logL[ind[0]:,ind[1]] - logL[ind[0]:,ind[1]]) - 2.3 ))
                     ind_sigma_AL = np.argmin(np.abs( (logL[ind[0],ind[1]:] - logL[ind[0],ind[1]:]) - 2.3 ))    
                     sigma_r_fit =  r_v[ind_sigma_r+ind[0]] - r_fit
@@ -598,6 +598,7 @@ class BBREstimation(PipelineStage):
                 X,Y = np.meshgrid(r_v[0], r_v[1])
                 levels=[np.min(gridded_chi2), np.min(gridded_chi2)+2.3,np.min(gridded_chi2)+6.17,np.min(gridded_chi2)+11.8]
                 cs = pl.contourf(X, Y, gridded_chi2.T, levels)
+                pl.xscale('log')
                 pl.savefig(self.get_output('likelihood_on_r'))
             else:
                 pl.figure()
