@@ -564,8 +564,8 @@ class BBREstimation(PipelineStage):
                     ind = np.unravel_index(np.argmin(logL, axis=None), logL.shape)
                     r_fit = r_v[ind[0]]
                     AL_fit = r_v[ind[1]]
-                    ind_sigma_r = np.argmin(np.abs( (logL[ind[0]:,ind[1]] - logL[np.argmin(logL[ind[0]:,ind[1]])]) - 2.3 ))    
-                    ind_sigma_AL = np.argmin(np.abs( (logL[ind[0],ind[1]:] - logL[np.argmin(logL[ind[0],ind[1]:])]) - 2.3 ))    
+                    ind_sigma_r = np.argmin(np.abs( (logL[ind[0]:,ind[1]] - logL[ind[0]:,ind[1]]) - 2.3 ))
+                    ind_sigma_AL = np.argmin(np.abs( (logL[ind[0],ind[1]:] - logL[ind[0],ind[1]:]) - 2.3 ))    
                     sigma_r_fit =  r_v[ind_sigma_r+ind[0]] - r_fit
                     sigma_AL_fit =  AL_v[ind_sigma_AL+ind[1]] - AL_fit
                     r_fit = [r_fit,AL_fit]
