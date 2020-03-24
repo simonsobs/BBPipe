@@ -544,17 +544,7 @@ class BBREstimation(PipelineStage):
 
                 # gridding -2log(L)
                 if self.config['AL_marginalization']:
-                    print(r_v[0])
-                    print(len(r_v[0]))
-                    print('///////')
-                    print(r_v[1])
-                    print(len(r_v[1]))
-
                     r_v, AL_v = r_v[0], r_v[1]
-
-                    print(r_v)
-                    print(AL_v)
-
                     logL = np.zeros((len(r_v), len(AL_v)))
                     for ir in range(len(r_v)):
                         for ia in range(len(AL_v)):
@@ -603,7 +593,7 @@ class BBREstimation(PipelineStage):
                                     Cl_BB_lens_bin)
             if self.config['AL_marginalization']:
                 pl.figure()
-                X,Y = np.meshgrid(r_v, AL_v)
+                X,Y = np.meshgrid(r_v[0], r_v[1])
                 levels=[np.min(gridded_chi2), np.min(gridded_chi2)+2.3,np.min(gridded_chi2)+6.17,np.min(gridded_chi2)+11.8]
                 cs = pl.contourf(X, Y, gridded_chi2.T, levels)
                 pl.savefig(self.get_output('likelihood_on_r'))
