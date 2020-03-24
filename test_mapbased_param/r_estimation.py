@@ -587,8 +587,9 @@ class BBREstimation(PipelineStage):
                 AL_v = np.linspace(0.0, 2.0, num=len(r_v))
                 r_v =[r_v, AL_v]
                 print(r_v[0])
+                print(len(r_v[0]))
                 print('///////')
-                print(r_v[1])
+                print(len(r_v[1]))
                 exit()
             else:
                 r_v = np.logspace(-5,0,num=1000)
