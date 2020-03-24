@@ -547,10 +547,15 @@ class BBREstimation(PipelineStage):
                     print(r_v[0])
                     print(len(r_v[0]))
                     print('///////')
+                    print(r_v[1])
                     print(len(r_v[1]))
-                    exit()
+
                     r_v = r_v[0]
                     AL_v = r_v[1]
+
+                    print(r_v)
+                    print(AL_v)
+
                     logL = np.zeros((len(r_v), len(AL_v)))
                     for ir in range(len(r_v)):
                         for ia in range(len(AL_v)):
