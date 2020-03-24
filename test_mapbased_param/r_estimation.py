@@ -550,8 +550,7 @@ class BBREstimation(PipelineStage):
                     print(r_v[1])
                     print(len(r_v[1]))
 
-                    r_v = r_v[0]
-                    AL_v = r_v[1]
+                    r_v, AL_v = r_v[0], r_v[1]
 
                     print(r_v)
                     print(AL_v)
