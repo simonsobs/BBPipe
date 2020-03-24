@@ -611,8 +611,10 @@ class BBREstimation(PipelineStage):
         else:
             to_be_saved = np.hstack((r_fit,  sigma_r_fit))
         np.savetxt(self.get_output('estimated_cosmo_params'), to_be_saved, comments=column_names)
-        if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization'])):
+        if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization']) and (not self.config['AL_marginalization'])):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
+        elif self.config['AL_marginalization']:
+            np.save(self.get_output('gridded_likelihood'), np.hstack((r_v[0], r_v[1], gridded_likelihood)))
         else:
             np.save(self.get_output('gridded_likelihood'), samples)
 
