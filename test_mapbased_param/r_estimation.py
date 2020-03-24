@@ -474,6 +474,8 @@ class BBREstimation(PipelineStage):
                         r_loc, AL_loc = r_loc
                         Cl_BB_lens_bin = bins.bin_cell(AL_loc*Cl_BB_lens[:3*self.config['nside']])
                         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
+                        if self.config['noise_option']!='no_noise': 
+                            ClBB_model_other_than_prim += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
                         Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                                 + ClBB_model_other_than_prim
                     else:
