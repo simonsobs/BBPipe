@@ -544,6 +544,11 @@ class BBREstimation(PipelineStage):
 
                 # gridding -2log(L)
                 if self.config['AL_marginalization']:
+                    print(r_v[0])
+                    print(len(r_v[0]))
+                    print('///////')
+                    print(len(r_v[1]))
+                    exit()
                     r_v = r_v[0]
                     AL_v = r_v[1]
                     logL = np.zeros((len(r_v), len(AL_v)))
@@ -586,11 +591,6 @@ class BBREstimation(PipelineStage):
                 r_v = np.logspace(-5,0,num=50)
                 AL_v = np.linspace(0.0, 2.0, num=len(r_v))
                 r_v =[r_v, AL_v]
-                print(r_v[0])
-                print(len(r_v[0]))
-                print('///////')
-                print(len(r_v[1]))
-                exit()
             else:
                 r_v = np.logspace(-5,0,num=1000)
 
