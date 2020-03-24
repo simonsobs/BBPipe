@@ -582,7 +582,7 @@ class BBREstimation(PipelineStage):
                 return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
             if self.config['AL_marginalization']:
-                r_v = np.logspace(-5,0,num=500)
+                r_v = np.logspace(-5,0,num=200)
                 AL_v = np.linspace(0.0, 2.0, num=len(r_v))
                 r_v =[r_v, AL_v]
             else:
