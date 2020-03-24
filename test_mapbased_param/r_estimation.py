@@ -582,7 +582,7 @@ class BBREstimation(PipelineStage):
                 return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
             if self.config['AL_marginalization']:
-                r_v = np.logspace(-5,0,num=100)
+                r_v = np.logspace(-5,0,num=500)
                 AL_v = np.linspace(0.0, 2.0, num=len(r_v))
                 r_v =[r_v, AL_v]
             else:
@@ -614,9 +614,7 @@ class BBREstimation(PipelineStage):
         if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization']) and (not self.config['AL_marginalization'])):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
         elif self.config['AL_marginalization']:
-            print(r_v[0])
-            print(r_v[1])
-            np.save(self.get_output('gridded_likelihood'), np.hstack((r_v[0], r_v[1], gridded_likelihood)))
+            np.save(self.get_output('gridded_likelihood'), gridded_likelihood )
         else:
             np.save(self.get_output('gridded_likelihood'), samples)
 
