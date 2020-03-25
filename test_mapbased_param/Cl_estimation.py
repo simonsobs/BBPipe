@@ -469,8 +469,8 @@ class BBClEstimation(PipelineStage):
                             compute_master, get_field, mask, mask_apo, 
                             w, noise_cov_, mask_patches, Cl_noise_freq, i_cmb=0)
         else: 
-            Cl_stat_res_model = np.array([0.0])
-            Cl_stat_res_noise_bias = np.array([0.0])
+            Cl_stat_res_model = np.zeros_like(Cl_noise_bias)
+            Cl_stat_res_noise_bias = np.zeros_like(Cl_noise_bias)
         # np.save('Cl_stat_res_model', Cl_stat_res_model)
         # np.save('Cl_stat_res_noise_bias', Cl_stat_res_noise_bias)
         Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0) - Cl_stat_res_noise_bias, np.std(Cl_stat_res_model, axis=0)))
