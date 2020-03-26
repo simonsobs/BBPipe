@@ -59,7 +59,7 @@ class BBMapParamCompSep(PipelineStage):
                 #     np.sum( np.ones(num_steps)*\
                 #         convert_units('uK_RJ','Jysr', freqs_loc)*\
                 #             (bandpass[i]/(num_steps-1)))
-                bandpass_loc = freqs_loc**-2/instrument['frequencies'][i]**-2
+                bandpass_loc = freqs_loc**-2/(instrument['frequencies'][i]*1.0)**-2
                 inst_freq.append((freqs_loc, bandpass_loc))
 
             # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
