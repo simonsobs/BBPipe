@@ -74,11 +74,13 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
     for i_n in np.arange(len(nll)) :
         n=nll[i_n]
         nl=np.zeros(3*nside_out)
-        nl[2:]=n; nl[:2]=n[0]
         if CMBS4_opt:
+            for i in range(3): 
+                nl[i][2:]=n; nl[i][:2]=n[i][0]
             no_t,no_q,no_u=hp.synfast([nl[0],nl[1],nl[2],0*nl,0*nl,0*nl],nside=nside_out,
                                   pol=True,new=True,verbose=False)
         else:
+            nl[2:]=n; nl[:2]=n[0]
             no_t,no_q,no_u=hp.synfast([nl/2.,nl,nl,0*nl,0*nl,0*nl],nside=nside_out,
                                   pol=True,new=True,verbose=False)
         # nv_t=nlev[i_n]*np.ones_like(no_t)/np.sqrt(2.);
