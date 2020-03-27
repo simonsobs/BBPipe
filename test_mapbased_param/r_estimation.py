@@ -470,6 +470,7 @@ class BBREstimation(PipelineStage):
                     -2logL = sum_ell [ (2l+1)fsky * ( log(C) + C^-1.D  ) ]
                         cf. eg. Tegmark 1998
                     '''    
+                    print('ClBB_model_other_than_prim = ',ClBB_model_other_than_prim)
                     if self.config['AL_marginalization']:
                         r_loc, AL_loc = r_loc
                         Cl_BB_lens_bin = bins.bin_cell(AL_loc*Cl_BB_lens[:3*self.config['nside']])
