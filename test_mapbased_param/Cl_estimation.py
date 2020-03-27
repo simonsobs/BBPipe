@@ -78,7 +78,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         nhits, noise_maps_sim, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=nhits_raw,
-                                no_inh=self.config['no_inh'])
+                                no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
 
         # reformating the simulated noise maps 
         noise_maps_ = np.zeros((n_cov.shape[0], 3, W.shape[-1]))
