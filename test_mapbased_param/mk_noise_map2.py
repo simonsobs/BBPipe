@@ -76,7 +76,8 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
         if CMBS4_opt:
             nl=np.zeros((3, 3*nside_out))
             for i in range(3): 
-                nl[i,2:]=n; nl[i,:2]=n[i][0]
+                nl[i,2:]=n[i]
+                nl[i,:2]=n[i][0]
             no_t,no_q,no_u=hp.synfast([nl[0],nl[1],nl[2],0*nl,0*nl,0*nl],nside=nside_out,
                                   pol=True,new=True,verbose=False)
         else:
