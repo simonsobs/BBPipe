@@ -470,15 +470,15 @@ class BBREstimation(PipelineStage):
                     -2logL = sum_ell [ (2l+1)fsky * ( log(C) + C^-1.D  ) ]
                         cf. eg. Tegmark 1998
                     '''    
-                    print('ClBB_model_other_than_prim = ',ClBB_model_other_than_prim)
+                    print('ClBB_model_other_than_prim = ', ClBB_model_other_than_prim)
                     if self.config['AL_marginalization']:
                         r_loc, AL_loc = r_loc
                         Cl_BB_lens_bin = bins.bin_cell(AL_loc*Cl_BB_lens[:3*self.config['nside']])
-                        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
+                        ClBB_model_other_than_prim_ = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
                         if self.config['noise_option']!='no_noise': 
-                            ClBB_model_other_than_prim += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                            ClBB_model_other_than_prim_ += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
                         Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
-                                                + ClBB_model_other_than_prim
+                                                + ClBB_model_other_than_prim_
                     else:
                         Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                                 + ClBB_model_other_than_prim
