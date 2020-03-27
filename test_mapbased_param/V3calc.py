@@ -297,7 +297,7 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
             print(f, Map_white_noise_levels[2][f])
             NlT = Map_white_noise_levels[0][f]**2 * A_SR * ((ell / fknee_tot[f][0] )**alpha_tot[f][0] + 1.)/A_arcmin
             NlE = Map_white_noise_levels[1][f]**2 * A_SR * ((ell / fknee_tot[f][1] )**alpha_tot[f][1] + 1.)/A_arcmin
-            print(f, knee_tot[f][2], alpha_tot[f][2])
+            print(f, fknee_tot[f][2], alpha_tot[f][2])
             NlB = Map_white_noise_levels[2][f]**2 * A_SR * ((ell / fknee_tot[f][2] )**alpha_tot[f][2] + 1.)/A_arcmin
             if beam_corrected :
                 NlT  *= np.exp( ell*(ell+1)* S4_beams[f]**2 )
