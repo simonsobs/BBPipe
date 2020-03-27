@@ -470,7 +470,6 @@ class BBREstimation(PipelineStage):
                     -2logL = sum_ell [ (2l+1)fsky * ( log(C) + C^-1.D  ) ]
                         cf. eg. Tegmark 1998
                     '''    
-                    print('ClBB_model_other_than_prim = ', ClBB_model_other_than_prim)
                     if self.config['AL_marginalization']:
                         r_loc, AL_loc = r_loc
                         Cl_BB_lens_bin = bins.bin_cell(AL_loc*Cl_BB_lens[:3*self.config['nside']])
@@ -590,8 +589,6 @@ class BBREstimation(PipelineStage):
                 r_v =[r_v, AL_v]
             else:
                 r_v = np.logspace(-5,0,num=1000)
-
-            print('ClBB_model_other_than_prim = ', ClBB_model_other_than_prim)
 
             r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
                                 ell_v, Cl_BB_prim_r1, ClBB_model_other_than_prim, r_v, bins, 
