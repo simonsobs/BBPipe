@@ -79,6 +79,7 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
             for i in range(3): 
                 nl[i,2:]=n[i]
                 nl[i,:2]=n[i][0]
+            import pylab as pl
             pl.figure()
             pl.loglog(nl[0])
             pl.loglog(nl[1])
