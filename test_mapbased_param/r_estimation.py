@@ -591,6 +591,8 @@ class BBREstimation(PipelineStage):
             else:
                 r_v = np.logspace(-5,0,num=1000)
 
+            print('ClBB_model_other_than_prim = ', ClBB_model_other_than_prim)
+
             r_fit, sigma_r_fit, gridded_likelihood, gridded_chi2 = from_Cl_to_r_estimate(ClBB_obs,
                                 ell_v, Cl_BB_prim_r1, ClBB_model_other_than_prim, r_v, bins, 
                                     Cl_BB_lens_bin)
