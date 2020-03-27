@@ -27,8 +27,7 @@ class BBMapSim(PipelineStage):
         nhits, noise_maps, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
-                                no_inh=self.config['no_inh'])
-
+                                no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
 
         if self.config['external_binary_mask']:
             binary_mask = hp.read_map(self.config['external_binary_mask'])

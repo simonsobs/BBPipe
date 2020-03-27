@@ -42,7 +42,8 @@ def get_mask(nh, nside_out=512) :
     msk[not0]=nh[not0]
     return msk
 
-def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_map=None, no_inh=False) :
+def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
+                    norm_hits_map=None, no_inh=False, CMBS4='') :
     """
     Generates noise simulation
     sensitivity : choice of sensitivity model for SAC's V3 
@@ -61,16 +62,24 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, norm_hits_ma
 
     print(sensitivity,knee_mode,ny_lf,fsky,3*nside_out)
 
-    ll,nll,nlev=v3.so_V3_SA_noise(sensitivity,knee_mode,ny_lf,fsky,3*nside_out,remove_kluge=True)
+    if CMBS4!='':CMBS4_opt = True
+    else:CMBS4_opt = False
+    ll,nll,nlev=v3.so_V3_SA_noise(sensitivity,knee_mode,ny_lf,fsky,3*nside_out,\
+            remove_kluge=True, CMBS4=CMBS4_opt)
     zer0=1E-6
     id_cut=np.where(nh<zer0)[0]
     nh[id_cut]=np.amax(nh) #zer0
     mps_no=[];
+
     for i_n in np.arange(len(nll)) :
         n=nll[i_n]
         nl=np.zeros(3*nside_out)
         nl[2:]=n; nl[:2]=n[0]
-        no_t,no_q,no_u=hp.synfast([nl/2.,nl,nl,0*nl,0*nl,0*nl],nside=nside_out,
+        if CMBS4_opt:
+            no_t,no_q,no_u=hp.synfast([nl[0],nl[1],nl[2],0*nl,0*nl,0*nl],nside=nside_out,
+                                  pol=True,new=True,verbose=False)
+        else:
+            no_t,no_q,no_u=hp.synfast([nl/2.,nl,nl,0*nl,0*nl,0*nl],nside=nside_out,
                                   pol=True,new=True,verbose=False)
         # nv_t=nlev[i_n]*np.ones_like(no_t)/np.sqrt(2.);
         # nv_q=nlev[i_n]*np.ones_like(no_q); nv_u=nlev[i_n]*np.ones_like(no_u)
