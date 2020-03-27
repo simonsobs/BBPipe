@@ -73,7 +73,8 @@ class BBMapSim(PipelineStage):
         elif self.config['instrument'] == 'CMBS4':
             fwhm = np.array([11, 72.8, 72.8, 25.5, 22.7, 25.5, 22.7, 13, 13])
             freqs = np.array([20, 30, 40, 85, 95, 145, 155, 220, 270])
-            nlev = np.array([6.09, 2.44, 3.09, 0.61, 0.54, 0.85, 0.91, 2.34, 4.02])
+            # nlev = np.array([6.09, 2.44, 3.09, 0.61, 0.54, 0.85, 0.91, 2.34, 4.02])
+            nlev = np.array([5.07, 4.20, 5.31, 6.40, 5.64, 4.21, 4.51, 34.59, 59.32])/3
         else:
             print('I do not know this instrument')
             sys.exit()
