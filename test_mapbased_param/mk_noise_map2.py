@@ -84,7 +84,8 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
             pl.loglog(nl[0])
             pl.loglog(nl[1])
             pl.loglog(nl[2])
-            pl.show()
+            pl.savefig('test_Nl.pdf')
+            pl.close()
             exit()
             no_t,no_q,no_u=hp.synfast([nl[0],nl[1],nl[2],0*nl[0],0*nl[0],0*nl[0]],nside=nside_out,
                                   pol=True,new=True,verbose=False)
