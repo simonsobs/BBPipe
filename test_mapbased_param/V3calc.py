@@ -295,8 +295,8 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
         N_ell_P_SA = []
         for f in range(len(alpha_tot)):
             if one_over_f_mode == 2:
-                NlT = Map_white_noise_levels[0][f]**2 * A_SR / A_arcmin
-                NlE = Map_white_noise_levels[1][f]**2 * A_SR / A_arcmin
+                NlT = Map_white_noise_levels[0][f]**2 * A_SR / A_arcmin * np.ones_like(ell)
+                NlE = Map_white_noise_levels[1][f]**2 * A_SR / A_arcmin * np.ones_like(ell)
             else:
                 NlT = Map_white_noise_levels[0][f]**2 * A_SR * ((ell / fknee_tot[f][0] )**alpha_tot[f][0] + 1.)/A_arcmin
                 NlE = Map_white_noise_levels[1][f]**2 * A_SR * ((ell / fknee_tot[f][1] )**alpha_tot[f][1] + 1.)/A_arcmin
