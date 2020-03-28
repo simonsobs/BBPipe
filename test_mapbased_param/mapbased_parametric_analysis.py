@@ -100,7 +100,8 @@ class BBMapParamCompSep(PipelineStage):
         # assuming inhomogeneous noise
         components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
-        options={'disp':False, 'gtol': 1e-6, 'eps': 1e-4, 'maxiter': 100, 'ftol': 1e-6 } 
+        # options={'disp':False, 'gtol': 1e-6, 'eps': 1e-4, 'maxiter': 100, 'ftol': 1e-6 } 
+        options={'disp':False, 'gtol': 1e-12, 'eps': 1e-12, 'maxiter': 100, 'ftol': 1e-12 } 
         tol=1e-18
         method='TNC'
 
