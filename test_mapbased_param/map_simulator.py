@@ -166,7 +166,7 @@ class BBMapSim(PipelineStage):
             noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
         else:
             noise_cov = freq_maps*0.0
-            nlev /= hp.nside2resol(self.config['nside'], arcmin=True)
+            # nlev /= hp.nside2resol(self.config['nside'], arcmin=True)
             noise_cov[::3,:] = nlev[:,np.newaxis]/np.sqrt(2.0)
             noise_cov[1::3,:] = nlev[:,np.newaxis]
             noise_cov[2::3,:] = nlev[:,np.newaxis]
@@ -182,10 +182,7 @@ class BBMapSim(PipelineStage):
 
         # save on disk frequency maps, noise maps, noise_cov, binary_mask
         column_names = []
-        print(freqs)
         [ column_names.extend( ('I_'+str(ch)+'GHz','Q_'+str(ch)+'GHz','U_'+str(ch)+'GHz')) for ch in freqs]
-        print(column_names)
-        print(noise_cov.shape)
 
         hp.write_map(self.get_output('binary_mask_cut'), binary_mask, overwrite=True)
         hp.write_map(self.get_output('frequency_maps'), freq_maps, overwrite=True, column_names=column_names)
