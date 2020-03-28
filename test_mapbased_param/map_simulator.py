@@ -122,9 +122,9 @@ class BBMapSim(PipelineStage):
         sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
 
         # restructuration of the freq maps, of size {n_stokes x n_freqs, n_pix}
-        print('shape of freq_maps = ', freq_maps.shape)
+        # print('shape of freq_maps = ', freq_maps.shape)
         freq_maps = freq_maps.reshape((3*len(self.config['frequencies']),hp.nside2npix(self.config['nside'])))
-        print('shape of freq_maps = ', freq_maps.shape)
+        # print('shape of freq_maps = ', freq_maps.shape)
 
         if self.config['external_sky_sims']!='':
             freq_maps *= 0.0
