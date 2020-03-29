@@ -181,7 +181,7 @@ global:
     fsky: 0.1
     nside: '''+str(nside)+'''
     lmin: 30
-    lmax: '''+str(int(2*nside))'''
+    lmax: '''+str(int(2*nside))+'''
     nlb: '''+str(nlb)+'''
     custom_bins: True
     noise_option: \''''+str(noise_option)+'''\'
