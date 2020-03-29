@@ -291,7 +291,7 @@ class BBClEstimation(PipelineStage):
 
         ##############################
         # simulation of the CMB
-
+        """
         # Cl_BB_reconstructed = []
         pl.figure()
         ell_v_eff = b.get_effective_ells()
@@ -304,7 +304,7 @@ class BBClEstimation(PipelineStage):
         pl.loglog(ell_v_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r-')
         pl.savefig('test_NaMaster_simulated_CMB.pdf')
         pl.close()
-
+        """
 
         ##############################
         ### compute noise bias in the comp sep maps
