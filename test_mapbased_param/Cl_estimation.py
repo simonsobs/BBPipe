@@ -301,7 +301,7 @@ class BBClEstimation(PipelineStage):
             f2y0=get_field(mp_q_sim,mp_u_sim, mask_apo, purify_b=True)
             Cl_BB_reconstructed = compute_master(f2y0, f2y0, w)[3]
             pl.loglog(ell_v_eff, Cl_BB_reconstructed, 'k-', alpha=0.5)
-        pl.loglog(ell_v_eff, b.bin_cell(clbb), 'r-')
+        pl.loglog(ell_v_eff, b.bin_cell(clbb[:3*self.config['nside']]), 'r-')
         pl.savefig('test_NaMaster_simulated_CMB.pdf')
         pl.close()
 
