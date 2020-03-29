@@ -291,14 +291,19 @@ class BBClEstimation(PipelineStage):
 
         ##############################
         # simulation of the CMB
-        '''
-        Cl_BB_reconstructed = []
+
+        # Cl_BB_reconstructed = []
+        pl.figure()
         for i in range(10):
             mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
             # f2y0=get_field(mask*mp_q_sim,mask*mp_u_sim, purify_b=True)
             f2y0=get_field(mp_q_sim,mp_u_sim, purify_b=True)
-            Cl_BB_reconstructed.append(compute_master(f2y0, f2y0, w)[3])
-        '''
+            Cl_BB_reconstructed = compute_master(f2y0, f2y0, w)[3]
+            pl.loglog(Cl_BB_reconstructed, 'k-', alpha=0.5)
+        pl.loglog(clbb, 'r-')
+        pl.savefig('test_NaMaster_simulated_CMB.pdf')
+        pl.close()
+
 
         ##############################
         ### compute noise bias in the comp sep maps
