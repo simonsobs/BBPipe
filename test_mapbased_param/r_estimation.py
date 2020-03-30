@@ -535,6 +535,10 @@ class BBREstimation(PipelineStage):
                                         linewidth=3.0, alpha=1.0, label='true CMB template @ 150GHz')
                         # pl.loglog( ell_v_loc, norm*np.abs((Cl_CMB_template_150GHz - Cl_BB_lens_bin)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), linestyle='-', color='red', 
                         #                 linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz - theoretical lensing ')
+                        if self.config['AL_marginalization']:
+                            pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin_[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
+                                    label='$A_L$-fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
+
                         pl.legend()
                         pl.xlabel('$\ell$', fontsize=20)
                         pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
