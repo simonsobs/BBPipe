@@ -61,7 +61,7 @@ def grabargs():
     parser.add_argument("--path_to_ClBBlens", type=str, help = "path to lensed BB angular spectrum", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_lensed_scalar.fits")
     parser.add_argument("--path_to_ClBBprim", type=str, help = "path to primordial BB angular spectrum, assuming r=1", default="/global/homes/j/josquin/SIMONS_OBS/BBPipe/test_mapbased_param/Cls_Planck2018_unlensed_scalar_and_tensor_r1.fits")
     parser.add_argument("--tag", type=str, help = "specific tag for a specific run, to avoid erasing previous results", default=rand_string)
-    parser.add_argument("--apotype", type=str, help = "apodization type", default='C1')
+    parser.add_argument("--apotype", type=str, help = "apodization type", default='C2')
     parser.add_argument("--aposize", type=float, help = "apodization size", default=8.0)
     parser.add_argument("--r_input", type=float, help = "input r value to be assumed", default=0.000)
     parser.add_argument("--AL_input", type=float, help = "input r value to be assumed", default=1.000)
@@ -178,7 +178,6 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
     global_string = '''
 global:
     frequencies: '''+str(frequencies)+'''
-    fsky: 0.1
     nside: '''+str(nside)+'''
     lmin: 30
     lmax: '''+str(int(2*nside))+'''

@@ -143,11 +143,6 @@ class BBREstimation(PipelineStage):
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
-        #######################
-        print('CHEATING!!!!')
-        ClBB_obs = ClBB_model_other_than_prim*1.0 
-        #######################
-
         if self.config['noise_option']!='no_noise': 
             """
             if self.config['Nspec']!=0:
@@ -598,7 +593,7 @@ class BBREstimation(PipelineStage):
                 return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
             if self.config['AL_marginalization']:
-                r_v = np.logspace(-5,0,num=200)
+                r_v = np.logspace(-5,0,num=1000)
                 AL_v = np.linspace(0.0, 2.0, num=len(r_v))
                 r_v =[r_v, AL_v]
             else:
