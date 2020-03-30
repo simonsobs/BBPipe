@@ -26,5 +26,5 @@ done
 for seed in 1300 1301 1302 1303 1304
 do
     echo "Generating simulation: pysm beta, seed = "${seed}
-    ${python_exec} new_sim.py --seed ${seed} --beta-var True
+    ${python_exec} new_sim.py --seed ${seed} --beta-pysm True
 done
