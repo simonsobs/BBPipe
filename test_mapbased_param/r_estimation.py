@@ -152,11 +152,11 @@ class BBREstimation(PipelineStage):
                 ClBB_model_other_than_prim += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
                 ClBB_model_other_than_prim_and_lens += Cl_cov_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
             """
-            # ClBB_model_other_than_prim += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
-            # ClBB_model_other_than_prim_and_lens += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            ClBB_model_other_than_prim += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            ClBB_model_other_than_prim_and_lens += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
-            ClBB_model_other_than_prim += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
-            ClBB_model_other_than_prim_and_lens += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            # ClBB_model_other_than_prim += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
+            # ClBB_model_other_than_prim_and_lens += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
 
         if self.config['include_stat_res']:
             ClBB_model_other_than_prim += Cl_stat_res_model[1][(ell_v>=lmin)&(ell_v<=lmax)]
@@ -478,8 +478,8 @@ class BBREstimation(PipelineStage):
                         Cl_BB_lens_bin_ = bins.bin_cell(AL_loc*Cl_BB_lens[:3*self.config['nside']])
                         ClBB_model_other_than_prim_ = Cl_BB_lens_bin_[(ell_v>=lmin)&(ell_v<=lmax)]
                         if self.config['noise_option']!='no_noise': 
-                            # ClBB_model_other_than_prim_ += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
-                            ClBB_model_other_than_prim_ += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                            ClBB_model_other_than_prim_ += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                            # ClBB_model_other_than_prim_ += Cl_noise[1][(ell_v>=lmin)&(ell_v<=lmax)]
                         Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                                 + ClBB_model_other_than_prim_
                     else:
@@ -493,11 +493,18 @@ class BBREstimation(PipelineStage):
                                      label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
                         pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
                                     label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
+                        if self.config['AL_marginalization']:
+                            pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin_[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
+                                    label='$A_L$-fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
+
                         # if self.config['Nspec']==0:
                             # pl.loglog( ell_v_loc, norm*Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
                                     # label='noise post comp sep', linestyle=':', color='DarkBlue')
                         pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      label='true CMB noise post comp sep', linestyle=':', color='Cyan')
+                        pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
+
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                         pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
@@ -528,17 +535,11 @@ class BBREstimation(PipelineStage):
                         if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
                                                 linewidth=2.0, alpha=0.8)
-                        pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
 
                         pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
                                         linewidth=3.0, alpha=1.0, label='true CMB template @ 150GHz')
                         # pl.loglog( ell_v_loc, norm*np.abs((Cl_CMB_template_150GHz - Cl_BB_lens_bin)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), linestyle='-', color='red', 
                         #                 linewidth=3.0, alpha=1.0, label='input CMB template @ 150GHz - theoretical lensing ')
-                        if self.config['AL_marginalization']:
-                            pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin_[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
-                                    label='$A_L$-fitted lensing BB', linestyle='--', color='DarkOrange', linewidth=2.0)
-
                         pl.legend()
                         pl.xlabel('$\ell$', fontsize=20)
                         pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
