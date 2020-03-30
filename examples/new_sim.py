@@ -28,28 +28,26 @@ parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true',
                   help='Calculate power spectra and covariance matrix, default=True')
 parser.add_option('--beta-var', dest='beta_var', default=False,  action='store_true',
                   help='Set to include gaussian spectral indices, default=False')
-parser.add_option('--A-bd', dest='A_beta_dust', default=1, type=int,
-                  help='Modify dust amplitude, default=1')
-parser.add_option('--A-bs', dest='A_beta_sync', default=1, type=int,
-                  help='Modify sync amplitude, default=1')
+parser.add_option('--beta-pysm', dest='beta_pysm', default=False,  action='store_true',
+                  help='Set to include gaussian spectral indices, default=False')
+parser.add_option('--sigma-d', dest='sigma_dust', default=10,  type=int,
+                  help='Modify amplitude of dust variation, default=10*E-2')
+parser.add_option('--sigma-s', dest='sigma_sync', default=0,  type=int,
+                  help='Modify amplitude of sync variation, default=10*E-2')
 
 (o, args) = parser.parse_args()
 
 nside = o.nside
 seed = o.seed
+np.random.seed(seed)
 
 if len(args) != 9:
         #parser.error
-        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --A-bd --A-bs")
+        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --sigma-d --sigma-s")
         print("Check with <script> -h")
-
-np.random.seed(seed)
 
 prefix_in='/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/'
 prefix_out="./"
-#o.A_beta_dust  = np.arange(0, 55, 5) ; o.A_beta_dust[0]=1
-A_bd = o.A_beta_dust
-A_bs = o.A_beta_sync
 
 # Dust
 A_dust_BB=5
@@ -58,9 +56,11 @@ alpha_dust_EE=-0.42
 alpha_dust_BB=-0.2
 nu0_dust=353. 
 temp_dust = 19.6
+if o.beta_pysm:
+        beta_dust = hp.ud_grade(hp.read_map(prefix_in+'template_PySM/beta_mean1p59_std0p2.fits', verbose=False), nside_out=nside)
 if o.beta_var:
         #print('map_beta_dust_Ad%d.fits'%(A_bd))
-        beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust_Ad%d.fits'%(A_bd), verbose=False), nside_out=nside)
+        beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust_sigD%d_sd%d.fits'%(o.sigma_dust, seed), verbose=False), nside_out=nside)
 else:
     beta_dust = 1.59
 
@@ -71,7 +71,8 @@ alpha_sync_EE=-0.6
 alpha_sync_BB=-0.4
 nu0_sync=23. 
 if o.beta_var:
-        beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_As%d.fits'%(A_bs), verbose=False), nside_out=nside)
+        #beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_sigS%d.fits'%(o.sigma_sync), verbose=False), nside_out=nside)
+        beta_sync=-3.
 else:
     beta_sync=-3.
 
@@ -105,11 +106,12 @@ if o.use_pysm:
         return power_law(nu, nu0, beta-2)*black_body(nu, nu0, t)
 
     if o.beta_var:    
-        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betaVar_Ad%dAs%d"%(nside, seed, A_bd, A_bs)
+        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betaVar_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
         for i in beta_dust:
                 f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
-        for j in beta_sync:
-                f_sync = power_law(nu, nu0_sync, j)
+        #for j in beta_sync:
+        #        f_sync = power_law(nu, nu0_sync, j)
+        f_sync = power_law(nu, nu0_sync, beta_sync)
     else:
         dirname = prefix_out+"new_sim_ns%d_seed%d_pysm"%(nside, seed)
         f_dust = dust_sed(nu, nu0_dust, beta_dust, temp_dust)
@@ -129,17 +131,20 @@ else:
         return None
 
     if o.beta_var:
-        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_betaVar_Ad%dAs%d"%(nside, seed, A_bd, A_bs)
+        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_betaVar_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
         for i in beta_dust:
             f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
-        for j in beta_sync:
-            f_sync = comp_sed(nu, nu0_sync, j, None, 'sync')
+        #for j in beta_sync:
+        #        f_sync = comp_sed(nu, nu0_sync, j, None, 'sync')
+        f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
     else:
         dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim"%(nside, seed)
         f_dust = comp_sed(nu, nu0_dust, beta_dust, temp_dust, 'dust')
         f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
 
 os.system('mkdir -p '+dirname)
+dirnameMoments = dirname+"MomTrue"
+os.system('mkdir -p '+dirnameMoments)
 
 f_cmb = fcmb(nu)
 
@@ -210,7 +215,7 @@ C_ells_sky[:, 1, :, 1, :] = (cl_cmb_bb[None, None, :] * f_cmb[:, None, None] * f
 sens=1
 knee=1
 ylf=1
-fsky=1.
+fsky=0.1
 nell=np.zeros([len(nu),lmax+1])
 _,nell[:,2:],_=Simons_Observatory_V3_SA_noise(sens,knee,ylf,fsky,lmax+1,1)
 nell*=cl2dl[None,:]
