@@ -143,6 +143,11 @@ class BBREstimation(PipelineStage):
         ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
         ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
+        #######################
+        print('CHEATING!!!!')
+        ClBB_obs = ClBB_model_other_than_prim*1.0 
+        #######################
+
         if self.config['noise_option']!='no_noise': 
             """
             if self.config['Nspec']!=0:
