@@ -4,6 +4,21 @@ import matplotlib.pyplot as plt
 from . import V3calc as v3
 import os
 
+
+def rotation_C2G(mp_C, nside_h=512):
+
+    nside_l=hp.npix2nside(len(mp_C))
+    # nside_h=512
+    ipixG=np.arange(hp.nside2npix(nside_h))
+    thG,phiG=hp.pix2ang(nside_h,ipixG)
+    r=hp.Rotator(coord=['G','C'])
+    thC,phiC=r(thG,phiG)
+    ipixC=hp.ang2pix(nside_l,thC,phiC)
+
+    mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
+
+    return mp_G
+
 def get_nhits(nside_out=512) :
     """
     Generates an Nhits map in Galactic coordinates.
@@ -14,16 +29,7 @@ def get_nhits(nside_out=512) :
     if not os.path.isfile(fname_out) :
         fname_in='norm_nHits_SA_35FOV.fits'
         mp_C=hp.read_map(fname_in,verbose=False)
-        nside_l=hp.npix2nside(len(mp_C))
-
-        nside_h=512
-        ipixG=np.arange(hp.nside2npix(nside_h))
-        thG,phiG=hp.pix2ang(nside_h,ipixG)
-        r=hp.Rotator(coord=['G','C'])
-        thC,phiC=r(thG,phiG)
-        ipixC=hp.ang2pix(nside_l,thC,phiC)
-
-        mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
+        mp_G = rotation_C2G(mp_C)
         hp.write_map(fname_out,mp_G)
 
     return hp.ud_grade(hp.read_map(fname_out,verbose=False),
