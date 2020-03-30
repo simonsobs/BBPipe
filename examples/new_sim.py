@@ -29,11 +29,11 @@ parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true',
 parser.add_option('--beta-var', dest='beta_var', default=False,  action='store_true',
                   help='Set to include gaussian spectral indices, default=False')
 parser.add_option('--beta-pysm', dest='beta_pysm', default=False,  action='store_true',
-                  help='Set to include gaussian spectral indices, default=False')
+                  help='Set to include non-gaussian varying spectral indices, default=False')
 parser.add_option('--sigma-d', dest='sigma_dust', default=10,  type=int,
-                  help='Modify amplitude of dust variation, default=10*E-2')
+                  help='Modify amplitude of dust variation, default=0. Input values are multiplied to E-2')
 parser.add_option('--sigma-s', dest='sigma_sync', default=0,  type=int,
-                  help='Modify amplitude of sync variation, default=10*E-2')
+                  help='Modify amplitude of sync variation, default=0. Input values are multiplied to E-2')
 
 (o, args) = parser.parse_args()
 
@@ -43,7 +43,7 @@ np.random.seed(seed)
 
 if len(args) != 9:
         #parser.error
-        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --sigma-d --sigma-s")
+        print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --beta-pysm --sigma-d --sigma-s")
         print("Check with <script> -h")
 
 prefix_in='/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/'
@@ -57,9 +57,8 @@ alpha_dust_BB=-0.2
 nu0_dust=353. 
 temp_dust = 19.6
 if o.beta_pysm:
-        beta_dust = hp.ud_grade(hp.read_map(prefix_in+'template_PySM/beta_mean1p59_std0p2.fits', verbose=False), nside_out=nside)
-if o.beta_var:
-        #print('map_beta_dust_Ad%d.fits'%(A_bd))
+        beta_dust = hp.ud_grade(hp.read_map(prefix_in+'template_PySM/dust_beta.fits', field=0, verbose=False), nside_out=nside)
+elif o.beta_var:
         beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust_sigD%d_sd%d.fits'%(o.sigma_dust, seed), verbose=False), nside_out=nside)
 else:
     beta_dust = 1.59
@@ -109,8 +108,13 @@ if o.use_pysm:
         dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betaVar_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
         for i in beta_dust:
                 f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
+        f_sync = power_law(nu, nu0_sync, beta_sync)
         #for j in beta_sync:
         #        f_sync = power_law(nu, nu0_sync, j)
+    elif o.beta_pysm:
+        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betapysm"%(nside, seed)
+        for i in beta_dust:
+                f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
         f_sync = power_law(nu, nu0_sync, beta_sync)
     else:
         dirname = prefix_out+"new_sim_ns%d_seed%d_pysm"%(nside, seed)
@@ -136,6 +140,11 @@ else:
             f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
         #for j in beta_sync:
         #        f_sync = comp_sed(nu, nu0_sync, j, None, 'sync')
+        f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
+    elif o.beta_pysm:
+        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_betapysm"%(nside, seed)
+        for i in beta_dust:
+            f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
         f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
     else:
         dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim"%(nside, seed)
