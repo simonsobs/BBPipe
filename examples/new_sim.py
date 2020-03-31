@@ -24,11 +24,11 @@ parser.add_option('--simulate', dest='do_simulation', default=True, action='stor
                   help='Simulation step, default=True')
 parser.add_option('--pysm', dest='use_pysm', default=False, action='store_true',
                   help='Set to use PySM for simulations, default=False')
-parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true',
+parser.add_option('--do-cl', dest='do_Cls', default=False,  action='store_true', #default=True,  action='store_true',
                   help='Calculate power spectra and covariance matrix, default=True')
 parser.add_option('--beta-var', dest='beta_var', default=False,  action='store_true',
                   help='Set to include gaussian spectral indices, default=False')
-parser.add_option('--beta-pysm', dest='beta_pysm', default=True,  action='store_true',
+parser.add_option('--beta-pysm', dest='beta_pysm', default=False,  action='store_true',
                   help='Set to include non-gaussian varying spectral indices, default=False')
 parser.add_option('--sigma-d', dest='sigma_dust', default=10,  type=int,
                   help='Modify amplitude of dust variation, default=0. Input values are multiplied to E-2')
