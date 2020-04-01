@@ -15,11 +15,15 @@ parser.add_option('--nside', dest='nside', default=256, type=int,
 parser.add_option('--pysm', dest='use_pysm', default=False, action='store_true',
                   help='Set to use PySM spectral energy distributions, default=False')
 parser.add_option('--smooth', dest='use_smoothing', default=False, action='store_true',
-                  help='Set to include gaussian spectral index for dust, default=False')
+                  help='Set to smooth beam, default=False')
 parser.add_option('--beta-dust-gaus', dest='beta_dust_gaus', default=False, action='store_true',
                   help='Set to include gaussian spectral index for dust, default=False')
 parser.add_option('--beta-sync-gaus', dest='beta_sync_gaus', default=False, action='store_true',
                   help='Set to include gaussian spectral index for sync, default=False')
+parser.add_option('--sigma-d', dest='sigma_dust', default=0,  type=int,
+                  help='Select amplitude of dust variation, default=0. Input values are multiplied to E-2')
+parser.add_option('--sigma-s', dest='sigma_sync', default=0,  type=int,
+                  help='Select amplitude of sync variation, default=0. Input values are multiplied to E-2')
 
 (o, args) = parser.parse_args()
 
@@ -35,8 +39,7 @@ alpha_dust_BB=-0.2
 nu0_dust=353. 
 temp_dust = 19.6
 if o.beta_dust_gaus:
-    beta_dust =  hp.ud_grade(hp.read_map('map_beta_dust.fits', verbose=False), nside_out=nside)
-#    beta_dust =  hp.ud_grade(hp.read_map('map_beta_dust_sigD%d_sd%d.fits'%(o.sigma_dust, seed), verbose=False), nside_out=nside)
+    beta_dust =  hp.ud_grade(hp.read_map('map_beta_dust_sigD%d_sd%d.fits'%(o.sigma_dust, seed), verbose=False), nside_out=nside)
 else:
     beta_dust = 1.59
 
@@ -47,7 +50,7 @@ alpha_sync_EE=-0.6
 alpha_sync_BB=-0.4
 nu0_sync=23.
 if o.beta_sync_gaus:
-        beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_sigS%d.fits'%(o.sigma_sync), verbose=False), nside_out=nside)
+    beta_sync = hp.ud_grade(hp.read_map('map_beta_sync_sigS%d_sd%d.fits'%(o.sigma_sync, seed), verbose=False), nside_out=nside)
 else:
     beta_sync=-3.
 
@@ -258,18 +261,16 @@ nhits/=np.amax(nhits)
 fsky_msk=np.mean(nhits) 
 nhits_binary=np.zeros_like(nhits) 
 nhits_binary[nhits>1E-3]=1 
-#inv_sqrtnhits=np.zeros_like(nhits)
-#inv_sqrtnhits[nhits>1E-3]=1./np.sqrt(nhits[nhits>1E-3])
 
 # Noise maps
 nsplits = 4
 maps_noise = np.zeros([nsplits, nfreq, npol, npix])
 for s in range(nsplits):
     for i in range(nfreq):
-        nell_ee = N_ells_sky[i, 0, i, 0, :]*dl2cl
-        nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl
-        nell_00 = nell_ee * 0
-        maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00][i]*nsplits, nside, pol=False, new=True) 
+        nell_ee = N_ells_sky[i, 0, i, 0, :]*dl2cl *nsplits
+        nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl *nsplits
+        nell_00 = nell_ee * 0 *nsplits
+        maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00], nside, pol=False, new=True)[1:]
 noi_coadd = np.mean(maps_noise, axis=0)
 
 # Save splits 
