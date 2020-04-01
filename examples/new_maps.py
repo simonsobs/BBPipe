@@ -12,8 +12,6 @@ parser.add_option('--seed', dest='seed',  default=1200, type=int,
                   help='Set to define seed, default=1200')
 parser.add_option('--nside', dest='nside', default=256, type=int,
                   help='Set to define Nside parameter, default=256')
-parser.add_option('--pysm', dest='use_pysm', default=False, action='store_true',
-                  help='Set to use PySM spectral energy distributions, default=False')
 parser.add_option('--smooth', dest='use_smoothing', default=False, action='store_true',
                   help='Set to smooth beam, default=False')
 parser.add_option('--beta-dust-gaus', dest='beta_dust_gaus', default=False, action='store_true',
@@ -63,61 +61,17 @@ def fcmb(nu):
     ex=np.exp(x)
     return ex*(x/(ex-1))**2
 
-# All spectra
-if o.use_pysm:
-    dirname = "new_simulation_ns%d_seed%d_pysm"%(nside, seed)
-    def power_law(nu, nu0, b):
-        return (nu/nu0)**b
-    
-    def B(nu, t):
-        x = constants.h*nu*1E9 / constants.k / t
-        return  (nu)**3  / np.expm1(x)
-    
-    def black_body(nu, nu0, t):
-        return B(nu, t)/B(nu0, t)
-
-    def comp_sed(nu,nu0,beta,temp,typ):
-        if typ=='cmb':
-            return fcmb(nu)
-        elif typ=='dust':
-            return power_law(nu, nu0, beta-2)*black_body(nu, nu0, temp)
-        elif typ=='sync':
-            return power_law(nu, nu0, beta)            
-else:
-    dirname = "new_simulation_ns%d_seed%d_bbsim"%(nside, seed)
-    def comp_sed(nu,nu0,beta,temp,typ):
-        if typ=='cmb':
-            return fcmb(nu)
-        elif typ=='dust':
-            x_to=0.04799244662211351*nu/temp
-            x_from=0.04799244662211351*nu0/temp
-            return (nu/nu0)**(1+beta)*(np.exp(x_from)-1)/(np.exp(x_to)-1)
-        elif typ=='sync':
-            return (nu/nu0)**beta
-        return None
-
-os.system('mkdir -p '+dirname)
-    
-if type(beta_dust)==np.ndarray:
-    for i in beta_dust:
-        f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
-else:
-    f_dust = comp_sed(nu, nu0_dust, beta_dust, temp_dust, 'dust')    
-if type(beta_sync)==np.ndarray:
-    for j in beta_sync:
-        f_sync = comp_sed(nu, nu0_sync, j, None, 'sync')
-else:
-    f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
-f_cmb = fcmb(nu)
-
-f_dust = f_dust/f_cmb
-f_sync = f_sync/f_cmb
-f_cmb_RJ = f_cmb.copy()
-f_cmb = f_cmb/f_cmb_RJ
+f_cmb_RJ = fcmb(nu).copy()
 ncomp = 3 
 
 A_sync_BB = A_sync_BB * fcmb(nu0_sync)**2
 A_dust_BB = A_dust_BB * fcmb(nu0_dust)**2
+
+# Output directory
+dirname = "new_simulation_ns%d_seed%d_pysm_sigD%d_sigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
+os.system('mkdir -p '+dirname)
+dirnameMoments = dirname+"MomTrue"
+os.system('mkdir -p '+dirnameMoments)
 
 lmax = 3*nside-1
 ells = np.arange(lmax+1)
@@ -165,18 +119,7 @@ cl_cmb_tb = 0 * cl_cmb_bb
 cl_cmb_eb = 0 * cl_cmb_bb
 cl_cmb_te = 0 * cl_cmb_bb
 
-# Raw sky power spectra
-C_ells_sky = np.zeros([nfreq, npol, nfreq, npol, nells])
-# EE [6, 6 , nells]
-C_ells_sky[:, 0, :, 0, :] = (cl_cmb_ee[None, None, :] * f_cmb[:, None, None] * f_cmb[None, :, None] +
-                             cl_dust_ee[None, None, :] * f_dust[:, None, None] * f_dust[None, :, None] +
-                             cl_sync_ee[None, None, :] * f_sync[:, None, None] * f_sync[None, :, None]) * cl2dl[None, None, :] 
-# BB (6, 6, nells)
-C_ells_sky[:, 1, :, 1, :] = (cl_cmb_bb[None, None, :] * f_cmb[:, None, None] * f_cmb[None, :, None] +
-                             cl_dust_bb[None, None, :] * f_dust[:, None, None] * f_dust[None, :, None] +
-                             cl_sync_bb[None, None, :] * f_sync[:, None, None] * f_sync[None, :, None]) * cl2dl[None, None, :]
-
-# Add noise
+# Noise
 sens=1
 knee=1
 ylf=1
@@ -197,58 +140,54 @@ maps_comp[0,:,:] = hp.synfast([cl_cmb_tt, cl_cmb_ee, cl_cmb_bb, cl_cmb_te, cl_cm
 maps_comp[1,:,:] = hp.synfast([cl_dust_tt, cl_dust_ee, cl_dust_bb, cl_dust_te, cl_dust_eb, cl_dust_tb], nside, new=True)
 maps_comp[2,:,:] = hp.synfast([cl_sync_tt, cl_sync_ee, cl_sync_bb, cl_sync_te, cl_sync_eb, cl_sync_tb], nside, new=True)
 
-if o.use_pysm:
-    d2 = models("d2", nside) 
-    s1 = models("s1", nside) 
-    c1 = models("c1", nside) 
-
-    map_I_dust, map_Q_dust, map_U_dust = maps_comp[1,:,:]
-    map_I_sync, map_Q_sync, map_U_sync = maps_comp[2,:,:]
-    map_I_cmb,map_Q_cmb,map_U_cmb = maps_comp[0,:,:]
-
-    # Dust
-    d2[0]['A_I'] = map_I_dust
-    d2[0]['A_Q'] = map_Q_dust
-    d2[0]['A_U'] = map_U_dust
-    d2[0]['spectral_index'] = beta_dust
-    d2[0]['temp'] = temp_dust * np.ones(d2[0]['temp'].size) #need array, no const value for temp with PySM
-    # Sync
-    s1[0]['A_I'] = map_I_sync
-    s1[0]['A_Q'] = map_Q_sync
-    s1[0]['A_U'] = map_U_sync
-    s1[0]['spectral_index'] = beta_sync
-    # CMB
-    c1[0]['A_I'] = map_I_cmb
-    c1[0]['model'] = 'pre_computed' #different output maps at different seeds 
-    c1[0]['A_Q'] = map_Q_cmb
-    c1[0]['A_U'] = map_U_cmb
-
-    sky_config = {'dust' : d2, 'synchrotron' : s1, 'cmb' : c1}
-
-    sky = pysm.Sky(sky_config)
-
-    beams=Simons_Observatory_V3_SA_beams() 
-    instrument_config = {
-        'nside' : nside,
-        'frequencies' : nu, #Expected in GHz 
-        'use_smoothing' : o.use_smoothing,
-        'beams' : beams, #Expected in arcmin 
-        'add_noise' : False,
-        'use_bandpass' : False,
-        'channel_names' : ['LF1', 'LF2', 'MF1', 'MF2', 'UHF1', 'UHF2'],
-        'output_units' : 'uK_RJ',
-        'output_directory' : dirname,
-        'output_prefix' : '/test_deltabpass_',
-    }
+d2 = models("d2", nside) 
+s1 = models("s1", nside) 
+c1 = models("c1", nside) 
     
-    sky = pysm.Sky(sky_config)
-    instrument = pysm.Instrument(instrument_config)
-    maps_signal, _ = instrument.observe(sky, write_outputs=False)
-    maps_signal = maps_signal[:,1:,:]
-    maps_signal = maps_signal/f_cmb_RJ[:,None,None]
-else:
-    sed_comp = np.array([f_cmb, f_dust, f_sync]).T
-    maps_signal = np.sum(maps_comp[None, :,1:,:]*sed_comp[:,:,None,None], axis=1)
+map_I_dust, map_Q_dust, map_U_dust = maps_comp[1,:,:]
+map_I_sync, map_Q_sync, map_U_sync = maps_comp[2,:,:]
+map_I_cmb,map_Q_cmb,map_U_cmb = maps_comp[0,:,:]
+
+# Dust
+d2[0]['A_I'] = map_I_dust
+d2[0]['A_Q'] = map_Q_dust
+d2[0]['A_U'] = map_U_dust
+d2[0]['spectral_index'] = beta_dust
+d2[0]['temp'] = temp_dust * np.ones(d2[0]['temp'].size) #need array, no const value for temp with PySM
+# Sync
+s1[0]['A_I'] = map_I_sync
+s1[0]['A_Q'] = map_Q_sync
+s1[0]['A_U'] = map_U_sync
+s1[0]['spectral_index'] = beta_sync
+# CMB
+c1[0]['A_I'] = map_I_cmb
+c1[0]['model'] = 'pre_computed' #different output maps at different seeds 
+c1[0]['A_Q'] = map_Q_cmb
+c1[0]['A_U'] = map_U_cmb
+
+sky_config = {'dust' : d2, 'synchrotron' : s1, 'cmb' : c1}
+
+sky = pysm.Sky(sky_config)
+
+beams=Simons_Observatory_V3_SA_beams() 
+instrument_config = {
+    'nside' : nside,
+    'frequencies' : nu, #Expected in GHz 
+    'use_smoothing' : o.use_smoothing,
+    'beams' : beams, #Expected in arcmin 
+    'add_noise' : False,
+    'use_bandpass' : False,
+    'channel_names' : ['LF1', 'LF2', 'MF1', 'MF2', 'UHF1', 'UHF2'],
+    'output_units' : 'uK_RJ',
+    'output_directory' : dirname,
+    'output_prefix' : '/test_deltabpass_',
+}
+    
+sky = pysm.Sky(sky_config)
+instrument = pysm.Instrument(instrument_config)
+maps_signal, _ = instrument.observe(sky, write_outputs=False)
+maps_signal = maps_signal[:,1:,:]
+maps_signal = maps_signal/f_cmb_RJ[:,None,None]
 
 # Save map
 nmaps = nfreq * npol
@@ -271,9 +210,8 @@ for s in range(nsplits):
         nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl *nsplits
         nell_00 = nell_ee * 0 *nsplits
         maps_noise[s, i, :, :] = hp.synfast([nell_00, nell_ee, nell_bb, nell_00, nell_00, nell_00], nside, pol=False, new=True)[1:]
-noi_coadd = np.mean(maps_noise, axis=0)
 
-# Save splits 
+# Save splits
 for s in range(nsplits):
     hp.write_map(dirname+"/obs_split%dof%d.fits.gz" % (s+1, nsplits),
                  ((maps_signal[:,:,:]+maps_noise[s,:,:,:])*nhits_binary).reshape([nmaps,npix]),
