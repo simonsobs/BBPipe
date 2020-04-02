@@ -16,15 +16,15 @@ do
 	if [ ! -d new_sim_ns${nside}_seed${seed}_bbsim_betaVar_sigD${sig_d}sigS${sig_s} ] ; then
 	    echo "Generating simulation: gaussian beta with sigma dust = "${sig_d}
 	    ${python_exec} new_sim.py --seed ${seed} --beta-var True --sigma-d ${sig_d}
-	    echo "/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/new_sim_ns${nside}_seed${seed}_bbsim_betaVar_sigD${sig_d}sigS${sig_s}" >>  list_newsims_seed1300_sigDsigS.txt
+	    #echo "/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/new_sim_ns${nside}_seed${seed}_bbsim_betaVar_sigD${sig_d}sigS${sig_s}" >>  list_newsims_seed1300_sigDsigS.txt
 	fi
     done
 done
 
 
-# Generate simulations with pysm beta maps
-for seed in 1300 1301 1302 1303 1304
-do
-    echo "Generating simulation: pysm beta, seed = "${seed}
-    ${python_exec} new_sim.py --seed ${seed} --beta-pysm True
-done
+## Generate simulations with pysm beta maps
+#for seed in 1300 1301 1302 1303 1304
+#do
+#    echo "Generating simulation: pysm beta, seed = "${seed}
+#    ${python_exec} new_sim.py --seed ${seed} --beta-pysm True
+#done

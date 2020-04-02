@@ -22,11 +22,13 @@ parser.add_option('--nside', dest='nside', default=256, type=int,
                   help='Set to define Nside parameter, default=256')
 parser.add_option('--simulate', dest='do_simulation', default=True, action='store_true',
                   help='Simulation step, default=True')
-parser.add_option('--pysm', dest='use_pysm', default=False, action='store_true',
+parser.add_option('--pysm-sim', dest='pysm_sim', default=False, action='store_true',
                   help='Set to use PySM for simulations, default=False')
 parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true', 
                   help='Calculate power spectra and covariance matrix, default=True')
-parser.add_option('--beta-var', dest='beta_var', default=False,  action='store_true',
+parser.add_option('--beta-dust-var', dest='beta_dust_var', default=False,  action='store_true',
+                  help='Set to include gaussian spectral indices, default=False')
+parser.add_option('--beta-sync-var', dest='beta_sync_var', default=False,  action='store_true',
                   help='Set to include gaussian spectral indices, default=False')
 parser.add_option('--beta-pysm', dest='beta_pysm', default=False,  action='store_true',
                   help='Set to include non-gaussian varying spectral indices, default=False')
@@ -41,10 +43,10 @@ nside = o.nside
 seed = o.seed
 np.random.seed(seed)
 
-if len(args) != 9:
+if len(args) != 11:
         #parser.error
         print("Default settings: --seed --nside --simulate --pysm --do-cl --beta-var --beta-pysm --sigma-d --sigma-s")
-        print("Check with <script> -h")
+        print("Check default settings:  <script> -h")
 
 prefix_in='/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/'
 prefix_out="./"
@@ -56,112 +58,99 @@ alpha_dust_EE=-0.42
 alpha_dust_BB=-0.2
 nu0_dust=353. 
 temp_dust = 19.6
+beta_dust_const = 1.59
 if o.beta_pysm:
-        #beta_dust = hp.ud_grade(hp.read_map(prefix_in+'template_PySM/dust_beta.fits', field=0, verbose=False), nside_out=nside)
         beta_dust = pysm.read_map(prefix_in+'template_PySM/dust_beta.fits', nside, field=0, pixel_indices=None, mpi_comm=None)
-elif o.beta_var:
+elif o.beta_dust_var:
         beta_dust =  hp.ud_grade(hp.read_map(prefix_in+'map_beta_dust_sigD%d_sd%d.fits'%(o.sigma_dust, seed), verbose=False), nside_out=nside)
 else:
-    beta_dust = 1.59
+        beta_dust = beta_dust_const
     
 # Sync
 A_sync_BB=2
 EB_sync=2.
 alpha_sync_EE=-0.6
 alpha_sync_BB=-0.4
-nu0_sync=23. 
-if o.beta_var:
-        #beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_sigS%d.fits'%(o.sigma_sync), verbose=False), nside_out=nside)
-        beta_sync=-3.
+nu0_sync=23.
+beta_sync_const=-3.
+if o.beta_sync_var:
+        beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_sigS%d.fits'%(o.sigma_sync, o.seed), verbose=False), nside_out=nside)
 else:
-    beta_sync=-3.
+        beta_sync = beta_sync_const
 
 nu = np.array([27., 39., 93., 145., 225., 280.]) 
+npix = hp.nside2npix(nside)
 
+# CMB spectrum
 def fcmb(nu):
     x=0.017608676067552197*nu
     ex=np.exp(x)
     return ex*(x/(ex-1))**2
 
-if o.use_pysm:
-    d2 = models("d2", nside) 
-    s1 = models("s1", nside) 
-    c1 = models("c1", nside)
-
-    def plaw(nu, nu0, b):
+def plaw(nu, nu0, b):
         return (nu/nu0)**b
 
-    def power_law(nu, nu0, b_list):
+def power_law(nu, nu0, b_list):
         output = []
         for b in np.array(b_list):
                 new_elem = plaw(nu, nu0, b)
                 output.append(new_elem)
-        return output
+        return (np.array(output).reshape([6*npix]))
 
-    def black_body(nu, nu0, t):
+def black_body(nu, nu0, t):
         return B(nu, t)/B(nu0, t)
     
-    def B(nu, t):
+def B(nu, t):
         x = constants.h*nu*1E9 / constants.k / t
         return  (nu)**3  / np.expm1(x)
 
-    def dust_sed(nu, nu0, beta, t):
-        return power_law(nu, nu0, beta-2)*black_body(nu, nu0, t)
-
-    if o.beta_var:    
-        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betaVar_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
-        f_dust = dust_sed(nu, nu0_dust, beta_dust, temp_dust)
-        f_sync = plaw(nu, nu0_sync, beta_sync)
-    elif o.beta_pysm:
-        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betapysm"%(nside, seed)
-#        for i in beta_dust:
-#                f_dust = dust_sed(nu, nu0_dust, i, temp_dust)
-#        f_sync = power_law(nu, nu0_sync, beta_sync)
-    else:
-        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm"%(nside, seed)
-#        f_dust = dust_sed(nu, nu0_dust, beta_dust, temp_dust)
-#        f_sync = power_law(nu, nu0_sync, beta_sync)
-
-else:
-    #All spectra
-    def comp_sed(nu,nu0,beta,temp,typ):
+# All spectra
+# For constant betas
+def comp_sed_const(nu,nu0,beta,temp,typ):
         if typ=='cmb':
-            return fcmb(nu)
+                return fcmb(nu)
         elif typ=='dust':
-            x_to=0.04799244662211351*nu/temp
-            x_from=0.04799244662211351*nu0/temp
-            return (nu/nu0)**(1+beta)*(np.exp(x_from)-1)/(np.exp(x_to)-1)
+                return plaw(nu, nu0, beta-2)*black_body(nu, nu0, temp)
         elif typ=='sync':
-            return (nu/nu0)**beta
+                return plaw(nu, nu0, beta)
         return None
 
-    if o.beta_var:
-        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_betaVar_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
-        for i in beta_dust:
-            f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
-        #for j in beta_sync:
-        #        f_sync = comp_sed(nu, nu0_sync, j, None, 'sync')
-        f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
-    elif o.beta_pysm:
-        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_betapysm"%(nside, seed)
-        for i in beta_dust:
-            f_dust = comp_sed(nu, nu0_dust, i, temp_dust, 'dust')
-        f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
-    else:
-        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim"%(nside, seed)
-        f_dust = comp_sed(nu, nu0_dust, beta_dust, temp_dust, 'dust')
-        f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
+f_dust_const = comp_sed_const(nu, nu0_dust, beta_dust_const, temp_dust, 'dust')
+f_sync_const = comp_sed_const(nu, nu0_sync, beta_sync_const, None, 'sync')
+f_cmb_const = comp_sed_const(nu, None, None, None, 'cmb')
+
+if o.pysm_sim:
+        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
+else:
+        dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
+        if o.beta_dust_var or o.beta_sync_var or o.beta_pysm:
+                # For varying betas
+                def comp_sed(nu,nu0,beta,temp,typ):
+                        if typ=='cmb':
+                                return (fcmb(nu)*np.ones([npix,6])).reshape([6*npix])
+                        elif typ=='dust':
+                                return power_law(nu, nu0, beta-2)*((black_body(nu, nu0, temp)*np.ones([npix,6])).reshape([6*npix]))
+                        elif typ=='sync':
+                                return power_law(nu, nu0, beta*np.ones([npix, 6]))
+                        return None
+
+                f_dust = comp_sed(nu, nu0_dust, beta_dust, temp_dust, 'dust')
+                f_sync = comp_sed(nu, nu0_sync, beta_sync, None, 'sync')
+                f_cmb = comp_sed(nu, None, None, None, 'cmb')
+        else:
+                f_dust = f_dust_const
+                f_sync = f_sync_const
+                f_cmb = f_cmb_const
+
+        f_dust = f_dust/f_cmb
+        f_sync = f_sync/f_cmb
+        f_cmb = f_cmb/f_cmb
 
 os.system('mkdir -p '+dirname)
 dirnameMoments = dirname+"MomTrue"
 os.system('mkdir -p '+dirnameMoments)
 
 f_cmb_RJ = fcmb(nu).copy()
-
-f_cmb = fcmb(nu)
-f_dust = f_dust/f_cmb
-f_sync = f_sync/f_cmb
-f_cmb = f_cmb/f_cmb
 
 A_sync_BB = A_sync_BB * fcmb(nu0_sync)**2
 A_dust_BB = A_dust_BB * fcmb(nu0_dust)**2
@@ -210,23 +199,16 @@ cl_cmb_eb = 0 * cl_cmb_bb
 cl_cmb_te = 0 * cl_cmb_bb
 
 # Raw sky power spectra
+# Generate with some nominal spectra assuming constant spectral indices
 C_ells_sky = np.zeros([6, 2, 6, 2, len(ells)])
-# EE
-# [6,6,Nl]
-##(1,1,1,768) (786432,1,1,6)
-#print(cl_dust_ee.shape)
-#print((f_dust.T).shape)
-f_dust = f_dust.flatten()
-#print(f_dust[:].shape)
-#exit()
-C_ells_sky[:, 0, :, 0, :] = (cl_cmb_ee[None, None, :] * f_cmb[:, None, None] * f_cmb[None, :, None] +
-                             cl_dust_ee[None, None, None, :] * f_dust[:, None, None, None] * f_dust[None, :, None, None] +
-                             cl_sync_ee[None, None, :] * f_sync[:, None, None] * f_sync[None, :, None]) * cl2dl[None, None, :]
-# BB
-# [6,6,Nl]
-C_ells_sky[:, 1, :, 1, :] = (cl_cmb_bb[None, None, :] * f_cmb[:, None, None] * f_cmb[None, :, None] +
-                             cl_dust_bb[None, None, :] * f_dust[:, None, None] * f_dust[None, :, None] +
-                             cl_sync_bb[None, None, :] * f_sync[:, None, None] * f_sync[None, :, None]) * cl2dl[None, None, :]
+# EE [nfreq, nfreq, nell]
+C_ells_sky[:, 0, :, 0, :] = (cl_cmb_ee[None, None, :] * f_cmb_const[:, None, None] * f_cmb_const[None, :, None] +
+                             cl_dust_ee[None, None, :] * f_dust_const[:, None, None] * f_dust_const[None, :, None] +
+                             cl_sync_ee[None, None, :] * f_sync_const[:, None, None] * f_sync_const[None, :, None]) * cl2dl[None, None, :]
+# BB [nfreq, nfreq, nell]
+C_ells_sky[:, 1, :, 1, :] = (cl_cmb_bb[None, None, :] * f_cmb_const[:, None, None] * f_cmb_const[None, :, None] +
+                             cl_dust_bb[None, None, :] * f_dust_const[:, None, None] * f_dust_const[None, :, None] +
+                             cl_sync_bb[None, None, :] * f_sync_const[:, None, None] * f_sync_const[None, :, None]) * cl2dl[None, None, :]
 
 # Add noise
 sens=1
@@ -242,13 +224,17 @@ for i,n in enumerate(nu):
     for j in [0,1]:
         N_ells_sky[i, j, i, j, :] = nell[i]
 
-Npix = hp.nside2npix(nside)
 if o.do_simulation:
-    maps_comp = np.zeros([3, 2+1, Npix])
+    maps_comp = np.zeros([3, 2+1, npix])
     maps_comp[0,:,:] = hp.synfast([cl_cmb_tt, cl_cmb_ee, cl_cmb_bb, cl_cmb_te, cl_cmb_eb, cl_cmb_tb], nside, new=True)
     maps_comp[1,:,:] = hp.synfast([cl_dust_tt, cl_dust_ee, cl_dust_bb, cl_dust_te, cl_dust_eb, cl_dust_tb], nside, new=True)
     maps_comp[2,:,:] = hp.synfast([cl_sync_tt, cl_sync_ee, cl_sync_bb, cl_sync_te, cl_sync_eb, cl_sync_tb], nside, new=True)
-    if o.use_pysm:
+
+    if o.pysm_sim:
+            d2 = models("d2", nside) 
+            s1 = models("s1", nside) 
+            c1 = models("c1", nside)
+            
             map_I_dust, map_Q_dust, map_U_dust = maps_comp[1,:,:]
             map_I_sync, map_Q_sync, map_U_sync = maps_comp[2,:,:]
             map_I_cmb,map_Q_cmb,map_U_cmb = maps_comp[0,:,:]
@@ -286,7 +272,7 @@ if o.do_simulation:
                     'output_units' : 'uK_RJ',
                     'output_directory' : dirname,
                     'output_prefix' : '/test_deltabpass_',
-}
+            }
     
             sky = pysm.Sky(sky_config)
             instrument = pysm.Instrument(instrument_config)
@@ -295,9 +281,10 @@ if o.do_simulation:
             maps_signal = maps_signal/f_cmb_RJ[:,None,None]
     else:
             sed_comp = np.array([f_cmb, f_dust, f_sync]).T
-            maps_signal = np.sum(maps_comp[None, :,:,:]*sed_comp[:,:,None,None], axis=1)
+            sed_comp = sed_comp.reshape([len(nu), 3, npix])
+            maps_signal = np.sum(maps_comp[None,:,1:,:]*sed_comp[:,:,None,:], axis=1)
 
-    maps_noise = np.zeros([6,2,Npix])
+    maps_noise = np.zeros([6,2,npix])
     for i in range(6):
         nell_ee = N_ells_sky[i, 0, i, 0, :]*dl2cl
         nell_bb = N_ells_sky[i, 1, i, 1, :]*dl2cl
@@ -308,11 +295,11 @@ if o.do_simulation:
         def map2cl(maps):
             cl_out = np.zeros([6,2,6,2,len(ells)])
             for i in range(6):
-                m1 = np.zeros([3, Npix])
+                m1 = np.zeros([3, npix])
                 m1[1:,:]=maps[i, :, :]
                 for j in range(i,6):
                     print(i,j)
-                    m2 = np.zeros([3, Npix])
+                    m2 = np.zeros([3, npix])
                     m2[1:,:]=maps[j, :, :]
 
                     cl = hp.anafast(m1, m2, iter=0)
@@ -329,7 +316,7 @@ if o.do_simulation:
         S_ells_sim = map2cl(maps_signal+maps_noise)-N_ells_sky
     else:
         # Save maps: 2d array (nmaps, npix) 
-        hp.write_map(dirname+"/maps_sky_signal.fits", maps_signal.reshape([len(nu)*2,Npix]) ,
+        hp.write_map(dirname+"/maps_sky_signal.fits", maps_signal.reshape([len(nu)*2,npix]) ,
                      overwrite=True)
         hp.write_map(dirname+"/maps_comp_cmb.fits", maps_comp[0],overwrite=True)
         hp.write_map(dirname+"/maps_comp_dust.fits", maps_comp[1], overwrite=True)
