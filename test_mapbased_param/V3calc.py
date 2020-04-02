@@ -172,7 +172,7 @@ def so_V3_SA_beams():
 
 
 def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,delta_ell=1,
-                   beam_corrected=False,remove_kluge=False, CMBS4=False):
+                   beam_corrected=False,remove_kluge=False, CMBS4=''):
 
     ## retuns noise curves, including the impact of the beam for the SO small aperature telescopes
     ## noise curves are polarization only
@@ -239,7 +239,7 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
     ####################################################################
     ###   CALCULATE N(ell) for Temperature
     ## calculate the experimental weight
-    if CMBS4:
+    if CMBS4=='CMBS4':
         # noise on I, E and B
         Map_white_noise_levels = [np.array([8.14, 6.73, 8.52, 10.27, 9.05, 9.31, 9.98, 74.81, 128.29])/3]
         Map_white_noise_levels.append(np.array([5.52, 4.56, 5.78, 6.96, 6.14, 4.31, 4.61, 35.62, 61.08])/3)
@@ -264,7 +264,7 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
     ###################################################
     ###   CALCULATE N(ell) for Polarization
     ## calculate the astmospheric contribution for P
-    if CMBS4:
+    if CMBS4=='CMBS4':
         print(' CMBS4 configuration !!!! ')
         f_knee_pol_SA_20  = np.array([500,200,200])
         f_knee_pol_SA_30  = np.array([150, 65, 75])
