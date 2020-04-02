@@ -68,7 +68,7 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
 
     print(sensitivity,knee_mode,ny_lf,fsky,3*nside_out)
 
-    if CMBS4!='':CMBS4_opt = True
+    if CMBS4!='CMBS4':CMBS4_opt = True
     else: CMBS4_opt = False
     ll,nll,nlev=v3.so_V3_SA_noise(sensitivity,knee_mode,ny_lf,fsky,3*nside_out,\
             remove_kluge=True, CMBS4=CMBS4_opt)

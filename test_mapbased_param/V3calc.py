@@ -239,7 +239,7 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
     ####################################################################
     ###   CALCULATE N(ell) for Temperature
     ## calculate the experimental weight
-    if CMBS4=='CMBS4':
+    if CMBS4:
         # noise on I, E and B
         Map_white_noise_levels = [np.array([8.14, 6.73, 8.52, 10.27, 9.05, 9.31, 9.98, 74.81, 128.29])/3]
         Map_white_noise_levels.append(np.array([5.52, 4.56, 5.78, 6.96, 6.14, 4.31, 4.61, 35.62, 61.08])/3)
@@ -264,7 +264,7 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
     ###################################################
     ###   CALCULATE N(ell) for Polarization
     ## calculate the astmospheric contribution for P
-    if CMBS4=='CMBS4':
+    if CMBS4:
         print(' CMBS4 configuration !!!! ')
         f_knee_pol_SA_20  = np.array([500,200,200])
         f_knee_pol_SA_30  = np.array([150, 65, 75])
@@ -307,6 +307,7 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
                 NlB  *= np.exp( ell*(ell+1)* S4_beams[f]**2 )
             N_ell_P_SA.append( [NlT,NlE,NlB ] ) 
     else:
+        print('SO configuration ')
         AN_P_27  = (ell / f_knee_pol_SA_27[one_over_f_mode] )**alpha_pol[0] + 1.
         AN_P_39  = (ell / f_knee_pol_SA_39[one_over_f_mode] )**alpha_pol[1] + 1.
         AN_P_93  = (ell / f_knee_pol_SA_93[one_over_f_mode] )**alpha_pol[2] + 1.
