@@ -119,6 +119,10 @@ f_dust_const = comp_sed_const(nu, nu0_dust, beta_dust_const, temp_dust, 'dust')
 f_sync_const = comp_sed_const(nu, nu0_sync, beta_sync_const, None, 'sync')
 f_cmb_const = comp_sed_const(nu, None, None, None, 'cmb')
 
+f_dust_const /= f_cmb_const
+f_sync_const /= f_cmb_const
+f_cmb_const /= f_cmb_const
+
 if o.pysm_sim:
         dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
 else:
@@ -150,7 +154,7 @@ os.system('mkdir -p '+dirname)
 dirnameMoments = dirname+"MomTrue"
 os.system('mkdir -p '+dirnameMoments)
 
-f_cmb_RJ = fcmb(nu).copy()
+f_cmb_RJ = fcmb(nu)
 
 A_sync_BB = A_sync_BB * fcmb(nu0_sync)**2
 A_dust_BB = A_dust_BB * fcmb(nu0_dust)**2
@@ -280,8 +284,9 @@ if o.do_simulation:
             maps_signal = maps_signal[:,1:,:]
             maps_signal = maps_signal/f_cmb_RJ[:,None,None]
     else:
-            sed_comp = np.array([f_cmb, f_dust, f_sync]).T
-            sed_comp = sed_comp.reshape([len(nu), 3, npix])
+            sed_comp = np.array([f_cmb, f_dust, f_sync]).T # [3, n_nu, n_pix].T = [n_pix, n_nu, 3]
+            # Swap the axes 0 and 1
+            sed_comp = np.transpose(np.array([f_cmb, f_dust, f_sync]), axes=[1, 0, 2]) # [n_nu, 3, n_pix]
             maps_signal = np.sum(maps_comp[None,:,1:,:]*sed_comp[:,:,None,:], axis=1)
 
     maps_noise = np.zeros([6,2,npix])

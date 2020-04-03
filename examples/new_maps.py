@@ -68,7 +68,6 @@ A_sync_BB = A_sync_BB * fcmb(nu0_sync)**2
 A_dust_BB = A_dust_BB * fcmb(nu0_dust)**2
 
 # Output directory
-#prefix_out = "/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/"
 prefix_out = "/mnt/extraspace/susanna/test_newmaps/simulations/"
 dirname = prefix_out+"new_simulation_ns%d_seed%d_pysm_sigD%d_sigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
 os.system('mkdir -p '+dirname)

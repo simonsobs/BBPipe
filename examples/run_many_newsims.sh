@@ -13,14 +13,12 @@ do
 	    echo "Generating gaussian dust spectral indices with sigma "
 	    python3 beta_gaussian.py --sigma-d ${sig_d} --seed ${seed}
 	fi
-	if [ ! -d new_sim_ns${nside}_seed${seed}_bbsim_betaVar_sigD${sig_d}sigS${sig_s} ] ; then
+	if [ ! -d new_sim_ns${nside}_seed${seed}_bbsim_sigD${sig_d}_sigS${sig_s} ] ; then
 	    echo "Generating simulation: gaussian beta with sigma dust = "${sig_d}
-	    ${python_exec} new_sim.py --seed ${seed} --beta-var True --sigma-d ${sig_d}
-	    #echo "/mnt/zfsusers/susanna/PySM-tests2/BBPipe/examples/new_sim_ns${nside}_seed${seed}_bbsim_betaVar_sigD${sig_d}sigS${sig_s}" >>  list_newsims_seed1300_sigDsigS.txt
+	    ${python_exec} new_simulation.py --seed ${seed} --pysm-sim True --beta-dust-var True --sigma-d ${sig_d}
 	fi
     done
 done
-
 
 ## Generate simulations with pysm beta maps
 #for seed in 1300 1301 1302 1303 1304
