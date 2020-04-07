@@ -18,6 +18,7 @@ def noise_covariance_estimation(self):
     """
     Estimation of the pixel-based covariance matrix
     """
+    Ncov = []*noise_maps_sim.shape[0]
     for i in range(self.config['Nsims_bias']):
         # looping over simulations
         print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
@@ -26,7 +27,6 @@ def noise_covariance_estimation(self):
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=nhits_raw,
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
-        Ncov = []*noise_maps_sim.shape[0]
         for f in range(noise_maps_sim.shape[0]):
             nnT = np.outer( noise_maps_sim[f], noise_maps_sim[f] )
             if i == 0: Ncov[f] = nnT 
