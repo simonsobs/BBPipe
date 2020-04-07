@@ -35,7 +35,14 @@ def noise_covariance_estimation(self, binary_mask):
         for f in range(Nfreqs):
             for u in range(2):
                 for q in range(2):
-                    Ncov[f,u,q] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
+                    if u==0 and q==0:
+                        Ncov[f,::2,::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
+                    elif u==0 and q==1:
+                        Ncov[f,::2,1::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
+                    elif u==1 and q==0:
+                        Ncov[f,1::2,::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
+                    else:
+                        Ncov[f,1::2,1::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
 
     return Ncov
 
