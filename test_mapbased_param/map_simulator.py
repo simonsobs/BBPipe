@@ -28,10 +28,11 @@ def noise_covariance_estimation(self, binary_mask):
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
 
         noise_maps_sim[:,np.where(binary_mask==0)[0]]=0.0
+        good_pix = np.where(binary_mask==1)[0]
 
-        if i == 0: Ncov = np.zeros((noise_maps_sim.shape[0], noise_maps_sim.shape[1], noise_maps_sim.shape[1]))
+        if i == 0: Ncov = np.zeros((noise_maps_sim.shape[0], len(good_pix), len(good_pix)))
         for f in range(noise_maps_sim.shape[0]):
-            nnT = np.outer( noise_maps_sim[f], noise_maps_sim[f] )
+            nnT = np.outer( noise_maps_sim[f,good_pix], noise_maps_sim[f,good_pix] )
             if i == 0: Ncov[f,:,:] = nnT 
             else: Ncov[f,:,:] += nnT
 
