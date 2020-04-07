@@ -14,7 +14,7 @@ import copy
 import glob
 
 
-def noise_covariance_estimation(self):
+def noise_covariance_estimation(self, binary_mask):
     """
     Estimation of the pixel-based covariance matrix
     """
@@ -26,6 +26,9 @@ def noise_covariance_estimation(self):
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
+
+        noise_maps_sim[:,np.where(binary_mask==0)[0]]=0.0
+
         if i == 0: Ncov = np.zeros((noise_maps_sim.shape[0], noise_maps_sim.shape[1], noise_maps_sim.shape[1]))
         for f in range(noise_maps_sim.shape[0]):
             nnT = np.outer( noise_maps_sim[f], noise_maps_sim[f] )
@@ -202,7 +205,7 @@ class BBMapSim(PipelineStage):
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         if self.config['pixel_based_noise_cov']:
-            noise_cov_pp = noise_covariance_estimation(self)
+            noise_cov_pp = noise_covariance_estimation(self, binary_mask)
             np.save('noise_cov_pp', noise_cov_pp)
 
         # save on disk frequency maps, noise maps, noise_cov, binary_mask
