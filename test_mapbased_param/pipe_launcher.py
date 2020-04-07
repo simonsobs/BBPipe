@@ -83,6 +83,8 @@ def grabargs():
     parser.add_argument("--bandpass", action='store_true', help = "include non-zero bandpasses in the component separation", default=False)
     parser.add_argument("--instrument", type=str, help = "specifies the instrument bbpipe should consider, SO, CMBS4, etc.", default='SO')
     parser.add_argument("--path_to_dust_template", type=str, help = "path to e.g. PySM dust template", default="/global/cscratch1/sd/josquin/SO_sims/dust_beta.fits")
+    parser.add_argument("--pixel_based_noise_cov", action='store_true', help = "pixel-based estimation of the noise covariance matrix", default=False)
+
     args = parser.parse_args()
 
     return args
@@ -165,7 +167,8 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
                 external_binary_mask='', external_noise_cov='',
                 Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', 
                 mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, instrument='SO', \
-                frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template=''):
+                frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='', \
+                pixel_based_noise_cov=False):
     '''
     function generating the config file
     '''
@@ -206,6 +209,7 @@ BBMapSim:
     external_noise_sims: \''''+str(external_noise_sims)+'''\'
     external_binary_mask: \''''+str(external_binary_mask)+'''\'
     external_noise_cov: \''''+str(external_noise_cov)+'''\'
+    pixel_based_noise_cov: '''+str(pixel_based_noise_cov)+'''
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
@@ -299,7 +303,9 @@ def main():
                 Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing,\
-                instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass, path_to_dust_template=args.path_to_dust_template)
+                instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass, path_to_dust_template=args.path_to_dust_template,\
+                pixel_based_noise_cov=args.pixel_based_noise_cov )
+        
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
@@ -331,7 +337,7 @@ def main():
 
         for line in fin.readlines():
             if line != '\n':
-                fout.write('srun -n 1 -c 1 '+line)
+                fout.write('srun -n 1 -c 1` '+line)
             # else: fout.write(line)
         fin.close()
         fout.close()

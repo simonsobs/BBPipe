@@ -13,6 +13,27 @@ import healpy as hp
 import copy
 import glob
 
+
+def noise_covariance_estimation():
+    """
+    Estimation of the pixel-based covariance matrix
+    """
+    for i in range(self.config['Nsims_bias']):
+        # looping over simulations
+        print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
+        # generating frequency-maps noise simulations
+        nhits, noise_maps_sim, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+                        knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
+                            nside_out=self.config['nside'], norm_hits_map=nhits_raw,
+                                no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
+        Ncov = []*noise_maps_sim.shape[0]
+        for f in range(noise_maps_sim.shape[0]):
+            nnT = np.outer( noise_maps_sim[f], noise_maps_sim[f] )
+            if i == 0: Ncov[f] = nnT 
+            else: Ncov[f] += nnT
+
+    return Ncov
+
 class BBMapSim(PipelineStage):
     """
     Stage that performs the simulation 
@@ -179,6 +200,10 @@ class BBMapSim(PipelineStage):
             noise_cov *= noise_cov
 
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
+
+        if self.config['pixel_based_noise_cov']:
+            noise_cov_pp = noise_covariance_estimation()
+            np.save('noise_cov_pp', noise_cov_pp)
 
         # save on disk frequency maps, noise maps, noise_cov, binary_mask
         column_names = []
