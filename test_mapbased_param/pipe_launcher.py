@@ -198,6 +198,7 @@ global:
     bmodes_template: \''''+str(bmodes_template)+'''\'
     instrument: \''''+str(instrument)+'''\'
     bandpass: '''+str(bandpass)+'''
+    Nsims_bias:  '''+str(Nsims_bias)+'''
 
 BBMapSim:
     cmb_model: 'c1'
@@ -222,7 +223,6 @@ BBClEstimation:
     apotype:  \''''+str(apotype)+'''\'
     purify_b: True
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
-    Nsims_bias:  '''+str(Nsims_bias)+'''
     extra_apodization: '''+str(extra_apodization)+'''
     mask_apo: \''''+mask_apo+'''\'
 
