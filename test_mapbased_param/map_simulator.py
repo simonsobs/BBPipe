@@ -26,11 +26,10 @@ def noise_covariance_estimation(self):
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
+        if i == 0: Ncov = np.zeros((noise_maps_sim.shape[0], noise_maps_sim.shape[1], noise_maps_sim.shape[1]))
         for f in range(noise_maps_sim.shape[0]):
             nnT = np.outer( noise_maps_sim[f], noise_maps_sim[f] )
-            if i == 0: 
-                Ncov = np.zeros((noise_maps_sim.shape[0], noise_maps_sim.shape[1], noise_maps_sim.shape[1]))
-                Ncov[f,:,:] = nnT 
+            if i == 0: Ncov[f,:,:] = nnT 
             else: Ncov[f,:,:] += nnT
 
     return Ncov
