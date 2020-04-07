@@ -305,7 +305,7 @@ def main():
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing,\
                 instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass, path_to_dust_template=args.path_to_dust_template,\
                 pixel_based_noise_cov=args.pixel_based_noise_cov )
-        
+
         # submit call 
         # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
@@ -337,7 +337,7 @@ def main():
 
         for line in fin.readlines():
             if line != '\n':
-                fout.write('srun -n 1 -c 1` '+line)
+                fout.write('srun -n 1 -c 1 '+line)
             # else: fout.write(line)
         fin.close()
         fout.close()
