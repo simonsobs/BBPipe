@@ -29,9 +29,9 @@ def noise_covariance_estimation(self):
         for f in range(noise_maps_sim.shape[0]):
             nnT = np.outer( noise_maps_sim[f], noise_maps_sim[f] )
             if i == 0: 
-                Ncov = []*noise_maps_sim.shape[0]
-                Ncov[f] = nnT 
-            else: Ncov[f] += nnT
+                Ncov = np.zeros((noise_maps_sim.shape[0], noise_maps_sim.shape[1], noise_maps_sim.shape[1]))
+                Ncov[f,:,:] = nnT 
+            else: Ncov[f,:,:] += nnT
 
     return Ncov
 
