@@ -24,7 +24,7 @@ def noise_covariance_estimation(self):
         # generating frequency-maps noise simulations
         nhits, noise_maps_sim, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
-                            nside_out=self.config['nside'], norm_hits_map=nhits_raw,
+                            nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
         for f in range(noise_maps_sim.shape[0]):
             nnT = np.outer( noise_maps_sim[f], noise_maps_sim[f] )
