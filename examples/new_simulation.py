@@ -32,7 +32,7 @@ parser.add_option('--beta-sync-var', dest='beta_sync_var', default=False,  actio
                   help='Set to include gaussian spectral indices, default=False')
 parser.add_option('--beta-pysm', dest='beta_pysm', default=False,  action='store_true',
                   help='Set to include non-gaussian varying spectral indices, default=False')
-parser.add_option('--sigma-d', dest='sigma_dust', default=10,  type=int,
+parser.add_option('--sigma-d', dest='sigma_dust', default=0,  type=int,
                   help='Modify amplitude of dust variation, default=0. Input values are multiplied to E-2')
 parser.add_option('--sigma-s', dest='sigma_sync', default=0,  type=int,
                   help='Modify amplitude of sync variation, default=0. Input values are multiplied to E-2')
@@ -124,7 +124,10 @@ f_sync_const /= f_cmb_const
 f_cmb_const /= f_cmb_const
 
 if o.pysm_sim:
-        dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
+        if o.beta_pysm:
+                dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_betapysm"%(nside, seed)
+        else:
+                dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
 else:
         dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
         if o.beta_dust_var or o.beta_sync_var or o.beta_pysm:

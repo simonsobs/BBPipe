@@ -494,6 +494,16 @@ class BBCompSep(PipelineStage):
             return -np.inf
 
         params = self.params.build_params(par)
+
+        # Print all pars changing per seed
+        #with open('parameters_samples_sd1302_sig20.txt', 'a') as f:
+        #    print(params, file=f)  
+
+        # Print fit params per seed
+        ##names=np.array(self.params.p_free_names)
+        ##PAR = np.column_stack((names, par))
+        ##np.savetxt('params_fit.txt', PAR, delimiter=": ", fmt="%s")
+        
         if self.use_handl:
             dx = self.h_and_l_dx(params)
         else:
@@ -548,46 +558,28 @@ class BBCompSep(PipelineStage):
         parameters = dict(zip(list(names),res.x))
         model_cls = self.model(parameters) # n_bpws, nfreqs, nfreqs
 
-        # Compute covariance
-        nbands=self.n_bpws
-        delta_ell = 10
-        lmax=2+nbands*delta_ell
-        ells=np.arange(lmax+1)
-        lbands=np.linspace(2,lmax,nbands+1,dtype=int)
-        avg_bpw=0.5*(lbands[1:]+lbands[:-1]) #len = n_bpw, number of effective ells
-        #avg_bp = np.dot(ells, W.T)
-        windows=np.zeros([nbands,lmax+1])
-        for b,(l0,lf) in enumerate(zip(lbands[:-1],lbands[1:])):
-            windows[b,l0:lf]=1
-            windows[b,:]/=np.sum(windows[b])
-        fsky=1.
-        factor_modecount=1./((2*avg_bpw+1)*delta_ell*fsky)
-        iu1 = np.triu_indices(6)
-        cov_bpw=np.zeros([self.n_bpws,self.ncross,self.n_bpws,self.ncross])
-        bpw_tot = np.zeros([self.n_bpws, self.ncross])
-        for ii,(i1,i2) in enumerate(zip(iu1[0], iu1[1])):
-            bpw_tot[:,ii] = self.bbdata[:, i1, i2]
-            for jj,(j1,j2) in enumerate(zip(iu1[0],iu1[1])):
-                covar=(self.bbdata[:,i1,j1]*self.bbdata[:,i2,j2]+
-                       self.bbdata[:,i1,j2]*self.bbdata[:,i2,j1])
-                cov_bpw[:,ii,:,jj]=np.diag(covar) #ncross
-        #bpw_tot=bpw_tot.flatten() #ncross
-        #cov_bpw=cov_bpw.reshape([self.ncross*self.n_bpws,self.ncross*self.n_bpws])
-        els_x=np.sqrt(np.diag(covar))
+        ## Select the upper triangle
+        #for i in range(self.nfreqs):
+            #for j in range(i, self.nfreqs):
+                #import matplotlib.pyplot as plt
+                #plt.figure()
+                #plt.plot(self.ell_b, bbdata_cls[:,i,j], label='data')
+                #plt.plot(self.ell_b, model_cls[:,i,j], label='theory')
+                #plt.legend()
+                #plt.savefig(f'model_vs_data_{i}_{j}.png',bbox_inches='tight')
 
-        # Select the upper triangle
-        for i in range(self.nfreqs):
-            for j in range(i, self.nfreqs):
-                import matplotlib.pyplot as plt
-                plt.figure()
-                plt.plot(self.ell_b, bbdata_cls[:,i,j], label='data')
-                #plt.plot(self.ell_b, cov_bpw[:,i,:,j], label='Coadd data')
-                #plt.errorbar(self.ell_b, bbdata_cls[:,i,j], yerr=els_x[j,i])
-                #plt.errorbar(self.ell_b, covar, yerr=els_x[j,i])
-                plt.plot(self.ell_b, model_cls[:,i,j], label='theory')
-                plt.legend()
-                plt.savefig(f'model_vs_data_{i}_{j}.png',bbox_inches='tight')
-                
+        np.savetxt('ell_b.txt', self.ell_b)
+        
+        ## Write the array to disk
+        with open('bbdata_cls_1304.txt', 'w') as outfile:
+            for data_slice in bbdata_cls:
+                np.savetxt(outfile, data_slice)
+                outfile.write('#\n')
+        with open('model_cls_1304.txt', 'w') as outmodel:
+            for model_slice in model_cls:
+                np.savetxt(outmodel, model_slice)
+                outmodel.write('#\n')
+                        
         return res.x
 
     def fisher(self):
