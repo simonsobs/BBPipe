@@ -69,6 +69,9 @@ def noise_correlation_estimation(self, binary_mask):
     for f in range(Nfreqs):
         for i_ct in range(len(costheta_v)):
             for l in ell_v[2:]:
+                print(legendre(l)(costheta_v[i_ct]))
+                print(nll[f][l-2])
+                print(1/(4*np.pi)*(2*l + 1))
                 Ntheta[f, i_ct] += 1/(4*np.pi)*(2*l + 1)*nll[f][l-2]*legendre(l)(costheta_v[i_ct])
         Ntheta_interp.append( interp1d(theta_v, Ntheta[f,:]) )
 
