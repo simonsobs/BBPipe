@@ -76,15 +76,6 @@ def noise_correlation_estimation(self, binary_mask):
             Ntheta[f, i_ct] += np.sum([1/(4*np.pi)*(2*l + 1)*nll[f][l-2]*legendre(l)(costheta_v[i_ct]) for l in ell_v[2:]])
         Ntheta_interp.append( interp1d(theta_v, Ntheta[f,:]) )
 
-        pl.figure()
-        pl.plot(theta_v, Ntheta[f,:], 'ko')
-        costheta_v2 = np.linspace(-1,1,num=10000)
-        theta_v2 = np.arccos(costheta_v2)
-        pl.plot(theta_v2, Ntheta_interp[0](theta_v2), 'r-')
-        pl.savefig('test_plot_'+str(f)+'.pdf')
-    exit()
-
-
     ## assignment to pixels! 
     print('building N_ij')
     obs_pix = np.where(binary_mask == 1) [0]
