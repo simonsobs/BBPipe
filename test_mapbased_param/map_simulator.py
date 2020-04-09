@@ -83,6 +83,7 @@ def noise_correlation_estimation(self, binary_mask):
             ind2=0
             for p2 in obs_pix:
                 theta_p1_p2 = hp.pix2ang(self.config['nside'], [p1, p2])
+                print('theta = ', theta_p1_p2)
                 Nij[f, ind1, ind2] = Ntheta_interp(theta_p1_p2)
                 ind2+=1
             ind1+=1
