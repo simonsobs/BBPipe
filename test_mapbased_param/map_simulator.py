@@ -78,12 +78,13 @@ def noise_correlation_estimation(self, binary_mask):
     Nij = np.zeros((Nfreqs, len(obs_pix),len(obs_pix)))
     for f in range(Nfreqs):
         ind1=0
+        print('progress = ', ind1*100.0/len(obs_pix))
         for p1 in obs_pix:
             ind2=0
-            # for p2 in obs_pix:
-            theta_p1_p2 = hp.pix2ang(self.config['nside'], [p1, obs_pix])
-            Nij[f, ind1, :] = Ntheta_interp(theta_p1_p2)
-            # ind2+=1
+            for p2 in obs_pix:
+                theta_p1_p2 = hp.pix2ang(self.config['nside'], [p1, p2])
+                Nij[f, ind1, ind2] = Ntheta_interp(theta_p1_p2)
+                ind2+=1
             ind1+=1
 
     return Nij
