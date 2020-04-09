@@ -42,6 +42,10 @@ def noise_covariance_estimation(self, binary_mask):
     return Ncov
 
 
+def great_circle_distance(coord1, coord2):
+
+    return np.arccos( np.sin(coord1[1])*np.sin(coord2[1]) + np.cos(coord1[1])*np.cos(coord2[1])*np.cos(coord2[0]-coord1[0]) )
+
 def noise_correlation_estimation(self, binary_mask):
     from scipy.special import legendre
     from . import V3calc as v3
@@ -82,7 +86,8 @@ def noise_correlation_estimation(self, binary_mask):
         for p1 in obs_pix:
             ind2=0
             for p2 in obs_pix:
-                theta_p1_p2 = hp.pix2ang(self.config['nside'], [p1, p2])
+                longlatp1,longlatp2 = hp.pix2ang(self.config['nside'], [p1, p2])
+                theta_p1_p2 = great_circle_distance(longlatp1, longlatp2)
                 print('theta = ', theta_p1_p2)
                 Nij[f, ind1, ind2] = Ntheta_interp(theta_p1_p2)
                 ind2+=1
