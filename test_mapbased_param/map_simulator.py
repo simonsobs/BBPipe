@@ -88,7 +88,6 @@ def noise_correlation_estimation(self, binary_mask):
             for p2 in obs_pix:
                 longlatp1,longlatp2 = hp.pix2ang(self.config['nside'], [p1, p2])
                 theta_p1_p2 = great_circle_distance(longlatp1, longlatp2)
-                print('theta = ', theta_p1_p2)
                 Nij[f, ind1, ind2] = Ntheta_interp[f](theta_p1_p2)
                 ind2+=1
             ind1+=1
