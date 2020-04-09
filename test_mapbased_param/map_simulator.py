@@ -50,8 +50,8 @@ def noise_correlation_estimation(self, binary_mask):
     theta_v = np.arccos(costheta_v)
     ell_v = range(512)
    
-    nh=get_nhits(nside_out=nside_out)
-    msk=mknm.get_mask(nh, nside_out=nside_out)
+    nh=mknm.get_nhits(nside_out=self.config['nside'])
+    msk=mknm.get_mask(nh, nside_out=self.config['nside'])
     fsky=np.mean(msk)
 
     ## grab the noise angular power spectra
