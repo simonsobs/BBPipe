@@ -35,16 +35,59 @@ def noise_covariance_estimation(self, binary_mask):
         for f in range(Nfreqs):
             for u in range(2):
                 for q in range(2):
-                    if u==0 and q==0:
-                        Ncov[f,::2,::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
-                    elif u==0 and q==1:
-                        Ncov[f,::2,1::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
-                    elif u==1 and q==0:
-                        Ncov[f,1::2,::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
-                    else:
-                        Ncov[f,1::2,1::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
-
+                    if u==0 and q==0: Ncov[f,::2,::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
+                    elif u==0 and q==1: Ncov[f,::2,1::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
+                    elif u==1 and q==0: Ncov[f,1::2,::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
+                    else: Ncov[f,1::2,1::2] += np.outer( noise_maps_sim[2*f+u+1,good_pix], noise_maps_sim[2*f+q+1,good_pix] )
     return Ncov
+
+
+def noise_correlation_estimation(self, binary_mask):
+    from scipy.special import legendre
+    from . import V3calc as v3
+
+    costheta_v = np.linspace(-1,1,num=1000)
+    theta_v = np.arccos(costheta_v)
+    ell_v = range(512)
+   
+    nh=get_nhits(nside_out=nside_out)
+    msk=mknm.get_mask(nh, nside_out=nside_out)
+    fsky=np.mean(msk)
+
+    ## grab the noise angular power spectra
+    print('estimating N_ell')
+    ll, nll, nlev=v3.so_V3_SA_noise(sensitivity=self.config['sensitivity_mode'], 
+                        knee_mode=self.config['knee_mode'], ny_lf=self.config['ny_lf'], fsky,
+                        self.config['nside'], CMBS4=self.config['instrument'])
+
+    ## estimate the correlation noise function and interpolation
+    print('estimate the correlation noise function and interpolation')
+    from scipy.interpolate import interp1d
+    Nfreqs = nll.shape[0]
+    Ntheta = np.zeros((Nfreqs, len(theta)))
+    Ntheta_interp = []
+    for f in range(Nfreqs):
+        for i_ct in range(len(costheta_v)):
+            for l in ell_v[2:]:
+                Ntheta[f, i_ct] += 1/(4*np.pi)*(2*l + 1)*nll[f,l]*legendre(l)(costheta_v[i_ct])
+        Ntheta_interp.append( interp1d(theta_v, Ntheta[f,:]) )
+
+    ## assignment to pixels! 
+    print('building N_ij')
+    obs_pix = np.where(binary_mask == 1) [0]
+    Nij = np.zeros((Nfreqs, len(obs_pix),len(obs_pix)))
+    for f in range(Nfreqs):
+        ind1=0
+        for p1 in obs_pix:
+            ind2=0
+            # for p2 in obs_pix:
+            theta_p1_p2 = hp.pix2ang(self.config['nside'], [p1, obs_pix])
+            Nij[f, ind1, :] = Ntheta_interp(theta_p1_p2)
+            # ind2+=1
+            ind1+=1
+
+    return Nij
+
 
 class BBMapSim(PipelineStage):
     """
@@ -214,8 +257,12 @@ class BBMapSim(PipelineStage):
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         if self.config['pixel_based_noise_cov']:
+            noise_cov_pp_v2 = noise_correlation_estimation(self, binary_mask):
+            np.save('noise_cov_pp_v2', noise_cov_pp_v2)
+            
             noise_cov_pp = noise_covariance_estimation(self, binary_mask)
             np.save('noise_cov_pp', noise_cov_pp)
+
 
         # save on disk frequency maps, noise maps, noise_cov, binary_mask
         column_names = []
