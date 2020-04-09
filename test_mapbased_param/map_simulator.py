@@ -50,7 +50,7 @@ def noise_correlation_estimation(self, binary_mask):
     theta_v = np.arccos(costheta_v)
     ell_v = range(512)
    
-    nh=mknm.get_nhits(nside_out=self.config['nside'])
+    nh = hp.ud_grade(hp.read_map(self.get_input('norm_hits_map')), nside_out=self.config['nside'])
     msk=mknm.get_mask(nh, nside_out=self.config['nside'])
     fsky=np.mean(msk)
 
