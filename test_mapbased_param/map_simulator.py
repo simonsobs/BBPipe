@@ -257,9 +257,9 @@ class BBMapSim(PipelineStage):
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         if self.config['pixel_based_noise_cov']:
-            noise_cov_pp_v2 = noise_correlation_estimation(self, binary_mask):
+            noise_cov_pp_v2 = noise_correlation_estimation(self, binary_mask)
             np.save('noise_cov_pp_v2', noise_cov_pp_v2)
-            
+
             noise_cov_pp = noise_covariance_estimation(self, binary_mask)
             np.save('noise_cov_pp', noise_cov_pp)
 
