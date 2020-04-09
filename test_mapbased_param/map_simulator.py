@@ -56,8 +56,8 @@ def noise_correlation_estimation(self, binary_mask):
 
     ## grab the noise angular power spectra
     print('estimating N_ell')
-    ll, nll, nlev=v3.so_V3_SA_noise(sensitivity=self.config['sensitivity_mode'], \
-                        knee_mode=self.config['knee_mode'], ny_lf=self.config['ny_lf'], fsky=fsky, \
+    ll, nll, nlev=v3.so_V3_SA_noise(self.config['sensitivity_mode'], \
+                        self.config['knee_mode'], self.config['ny_lf'], fsky, \
                         self.config['nside'], CMBS4=self.config['instrument'])
 
     ## estimate the correlation noise function and interpolation
