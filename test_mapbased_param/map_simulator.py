@@ -58,11 +58,8 @@ def noise_correlation_estimation(self, binary_mask):
     print('estimating N_ell')
     ll, nll, nlev=v3.so_V3_SA_noise(self.config['sensitivity_mode'], \
                         self.config['knee_mode'], self.config['ny_lf'], fsky, \
-                        self.config['nside'], CMBS4=self.config['instrument'])
-    print(len(nll))
-    print(len(nll[0]))
-    sys.exit()
-    
+                        self.config['nside'])
+
     ## estimate the correlation noise function and interpolation
     print('estimate the correlation noise function and interpolation')
     from scipy.interpolate import interp1d
