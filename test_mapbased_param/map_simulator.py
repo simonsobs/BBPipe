@@ -46,7 +46,7 @@ def noise_correlation_estimation(self, binary_mask):
     from scipy.special import legendre
     from . import V3calc as v3
 
-    costheta_v = np.linspace(-1,1,num=1000)
+    costheta_v = np.linspace(-1,1,num=100)
     theta_v = np.arccos(costheta_v)
    
     nh = hp.ud_grade(hp.read_map(self.get_input('norm_hits_map')), nside_out=self.config['nside'])
@@ -67,12 +67,9 @@ def noise_correlation_estimation(self, binary_mask):
     ell_v = range(len(nll[0])+2)
     Ntheta_interp = []
     for f in range(Nfreqs):
+        print('f = ', f)
         for i_ct in range(len(costheta_v)):
-            for l in ell_v[2:]:
-                print(legendre(l)(costheta_v[i_ct]))
-                print(nll[f][l-2])
-                print(1/(4*np.pi)*(2*l + 1))
-                Ntheta[f, i_ct] += 1/(4*np.pi)*(2*l + 1)*nll[f][l-2]*legendre(l)(costheta_v[i_ct])
+            Ntheta[f, i_ct] += np.sum([1/(4*np.pi)*(2*l + 1)*nll[f][l-2]*legendre(l)(costheta_v[i_ct]) for l in ell_v[2:]])
         Ntheta_interp.append( interp1d(theta_v, Ntheta[f,:]) )
 
     ## assignment to pixels! 
