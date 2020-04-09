@@ -81,7 +81,8 @@ def noise_correlation_estimation(self, binary_mask):
         costheta_v2 = np.linspace(-1,1,num=10000)
         theta_v2 = np.arccos(costheta_v2)
         pl.plot(theta_v2, Ntheta_interp[0](theta_v2), 'r-')
-        pl.show()
+        pl.savefig('test_plot_'+str(f)+'.pdf')
+    exit()
 
 
     ## assignment to pixels! 
