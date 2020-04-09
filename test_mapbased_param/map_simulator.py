@@ -48,7 +48,6 @@ def noise_correlation_estimation(self, binary_mask):
 
     costheta_v = np.linspace(-1,1,num=1000)
     theta_v = np.arccos(costheta_v)
-    ell_v = range(512)
    
     nh = hp.ud_grade(hp.read_map(self.get_input('norm_hits_map')), nside_out=self.config['nside'])
     msk=mknm.get_mask(nh, nside_out=self.config['nside'])
@@ -64,10 +63,8 @@ def noise_correlation_estimation(self, binary_mask):
     print('estimate the correlation noise function and interpolation')
     from scipy.interpolate import interp1d
     Nfreqs = len(nll)
-    print(Nfreqs)
-    print(len(nll[0]))
-    exit()
     Ntheta = np.zeros((Nfreqs, len(theta_v)))
+    ell_v = range(len(nll[0])+2)
     Ntheta_interp = []
     for f in range(Nfreqs):
         for i_ct in range(len(costheta_v)):
