@@ -64,6 +64,9 @@ def noise_correlation_estimation(self, binary_mask):
     print('estimate the correlation noise function and interpolation')
     from scipy.interpolate import interp1d
     Nfreqs = len(nll)
+    print(Nfreqs)
+    print(len(nll[0]))
+    exit()
     Ntheta = np.zeros((Nfreqs, len(theta_v)))
     Ntheta_interp = []
     for f in range(Nfreqs):
