@@ -63,13 +63,13 @@ def noise_correlation_estimation(self, binary_mask):
     ## estimate the correlation noise function and interpolation
     print('estimate the correlation noise function and interpolation')
     from scipy.interpolate import interp1d
-    Nfreqs = nll.shape[0]
+    Nfreqs = len(nll)
     Ntheta = np.zeros((Nfreqs, len(theta)))
     Ntheta_interp = []
     for f in range(Nfreqs):
         for i_ct in range(len(costheta_v)):
             for l in ell_v[2:]:
-                Ntheta[f, i_ct] += 1/(4*np.pi)*(2*l + 1)*nll[f,l]*legendre(l)(costheta_v[i_ct])
+                Ntheta[f, i_ct] += 1/(4*np.pi)*(2*l + 1)*nll[f][l]*legendre(l)(costheta_v[i_ct])
         Ntheta_interp.append( interp1d(theta_v, Ntheta[f,:]) )
 
     ## assignment to pixels! 
