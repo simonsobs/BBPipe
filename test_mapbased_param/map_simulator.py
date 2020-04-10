@@ -73,7 +73,7 @@ def noise_correlation_estimation(self, binary_mask):
     for f in range(Nfreqs):
         print('f = ', f)
         for i_ct in range(len(costheta_v)):
-            Ntheta[f, i_ct] = np.sum([1.0/(4*np.pi)*(2.0*l + 1)*nll[f][l-2]*legendre(l)(costheta_v[i_ct]) for l in ell_v[2:]])
+            Ntheta[f, i_ct] = np.sum([(2.0*l + 1)/(4*np.pi) * nll[f][l-2] * legendre(l)(costheta_v[i_ct]) for l in ell_v[2:]])
         Ntheta_interp.append( interp1d(theta_v, Ntheta[f,:]) )
 
     ## assignment to pixels! 
@@ -88,6 +88,9 @@ def noise_correlation_estimation(self, binary_mask):
             for p2 in obs_pix:
                 longlatp1,longlatp2 = hp.pix2ang(self.config['nside'], [p1, p2])
                 theta_p1_p2 = np.abs(great_circle_distance(longlatp1, longlatp2))
+                if p1 == p2: 
+                    print(theta_p1_p2)
+                    exit()
                 Nij[f, ind1, ind2] = Ntheta_interp[f](theta_p1_p2)
                 ind2+=1
             ind1+=1
