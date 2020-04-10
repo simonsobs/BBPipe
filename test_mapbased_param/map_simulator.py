@@ -90,10 +90,10 @@ def noise_correlation_estimation(self, binary_mask):
                 longlatp1 = hp.pix2ang(self.config['nside'], p1)
                 longlatp2 = hp.pix2ang(self.config['nside'], p2)
                 theta_p1_p2 = np.abs(great_circle_distance(longlatp1, longlatp2))
-                if p1 == p2: 
-                    print(longlatp1, longlatp2)
-                    print(theta_p1_p2)
-                    exit()
+                # if p1 == p2: 
+                #     print(longlatp1, longlatp2)
+                #     print(theta_p1_p2)
+                #     exit()
                 Nij[f, ind1, ind2] = Ntheta_interp[f](theta_p1_p2)
                 ind2+=1
             ind1+=1
