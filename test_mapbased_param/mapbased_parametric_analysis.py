@@ -83,16 +83,23 @@ class BBMapParamCompSep(PipelineStage):
 
 
         if self.config['highpass_filtering']:
+            from scipy import signal 
+            from scipy.interpolate import interp1d
+            Nx=10000
+            window = signal.tukey(Nx, alpha=0.5)
+            window[int(Nx/2):] = window[int(Nx/2)]
+            f = interp1d(range(Nx), window )
+            def beam_window(theta):
+                '''
+                providing theta in radians
+                killing modes that are below ell ~ 60
+                '''
+                return f(theta*0.25*Nx/(np.pi/60))
+
             print('high-pass filtering frequency maps')
-            for f in range(frequency_maps.shape[0])
-                # definition of the beam window for high pass
-                mu = hp.nside2resol(self.config['nside'])*1.0/2
-                angles = np.linspace(0,np.pi,num=1000)
-                sigma = mu*1.0
-                beam_window = (np.exp(-(angles-mu)**20/sigma**20))
+            for f in range(frequency_maps.shape[0]):
                 # applying this beam window through smoothing
                 frequency_maps[f] = healpy.smoothing(frequency_maps[f], beam_window=beam_window)
-
 
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
