@@ -80,6 +80,20 @@ class BBMapParamCompSep(PipelineStage):
         else:
             instrument_ = copy.deepcopy(instrument)
 
+
+
+        if self.config['highpass_filtering']:
+            print('high-pass filtering frequency maps')
+            for f in range(frequency_maps.shape[0])
+                # definition of the beam window for high pass
+                mu = hp.nside2resol(self.config['nside'])*1.0/2
+                angles = np.linspace(0,np.pi,num=1000)
+                sigma = mu*1.0
+                beam_window = (np.exp(-(angles-mu)**20/sigma**20))
+                # applying this beam window through smoothing
+                frequency_maps[f] = healpy.smoothing(frequency_maps[f], beam_window=beam_window)
+
+
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
         noise_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
@@ -160,7 +174,7 @@ class BBMapParamCompSep(PipelineStage):
             frequency_maps__ = frequency_maps_*1.0
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
-            # noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             print('actual component separation ... ')
             res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
                          data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
