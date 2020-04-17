@@ -106,7 +106,7 @@ class BBMapParamCompSep(PipelineStage):
             #     killing modes that are below ell ~ 60
             #     '''
             #     return f(theta*0.25*Nx/(np.pi/60))
-            ell_knee = 60
+            ell_knee = 100
             lmax = int(2*self.config['nside'])
             filter_window = np.array([0,]+[1.0/np.sqrt(1.0+(ell_knee*1.0/ell)**2.4) for ell in range(1,lmax)])
             print('high-pass filtering frequency maps')
