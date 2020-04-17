@@ -80,6 +80,19 @@ class BBMapParamCompSep(PipelineStage):
         else:
             instrument_ = copy.deepcopy(instrument)
 
+
+        ind = 0
+        frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
+        noise_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
+        noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
+        for f in range(len(instrument['frequencies'])) : 
+            for i in range(3): 
+                frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
+                noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
+                noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
+                ind += 1
+        
+
         if self.config['highpass_filtering']:
             # from scipy import signal 
             # from scipy.interpolate import interp1d
@@ -100,23 +113,10 @@ class BBMapParamCompSep(PipelineStage):
             for f in range(frequency_maps.shape[0]):
                 # applying this beam window through smoothing
                 # frequency_maps[f] = healpy.smoothing(frequency_maps[f], beam_window=beam_window)
-                alms = hp.map2alm([frequency_maps[f][0], frequency_maps[f][0], frequency_maps[f][1]])
+                alms = hp.map2alm(frequency_maps_[f])
                 hp.almxfl(alms, filter_window, inplace=True) 
-                frequency_maps_ = hp.alm2map(alms)
-                frequency_maps[f][0] = frequency_maps_[1]
-                frequency_maps[f][1] = frequency_maps_[2]
+                frequency_maps_[f] = hp.alm2map(alms)
 
-        ind = 0
-        frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        noise_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        for f in range(len(instrument['frequencies'])) : 
-            for i in range(3): 
-                frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
-                noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
-                noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
-                ind += 1
-        
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
         noise_maps_ = noise_maps_[:,1:,:]
