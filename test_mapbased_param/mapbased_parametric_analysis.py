@@ -80,26 +80,31 @@ class BBMapParamCompSep(PipelineStage):
         else:
             instrument_ = copy.deepcopy(instrument)
 
-
-
         if self.config['highpass_filtering']:
-            from scipy import signal 
-            from scipy.interpolate import interp1d
-            Nx=10000
-            window = signal.tukey(Nx, alpha=0.5)
-            window[int(Nx/2):] = window[int(Nx/2)]
-            f = interp1d(range(Nx), window )
-            def beam_window(theta):
-                '''
-                providing theta in radians
-                killing modes that are below ell ~ 60
-                '''
-                return f(theta*0.25*Nx/(np.pi/60))
-
+            # from scipy import signal 
+            # from scipy.interpolate import interp1d
+            # Nx=10000
+            # window = signal.tukey(Nx, alpha=0.5)
+            # window[int(Nx/2):] = window[int(Nx/2)]
+            # # f = interp1d(range(Nx), window )
+            # def beam_window(theta):
+            #     '''
+            #     providing theta in radians
+            #     killing modes that are below ell ~ 60
+            #     '''
+            #     return f(theta*0.25*Nx/(np.pi/60))
+            ell_knee = 40
+            lmax = int(2*self.config['nside'])
+            filter_window = np.array([1.0/np.sqrt(1.0+(ell_knee*1.0/ell)**2.4) for ell in range(lmax)])
             print('high-pass filtering frequency maps')
             for f in range(frequency_maps.shape[0]):
                 # applying this beam window through smoothing
-                frequency_maps[f] = healpy.smoothing(frequency_maps[f], beam_window=beam_window)
+                # frequency_maps[f] = healpy.smoothing(frequency_maps[f], beam_window=beam_window)
+                alms = hp.map2alm([frequency_maps[f][0], frequency_maps[f][0], frequency_maps[f][1]])
+                hp.almxfl(alms, filter_window, inplace=True) 
+                frequency_maps_ = hp.alm2map(alms)
+                frequency_maps[f][0] = frequency_maps_[1]
+                frequency_maps[f][1] = frequency_maps_[2]
 
         ind = 0
         frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
