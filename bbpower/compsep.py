@@ -46,7 +46,7 @@ class BBCompSep(PipelineStage):
                         reference[:w3j_array.shape[0]] = w3j_array
                         w3j_array = reference
                     
-                    w3j_array = np.concatenate([w3j[-ellmin:],w3j[:-ellmin]])
+                    w3j_array = np.concatenate([w3j_array[-ellmin:],w3j_array[:-ellmin]])
                     w3j_array = w3j_array[:len(ells_w3j)]
                     w3j_array[:ellmin] = 0
 
