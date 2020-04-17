@@ -212,13 +212,13 @@ BBMapSim:
     external_binary_mask: \''''+str(external_binary_mask)+'''\'
     external_noise_cov: \''''+str(external_noise_cov)+'''\'
     pixel_based_noise_cov: '''+str(pixel_based_noise_cov)+'''
-    highpass_filtering: '''+str(highpass_filtering)+'''
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
     smart_multipatch: False
     fixed_delta_beta_slicing: '''+str(fixed_delta_beta_slicing)+'''
     path_to_dust_template: \''''+str(path_to_dust_template)+'''\'
+    highpass_filtering: '''+str(highpass_filtering)+'''
 
 BBClEstimation:
     aposize:  '''+str(aposize)+'''
