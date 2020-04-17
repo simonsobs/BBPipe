@@ -108,7 +108,7 @@ class BBMapParamCompSep(PipelineStage):
             #     return f(theta*0.25*Nx/(np.pi/60))
             ell_knee = 40
             lmax = int(2*self.config['nside'])
-            filter_window = np.array([1.0/np.sqrt(1.0+(ell_knee*1.0/ell)**2.4) for ell in range(lmax)])
+            filter_window = np.array([0]+[1.0/np.sqrt(1.0+(ell_knee*1.0/ell)**2.4) for ell in range(1,lmax)])
             print('high-pass filtering frequency maps')
             for f in range(frequency_maps.shape[0]):
                 # applying this beam window through smoothing
