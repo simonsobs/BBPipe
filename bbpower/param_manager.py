@@ -56,7 +56,7 @@ class ParameterManager(object):
                     if (p1 in config['pol_channels']) and (p2 in config['pol_channels']):
                         self._add_parameters(d)
             dm = c.get('moments')
-            if dm: # Moments
+            if dm and config['moments']: # Moments
                 self._add_parameters(dm)
 
         # Loop through different systematics

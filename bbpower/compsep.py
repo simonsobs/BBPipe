@@ -3,7 +3,7 @@ import os
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
-from .types import NpzFile, SACCFile
+from .types import NpzFile, SACCFile, YamlFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
 from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
@@ -22,7 +22,7 @@ class BBCompSep(PipelineStage):
     """
     name = "BBCompSep"
     inputs = [('cells_coadded', SACCFile),('cells_noise', SACCFile),('cells_fiducial', SACCFile)]
-    outputs = [('param_chains', NpzFile), ('config_copy', NpzFile)]
+    outputs = [('param_chains', NpzFile), ('config_copy', YamlFile)]
     config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
                     'sampler':'emcee', 'moments':False}
 
@@ -383,8 +383,10 @@ class BBCompSep(PipelineStage):
 
             # Set SED function with scaling beta
             def sed_d1(nu):
-                #return comp['sed'].diff(nu, cls_betas, *sed_params)
-                return comp['sed'].diff(nu,  *sed_params)[0] #only differentiate beta param
+                nu0 = params[comp['names_sed_dict']['nu0']]
+                x = np.log(nu / nu0)
+                # This is only valid for spectral indices
+                return x * comp['sed'].eval(nu, *sed_params)
 
             for tn in range(self.nfreqs):
                 sed_b = self.bpss[tn].convolve_sed(sed_d1, params)[0] #on
@@ -402,10 +404,13 @@ class BBCompSep(PipelineStage):
             comp = self.fg_model.components[c_name]
             units = comp['cmb_n0_norm']
             sed_params = [params[comp['names_sed_dict'][k]]
-                for k in comp['sed'].params]
+                          for k in comp['sed'].params]
 
             def sed_d2(nu):
-                return comp['sed'].diff_diff(nu,  *sed_params)[0][0]
+                nu0 = params[comp['names_sed_dict']['nu0']]
+                x = np.log(nu / nu0)
+                # This is only valid for spectral indices
+                return x**2 * comp['sed'].eval(nu, *sed_params)
 
             for tn in range(self.nfreqs):
                 sed_b = self.bpss[tn].convolve_sed(sed_d2, params)[0]
@@ -426,7 +431,7 @@ class BBCompSep(PipelineStage):
 
 
         v_left = np.transpose(v_left, axes=[1, 0, 2])
-        moment1x1 = np.dot(np.dot(mat, v_right), v_left)
+        moment1x1 = np.dot(np.dot(mat, v_right), v_left) / (4*np.pi)
         return moment1x1
 
     def evaluate_0x2(self, params, lmax, cls_cc, cls_bb,
@@ -552,35 +557,11 @@ class BBCompSep(PipelineStage):
             c2=-2*self.lnprob(par)
             return c2
         res=minimize(chi2, self.params.p0, method="Powell")
-
-        bbdata_cls = self.bbdata # n_bpws, nfreqs, nfreqs
-        names=self.params.p_free_names
-        parameters = dict(zip(list(names),res.x))
-        model_cls = self.model(parameters) # n_bpws, nfreqs, nfreqs
-
-        ## Select the upper triangle
-        #for i in range(self.nfreqs):
-            #for j in range(i, self.nfreqs):
-                #import matplotlib.pyplot as plt
-                #plt.figure()
-                #plt.plot(self.ell_b, bbdata_cls[:,i,j], label='data')
-                #plt.plot(self.ell_b, model_cls[:,i,j], label='theory')
-                #plt.legend()
-                #plt.savefig(f'model_vs_data_{i}_{j}.png',bbox_inches='tight')
-
-        np.savetxt('ell_b.txt', self.ell_b)
-        
-        ## Write the array to disk
-        with open('bbdata_cls_1304.txt', 'w') as outfile:
-            for data_slice in bbdata_cls:
-                np.savetxt(outfile, data_slice)
-                outfile.write('#\n')
-        with open('model_cls_1304.txt', 'w') as outmodel:
-            for model_slice in model_cls:
-                np.savetxt(outmodel, model_slice)
-                outmodel.write('#\n')
-                        
-        return res.x
+        if len(self.params.p0)<2:
+            x = np.array([res.x])
+        else:
+            x = res.x
+        return x
 
     def fisher(self):
         """
@@ -643,7 +624,7 @@ class BBCompSep(PipelineStage):
             print("Best fit:")
             for n,p in zip(self.params.p_free_names,sampler):
                 print(n+" = %.3lE" % p)
-            print("Chi2: %.3lE" % chi2)
+            print("Chi2: ", chi2)
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
             np.savez(self.get_output('param_chains'),
