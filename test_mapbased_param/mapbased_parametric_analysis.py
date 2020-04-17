@@ -115,7 +115,7 @@ class BBMapParamCompSep(PipelineStage):
                 alms = hp.map2alm(frequency_maps_[f])
                 for alms_ in alms:
                     hp.almxfl(alms_, filter_window, inplace=True) 
-                frequency_maps_[f] = hp.alm2map(alms)
+                frequency_maps_[f] = hp.alm2map(alms, nside=self.config['nside'])
 
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
