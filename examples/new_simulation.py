@@ -22,7 +22,7 @@ parser.add_option('--nside', dest='nside', default=256, type=int,
                   help='Set to define Nside parameter, default=256')
 parser.add_option('--simulate', dest='do_simulation', default=True, action='store_true',
                   help='Simulation step, default=True')
-parser.add_option('--pysm-sim', dest='pysm_sim', default=False, action='store_true',
+parser.add_option('--pysm-sim', dest='pysm_sim', default=True, action='store_true',
                   help='Set to use PySM for simulations, default=False')
 parser.add_option('--do-cl', dest='do_Cls', default=True,  action='store_true', 
                   help='Calculate power spectra and covariance matrix, default=True')
@@ -74,7 +74,9 @@ alpha_sync_BB=-0.4
 nu0_sync=23.
 beta_sync_const=-3.
 if o.beta_sync_var:
-        beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_sigS%d.fits'%(o.sigma_sync, o.seed), verbose=False), nside_out=nside)
+        beta_sync = hp.ud_grade(hp.read_map(prefix_in+'map_beta_sync_sigS%d_sd%d.fits'%(o.sigma_sync, o.seed), verbose=False), nside_out=nside)
+elif o.beta_pysm:
+        beta_sync = pysm.read_map(prefix_in+'template_PySM/synch_beta.fits', nside, field=0, pixel_indices=None, mpi_comm=None)
 else:
         beta_sync = beta_sync_const
 

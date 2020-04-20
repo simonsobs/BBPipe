@@ -8,9 +8,9 @@ parser.add_option('--seed', dest='seed',  default=1300, type=int,
                   help='Set to define seed, default=1300')
 parser.add_option('--nside', dest='nside', default=256, type=int,
                   help='Set to define Nside parameter, default=256')
-parser.add_option('--sigma-d', dest='sigma_dust', default=10,  type=int,
+parser.add_option('--sigma-d', dest='sigma_dust', default=0,  type=int,
                   help='Modify amplitude of dust variation, default=1')
-parser.add_option('--sigma-s', dest='sigma_sync', default=10,  type=int,
+parser.add_option('--sigma-s', dest='sigma_sync', default=0,  type=int,
                   help='Modify amplitude of sync variation, default=1')
 parser.add_option('--beta-dust', dest='calculate_beta_dust', default=True, action='store_true',
                   help='Calculate gaussian spectral index map of dust, default=True')
@@ -27,8 +27,8 @@ ells = np.arange(lmax+1)
 
 # Gamma (convergence)
 gamma_beta_sync = -2.5 
-#gamma_beta_dust = -3.5
-gamma_beta_dust = -2.1
+gamma_beta_dust = -3.5
+#gamma_beta_dust = -2.1
 
 prefix_out="."
 
@@ -59,7 +59,7 @@ if o.calculate_beta_sync:
     mean_addS = -3
     map_beta_sync = delta_betaS+mean_addS
     #print(map_beta_sync)
-    hp.write_map(prefix_out+"/map_beta_sync_sigS%d.fits"%(o.sigma_sync), map_beta_sync, overwrite=True) 
+    hp.write_map(prefix_out+"/map_beta_sync_sigS%d_sd%d.fits"%(o.sigma_sync, o.seed), map_beta_sync, overwrite=True) 
 
 
 
