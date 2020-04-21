@@ -151,6 +151,7 @@ class BBCompSep(PipelineStage):
 
         # Store data
         self.bbdata = self.vector_to_matrix(v2d)
+        np.save('bicepdata', self.bbdata)
         if self.use_handl:
             self.bbnoise = self.vector_to_matrix(v2d_noi)
             self.bbfiducial = self.vector_to_matrix(v2d_fid)

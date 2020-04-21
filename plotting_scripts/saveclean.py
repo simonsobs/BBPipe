@@ -3,11 +3,19 @@ import emcee
 from fsettings import alllabels
 import glob
 
-allfs = ['/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bicep_bands_gauss/output/', 
-         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_A5/output/', 
-         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_ee/output/', 
-         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_gauss1/output/', 
-         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_ell/output/']
+allfs = ['/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all/output/',
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all2/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_gauss1/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_gauss3/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_gauss5/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_decorr/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_decorr2/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_decorr_gauss1/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_decorr_gauss3/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_decorr_gauss5/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/ahwp_ignore/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/ahwp_model/output/', 
+         '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bicep_actuallyjustangles/output/']
 
 
 def save_cleaned_chains(fdir):
@@ -20,8 +28,8 @@ def save_cleaned_chains(fdir):
     burnin = int(10. * np.mean(tau))
     thin = int(0.5 * np.mean(tau))
 
-    chains = reader.get_chain()
     samples = reader.get_chain(discard=burnin, flat=True, thin=thin) 
+    chains = reader.get_chain(discard=burnin, flat=False) 
 
     N = chains.shape[0]
     M = chains.shape[1]
@@ -39,26 +47,15 @@ def save_cleaned_chains(fdir):
         print("tau: ", np.mean(tau), np.min(tau), np.max(tau), np.std(tau), file=of)
         print("burnin: %d, thin: %d" %(burnin, thin), file=of)
         print("independent samps per chain: %d" %inds, file=of)
+        print("GR", file=of)
+        print(GR, file=of)
         if np.any(GR > 1.1):
             print("FAILED GR", file=of)
         if inds < 50: 
             print("POTENTIALLY BAD TAU", file=of)
-    np.savez(fdir+'cleaned_chains', samples=samples, names=x['names'], labels=labels, p0=x['p0'])
+    #np.savez(fdir+'cleaned_chains', samples=samples, names=x['names'], labels=labels, p0=x['p0'])
     return
 
 for af in allfs:
     save_cleaned_chains(af)
-
-allfs0 = ['/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_decorr/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/bandpass_decorr/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_decorr/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_ee/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_r0/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/baseline_r0rpos/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/dphi/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/dphi_decorr/output/',
- '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/dphi_eb/output/']
 

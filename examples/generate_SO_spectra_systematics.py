@@ -40,7 +40,7 @@ def get_output_params(do_phase=False, do_angle=False, do_sinuous=False, do_eb=Fa
 # Choose here whether to include the effects of
 #  - A frequency-dependent polarization angle (do_phase=True)
 #  - A non-zero constant polarization angle (do_angle=True)
-prefix_out, phase_nu, angles, do_eb = get_output_params(do_phase=False, 
+prefix_out, phase_nu, angles, do_eb = get_output_params(do_phase=True,
                                                  do_angle=False, 
                                                  do_sinuous=False, 
                                                  do_eb=False)
@@ -146,7 +146,6 @@ if do_eb:
     fg_eb = 0.1
 Alens = 1.
 r_tens = 0.01
-#r_tens = 0.0
 nyears = 5.
 
 #Bandpowers

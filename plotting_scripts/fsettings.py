@@ -11,7 +11,8 @@ alllabels = {'A_lens':'A_{lens}', 'r_tensor':'r', 'beta_d':'\\beta_d', 'epsilon_
              'shift_4':'\Delta\\nu_4', 'shift_5':'\Delta\\nu_5', 'shift_6':'\Delta\\nu_6', 
              'shift_7':'\Delta\\nu_7', 'shift_8':'\Delta\\nu_8', 'shift_9':'\Delta\\nu_9', 
              'shift_10':'\Delta\\nu_10', 'shift_11':'\Delta\\nu_11', 'shift_12':'\Delta\\nu_12', 
-             'angle_1':'\phi_1', 'angle_2':'\phi_2', 'angle_3':'\phi_3', 'angle_4':'\phi_4', 
-             'angle_5':'\phi_5', 'angle_6':'\phi_6', 'dphi1_1':'\Delta\phi_1', 'dphi1_2':'\Delta\phi_2', 
-             'dphi1_3':'\Delta\phi_3', 'dphi1_4':'\Delta\phi_4', 'dphi1_5':'\Delta\phi_5', 'dphi1_6':'\Delta\phi_6', 
+             'angle_1':'\phi_1', 'angle_2':'\phi_2', 'angle_3':'\phi_3', 'angle_4':'\phi_4', 'angle_5':'\phi_5', 'angle_6':'\phi_6', 
+             'angle_7':'\phi_7', 'angle_8':'\phi_8', 'angle_9':'\phi_9', 'angle_10':'\phi_10', 'angle_11':'\phi_11', 'angle_12':'\phi_12', 
+             'dphi1_1':'\Delta\phi_1', 'dphi1_2':'\Delta\phi_2', 'dphi1_3':'\Delta\phi_3', 'dphi1_4':'\Delta\phi_4', 'dphi1_5':'\Delta\phi_5', 'dphi1_6':'\Delta\phi_6', 
+             'dphi1_7':'\Delta\phi_7', 'dphi1_8':'\Delta\phi_8', 'dphi1_9':'\Delta\phi_9', 'dphi1_10':'\Delta\phi_10', 'dphi1_11':'\Delta\phi_11', 'dphi1_12':'\Delta\phi_12', 
              'decorr_amp_d':'\Delta_d', 'decorr_amp_s':'\Delta_s'}
