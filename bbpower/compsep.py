@@ -8,7 +8,7 @@ from .fg_model import FGModel
 from .param_manager import ParameterManager
 from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
 from fgbuster.component_model import CMB 
-from sacc.sacc import SACC
+import sacc
 
 class BBCompSep(PipelineStage):
     """
@@ -51,6 +51,21 @@ class BBCompSep(PipelineStage):
             raise ValueError("Input vector can only be 1- or 2-D")
         return mat
 
+    def _freq_pol_iterator(self):
+        icl = -1
+        for b1 in range(self.nfreqs):
+            for p1 in range(self.npol):
+                m1 = p1 + self.npol * b1
+                for b2 in range(b1, self.nfreqs):
+                    if b1 == b2:
+                        p2_r = range(p1, self.npol)
+                    else:
+                        p2_r = range(self.npol)
+                    for p2 in p2_r:
+                        m2 = p2 + self.npol * b2
+                        icl += 1
+                        yield b1, b2, p1, p2, m1, m2, icl
+
     def parse_sacc_file(self):
         """
         Reads the data in the sacc file included the power spectra, bandpasses, and window functions. 
@@ -59,95 +74,109 @@ class BBCompSep(PipelineStage):
         self.use_handl = self.config['likelihood_type'] == 'h&l'
 
         #Read data
-        self.s = SACC.loadFromHDF(self.get_input('cells_coadded'))
+        self.s = sacc.Sacc.load_fits(self.get_input('cells_coadded'))
         if self.use_handl:
-            s_fid = SACC.loadFromHDF(self.get_input('cells_fiducial'), \
-                                     precision_filename=self.get_input('cells_coadded'))
-            s_noi = SACC.loadFromHDF(self.get_input('cells_noise'), \
-                                     precision_filename=self.get_input('cells_coadded'))
+            s_fid = sacc.Sacc.load_fits(self.get_input('cells_fiducial'))
+            s_noi = sacc.Sacc.load_fits(self.get_input('cells_noise'))
 
-        #Keep only BB measurements
-        correlations=[]
-        for m1 in self.config['pol_channels']:
-            for m2 in self.config['pol_channels']:
-                correlations.append((m1+m2).encode())
+        # Keep only desired correlations
+        self.pols = self.config['pol_channels']
+        corr_all = ['cl_ee', 'cl_eb', 'cl_be', 'cl_bb']
+        corr_keep = []
+        for m1 in self.pols:
+            for m2 in self.pols:
+                clname = 'cl_' + m1.lower() + m2.lower()
+                corr_keep.append(clname)
+        for c in corr_all:
+            if c not in corr_keep:
+                self.s.remove_selection(c)
+                if self.use_handl:
+                    s_fid.remove_selection(c)
+                    s_noi.remove_selection(c)
 
-        self.s.cullType(correlations)
-        self.s.cullLminLmax(self.config['l_min']*np.ones(len(self.s.tracers)),
-                            self.config['l_max']*np.ones(len(self.s.tracers)))
+        # Scale cuts
+        self.s.remove_selection(ell__gt=self.config['l_max'])
+        self.s.remove_selection(ell__lt=self.config['l_min'])
         if self.use_handl:
-            s_fid.cullType(correlations)
-            s_fid.cullLminLmax(self.config['l_min']*np.ones(len(s_fid.tracers)),
-                               self.config['l_max']*np.ones(len(s_fid.tracers)))
-            s_noi.cullType(correlations)
-            s_noi.cullLminLmax(self.config['l_min']*np.ones(len(s_noi.tracers)),
-                               self.config['l_max']*np.ones(len(s_noi.tracers)))
-        self.nfreqs = len(self.s.tracers)
-        self.npol = len(self.config['pol_channels'])
+            s_fid.remove_selection(ell__gt=self.config['l_max'])
+            s_fid.remove_selection(ell__lt=self.config['l_min'])
+            s_noi.remove_selection(ell__gt=self.config['l_max'])
+            s_noi.remove_selection(ell__lt=self.config['l_min'])
+
+        tr_names = sorted(list(self.s.tracers.keys()))
+        self.nfreqs = len(tr_names)
+        self.npol = len(self.pols)
         self.nmaps = self.nfreqs * self.npol
         self.index_ut = np.triu_indices(self.nmaps)
         self.ncross = (self.nmaps * (self.nmaps + 1)) // 2
-        self.order = self.s.sortTracers()
-        self.pol_order=dict(zip(self.config['pol_channels'],range(self.npol)))
+        self.pol_order=dict(zip(self.pols,range(self.npol)))
 
         #Collect bandpasses
         self.bpss = []
-        for i_t, t in enumerate(self.s.tracers):
-            nu = t.z
+        for i_t, tn in enumerate(tr_names):
+            t = self.s.tracers[tn]
+            nu = t.nu
             dnu = np.zeros_like(nu);
             dnu[1:-1] = 0.5 * (nu[2:] - nu[:-2])
             dnu[0] = nu[1] - nu[0]
             dnu[-1] = nu[-1] - nu[-2]
-            bnu = t.Nz
+            bnu = t.bandpass
             self.bpss.append(Bandpass(nu, dnu, bnu, i_t+1, self.config))
 
-        #Get ell sampling
+        # Get ell sampling
+        # Example power spectrum
+        self.ell_b, _ = self.s.get_ell_cl('cl_' + 2 * self.pols[0].lower(),
+                                          tr_names[0], tr_names[0])
         #Avoid l<2
-        mask_w = self.s.binning.windows[0].ls > 1
-        self.bpw_l = self.s.binning.windows[0].ls[mask_w]
+        win0 = self.s.data[0]['window']
+        mask_w = win0.values > 1
+        self.bpw_l = win0.values[mask_w]
         self.n_ell = len(self.bpw_l)
+        self.n_bpws = len(self.ell_b)
         # D_ell factor
         self.dl2cl = 2 * np.pi / (self.bpw_l * (self.bpw_l + 1))
         if self.config.get('compute_dell'):
             self.dl2cl = 1.
-        _,_,_,self.ell_b,_ = self.order[0]
-        self.n_bpws = len(self.ell_b)
         self.windows = np.zeros([self.ncross, self.n_bpws, self.n_ell])
 
         #Get power spectra and covariances
-        v = self.s.mean.vector
-        if len(v) != self.n_bpws * self.ncross:
+        if not (self.s.covariance.covmat.shape[-1] == len(self.s.mean) == self.n_bpws * self.ncross):
             raise ValueError("C_ell vector's size is wrong")
-        cv = self.s.precision.getCovarianceMatrix()
+        ###cv = self.s.precision.getCovarianceMatrix()
 
-        #Parse into the right ordering
         v2d = np.zeros([self.n_bpws, self.ncross])
         if self.use_handl:
             v2d_noi = np.zeros([self.n_bpws, self.ncross])
             v2d_fid = np.zeros([self.n_bpws, self.ncross])
         cv2d = np.zeros([self.n_bpws, self.ncross, self.n_bpws, self.ncross])
+
         self.vector_indices = self.vector_to_matrix(np.arange(self.ncross, dtype=int)).astype(int)
         self.indx = []
-        for t1,t2,typ,ells,ndx in self.order:
-            p1,p2=typ.decode()
-            ip1=self.pol_order[p1]
-            ip2=self.pol_order[p2]
-            # Ordering is such that polarization channel is the fastest varying index
-            ind_vec=self.vector_indices[t1*self.npol + ip1, t2*self.npol + ip2]
-            for b,i in enumerate(ndx):
-                self.windows[ind_vec, b, :] = self.s.binning.windows[i].w[mask_w]
-            v2d[:, ind_vec] = v[ndx]
-            if self.use_handl:
-                v2d_noi[:, ind_vec] = s_noi.mean.vector[ndx]
-                v2d_fid[:, ind_vec] = s_fid.mean.vector[ndx]
-            if len(ells) != self.n_bpws:
+
+        #Parse into the right ordering
+        for b1, b2, p1, p2, m1, m2, ind_vec in self._freq_pol_iterator():
+            t1 = tr_names[b1]
+            t2 = tr_names[b2]
+            pol1 = self.pols[p1].lower()
+            pol2 = self.pols[p2].lower()
+            cl_typ = f'cl_{pol1}{pol2}'
+            ind_a = self.s.indices(cl_typ, (t1, t2))
+            if len(ind_a) != self.n_bpws:
                 raise ValueError("All power spectra need to be sampled at the same ells")
-            for t1b, t2b, typb, ellsb, ndxb in self.order:
-                p1b,p2b=typb.decode()
-                ip1b=self.pol_order[p1b]
-                ip2b=self.pol_order[p2b]
-                ind_vecb=self.vector_indices[t1b*self.npol + ip1b, t2b*self.npol + ip2b]
-                cv2d[:, ind_vec, :, ind_vecb] = cv[ndx, :][:, ndxb]
+            w = self.s.get_bandpower_windows(ind_a)
+            self.windows[ind_vec, :, :] = w.weight[mask_w, :].T
+            v2d[:, ind_vec] = np.array(self.s.mean[ind_a])
+            if self.use_handl:
+                _, v2d_noi[:, ind_vec] = s_noi.get_ell_cl(cl_typ, t1, t2)
+                _, v2d_fid[:, ind_vec] = s_fid.get_ell_cl(cl_typ, t1, t2)
+            for b1b, b2b, p1b, p2b, m1b, m2b, ind_vecb in self._freq_pol_iterator():
+                t1b = tr_names[b1b]
+                t2b = tr_names[b2b]
+                pol1b = self.pols[p1b].lower()
+                pol2b = self.pols[p2b].lower()
+                cl_typb = f'cl_{pol1b}{pol2b}'
+                ind_b = self.s.indices(cl_typb, (t1b, t2b))
+                cv2d[:, ind_vec, :, ind_vecb] = self.s.covariance.covmat[ind_a][:, ind_b]
 
         #Store data
         self.bbdata = self.vector_to_matrix(v2d)
@@ -164,7 +193,7 @@ class BBCompSep(PipelineStage):
         """
         cmb_lensingfile = np.loadtxt(self.config['cmb_model']['cmb_templates'][0])
         cmb_bbfile = np.loadtxt(self.config['cmb_model']['cmb_templates'][1])
-        
+
         self.cmb_ells = cmb_bbfile[:, 0]
         mask = (self.cmb_ells <= self.bpw_l.max()) & (self.cmb_ells > 1)
         self.cmb_ells = self.cmb_ells[mask]

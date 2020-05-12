@@ -1,4 +1,0 @@
-examples/SO_V3_ns512_sens1_knee1_4split_Mock0001/obs_split1of4.fits
-examples/SO_V3_ns512_sens1_knee1_4split_Mock0001/obs_split2of4.fits
-examples/SO_V3_ns512_sens1_knee1_4split_Mock0001/obs_split3of4.fits
-examples/SO_V3_ns512_sens1_knee1_4split_Mock0001/obs_split4of4.fits

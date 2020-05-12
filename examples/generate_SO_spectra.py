@@ -77,6 +77,7 @@ class Bpass(object):
 
     def convolve_sed(self,f):
         sed = np.sum(self.dnu*self.bnu*self.nu**2*f(self.nu))
+        return sed
 
 
 band_names = ['LF1', 'LF2', 'MF1', 'MF2', 'UHF1', 'UHF2']
@@ -150,7 +151,6 @@ bpw_freq_tot=bpw_freq_sig+bpw_freq_noi
 bpw_freq_tot=bpw_freq_tot.reshape([nfreqs*2,nfreqs*2,nbands])
 bpw_freq_sig=bpw_freq_sig.reshape([nfreqs*2,nfreqs*2,nbands])
 bpw_freq_noi=bpw_freq_noi.reshape([nfreqs*2,nfreqs*2,nbands])
-
 
 # Creating Sacc files
 s_d = sacc.Sacc()
