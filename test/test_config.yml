@@ -1,7 +1,13 @@
 # These parameters are accessible to all stages
 global:
-    nside: 512
+    nside: 64
     compute_dell: True
+
+BBPowerSpecter:
+    # Bandpower definition
+    bpw_edges: "./examples/test_data/bpw_edges.txt"
+    purify_B: False
+    n_iter : 0
 
 BBCompSep:
     # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')

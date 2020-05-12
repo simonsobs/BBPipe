@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import FitsFile,TextFile,SACCFile,DummyFile
+from .types import FitsFile,TextFile,DummyFile
 import sacc
 import numpy as np
 import healpy as hp
@@ -13,7 +13,7 @@ class BBPowerSpecter(PipelineStage):
     name="BBPowerSpecter"
     inputs=[('splits_list',TextFile),('masks_apodized',FitsFile),('bandpasses_list',TextFile),
             ('sims_list',TextFile),('beams_list',TextFile)]
-    outputs=[('cells_all_splits',SACCFile),('cells_all_sims',TextFile),('mcm',DummyFile)]
+    outputs=[('cells_all_splits',FitsFile),('cells_all_sims',TextFile),('mcm',DummyFile)]
     config_options={'bpw_edges':None,
                     'beam_correct':True,
                     'purify_B':True,
@@ -130,7 +130,7 @@ class BBPowerSpecter(PipelineStage):
     def get_fname_workspace(self,band1,band2):
         b1=min(band1,band2)
         b2=max(band1,band2)
-        return self.prefix_mcm+"_%d_%d.dat" % (b1+1, b2+1)
+        return self.prefix_mcm+"_%d_%d.fits" % (b1+1, b2+1)
 
     def get_field(self,band,mps):
         f = nmt.NmtField(self.masks[band],
@@ -196,69 +196,62 @@ class BBPowerSpecter(PipelineStage):
         sacc_t = []
         for b in range(self.n_bpss):
             bpss = self.bpss['band%d' % (b+1)]
+            beam = self.beams['band%d' % (b+1)]
             for s in range(self.nsplits):
-                T=sacc.Tracer(self.get_map_label(b,s),'CMBP',
-                              bpss['nu'],bpss['bnu'],
-                              exp_sample='SO_SAT')
-                T.addColumns({'dnu':bpss['dnu']})
+                T = sacc.BaseTracer.make('NuMap', self.get_map_label(b, s),
+                                         2, bpss['nu'], bpss['bnu'],
+                                         self.larr_all, beam,
+                                         quantity='cmb_polarization',
+                                         bandpass_extra={'dnu': bpss['dnu']})
                 sacc_t.append(T)
         return sacc_t
                                           
-    def get_sacc_binning(self,with_windows=False):
-        typ, ell, t1, q1, t2, q2 = [], [], [], [], [], []
+    def get_sacc_windows(self):
+        windows_wsp = {}
+        for b1 in range(self.n_bpss):
+            for b2 in range(b1,self.n_bpss):
+                name = self.get_workspace_label(b1, b2)
+                windows_wsp[name]={}
+                wsp = self.workspaces[name]
+                bpw_win = wsp.get_bandpower_windows()
+                windows_wsp[name]['EE'] = sacc.BandpowerWindow(self.larr_all, bpw_win[0, :, 0, :].T)
+                windows_wsp[name]['EB'] = sacc.BandpowerWindow(self.larr_all, bpw_win[1, :, 1, :].T)
+                windows_wsp[name]['BE'] = sacc.BandpowerWindow(self.larr_all, bpw_win[2, :, 2, :].T)
+                windows_wsp[name]['BB'] = sacc.BandpowerWindow(self.larr_all, bpw_win[3, :, 3, :].T)
+        return windows_wsp
+
+    def save_cell_to_file(self, cell, tracers, fname, with_windows=False):
+        # Create sacc file
+        s = sacc.Sacc()
+
+        # Add tracers
+        for t in tracers:
+            s.add_tracer_object(t)
+
+        # Add each power spectrum
         l_eff = self.bins.get_effective_ells()
-
-        windows=None
-        if with_windows:
-            windows_wsp = {}
-            for b1 in range(self.n_bpss):
-                for b2 in range(b1,self.n_bpss):
-                    name = self.get_workspace_label(b1,b2)
-                    windows_wsp[name]={}
-                    wsp = self.workspaces[name]
-                    bpw_win = wsp.get_bandpower_windows()
-                    windows_wsp[name]['EE'] = bpw_win[0,:,0,:]
-                    windows_wsp[name]['EB'] = bpw_win[1,:,1,:]
-                    windows_wsp[name]['BE'] = bpw_win[2,:,2,:]
-                    windows_wsp[name]['BB'] = bpw_win[3,:,3,:]
-            windows = []
-        
-        for b1,b2,s1,s2,l1,l2 in self.get_cell_iterator():
-            if (b1==b2) and (s1==s2):
-                types = ['EE','EB','BB'] # Do not double-count EB
-            else:
-                types = ['EE','EB', 'BE', 'BB']
-            name_wsp = self.get_workspace_label(b1,b2)
-            
-            for ty in types:
-                for il,l in enumerate(l_eff):
-                    ell.append(l)
-                    typ.append(ty)
-                    t1.append(b1*self.nsplits+s1)
-                    t2.append(b2*self.nsplits+s2)
-                    q1.append('C')
-                    q2.append('C')
-                    if with_windows:
-                        windows.append(sacc.Window(self.larr_all,
-                                                   windows_wsp[name_wsp][ty][il]))
-
-        return sacc.Binning(typ,ell,t1,q1,t2,q2,windows=windows)
-
-    def save_cell_to_file(self,cell,tracers,binning,fname):
-        # Create data vector
-        vector = []
         for b1,b2,s1,s2,l1,l2 in self.get_cell_iterator():
             add_BE = not ((b1==b2) and (s1==s2))
-            vector.append(cell[l1][l2][0]) #EE
-            vector.append(cell[l1][l2][1]) #EB
-            if add_BE: #Only add B1E2 if 1!=2
-                vector.append(cell[l1][l2][2]) #BE
-            vector.append(cell[l1][l2][3]) #BB
+            if with_windows:
+                wname = self.get_workspace_label(b1, b2)
+                s.add_ell_cl('cl_ee', l1, l2, l_eff, cell[l1][l2][0],
+                             window=self.win[wname]['EE'])  # EE
+                s.add_ell_cl('cl_eb', l1, l2, l_eff, cell[l1][l2][1],
+                             window=self.win[wname]['EB'])  # EB
+                if add_BE: #Only add B1E2 if 1!=2
+                    s.add_ell_cl('cl_be', l1, l2, l_eff, cell[l1][l2][2],
+                                 window=self.win[wname]['BE'])  # BE
+                s.add_ell_cl('cl_bb', l1, l2, l_eff, cell[l1][l2][3],
+                             window=self.win[wname]['BB'])  # EE
+            else:
+                s.add_ell_cl('cl_ee', l1, l2, l_eff, cell[l1][l2][0])  # EE
+                s.add_ell_cl('cl_eb', l1, l2, l_eff, cell[l1][l2][1])  # EB
+                if add_BE: #Only add B1E2 if 1!=2
+                    s.add_ell_cl('cl_be', l1, l2, l_eff, cell[l1][l2][2])  # BE
+                s.add_ell_cl('cl_bb', l1, l2, l_eff, cell[l1][l2][3])  # EE
 
-        sacc_mean = sacc.MeanVec(np.array(vector).flatten())
-        s=sacc.SACC(tracers,binning,sacc_mean)
         print("Saving to "+fname)
-        s.saveToHDF(fname)
+        s = s.save_fits(fname, overwrite=True)
 
     def run(self) :
         self.init_params()
@@ -289,8 +282,7 @@ class BBPowerSpecter(PipelineStage):
         self.nsplits = len(splits)
 
         # Get SACC binning
-        self.bin_win = self.get_sacc_binning(with_windows=True)
-        self.bin_nowin = self.get_sacc_binning(with_windows=False)
+        self.win = self.get_sacc_windows()
 
         # Get SACC tracers
         self.tracers = self.get_sacc_tracers()
@@ -298,14 +290,13 @@ class BBPowerSpecter(PipelineStage):
         # Compute all possible cross-power spectra
         print("Computing all cross-correlations")
         cell_data = self.compute_cells_from_splits(splits)
-        
+
         # Save output
         print("Saving to file")
         self.save_cell_to_file(cell_data,
                                self.tracers,
-                               self.bin_win,
-                               self.get_output('cells_all_splits'))
-        
+                               self.get_output('cells_all_splits'),
+                               with_windows=True)
         # Iterate over simulations
         sims = []
         with open(self.get_input('sims_list'),'r') as f:
@@ -329,10 +320,9 @@ class BBPowerSpecter(PipelineStage):
             cell_sim=self.compute_cells_from_splits(sim_splits)
             #   Save output
             fname=prefix_out + "_sim%d.sacc" % isim
-            self.save_cell_to_file(cell_sim,
+            self.save_cell_to_file(cell_data,
                                    self.tracers,
-                                   self.bin_nowin,
-                                   fname)
+                                   fname, with_windows=False)
 
 if __name__ == '__main__':
     cls = PipelineStage.main()
