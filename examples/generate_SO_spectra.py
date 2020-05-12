@@ -2,6 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import noise_calc as nc
 import sacc
+import sys
+
+
+prefix_out = sys.argv[1]
 
 #Foreground model
 A_sync_BB = 2.0
@@ -83,7 +87,7 @@ class Bpass(object):
 band_names = ['LF1', 'LF2', 'MF1', 'MF2', 'UHF1', 'UHF2']
 
 # Bandpasses
-bpss = {n: Bpass(n,f'data/bandpasses/{n}.txt') for n in band_names}
+bpss = {n: Bpass(n,f'examples/data/bandpasses/{n}.txt') for n in band_names}
 
 # Bandpowers
 dell = 10
@@ -107,7 +111,7 @@ dls_sync_ee=dl_plaw(A_sync_BB*EB_sync,alpha_sync_EE,larr_all)
 dls_sync_bb=dl_plaw(A_sync_BB,alpha_sync_BB,larr_all)
 dls_dust_ee=dl_plaw(A_dust_BB*EB_dust,alpha_dust_EE,larr_all)
 dls_dust_bb=dl_plaw(A_dust_BB,alpha_dust_BB,larr_all)
-_,dls_cmb_ee,dls_cmb_bb,_=read_camb("./data/camb_lens_nobb.dat")
+_,dls_cmb_ee,dls_cmb_bb,_=read_camb("./examples/data/camb_lens_nobb.dat")
 dls_comp=np.zeros([3,2,3,2,lmax+1]) #[ncomp,np,ncomp,np,nl]
 dls_comp[0,0,0,0,:]=dls_cmb_ee
 dls_comp[0,1,0,1,:]=Alens*dls_cmb_bb
@@ -206,6 +210,6 @@ s_d.add_covariance(cov_bpw)
 
 # Write output
 print("Writing")
-s_d.save_fits("cls_coadd.fits", overwrite=True)
-s_f.save_fits("cls_fid.fits", overwrite=True)
-s_n.save_fits("cls_noise.fits", overwrite=True)
+s_d.save_fits(prefix_out + "/cls_coadd.fits", overwrite=True)
+s_f.save_fits(prefix_out + "/cls_fid.fits", overwrite=True)
+s_n.save_fits(prefix_out + "/cls_noise.fits", overwrite=True)
