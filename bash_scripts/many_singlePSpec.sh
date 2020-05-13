@@ -9,7 +9,7 @@ do
 	[ -d /mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std} ] || mkdir /mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}
 
 	echo "Creating single simulation list if not existent"
-	[ -f test_BBMoments_simulations/list_sim_sd${seed}_stdd${std}_stds${std}.txt ]
+	[ -f test_BBMoments_simulations/list_sim_sd${seed}_stdd${std}_stds${std}.txt ] ||
 	echo "/mnt/extraspace/susanna/BBMoments/Simulations_Moments_varStd/sim_ns256_seed${seed}_stdd${std}_stds${std}_gdm3.0_gsm3.0_msk_B" >> list_sim_sd${seed}_stdd${std}_stds${std}.txt
 	
 	echo "BBPSPec for seed = "${seed}", std_s,std_d = "${std}
