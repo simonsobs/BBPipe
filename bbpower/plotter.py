@@ -3,7 +3,7 @@ from .types import TextFile, SACCFile, DirFile, HTMLFile, NpzFile
 import sacc
 import numpy as np
 import matplotlib
-#matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import dominate as dom
 import dominate.tags as dtg
@@ -45,7 +45,8 @@ class BBPlotter(PipelineStage):
             fname=self.get_output('plots')+'/bpass_summary.png'
             plt.figure()
             plt.title(title,fontsize=14)
-            for t in self.s_fid.tracers:
+            #for t in self.s_fid.tracers:
+            for t in self.s_cd_t.tracers:
                 n=t.name[2:-1]
                 nu_mean=np.sum(t.Nz*t.z**3*t.extra_cols['dnu'])/np.sum(t.Nz*t.z**2*t.extra_cols['dnu'])
                 plt.plot(t.z,t.Nz/np.amax(t.Nz),label=n+', $\\langle\\nu\\rangle=%.1lf\\,{\\rm GHz}$'%nu_mean)
@@ -58,7 +59,8 @@ class BBPlotter(PipelineStage):
             plt.close()
             lst+=dtg.li(dtg.a(title,href=fname))
             
-            for t in self.s_fid.tracers:
+            #for t in self.s_fid.tracers:
+            for t in self.s_cd_t.tracers:
                 n=t.name[2:-1]
                 title='Bandpass '+n
                 fname=self.get_output('plots')+'/bpass_'+n+'.png'
@@ -81,11 +83,12 @@ class BBPlotter(PipelineStage):
         els_x=np.sqrt(np.diag(self.s_cd_x.precision.getCovarianceMatrix()))
         cls_n=self.s_cd_n.mean.vector
         els_n=np.sqrt(np.diag(self.s_cd_n.precision.getCovarianceMatrix()))
-
+    
         with self.doc:
             dtg.h2("Coadded power spectra",id='coadded')
             lst=dtg.ul()
-            sorter=self.s_fid.sortTracers()
+            #sorter=self.s_fid.sortTracers()
+            sorter=self.s_cd_t.sortTracers()
             # Loop over all possible power spectra
             for t1,t2,typ,ells,ndx in sorter:
                 typ=typ.decode()
@@ -116,12 +119,12 @@ class BBPlotter(PipelineStage):
                              label='Total coadd')
                 eb=plt.errorbar(self.ells[self.msk]+1.,-ct,yerr=et,fmt='ro',mfc='white')
                 eb[-1][0].set_linestyle('--')
-
+    
                 plt.errorbar(self.ells[self.msk], cn,yerr=et,fmt='yo',
                              label='Noise')
                 eb=plt.errorbar(self.ells[self.msk]+1.,-cn,yerr=et,fmt='yo',mfc='white')
                 eb[-1][0].set_linestyle('--')
-
+    
                 plt.errorbar(self.ells[self.msk], cx,yerr=et,fmt='bo',
                              label='Cross-coadd')
                 eb=plt.errorbar(self.ells[self.msk]+1.,-cx,yerr=et,fmt='bo',mfc='white')
@@ -133,20 +136,20 @@ class BBPlotter(PipelineStage):
                 plt.savefig(fname,bbox_inches='tight')
                 plt.close()
                 lst+=dtg.li(dtg.a(title,href=fname))
-
+    
             dtg.div(dtg.a('Back to TOC',href='#contents'))
                 
     def add_nulls(self):
         with self.doc:
             dtg.h2("Null tests",id='nulls')
             lst=dtg.ul()
-
+    
             sorter=self.s_null.sortTracers()
             # All cross-correlations
             xcorrs=np.array(["%d_%d"%(s[0],s[1]) for s in sorter])
             # Unique cross-correlations
             xc_un=np.unique(xcorrs)
-
+    
             cls_null=self.s_null.mean.vector
             err_null=np.sqrt(self.s_null.precision.getCovarianceMatrix())
             # Loop over unique correlations
@@ -167,7 +170,7 @@ class BBPlotter(PipelineStage):
                 fname+=self.s_null.tracers[t2].name[2:-1]
                 fname+=".png"
                 print(fname)
-
+    
                 # Plot all power spectra
                 plt.figure()
                 plt.title(title,fontsize=15)
@@ -184,7 +187,7 @@ class BBPlotter(PipelineStage):
                 plt.savefig(fname,bbox_index='tight')
                 plt.close()
                 lst+=dtg.li(dtg.a(title,href=fname))
-
+    
             dtg.div(dtg.a('Back to TOC',href='#contents'))
 
     def add_contours(self):
@@ -202,20 +205,28 @@ class BBPlotter(PipelineStage):
                     'epsilon_ds':'\\epsilon_{ds}',
                     'alpha_d_bb':'\\alpha_d',
                     'amp_d_bb':'A_d',
+                    'amp_d_beta': 'A_{\\beta d}',
+                    'gamma_d_beta': '\\gamma_{\\beta d}',
                     'beta_s':'\\beta_s',
                     'alpha_s_bb':'\\alpha_s',
-                    'amp_s_bb':'A_s'}
+                    'amp_s_bb':'A_s',
+                    'amp_s_beta':'A_{\\beta s}',
+                    'gamma_s_beta': '\\gamma_{\\beta s}'}
             # TODO: we need to build this from the priors, I think.
             truth={'A_lens':1.,
                    'r_tensor':0.,
-                   'beta_d':1.59,
+                   'beta_d':1.6,
                    'epsilon_ds':0.,
                    'alpha_d_bb':-0.42,
                    'amp_d_bb':5.,
+                   'amp_d_beta':0.,
+                   'gamma_d_beta':-3.,
                    'beta_s':-3.,
                    'alpha_s_bb':-0.6,
-                   'amp_s_bb':2.}
-
+                   'amp_s_bb':2.,
+                   'amp_s_beta':0.,
+                   'gamma_s_beta':-3.}
+            
             # Select only parameters for which we have labels
             names_common=list(set(list(self.chain['names'])) & truth.keys())
             msk_common=np.array([n in names_common for n in self.chain['names']])
@@ -259,7 +270,8 @@ class BBPlotter(PipelineStage):
         # Chains
         self.chain=np.load(self.get_input('param_chains'))
 
-        self.ells=self.s_fid.sortTracers()[0][3]
+        #self.ells=self.s_fid.sortTracers()[0][3]
+        self.ells=self.s_cd_t.sortTracers()[0][3]
         self.msk=self.ells<self.config['lmax_plot']
         self.cols_typ={'EE':'r','EB':'g','BE':'y','BB':'b'}
 

@@ -132,6 +132,7 @@ if o.pysm_sim:
                 dirname = prefix_out+"new_sim_ns%d_seed%d_pysm_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
 else:
         dirname = prefix_out+"new_sim_ns%d_seed%d_bbsim_sigD%dsigS%d"%(nside, seed, o.sigma_dust, o.sigma_sync)
+        
         if o.beta_dust_var or o.beta_sync_var or o.beta_pysm:
                 # For varying betas
                 def comp_sed(nu,nu0,beta,temp,typ):

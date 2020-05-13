@@ -1,6 +1,6 @@
 import healpy as hp
 import numpy as np
-
+import matplotlib.pyplot as plt
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -38,6 +38,16 @@ def powerlaw(ells, gamma):
     c_ells[ells<2]=c_ells[2]
     return c_ells
 
+cl_betaDust = powerlaw(ells, gamma_beta_dust)
+plt.figure()
+plt.semilogy(ells, cl_betaDust, 'b',label="input power spectrum dust")
+#plt.semilogy(ells, cl_betaDust_out, 'r',label="output power spectrum dust")
+plt.xlabel('$\ell$')
+plt.ylabel('$C_\ell$')
+plt.legend()
+plt.grid()
+plt.savefig('/mnt/zfsusers/susanna/inputCldust.png')
+exit()
 if o.calculate_beta_dust:
     print(o.sigma_dust/100)
     cl_betaDust = powerlaw(ells, gamma_beta_dust)
@@ -48,7 +58,7 @@ if o.calculate_beta_dust:
     mean_addD = 1.6
     map_beta_dust = delta_betaD+mean_addD
     #print(map_beta_dust)
-    hp.write_map(prefix_out+"/map_beta_dust_sigD%d_sd%d.fits"%(o.sigma_dust, o.seed), map_beta_dust, overwrite=True) 
+    hp.write_map(prefix_out+"/map_beta_dust_sigD%d_sd%d.fits"%(o.sigma_dust, o.seed), map_beta_dust, overwrite=True)
 
 if o.calculate_beta_sync:
     cl_betaSync = powerlaw(ells, gamma_beta_sync)
