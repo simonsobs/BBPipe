@@ -212,6 +212,7 @@ class BBPlotter(PipelineStage):
                     'amp_s_bb':'A_s',
                     'amp_s_beta':'A_{\\beta s}',
                     'gamma_s_beta': '\\gamma_{\\beta s}'}
+
             # TODO: we need to build this from the priors, I think.
             truth={'A_lens':1.,
                    'r_tensor':0.,
