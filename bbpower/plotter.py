@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import TextFile, SACCFile, DirFile, HTMLFile, NpzFile
+from .types import TextFile, FitsFile, DirFile, HTMLFile, NpzFile
 import sacc
 import numpy as np
 import matplotlib
@@ -11,10 +11,10 @@ import os
 
 class BBPlotter(PipelineStage):
     name="BBPlotter"
-    inputs=[('cells_coadded_total',SACCFile), ('cells_coadded',SACCFile),
-            ('cells_noise',SACCFile), ('cells_null',SACCFile), 
-            ('cells_fiducial',SACCFile), ('param_chains',NpzFile)]
-    outputs=[('plots',DirFile),('plots_page',HTMLFile)]
+    inputs=[('cells_coadded_total', FitsFile), ('cells_coadded', FitsFile),
+            ('cells_noise', FitsFile), ('cells_null', FitsFile),
+            ('cells_fiducial', FitsFile), ('param_chains',NpzFile)]
+    outputs=[('plots',DirFile), ('plots_page',HTMLFile)]
     config_options={'lmax_plot':300}
 
     def create_page(self):

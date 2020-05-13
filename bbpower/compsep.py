@@ -3,7 +3,7 @@ import os
 from scipy.linalg import sqrtm
 
 from bbpipe import PipelineStage
-from .types import NpzFile, SACCFile, YamlFile
+from .types import NpzFile, FitsFile, YamlFile
 from .fg_model import FGModel
 from .param_manager import ParameterManager
 from .bandpasses import Bandpass, rotate_cells, rotate_cells_mat
@@ -17,7 +17,7 @@ class BBCompSep(PipelineStage):
     The foreground model parameters are defined in the config.yml file. 
     """
     name = "BBCompSep"
-    inputs = [('cells_coadded', SACCFile),('cells_noise', SACCFile),('cells_fiducial', SACCFile)]
+    inputs = [('cells_coadded', FitsFile),('cells_noise', FitsFile),('cells_fiducial', FitsFile)]
     outputs = [('param_chains', NpzFile), ('config_copy', YamlFile)]
     config_options={'likelihood_type':'h&l', 'n_iters':32, 'nwalkers':16, 'r_init':1.e-3,
                     'sampler':'emcee'}

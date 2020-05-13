@@ -99,14 +99,3 @@ class DummyFile(DataFile) :
     @classmethod
     def open(cls, path, mode, **kwargs):
         raise NotImplementedError("Not implemented yet!")
-
-class SACCFile(DataFile):
-    """
-    A data file in the SACCF5 format.
-    Using these files requires the sacc package.
-
-    """
-    suffix = 'sacc'
-    @classmethod
-    def open(cls, path, mode, **kwargs):
-        raise NotImplementedError("Not implemented yet!")

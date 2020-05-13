@@ -307,7 +307,7 @@ class BBPowerSpecter(PipelineStage):
         fo=open(self.get_output('cells_all_sims'),'w')
         prefix_out=self.get_output('cells_all_splits')[:-5]
         for isim,d in enumerate(sims):
-            fname=prefix_out + "_sim%d.sacc" % isim
+            fname=prefix_out + "_sim%d.fits" % isim
             fo.write(fname+"\n")
         fo.close()
 
@@ -319,7 +319,7 @@ class BBPowerSpecter(PipelineStage):
             #   Compute all possible cross-power spectra
             cell_sim=self.compute_cells_from_splits(sim_splits)
             #   Save output
-            fname=prefix_out + "_sim%d.sacc" % isim
+            fname=prefix_out + "_sim%d.fits" % isim
             self.save_cell_to_file(cell_data,
                                    self.tracers,
                                    fname, with_windows=False)

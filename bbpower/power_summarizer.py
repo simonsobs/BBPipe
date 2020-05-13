@@ -1,28 +1,27 @@
 from bbpipe import PipelineStage
-from .types import TextFile, SACCFile,DirFile
+from .types import TextFile, FitsFile, DirFile
 import sacc
 import numpy as np
 import os
 
 class BBPowerSummarizer(PipelineStage):
     name="BBPowerSummarizer"
-    inputs=[('splits_list',TextFile),('bandpasses_list',TextFile),('cells_fiducial',SACCFile),
-            ('cells_all_splits',SACCFile),('cells_all_sims',TextFile)]
-    outputs=[('cells_coadded_total',SACCFile),('cells_coadded',SACCFile),
-             ('cells_noise',SACCFile),('cells_null',SACCFile)]
+    inputs=[('splits_list',TextFile),('bandpasses_list',TextFile),('cells_fiducial',FitsFile),
+            ('cells_all_splits',FitsFile),('cells_all_sims',TextFile)]
+    outputs=[('cells_coadded_total',FitsFile),('cells_coadded',FitsFile),
+             ('cells_noise',FitsFile),('cells_null',FitsFile)]
     config_options={'nulls_covar_type':'diagonal',
                     'nulls_covar_diag_order': 0,
                     'data_covar_type':'block_diagonal',
                     'data_covar_diag_order': 3}
-    
-    def get_covariance_from_samples(self,v,covar_type='dense',
+
+    def get_covariance_from_samples(self,v,s,covar_type='dense',
                                     off_diagonal_cut=0):
         """
         Computes a covariance matrix from a set of samples in the form [nsamples, ndata]
         """
         if covar_type=='diagonal':
-            cov=np.std(v,axis=0)**2
-            return sacc.Precision(matrix=cov,is_covariance=True,mode="diagonal")
+            cov=np.diag(np.std(v,axis=0)**2)
         else:
             nsim, nd = v.shape
             vmean = np.mean(v,axis=0) 
@@ -38,13 +37,7 @@ class BBPowerSummarizer(PipelineStage):
                     cuts -= np.diag(np.ones(self.n_bpws-i),k=-i)
                 cov = cov.reshape([nblocks, self.n_bpws, nblocks, self.n_bpws])
                 cov = (cov * cuts[None, :, None, :]).reshape([nd, nd])
-            return sacc.Precision(matrix=cov,is_covariance=True,mode="dense")
-
-    def save_to_sacc(self,fname,t,b,v,cov=None,return_sacc=False):
-        s=sacc.SACC(t,b,mean=v,precision=cov)
-        s.saveToHDF(fname)
-        if return_sacc:
-            return s
+        s.add_covariance(cov)
 
     def init_params(self):
         """
@@ -83,9 +76,8 @@ class BBPowerSummarizer(PipelineStage):
 
         # First, initialize n_bpws to zero
         self.n_bpws = 0
-        self.sorting = None
         # Read splits power spectra
-        self.s_splits=sacc.SACC.loadFromHDF(self.get_input('cells_all_splits'))
+        self.s_splits=sacc.Sacc.load_fits(self.get_input('cells_all_splits'))
         # Read sorting and number of bandpowers
         self.check_sacc_consistency(self.s_splits)
         # Read file names for the power spectra of all simulations
@@ -104,8 +96,8 @@ class BBPowerSummarizer(PipelineStage):
         """
         bands=[]
         splits=[]
-        for t in s.tracers:
-            band,split=t.name[2:-1].split('_',2) # Tracer names are bandX_splitY
+        for tn, t in s.tracers.items():
+            band,split=tn.split('_',2) # Tracer names are bandX_splitY
             bands.append(band)
             splits.append(split)
         bands=np.unique(bands)
@@ -113,28 +105,51 @@ class BBPowerSummarizer(PipelineStage):
         if ((len(bands)!=self.nbands) or (len(splits)!=self.nsplits) or
             (len(s.tracers)!=self.nbands*self.nsplits)):
             raise ValueError("There's something wrong with these SACC tracers")
-        if self.sorting is None:
-            self.sorting=s.sortTracers()
-            # Number of bandpowers
-            _, _, _, self.ells, _ = self.sorting[0]
-            self.n_bpws=len(self.ells)
+        if self.n_bpws == 0:
+            self.ells, _ = s.get_ell_cl(s.data[0].data_type,
+                                        s.data[0].tracers[0],
+                                        s.data[0].tracers[1])
+            self.n_bpws = len(self.ells)
 
         # Total number of power spectra expected
-        nx_expected=((self.nbands*self.nsplits*2)*(self.nbands*self.nsplits*2+1))//2
-        nv_expected=self.n_bpws*nx_expected
-        if (len(self.sorting) != nx_expected) or (len(s.mean.vector)!=nv_expected):
-            raise ValueError("There's something wrong with the SACC binnign or mean")
+        ntracers = self.nbands * self.nsplits
+        nmaps = 2*ntracers
+        nxt_expected = (ntracers * (ntracers +1)) // 2
+        nx_expected = (nmaps * (nmaps +1)) // 2
+        nv_expected = self.n_bpws*nx_expected
+        if ((len(s.mean) != nv_expected) or
+            (len(s.get_tracer_combinations()) != nxt_expected)):
+            raise ValueError("There's something wrong with the SACC data vector")
 
-    def get_tracers(self,s):
+    def get_windows(self, s):
+        self.windows = {}
+        for b1 in range(self.nbands):
+            n1 = 'band%d_split1' % (b1+1)
+            for b2 in range(b1, self.nbands):
+                n2 = 'band%d_split1' % (b2+1)
+                xname = 'band%d_band%d' % (b1+1, b2+1)
+                self.windows[xname] = {}
+                _, _, ind = s.get_ell_cl('cl_ee', n1, n2, return_ind=True)
+                self.windows[xname]['ee'] = s.get_bandpower_windows(ind)
+                _, _, ind = s.get_ell_cl('cl_eb', n1, n2, return_ind=True)
+                self.windows[xname]['eb'] = s.get_bandpower_windows(ind)
+                self.windows[xname]['be'] = s.get_bandpower_windows(ind)
+                _, _, ind = s.get_ell_cl('cl_bb', n1, n2, return_ind=True)
+                self.windows[xname]['bb'] = s.get_bandpower_windows(ind)
+
+    def get_tracers(self, s):
         """
         Gets two array of tracers: one for coadd SACC files, one for null SACC files.
         """
         tracers_bands={}
-        for t in s.tracers:
-            band,split=t.name[2:-1].split('_',2)
+        for tn, t in s.tracers.items():
+            band,split=tn.split('_',2)
             if split=='split1':
-                T=sacc.Tracer(band,t.type,t.z,t.Nz,exp_sample=t.exp_sample)
-                T.addColumns({'dnu':t.extra_cols['dnu']})
+                T = sacc.BaseTracer.make('NuMap', band,
+                                         2, t.nu, t.bandpass,
+                                         t.ell, t.beam,
+                                         quantity='cmb_polarization',
+                                         bandpass_extra={'dnu': t.bandpass_extra['dnu']})
                 tracers_bands[band]=T
 
         self.t_coadd=[]
@@ -150,85 +165,49 @@ class BBPowerSummarizer(PipelineStage):
                 for j in range(i,self.nsplits):
                     name='band%d_null%dm%d'%(b+1,i+1,j+1)
                     self.ind_nulls[name]=ind_null
-                    T=sacc.Tracer(name,t.type,t.z,t.Nz,exp_sample=t.exp_sample)
-                    T.addColumns({'dnu':t.extra_cols['dnu']})
+                    T = sacc.BaseTracer.make('NuMap', name,
+                                             2, t.nu, t.bandpass,
+                                             t.ell, t.beam,
+                                             quantity='cmb_polarization',
+                                             bandpass_extra={'dnu': t.bandpass_extra['dnu']})
                     self.t_nulls.append(T)
                     ind_null+=1
-
-    def get_binnings(self,with_windows=True):
-        # Get windows if needed
-        win_coadd=None
-        win_nulls=None
-        if with_windows:
-            win_coadd=[]
-            win_nulls=[]
-            ls_win = self.s_splits.binning.windows[0].ls.copy()
-            nls=len(ls_win)
-            windows=np.zeros([self.nbands,2,self.nbands,2,self.n_bpws,nls])
-            for t1,t2,typ,ells,ndx in self.sorting:
-                b1,s1=self.tracer_number_to_band_split(t1)
-                b2,s2=self.tracer_number_to_band_split(t2)
-                typ=typ.decode()
-                p1=self.index_pol[typ[0]]
-                p2=self.index_pol[typ[1]]
-                if (s1==0) and (s2==0):
-                    for b,i in enumerate(ndx):
-                        w=self.s_splits.binning.windows[i].w
-                        windows[b1,p1,b2,p2,b,:]=w
-                        if not ((b1==b2) and (p1==p2)):
-                            windows[b2,p2,b1,p1,b,:]=w
-
-        # Binnings for coadds
-        typ, ell, t1, q1, t2, q2 = [], [], [], [], [], []
-        for i1 in range(2*self.nbands):
-            b1=i1//2
-            p1=i1%2
-            for i2 in range(i1,2*self.nbands):
-                b2=i2//2
-                p2=i2%2
-                ty=self.pol_names[p1]+self.pol_names[p2]
-                for il,ll in enumerate(self.ells):
-                    ell.append(ll)
-                    typ.append(ty)
-                    t1.append(b1)
-                    t2.append(b2)
-                    q1.append('C')
-                    q2.append('C')
-                    if with_windows:
-                        win_coadd.append(sacc.Window(ls_win,windows[b1,p1,b2,p2,il]))
-        self.bins_coadd=sacc.Binning(typ,ell,t1,q1,t2,q2,windows=win_coadd)
-
-        # Binnings for nulls
-        typ, ell, t1, q1, t2, q2 = [], [], [], [], [], []
-        for i_null,(i,j,k,l) in enumerate(self.pairings):
-            for b1 in range(self.nbands):
-                tr1=self.ind_nulls['band%d_null%dm%d'%(b1+1,i+1,j+1)]
-                for p1 in range(2):
-                    for b2 in range(self.nbands):
-                        tr2=self.ind_nulls['band%d_null%dm%d'%(b2+1,k+1,l+1)]
-                        for p2 in range(2):
-                            ty=self.pol_names[p1]+self.pol_names[p2]
-                            for il,ll in enumerate(self.ells):
-                                ell.append(ll)
-                                typ.append(ty)
-                                t1.append(tr1)
-                                t2.append(tr2)
-                                q1.append('C')
-                                q2.append('C')
-                                if with_windows:
-                                    win_nulls.append(sacc.Window(ls_win,windows[b1,p1,b2,p2,il]))
-        self.bins_nulls=sacc.Binning(typ,ell,t1,q1,t2,q2,windows=win_nulls)
         
-    def tracer_number_to_band_split(self,itracer):
-        """
-        Translates between tracer number in splits file and
-        band and split numbers
-        """
-        split=itracer%self.nsplits
-        band=itracer//self.nsplits
-        return band,split
+    def bands_splits_pol_iterator(self):
+        for b1 in range(self.nbands):
+            for b2 in range(b1,self.nbands):
+                for s1 in range(self.nsplits):
+                    if b1==b2:
+                        s2_range=range(s1,self.nsplits)
+                    else:
+                        s2_range=range(self.nsplits)
+                    for s2 in s2_range:
+                        for p1 in range(2):
+                            if (s1 == s2) and (b1 == b2):
+                                p2_range = range(p1, 2)
+                            else:
+                                p2_range = range(2)
+                            for p2 in p2_range:
+                                m1 = p1 + 2 * (s1 + self.nsplits * b1)
+                                m2 = p2 + 2 * (s2 + self.nsplits * b2)
+                                cl_name = 'cl_' + self.pol_names[p1].lower() + self.pol_names[p2].lower()
+                                yield b1, b2, s1, s2, p1, p2, m1, m2, cl_name
 
-    def parse_splits_sacc_file(self,s):
+    def get_cl_indices(self, s):
+        self.inds = np.zeros([self.nsplits * self.nbands * 2,
+                              self.nsplits * self.nbands * 2,
+                              self.n_bpws], dtype=int)
+
+        for b1, b2, s1, s2, p1, p2, m1, m2, cltyp in self.bands_splits_pol_iterator():
+            t1 = 'band%d_split%d' % (b1+1, s1+1)
+            t2 = 'band%d_split%d' % (b2+1, s2+1)
+            _, _, ind = s.get_ell_cl(cltyp, t1, t2, return_ind=True)
+            self.inds[m1, m2, :] = ind
+            if m1 != m2:
+                self.inds[m2, m1, :] = ind
+        self.inds = self.inds.flatten()
+
+    def parse_splits_sacc_file(self, s, get_saccs=False, with_windows=False):
         """
         Transform a SACC file containing splits into 4 SACC vectors:
         1 that contains the coadded power spectra.
@@ -242,50 +221,89 @@ class BBPowerSummarizer(PipelineStage):
 
         # Now read power spectra into an array of form [nsplits,nsplits,nbands,nbands,2,2,n_ell]
         # This duplicates the number of elements, but simplifies bookkeeping significantly.
-        spectra=np.zeros([self.nsplits,self.nsplits,
-                          self.nbands,2,self.nbands,2,
-                          self.n_bpws])
-        for t1,t2,typ,ells,ndx in self.sorting:
-            # Band, split and polarization channel indices
-            b1, s1 = self.tracer_number_to_band_split(t1)
-            b2, s2 = self.tracer_number_to_band_split(t2)
-            typ=typ.decode()
-            p1=self.index_pol[typ[0]]
-            p2=self.index_pol[typ[1]]
-            is_x = not ((b1==b2) and (s1==s2) and (p1==p2))
-            spectra[s1,s2,b1,p1,b2,p2,:]=s.mean.vector[ndx]
-            if is_x:
-                spectra[s2,s1,b2,p2,b1,p1,:]=s.mean.vector[ndx]
+
+        # Put it in shape [nsplits,nsplits,nbands,2,nbands,2,nl]
+        spectra = np.transpose(s.mean[self.inds].reshape([self.nsplits, self.nbands, 2,
+                                                          self.nsplits, self.nbands, 2,
+                                                          self.n_bpws]),
+                               axes=[0, 3, 1, 2, 4, 5, 6])
 
         # Coadding (assuming flat coadding)
         # Total coadding (including diagonal)
         weights_total = np.ones(self.nsplits,dtype=float)/self.nsplits
-        spectra_coadd_total = np.einsum('i,ijklmno,j',
-                                        weights_total,
-                                        spectra,
-                                        weights_total)
+        spectra_total = np.einsum('i,ijklmno,j',
+                                  weights_total,
+                                  spectra,
+                                  weights_total)
         # Off-diagonal coadding
-        spectra_coadd_xcorr = np.mean(spectra[np.triu_indices(self.nsplits,1)],axis=0)
+        spectra_xcorr = np.mean(spectra[np.triu_indices(self.nsplits,1)],axis=0)
 
         # Noise power spectra
-        spectra_coadd_noise = spectra_coadd_total - spectra_coadd_xcorr
+        spectra_noise = spectra_total - spectra_xcorr
 
         # Nulls
         spectra_nulls=np.zeros([self.n_nulls,self.nbands,2,self.nbands,2,self.n_bpws])
         for i_null,(i,j,k,l) in enumerate(self.pairings):
             spectra_nulls[i_null]=spectra[i,k]-spectra[i,l]-spectra[j,k]+spectra[j,l]
-            
-        # Turn into SACC means
-        spectra_coadd_total=spectra_coadd_total.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)]
-        spectra_coadd_xcorr=spectra_coadd_xcorr.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)]
-        spectra_coadd_noise=spectra_coadd_noise.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)]
-        spectra_nulls=spectra_nulls.reshape([-1,self.n_bpws])
-        sv_coadd_total=sacc.MeanVec(spectra_coadd_total.flatten())
-        sv_coadd_xcorr=sacc.MeanVec(spectra_coadd_xcorr.flatten())
-        sv_coadd_noise=sacc.MeanVec(spectra_coadd_noise.flatten())
-        sv_nulls=sacc.MeanVec(spectra_nulls.flatten())
 
-        return sv_coadd_total, sv_coadd_xcorr, sv_coadd_noise, sv_nulls
+        ret = {}
+        if get_saccs:
+
+            s_total = sacc.Sacc()
+            s_xcorr = sacc.Sacc()
+            s_noise = sacc.Sacc()
+            s_nulls = sacc.Sacc()
+            for t in self.t_coadd:
+                s_total.add_tracer_object(t)
+                s_xcorr.add_tracer_object(t)
+                s_noise.add_tracer_object(t)
+            for t in self.t_nulls:
+                s_nulls.add_tracer_object(t)
+
+            def add_cl(s, b1, b2, l1, l2, cls, add_eb=False):
+                pols = ['e', 'b']
+                for ip1 in range(2):
+                    p1 = pols[ip1]
+                    for ip2 in range(2):
+                        p2 = pols[ip2]
+                        x = p1+p2
+                        if (b1 == b2) and (x=='be') and (not add_eb):
+                            continue
+                        if with_windows:
+                            if b2 >= b1:
+                                bname = 'band%d_band%d' % (b1+1, b2+1)
+                                x_use = x
+                            else:
+                                bname = 'band%d_band%d' % (b2+1, b1+1)
+                                x_use = x[::-1]
+                            s.add_ell_cl('cl_' + x, l1, l2, self.ells,
+                                         cls[b1, ip1, b2, ip2],
+                                         window=self.windows[bname][x_use])
+                        else:
+                            s.add_ell_cl('cl_' + x, l1, l2, self.ells,
+                                         cls[b1, p1, b2, p2])
+            for b1 in range(self.nbands):
+                l1 = 'band%d'%(b1+1)
+                for b2 in range(b1, self.nbands):
+                    l2 = 'band%d'%(b2+1)
+                    add_cl(s_total, b1, b2, l1, l2, spectra_total)
+                    add_cl(s_xcorr, b1, b2, l1, l2, spectra_xcorr)
+                    add_cl(s_noise, b1, b2, l1, l2, spectra_noise)
+            for i_null, (i,j,k,l) in enumerate(self.pairings):
+                for b1 in range(self.nbands):
+                    l1 = 'band%d_null%dm%d'%(b1+1, i+1, j+1)
+                    for b2 in range(self.nbands):
+                        l2 = 'band%d_null%dm%d'%(b2+1, k+1, l+1)
+                        add_cl(s_nulls, b1, b2, l1, l2, spectra_nulls[i_null], add_eb=True)
+            ret['saccs'] = [s_total, s_xcorr, s_noise, s_nulls]
+
+        spectra_total=spectra_total.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)].flatten()
+        spectra_xcorr=spectra_xcorr.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)].flatten()
+        spectra_noise=spectra_noise.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)].flatten()
+        spectra_nulls=spectra_nulls.reshape([-1,self.n_bpws]).flatten()
+        ret['spectra'] = [spectra_total, spectra_xcorr, spectra_noise, spectra_nulls]
+
+        return ret
 
     def run(self):
         # Set things up
@@ -296,60 +314,53 @@ class BBPowerSummarizer(PipelineStage):
         print("Tracers")
         self.get_tracers(self.s_splits)
 
-        # Create binnings for all future files
-        print("Binning")
-        self.get_binnings()
+        print("Windows")
+        self.get_windows(self.s_splits)
+
+        print("Indexing")
+        self.get_cl_indices(self.s_splits)
 
         # Read data file, coadd and compute nulls
         print("Reading data")
-        sv_cd_t, sv_cd_x, sv_cd_n, sv_null=self.parse_splits_sacc_file(self.s_splits)
+        summ = self.parse_splits_sacc_file(self.s_splits, get_saccs=True, with_windows=True)
         
         # Read simulations
         print("Reading simulations")
-        sim_cd_t=np.zeros([self.nsims,len(sv_cd_t.vector)])
-        sim_cd_x=np.zeros([self.nsims,len(sv_cd_x.vector)])
-        sim_cd_n=np.zeros([self.nsims,len(sv_cd_n.vector)])
-        sim_null=np.zeros([self.nsims,len(sv_null.vector)])
-        for i,fn in enumerate(self.fname_sims):
+        sim_cd_t=np.zeros([self.nsims,len(summ['spectra'][0])])
+        sim_cd_x=np.zeros([self.nsims,len(summ['spectra'][1])])
+        sim_cd_n=np.zeros([self.nsims,len(summ['spectra'][2])])
+        sim_null=np.zeros([self.nsims,len(summ['spectra'][3])])
+        for i, fn in enumerate(self.fname_sims):
             print(fn)
-            s=sacc.SACC.loadFromHDF(fn)
-            cd_t,cd_x,cd_n,null=self.parse_splits_sacc_file(s)
-            sim_cd_t[i,:]=cd_t.vector
-            sim_cd_x[i,:]=cd_x.vector
-            sim_cd_n[i,:]=cd_n.vector
-            sim_null[i,:]=null.vector
+            s=sacc.Sacc.load_fits(fn)
+            sb=self.parse_splits_sacc_file(s)
+            sim_cd_t[i,:]=sb['spectra'][0]
+            sim_cd_x[i,:]=sb['spectra'][1]
+            sim_cd_n[i,:]=sb['spectra'][2]
+            sim_null[i,:]=sb['spectra'][3]
 
         # Compute covariance
         print("Covariances")
-        cov_cd_t=self.get_covariance_from_samples(sim_cd_t,
+        cov_cd_t=self.get_covariance_from_samples(sim_cd_t, summ['saccs'][0],
                                                   covar_type=self.config['data_covar_type'],
                                                   off_diagonal_cut=self.config['data_covar_diag_order'])
-        cov_cd_x=self.get_covariance_from_samples(sim_cd_x,
+        cov_cd_x=self.get_covariance_from_samples(sim_cd_x, summ['saccs'][1],
                                                   covar_type=self.config['data_covar_type'],
                                                   off_diagonal_cut=self.config['data_covar_diag_order'])
-        cov_cd_n=self.get_covariance_from_samples(sim_cd_n,
+        cov_cd_n=self.get_covariance_from_samples(sim_cd_n, summ['saccs'][2],
                                                   covar_type=self.config['data_covar_type'],
                                                   off_diagonal_cut=self.config['data_covar_diag_order'])
         # There are so many nulls that we'll probably run out of memory
-        cov_null=self.get_covariance_from_samples(sim_null,
+        cov_null=self.get_covariance_from_samples(sim_null, summ['saccs'][3],
                                                   covar_type=self.config['nulls_covar_type'],
                                                   off_diagonal_cut=self.config['nulls_covar_diag_order'])
 
         # Save data
         print("Writing output")
-        self.save_to_sacc(self.get_output("cells_coadded_total"),
-                          self.t_coadd,self.bins_coadd,sv_cd_t,cov=cov_cd_t,
-                          return_sacc=False)
-        self.save_to_sacc(self.get_output("cells_coadded"),
-                          self.t_coadd,self.bins_coadd,sv_cd_x,cov=cov_cd_x,
-                          return_sacc=False)
-        self.save_to_sacc(self.get_output("cells_noise"),
-                          self.t_coadd,self.bins_coadd,sv_cd_n,cov=cov_cd_n,
-                          return_sacc=False)
-        self.save_to_sacc(self.get_output("cells_null"),
-                          self.t_nulls,self.bins_nulls,sv_null,cov=cov_null,
-                          return_sacc=False)
-
+        summ['saccs'][0].save_fits(self.get_output("cells_coadded_total"), overwrite=True)
+        summ['saccs'][1].save_fits(self.get_output("cells_coadded"), overwrite=True)
+        summ['saccs'][2].save_fits(self.get_output("cells_noise"), overwrite=True)
+        summ['saccs'][3].save_fits(self.get_output("cells_null"), overwrite=True)
 
 if __name__ == '__main_':
     cls = PipelineStage.main()
