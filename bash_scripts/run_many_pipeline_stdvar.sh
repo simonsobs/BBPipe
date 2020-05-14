@@ -22,10 +22,11 @@ do
 done
 
 # --------------------------------------
-# Rename computed cells_all_splits_sim0.sacc to prevent overwriting
-# Copy already computed cells_all_splits_simX.sacc to directory with previously computed one
-# Rename reverse
-# Remove cells_all_sims.txt with single element and add all 500 elements to txt
+# Prepare output directory before running pipeline 
+# - Rename computed cells_all_splits_sim0.sacc to prevent overwriting
+# - Copy already computed cells_all_splits_simX.sacc to directory with previously computed one
+# - Rename reverse
+# - Remove cells_all_sims.txt with single element and add all 500 elements to txt
 # --------------------------------------
 for seed in {1000..1010}
 do
@@ -74,15 +75,39 @@ do
 done
 
 # --------------------------------------
-# BBCompsep with 500 sims
+# Prepare output directory before running pipeline with moments
+# - Create output directory
+# - Copy input files needed for BBCompSep and BBPlotter
+# --------------------------------------
+for seed in {1000..1010}
+do
+    for std in 30 
+    do
+	out_dir=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}
+	out_dir_momT=${out_dir}_momT
+	
+	echo "Before running pipeline with moments, prepare output directory "${out_dir_momT}
+	mkdir ${out_dir_momT}
+	cp ${out_dir}/cells_coadded.sacc ${out_dir_momT}
+	cp ${out_dir}/cells_coadded_total.sacc ${out_dir_momT}
+	cp ${out_dir}/cells_noise.sacc ${out_dir_momT}
+	cp ${out_dir}/cells_null.sacc ${out_dir_momT}
+    done
+done
+	
+# --------------------------------------
+# BBCompsep with 500 sims, without moments and with moments
 # both sync and dust varying
 # --------------------------------------
 for seed in {1000..1010}
 do
-    for std in 30
+    for std in 30 
     do
-	echo "BBPCompSep for seed = "${seed}", std = "${std}
-	addqueue -s -q berg -m 2 -n 1x12 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_coadded.sacc   --cells_noise=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_noise.sacc   --cells_fiducial=/mnt/extraspace/susanna/BBMoments/Simulations_Moments_varStd/sim_ns256_seed${seed}_stdd${std}_stds${std}_gdm3.0_gsm3.0_msk_B/cells_model.sacc   --param_chains=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/param_chains.npz   --config_copy=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/config_copy.yml   --config=./test_BBMoments_simulations/config.yaml 
+	echo "BBPCompSep Mom = False, for seed = "${seed}", std = "${std}
+	addqueue -s -q cmb -m 2 -n 1x12 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_coadded.sacc   --cells_noise=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_noise.sacc   --cells_fiducial=/mnt/extraspace/susanna/BBMoments/Simulations_Moments_varStd/sim_ns256_seed${seed}_stdd${std}_stds${std}_gdm3.0_gsm3.0_msk_B/cells_model.sacc   --param_chains=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/param_chains.npz   --config_copy=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/config_copy.yml   --config=./test_BBMoments_simulations/config.yaml
+
+	echo "BBPCompSep MOMT for seed = "${seed}", std = "${std}
+	addqueue -s -q berg -m 2 -n 1x12 /usr/bin/python3 -m bbpower BBCompSep   --cells_coadded=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/cells_coadded.sacc   --cells_noise=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/cells_noise.sacc   --cells_fiducial=/mnt/extraspace/susanna/BBMoments/Simulations_Moments_varStd/sim_ns256_seed${seed}_stdd${std}_stds${std}_gdm3.0_gsm3.0_msk_B/cells_model.sacc   --param_chains=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/param_chains.npz   --config_copy=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/config_copy.yml   --config=./test_BBMoments_simulations/config_MOMT.yml 	
     done
 done
 
@@ -92,9 +117,12 @@ done
 # --------------------------------------
 for seed in {1000..1010}
 do
-    for std in 30
+    for std in 30 #20 #50
     do
-	echo "BBPCompSep for seed = "${seed}", std = "${std}
+	echo "BBPlotter for seed = "${seed}", std = "${std}
 	addqueue -q berg -m 10 /usr/bin/python3 -m bbpower BBPlotter   --cells_coadded_total=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_coadded_total.sacc   --cells_coadded=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_coadded.sacc   --cells_noise=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_noise.sacc   --cells_null=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/cells_null.sacc   --cells_fiducial=/mnt/extraspace/susanna/BBMoments/Simulations_Moments_varStd/sim_ns256_seed${seed}_stdd${std}_stds${std}_gdm3.0_gsm3.0_msk_B/cells_model.sacc   --param_chains=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/param_chains.npz   --plots=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/plots.dir   --plots_page=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}/plots_page.html   --config=./test_BBMoments_simulations/config.yaml
+
+	echo "BBPlotter MOMT for seed = "${seed}", std = "${std}
+	addqueue -q berg -m 10 /usr/bin/python3 -m bbpower BBPlotter   --cells_coadded_total=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/cells_coadded_total.sacc   --cells_coadded=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/cells_coadded.sacc   --cells_noise=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/cells_noise.sacc   --cells_null=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/cells_null.sacc   --cells_fiducial=/mnt/extraspace/susanna/BBMoments/Simulations_Moments_varStd/sim_ns256_seed${seed}_stdd${std}_stds${std}_gdm3.0_gsm3.0_msk_B/cells_model.sacc   --param_chains=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/param_chains.npz   --plots=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/plots.dir   --plots_page=/mnt/extraspace/susanna/BBMoments_outputs_10varsims_COMPLETO/Output_BBMoments_seed${seed}_stdD${std}_stdS${std}_momT/plots_page.html   --config=./test_BBMoments_simulations/config_MOMT.yml
     done
 done
