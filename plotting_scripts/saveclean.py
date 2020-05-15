@@ -3,6 +3,9 @@ import emcee
 from fsettings import alllabels
 import glob
 
+#from getdist import plots, MCSamples
+#from labels import alllabels, allranges
+
 allfs = ['/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all/output/',
          '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all2/output/', 
          '/mnt/zfsusers/mabitbol/BBPipe/final_runs2/all_gauss1/output/', 
@@ -53,9 +56,31 @@ def save_cleaned_chains(fdir):
             print("FAILED GR", file=of)
         if inds < 50: 
             print("POTENTIALLY BAD TAU", file=of)
-    #np.savez(fdir+'cleaned_chains', samples=samples, names=x['names'], labels=labels, p0=x['p0'])
+    np.savez(fdir+'cleaned_chains', samples=samples, names=x['names'], labels=labels, p0=x['p0'])
     return
 
 for af in allfs:
     save_cleaned_chains(af)
 
+
+def getdist_clean(fdir):
+    sampler = np.load(fdir+'cleaned_chains.npz')
+    vals = [allranges[k] for k in sampler['labels']]
+    ranges = dict(zip(sampler['labels'], vals))
+    gd_samps = MCSamples(samples=sampler['samples'], 
+                         names=sampler['labels'], 
+                         labels=[p.strip('$') for p in sampler['labels']])
+    return gd_samps
+
+def individual_triangle(fdir):
+    savename = fdir.split('/')[6]
+    samps = getdist_clean(fdir)
+    z = samps.paramNames.list()
+    x = np.load(fdir+'params_out.npz')
+    p0 = dict(zip(z, x['p0']))
+
+    g = plots.get_subplot_plotter()
+    g.triangle_plot([samps], z, shaded=True, markers=p0, title_limit=1)
+    savefig('/mnt/zfsusers/mabitbol/notebooks/data_and_figures/triangles/'+savename+'_triangle_ranges.png', fmt='png')
+    close()
+    return 
