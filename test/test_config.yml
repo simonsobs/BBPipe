@@ -112,3 +112,10 @@ BBCompSep:
                     amp_s_bb: ['amp', 'tophat', [0., 2., "inf"]]
                     alpha_s_bb: ['alpha', 'tophat', [-1., -0.4, 0.]]
                     l0_s_bb: ['ell0', 'fixed', [80.]]
+
+BBPlotter:
+    lmax_plot: 128
+    plot_coadded_total: True
+    plot_noise: True
+    plot_nulls: True
+    plot_likelihood: False

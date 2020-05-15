@@ -20,6 +20,8 @@ python -m bbpower BBPowerSummarizer   --splits_list=./examples/test_data/splits_
 
 python -m bbpower BBCompSep   --cells_coadded=./test/test_out/cells_coadded.fits   --cells_noise=./test/test_out/cells_noise.fits   --cells_fiducial=./test/test_out/cls_fid.fits   --param_chains=./test/test_out/param_chains.npz   --config_copy=./test/test_out/config_copy.yml   --config=./test/test_config.yml
 
+python -m bbpower BBPlotter   --cells_coadded_total=./test/test_out/cells_coadded_total.fits   --cells_coadded=./test/test_out/cells_coadded.fits   --cells_noise=./test/test_out/cells_noise.fits   --cells_null=./test/test_out/cells_null.fits   --cells_fiducial=./test/test_out/cls_fid.fits   --param_chains=./test/test_out/param_chains.npz   --plots=./test/test_out/plots.dir   --plots_page=./test/test_out/plots_page.html   --config=./test/test_config.yml
+
 fchain="test/test_out/param_chains.npz"
 if python -c "import numpy as np; a=np.load('${fchain}'); rchi2 = a['chi2'] / a['ndof']; print('chi2/dof = ', rchi2) ; assert rchi2 < 2"; then
     echo "Test passed"
@@ -28,4 +30,4 @@ else
 fi
 
 # Cleanup
-#rm -r test/test_out
+rm -r test/test_out
