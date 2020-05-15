@@ -3,7 +3,7 @@ from .types import TextFile, FitsFile, DirFile, HTMLFile, NpzFile
 import sacc
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import dominate as dom
 import dominate.tags as dtg

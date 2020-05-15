@@ -172,12 +172,41 @@ class BBPowerSummarizer(PipelineStage):
                                              bandpass_extra={'dnu': t.bandpass_extra['dnu']})
                     self.t_nulls.append(T)
                     ind_null+=1
-        
+
+    def bands_pol_iterator(self, half=True, with_windows=True):
+        pols = ['e', 'b']
+        for b1 in range(self.nbands):
+            l1 = 'band%d'%(b1+1)
+            if half:
+                range_b2 = range(b1, self.nbands)
+            else:
+                range_b2 = range(self.nbands)
+            for ip1 in range(2):
+                for b2 in range_b2:
+                    l2 = 'band%d'%(b2+1)
+                    if (b1 == b2) and half:
+                        p2_range = range(ip1, 2)
+                    else:
+                        p2_range = range(2)
+                    for ip2 in p2_range:
+                        x = pols[ip1] + pols[ip2]
+                        if with_windows:
+                            if b2 >= b1:
+                                bname = 'band%d_band%d' % (b1+1, b2+1)
+                                x_use = x
+                            else:
+                                bname = 'band%d_band%d' % (b2+1, b1+1)
+                                x_use = x[::-1]
+                            win = self.windows[bname][x_use]
+                        else:
+                            win = None
+                        yield b1, ip1, b2, ip2, l1, l2, x, win
+
     def bands_splits_pol_iterator(self):
         for b1 in range(self.nbands):
             for b2 in range(b1,self.nbands):
                 for s1 in range(self.nsplits):
-                    if b1==b2:
+                    if b1 == b2:
                         s2_range=range(s1,self.nsplits)
                     else:
                         s2_range=range(self.nsplits)
@@ -188,17 +217,17 @@ class BBPowerSummarizer(PipelineStage):
                             else:
                                 p2_range = range(2)
                             for p2 in p2_range:
-                                m1 = p1 + 2 * (s1 + self.nsplits * b1)
-                                m2 = p2 + 2 * (s2 + self.nsplits * b2)
+                                m1 = p1 + 2 * (b1 + self.nbands * s1)
+                                m2 = p2 + 2 * (b2 + self.nbands * s2)
                                 cl_name = 'cl_' + self.pol_names[p1].lower() + self.pol_names[p2].lower()
-                                yield b1, b2, s1, s2, p1, p2, m1, m2, cl_name
+                                yield s1, s2, b1, b2, p1, p2, m1, m2, cl_name
 
     def get_cl_indices(self, s):
         self.inds = np.zeros([self.nsplits * self.nbands * 2,
                               self.nsplits * self.nbands * 2,
                               self.n_bpws], dtype=int)
 
-        for b1, b2, s1, s2, p1, p2, m1, m2, cltyp in self.bands_splits_pol_iterator():
+        for s1, s2, b1, b2, p1, p2, m1, m2, cltyp in self.bands_splits_pol_iterator():
             t1 = 'band%d_split%d' % (b1+1, s1+1)
             t2 = 'band%d_split%d' % (b2+1, s2+1)
             _, _, ind = s.get_ell_cl(cltyp, t1, t2, return_ind=True)
@@ -235,6 +264,7 @@ class BBPowerSummarizer(PipelineStage):
                                   weights_total,
                                   spectra,
                                   weights_total)
+
         # Off-diagonal coadding
         spectra_xcorr = np.mean(spectra[np.triu_indices(self.nsplits,1)],axis=0)
 
@@ -260,41 +290,29 @@ class BBPowerSummarizer(PipelineStage):
             for t in self.t_nulls:
                 s_nulls.add_tracer_object(t)
 
-            def add_cl(s, b1, b2, l1, l2, cls, add_eb=False):
-                pols = ['e', 'b']
-                for ip1 in range(2):
-                    p1 = pols[ip1]
-                    for ip2 in range(2):
-                        p2 = pols[ip2]
-                        x = p1+p2
-                        if (b1 == b2) and (x=='be') and (not add_eb):
-                            continue
-                        if with_windows:
-                            if b2 >= b1:
-                                bname = 'band%d_band%d' % (b1+1, b2+1)
-                                x_use = x
-                            else:
-                                bname = 'band%d_band%d' % (b2+1, b1+1)
-                                x_use = x[::-1]
-                            s.add_ell_cl('cl_' + x, l1, l2, self.ells,
-                                         cls[b1, ip1, b2, ip2],
-                                         window=self.windows[bname][x_use])
-                        else:
-                            s.add_ell_cl('cl_' + x, l1, l2, self.ells,
-                                         cls[b1, p1, b2, p2])
-            for b1 in range(self.nbands):
-                l1 = 'band%d'%(b1+1)
-                for b2 in range(b1, self.nbands):
-                    l2 = 'band%d'%(b2+1)
-                    add_cl(s_total, b1, b2, l1, l2, spectra_total)
-                    add_cl(s_xcorr, b1, b2, l1, l2, spectra_xcorr)
-                    add_cl(s_noise, b1, b2, l1, l2, spectra_noise)
+            for b1, ip1, b2, ip2, l1, l2, x, win in self.bands_pol_iterator(half=True,
+                                                                            with_windows=with_windows):
+                s_total.add_ell_cl('cl_' + x, l1, l2,
+                                   self.ells,
+                                   spectra_total[b1, ip1, b2, ip2],
+                                   window=win)
+                s_xcorr.add_ell_cl('cl_' + x, l1, l2,
+                                   self.ells,
+                                   spectra_xcorr[b1, ip1, b2, ip2],
+                                   window=win)
+                s_noise.add_ell_cl('cl_' + x, l1, l2,
+                                   self.ells,
+                                   spectra_noise[b1, ip1, b2, ip2],
+                                   window=win)
             for i_null, (i,j,k,l) in enumerate(self.pairings):
-                for b1 in range(self.nbands):
-                    l1 = 'band%d_null%dm%d'%(b1+1, i+1, j+1)
-                    for b2 in range(self.nbands):
-                        l2 = 'band%d_null%dm%d'%(b2+1, k+1, l+1)
-                        add_cl(s_nulls, b1, b2, l1, l2, spectra_nulls[i_null], add_eb=True)
+                for b1, ip1, b2, ip2, l1, l2, x, win in self.bands_pol_iterator(half=False,
+                                                                                with_windows=with_windows):
+                    l1s = l1 + '_null%dm%d' % (i+1, j+1)
+                    l2s = l2 + '_null%dm%d' % (k+1, l+1)
+                    s_nulls.add_ell_cl('cl_' + x, l1s, l2s,
+                                       self.ells,
+                                       spectra_nulls[i_null, b1, ip1, b2, ip2],
+                                       window=win)
             ret['saccs'] = [s_total, s_xcorr, s_noise, s_nulls]
 
         spectra_total=spectra_total.reshape([2*self.nbands,2*self.nbands,self.n_bpws])[np.triu_indices(2*self.nbands)].flatten()

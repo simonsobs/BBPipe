@@ -13,6 +13,7 @@ parser.add_option('--nside', dest='nside', default=256, type=int,
                   help='Set to define Nside parameter, default=256')
 (o, args) = parser.parse_args()
 
+np.random.seed(o.seed)
 npix = hp.nside2npix(o.nside)
 
 # Signal maps

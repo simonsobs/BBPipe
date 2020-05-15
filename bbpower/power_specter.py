@@ -312,6 +312,10 @@ class BBPowerSpecter(PipelineStage):
         fo.close()
 
         for isim,d in enumerate(sims):
+            fname=prefix_out + "_sim%d.fits" % isim
+            if os.path.isfile(fname):
+                print("found " + fname)
+                continue
             print("%d-th / %d simulation" % (isim+1, len(sims)))
             #   Compute list of splits
             sim_splits = [d+'/obs_split%dof%d.fits' % (i+1, self.nsplits)
@@ -320,7 +324,7 @@ class BBPowerSpecter(PipelineStage):
             cell_sim=self.compute_cells_from_splits(sim_splits)
             #   Save output
             fname=prefix_out + "_sim%d.fits" % isim
-            self.save_cell_to_file(cell_data,
+            self.save_cell_to_file(cell_sim,
                                    self.tracers,
                                    fname, with_windows=False)
 

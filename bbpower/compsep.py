@@ -135,8 +135,6 @@ class BBCompSep(PipelineStage):
         self.n_bpws = len(self.ell_b)
         # D_ell factor
         self.dl2cl = 2 * np.pi / (self.bpw_l * (self.bpw_l + 1))
-        if self.config.get('compute_dell'):
-            self.dl2cl = 1.
         self.windows = np.zeros([self.ncross, self.n_bpws, self.n_ell])
 
         #Get power spectra and covariances
@@ -474,7 +472,7 @@ class BBCompSep(PipelineStage):
             np.savez(self.get_output('param_chains'),
                      params=sampler,
                      names=self.params.p_free_names,
-                     chi2=chi2)
+                     chi2=chi2, ndof=len(self.bbcovar))
             print("Best fit:")
             for n,p in zip(self.params.p_free_names,sampler):
                 print(n+" = %.3lE" % p)
@@ -482,9 +480,9 @@ class BBCompSep(PipelineStage):
         elif self.config.get('sampler')=='single_point':
             sampler = self.singlepoint()
             np.savez(self.get_output('param_chains'),
-                     chi2=sampler,
+                     chi2=sampler, ndof=len(self.bbcovar),
                      names=self.params.p_free_names)
-            print("Chi^2:",sampler)
+            print("Chi^2:",sampler,len(self.bbcovar))
         elif self.config.get('sampler')=='timing':
             sampler = self.timing()
             np.savez(self.get_output('param_chains'),
