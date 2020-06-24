@@ -106,6 +106,7 @@ class BBMapParamCompSep(PipelineStage):
             #     killing modes that are below ell ~ 60
             #     '''
             #     return f(theta*0.25*Nx/(np.pi/60))
+            np.save('freq_maps_pre_filtering', frequency_maps_)
             ell_knee = 100
             lmax = int(2*self.config['nside'])
             filter_window = np.array([0,]+[1.0/np.sqrt(1.0+(ell_knee*1.0/ell)**2.4) for ell in range(1,lmax)])
@@ -116,6 +117,10 @@ class BBMapParamCompSep(PipelineStage):
                 for alms_ in alms:
                     hp.almxfl(alms_, filter_window, inplace=True) 
                 frequency_maps_[f] = hp.alm2map(alms, nside=self.config['nside'])
+            np.save('freq_maps_post_filtering', frequency_maps_)
+            sys.exit()
+
+
 
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
