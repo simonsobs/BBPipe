@@ -106,7 +106,8 @@ class BBMapParamCompSep(PipelineStage):
             #     killing modes that are below ell ~ 60
             #     '''
             #     return f(theta*0.25*Nx/(np.pi/60))
-            np.save('freq_maps_pre_filtering', frequency_maps_)
+            # np.save('freq_maps_pre_filtering', frequency_maps_)
+            frequency_maps_unfiltered = frequency_maps_*1.0
             ell_knee = 100
             lmax = int(2*self.config['nside'])
             filter_window = np.array([0,]+[1.0/np.sqrt(1.0+(ell_knee*1.0/ell)**2.4) for ell in range(1,lmax)])
@@ -117,8 +118,8 @@ class BBMapParamCompSep(PipelineStage):
                 for alms_ in alms:
                     hp.almxfl(alms_, filter_window, inplace=True) 
                 frequency_maps_[f] = hp.alm2map(alms, nside=self.config['nside'])
-            np.save('freq_maps_post_filtering', frequency_maps_)
-            sys.exit()
+            # np.save('freq_maps_post_filtering', frequency_maps_)
+            # sys.exit()
 
 
 
@@ -248,6 +249,18 @@ class BBMapParamCompSep(PipelineStage):
                     noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                     inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
                     noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
+
+
+            if self.config['highpass_filtering']:
+                print('re-estimating post comp sep sky maps from un-filtered frequency maps')
+                print('although using estimated spectral indices from high-pass filtered maps')
+                res.s_unfiltered = res.s*0.0
+                for p in obs_pix:
+                    for s in range(2):
+                        noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
+                        inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
+                        res.s_unfiltered[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(frequency_maps_unfiltered[:,s,p])
+                res.s = res.s_unfiltered
 
             # the noise if the combination (sum) of the noise_after_comp_sep
             # recovered on each of the sub masks
