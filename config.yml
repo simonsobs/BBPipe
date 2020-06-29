@@ -1,5 +1,5 @@
 global:
-    nside: 512
+    nside: 1024
    
 BB_HILC:
     verbose: True
@@ -8,15 +8,16 @@ BB_Cl_Process:
     pol: True
     verbose: True
     Nsimul: 100
+    beam: 10.0
 
 BB_Likelihood:
     # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
     sampler: 'maximum_likelihood'
     # If you chose emcee:
     # Number of walkers
-    #nwalkers: 128
+    nwalkers: 128
     # Number of iterations per walker
-    #n_iters: 1000
+    n_iters: 1000
     # Likelihood type (choose 'chi2' or 'h&l')
     likelihood_type: 'chi2'
     # Which polarization channels do you want to include?

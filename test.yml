@@ -29,7 +29,7 @@ inputs:
     freq_maps_list: ./inputs/filenames_of_maps.dat
     ell_bins_list: ./inputs/edges_of_bins.dat
     freqs_list: ./inputs/frequencies_data.dat
-    masks: ./inputs/mask_Planck_ns512.fits
+    masks: ./inputs/mask_apodized_inGalactic.fits
     noise_sims_list: ./inputs/noise_simulations_files.dat
 
 # Overall configuration file 
@@ -39,7 +39,7 @@ config: ./config.yml
 resume: False
 
 # Put all the output files in this directory:
-output_dir: ./outputs_ns512_test
+output_dir: ./outputs_ns1024_GaussNoise_NoSmooth_maxlike_SOMask
 
 # Put the logs from the individual stages in this directory:
 log_dir: ./logs

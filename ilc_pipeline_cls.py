@@ -16,6 +16,8 @@ class BB_Cl_Process(PipelineStage):
 		self.pol		= self.config['pol']
 		self.verbose	= self.config['verbose']
 		self.Nsimul		= self.config['Nsimul']
+		# beam in arcmin
+		self.beam      = self.config['beam']
 			
 	def read_freqs(self):
 		# read freq value and count the number of bands
@@ -28,11 +30,9 @@ class BB_Cl_Process(PipelineStage):
 		# transform to numpy array
 		self.freqs	= np.array(freqs)
 		self.Nfreqs	= len(self.freqs)
-
 	def read_mask(self):
 		m			= hp.read_map(self.get_input('masks'),verbose=False)
 		self.mask 	= hp.ud_grade(m,nside_out=self.nside)
-	
 	def read_ell_bins(self):
 		bins_edges	= []
 		f	= open(self.get_input('ell_bins_list'))
@@ -63,9 +63,12 @@ class BB_Cl_Process(PipelineStage):
 	def read_cmb_cls(self):
 		# Fill in for 7 cls
 		cmb_cls_teb			= hp.read_cl(self.get_input('cl_cmb'))
+		ellmax = cmb_cls_teb.shape[1]-1
 		self.cmb_cls		= np.zeros((7,cmb_cls_teb.shape[1]))
-		self.cmb_cls[0:3,:]	= cmb_cls_teb
-	
+		# at this point we divide by the beam^2
+		#beams = hp.gauss_beam(np.radians(self.beam/60.0),lmax=ellmax,pol=True)
+		for i in range(3):
+			self.cmb_cls[i,:]	= cmb_cls_teb[i] #/ beams[:,i]**2
 	def read_ilcweights(self):
 		npzfile 		= np.load(self.get_input('ilc_weights'))
 		self.ilc_w_T 	= npzfile['ilc_weights_T']
@@ -191,7 +194,7 @@ class BB_Cl_Process(PipelineStage):
 		
 		# calculate Nell
 		self.read_ilcweights()
-		nl_c_mean_P 	= self.calculate_noise_bias(pol_nb=True)		
+		nl_c_mean_P 	= self.calculate_noise_bias(pol_nb=True)
 		nl_c_mean_T 	= self.calculate_noise_bias(pol_nb=False)
 		
 		# coupling matrix and binning

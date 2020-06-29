@@ -28,7 +28,7 @@ class BB_HILC(PipelineStage):
 	def read_mask(self):
 		m			= hp.read_map(self.get_input('masks'),verbose=False)
 		self.mask 	= hp.ud_grade(m,nside_out=self.nside)
-		print(hp.npix2nside(len(self.mask)))
+		#print(hp.npix2nside(len(self.mask)))
 	
 	def read_ell_bins(self):
 		bins_edges	= []

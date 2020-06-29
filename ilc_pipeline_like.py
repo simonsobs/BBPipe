@@ -4,6 +4,7 @@ import pymaster as nmt
 from bbpipe import PipelineStage
 from types_mine import FitsFile,TextFile,DummyFile,NpzFile
 from param_manager import ParameterManager
+import os
 
 class BB_Likelihood(PipelineStage):
 	name 			= 'BB_Likelihood'
@@ -67,6 +68,8 @@ class BB_Likelihood(PipelineStage):
 		self.read_bandpowers()
 		self.read_cov_matrix()
 		self.load_cmb()
+		if self.use_handl:
+			self.prepare_h_and_l()
 		self.params = ParameterManager(self.config)
 		return
 	def minimizer(self):
@@ -77,6 +80,11 @@ class BB_Likelihood(PipelineStage):
 			return c2
 		res=minimize(chi2, self.params.p0, method="Powell")
 		return res.x
+	def prepare_h_and_l(self):
+		fiducial_noise = self.bbfiducial + self.bbnoise
+		self.Cfl_sqrt = np.array([sqrtm(f) for f in fiducial_noise])
+		self.observed_cls = self.bbdata + self.bbnoise
+		return 
 	def lnprob(self, par):
 		#Likelihood with priors. 
 		prior = self.params.lnprior(par)
@@ -157,7 +165,32 @@ class BB_Likelihood(PipelineStage):
 			indpol	= self.pol_order['B']
 			model_bandpowers[n] = np.mean(cmb_cell[mask,indpol])
 		return model_bandpowers
-	
+	def emcee_sampler(self):
+		"""
+		Sample the model with MCMC. 
+		"""
+		import emcee
+		from multiprocessing import Pool
+		fname_temp = self.get_output('param_chains')+'.h5'
+		backend = emcee.backends.HDFBackend(fname_temp)
+		nwalkers = self.config['nwalkers']
+		n_iters = self.config['n_iters']
+		ndim = len(self.params.p0)
+		found_file = os.path.isfile(fname_temp)
+		if not found_file:
+			backend.reset(nwalkers,ndim)
+			pos = [self.params.p0 + 1.e-3*np.random.randn(ndim) for i in range(nwalkers)]
+			nsteps_use = n_iters
+		else:
+			print("Restarting from previous run")
+			pos = None
+			nsteps_use = max(n_iters-len(backend.get_chain()), 0)
+		with Pool() as pool:
+			sampler = emcee.EnsembleSampler(nwalkers, ndim, self.lnprob,backend=backend)
+			if nsteps_use > 0:
+				sampler.run_mcmc(pos, nsteps_use, store=True, progress=True);
+		return sampler
+
 	def save_to_npz(self,fname,params,names,chi2):
 		np.savez(fname,params=params,names=names,chi2=chi2)
 		return
@@ -173,6 +206,10 @@ class BB_Likelihood(PipelineStage):
 			for n,p in zip(self.params.p_free_names,sampler):
 				print(n+" = %.3lE" % p)
 			print("Chi2: %.3lE" % chi2)
+		if self.config.get('sampler')=='emcee':
+			sampler = self.emcee_sampler()
+			np.savez(self.get_output('param_chains'),chain=sampler.chain,names=self.params.p_free_names)
+		print("Finished sampling")
 		return
 if __name__ == '__main__':
     cls = PipelineStage.main()
