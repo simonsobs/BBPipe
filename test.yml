@@ -23,8 +23,8 @@ stages:
 # a previous stage must be defined here.  They are listed by tag.
 
 inputs:
-    freq_maps_list_sp1: ./inputs/filenames_of_maps_sp1.dat
-    freq_maps_list_sp2: ./inputs/filenames_of_maps_sp2.dat
+    freq_maps_list_sp1: ./inputs/filenames_of_maps_split1.dat
+    freq_maps_list_sp2: ./inputs/filenames_of_maps_split2.dat
     ell_bins_list: ./inputs/edges_of_bins.dat
     freqs_list: ./inputs/frequencies_data.dat
     masks: ./inputs/mask_apodized_inGalactic.fits

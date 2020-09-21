@@ -61,13 +61,13 @@ class BB_Cl_Process(PipelineStage):
 		f		= open(self.get_input('freq_maps_list_sp1'),'r')
 		line	= f.readline()
 		qu_list = hp.read_map(line.strip(), field=(1,2), verbose=False)
-		self.SingleMap_s2 = nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 )
+		self.SingleMap_s2 = nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False )
 		
 	def read_cmb_cls(self):
 		cls_cmb			= hp.read_cl(self.get_input('cl_cmb'))
 		# Fill in 
 		self.nels = cls_cmb.shape[1]
-		self.cmb_cls = np.zeros([4,nels])
+		self.cmb_cls = np.zeros([4,self.nels])
 		# EE is in index 0, BB is in index 3
 		self.cmb_cls[0,:]	= cls_cmb[1]
 		self.cmb_cls[3,:]	= cls_cmb[2]
@@ -79,7 +79,9 @@ class BB_Cl_Process(PipelineStage):
 			cls_for_decoupling = np.zeros([4,self.nels])
 			cls_for_decoupling[0,:] = self.cls_cmb_MC[m,0,:]
 			cls_for_decoupling[3,:] = self.cls_cmb_MC[m,1,:]
-			self.bandpowers_MC[m,:,:] = self.compute_bandpowers(cls_for_decoupling)
+			bandpowers = self.compute_bandpowers(cls_for_decoupling)
+			self.bandpowers_MC[m,0,:] = bandpowers[0,:]
+			self.bandpowers_MC[m,1,:] = bandpowers[3,:]
 			print("Decoupling for iteration %i is ready"%m)
 	
 	def write_bandpowers_MC(self):
@@ -89,7 +91,7 @@ class BB_Cl_Process(PipelineStage):
 	def create_nmt_Workspace(self):
 		# This just sets a nmt workspace
 		self.workspace	= nmt.NmtWorkspace()
-		self.workspace.compute_coupling_matrix(self.SingleMap_s2,self.SingleMap_s2,bins=self.bins,is_teb=False,n_iter=6)
+		self.workspace.compute_coupling_matrix(self.SingleMap_s2,self.SingleMap_s2,bins=self.bins,is_teb=False)
 
 	def compute_bandpowers(self,cmb_cls):
 		# cmb_cls has TT,EE and BB spectra

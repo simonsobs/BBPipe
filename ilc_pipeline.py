@@ -49,11 +49,11 @@ class BB_HILC(PipelineStage):
 		# when I read in the freq maps, I need to multiply the map
 		for line in f:
 			qu_list = hp.read_map(line.strip(), field=(1,2), verbose=False)
-			self.maps_s2_sp1.append(nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
+			self.maps_s2_sp1.append(nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False ))
 			print("Split 1 file %s done"%line.strip())
 		for line in f2:
 			qu_list = hp.read_map(line.strip(), field=(1,2), verbose=False)
-			self.maps_s2_sp2.append(nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
+			self.maps_s2_sp2.append(nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False ))
 			print("Split 2 file %s done"%line.strip())
 	def do_ILC_MonteCarlo(self):
 		# First I need to read the two sets of splits
@@ -69,8 +69,8 @@ class BB_HILC(PipelineStage):
 				file2 = f2.readline().strip()
 				qu_list_sp1 = hp.read_map(file1, field=(1,2), verbose=False)
 				qu_list_sp2 = hp.read_map(file2, field=(1,2), verbose=False)
-				alms_s2_sp1.append(nmt.NmtField(self.mask, [qu_list_sp1[0] , qu_list_sp1[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
-				alms_s2_sp2.append(nmt.NmtField(self.mask, [qu_list_sp2[0] , qu_list_sp2[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
+				alms_s2_sp1.append(nmt.NmtField(self.mask, [qu_list_sp1[0] , qu_list_sp1[1] ], purify_b=True,purify_e=True,masked_on_input=False))
+				alms_s2_sp2.append(nmt.NmtField(self.mask, [qu_list_sp2[0] , qu_list_sp2[1] ], purify_b=True,purify_e=True,masked_on_input=False))
 				print("Iter=%i freq. %.1f GHz done with files %s and %s"%(m,self.freqs[n],file1,file2))
 			resultP 	= self.clean_ilc(alms_s2_sp1,alms_s2_sp2,pol=True)
 			self.weights_MC[m] = resultP['w_ilc']
