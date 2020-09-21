@@ -6,14 +6,15 @@ from types_mine import FitsFile,TextFile,DummyFile,NpzFile
 
 class BB_HILC(PipelineStage):
 	name 			= 'BB_HILC'
-	inputs			= [('freq_maps_list',TextFile),('ell_bins_list',TextFile),('freqs_list',TextFile),('masks',TextFile)]
-	outputs			= [('cl_cmb',FitsFile),('ilc_weights',NpzFile),('bands',NpzFile)]
-	
+	inputs			= [('freq_maps_list_sp1',TextFile),('freq_maps_list_sp2',TextFile),('ell_bins_list',TextFile),('freqs_list',TextFile),('masks',TextFile),('freq_maps_list_MC_sp1',TextFile),('freq_maps_list_MC_sp2',TextFile)]
+	outputs			= [('cl_cmb',FitsFile),('ilc_weights',NpzFile),('bands',NpzFile),('cl_cmb_MC',NpzFile),('ilc_weights_MC',NpzFile)]
+
 	def init_params(self):
 		self.nside 		= self.config['nside']
 		self.npix 		= hp.nside2npix(self.nside)
 		self.verbose	= self.config['verbose']
-			
+		self.Nmc = self.config['Nsimul']
+
 	def read_freqs(self):
 		# read freq value and count the number of bands
 		freqs	= []
@@ -28,6 +29,8 @@ class BB_HILC(PipelineStage):
 	def read_mask(self):
 		m			= hp.read_map(self.get_input('masks'),verbose=False)
 		self.mask 	= hp.ud_grade(m,nside_out=self.nside)
+		# We also need a binary mask where 0 stays 0, and >0 is 1
+		self.bin_mask = np.ceil(self.mask)
 		#print(hp.npix2nside(len(self.mask)))
 	
 	def read_ell_bins(self):
@@ -39,14 +42,47 @@ class BB_HILC(PipelineStage):
 	
 	def read_freq_maps(self):
 		# This is for reading the maps files and return it as a list of namaster fields
-		f	= open(self.get_input('freq_maps_list'),'r')
-		self.maps_s2 = [] 
-		self.maps_s0 = []
+		f	= open(self.get_input('freq_maps_list_sp1'),'r')
+		f2	= open(self.get_input('freq_maps_list_sp2'),'r')
+		self.maps_s2_sp1 = [] 
+		self.maps_s2_sp2 = [] 
+		# when I read in the freq maps, I need to multiply the map
 		for line in f:
-			self.maps_s0.append(nmt.NmtField(self.mask, [hp.read_map(line.strip(), field=0, verbose=False)]))
-			self.maps_s2.append(nmt.NmtField(self.mask, hp.read_map(line.strip(), field=(1,2), verbose=False)))
-	
-	def clean_ilc(self,alms_list,pol):
+			qu_list = hp.read_map(line.strip(), field=(1,2), verbose=False)
+			self.maps_s2_sp1.append(nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
+			print("Split 1 file %s done"%line.strip())
+		for line in f2:
+			qu_list = hp.read_map(line.strip(), field=(1,2), verbose=False)
+			self.maps_s2_sp2.append(nmt.NmtField(self.mask, [qu_list[0] , qu_list[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
+			print("Split 2 file %s done"%line.strip())
+	def do_ILC_MonteCarlo(self):
+		# First I need to read the two sets of splits
+		f	= open(self.get_input('freq_maps_list_MC_sp1'),'r')
+		f2	= open(self.get_input('freq_maps_list_MC_sp2'),'r')
+		self.weights_MC = np.zeros((self.Nmc,2,self.nbands,3*self.nside))
+		self.cls_cmb_MC = np.zeros((self.Nmc,2,3*self.nside))
+		for m in range(self.Nmc):
+			alms_s2_sp1 = [] 
+			alms_s2_sp2 = []
+			for n in range(self.nbands):
+				file1 = f.readline().strip()
+				file2 = f2.readline().strip()
+				qu_list_sp1 = hp.read_map(file1, field=(1,2), verbose=False)
+				qu_list_sp2 = hp.read_map(file2, field=(1,2), verbose=False)
+				alms_s2_sp1.append(nmt.NmtField(self.mask, [qu_list_sp1[0] , qu_list_sp1[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
+				alms_s2_sp2.append(nmt.NmtField(self.mask, [qu_list_sp2[0] , qu_list_sp2[1] ], purify_b=True,purify_e=True,masked_on_input=False,n_iter_mask_purify=6,n_iter=6 ))
+				print("Iter=%i freq. %.1f GHz done with files %s and %s"%(m,self.freqs[n],file1,file2))
+			resultP 	= self.clean_ilc(alms_s2_sp1,alms_s2_sp2,pol=True)
+			self.weights_MC[m] = resultP['w_ilc']
+			self.cls_cmb_MC[m] = resultP['cl_c']
+			print("Iter=%i done"%m)
+	def write_ILC_MonteCarlo(self):
+		fname = self.get_output('ilc_weights_MC')
+		np.savez(fname,ilc_weights_MC=self.weights_MC,Nmc=self.Nmc)
+	def write_ILC_spectra(self):
+		fname = self.get_output('cl_cmb_MC')
+		np.savez(fname,cls_cmb_MC=self.cls_cmb_MC,Nmc=self.Nmc)
+	def clean_ilc(self,alms_list,alms_list2,pol):
 		nside		= self.nside
 		verbose		= self.verbose
 		freqs		= self.freqs
@@ -67,7 +103,7 @@ class BB_HILC(PipelineStage):
 		
 		n_nu=len(freqs)
 		c_nu=cmb(freqs) #Frequency dependence
-		if len(alms_list)!=len(c_nu) :
+		if len(alms_list)!=len(c_nu) or len(alms_list2)!=len(c_nu) :
 			raise ValueError("#maps != #freqs")
 
 		n_ell=3*nside
@@ -87,7 +123,7 @@ class BB_HILC(PipelineStage):
 		c_ells=np.zeros([n_pols,n_nu,n_nu,n_ell])
 		for inu1 in np.arange(n_nu) :
 			for inu2 in np.arange(inu1,n_nu) :
-				cls=pspec_compute(alms_list[inu1],alms_list[inu2])
+				cls=pspec_compute(alms_list[inu1],alms_list2[inu2])
 				for ip in np.arange(n_pols) :
 					c_ells[ip,inu1,inu2]=cls[ip]
 					if inu2!=inu1 :
@@ -130,17 +166,21 @@ class BB_HILC(PipelineStage):
 		self.read_ell_bins()
 		self.read_freq_maps()
 		
-		resultT		= self.clean_ilc(self.maps_s0,pol=False)
-		resultP 	= self.clean_ilc(self.maps_s2,pol=True)
+		resultP 	= self.clean_ilc(self.maps_s2_sp1,self.maps_s2_sp2,pol=True)
 		
 		np.savez(self.get_output('bands'),bands = resultP['bands'])
 		
 		# join the spectra
-		cls_cmb			= [resultT['cl_c'][0],resultP['cl_c'][0],resultP['cl_c'][1]]
-		# save cell cmb
+		cls_cmb			= [np.zeros_like(resultP['cl_c'][0]),resultP['cl_c'][0],resultP['cl_c'][1]]
+		# save cell cmb to healpy fits file
 		self.save_cl_to_file(cls_cmb,self.get_output('cl_cmb'))
 		# save ilc weights
-		self.save_ilcweights_to_file(resultT['w_ilc'],resultP['w_ilc'],self.get_output('ilc_weights'))
+		self.save_ilcweights_to_file(resultP['w_ilc'],resultP['w_ilc'],self.get_output('ilc_weights'))
+		
+		# do the MC iterations
+		self.do_ILC_MonteCarlo()
+		self.write_ILC_MonteCarlo()
+		self.write_ILC_spectra()
 
 if __name__ == '__main__':
 	cls = PipelineStage.main()

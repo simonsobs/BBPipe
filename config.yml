@@ -3,16 +3,17 @@ global:
    
 BB_HILC:
     verbose: True
+    Nsimul: 200
 
 BB_Cl_Process:
     pol: True
     verbose: True
-    Nsimul: 100
+    Nsimul: 200
     beam: 10.0
 
 BB_Likelihood:
     # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
-    sampler: 'maximum_likelihood'
+    sampler: 'emcee'
     # If you chose emcee:
     # Number of walkers
     nwalkers: 128
