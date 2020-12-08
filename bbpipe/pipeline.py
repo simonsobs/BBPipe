@@ -29,7 +29,7 @@ class Pipeline:
         del self.stage_execution_config[name]
 
     def find_outputs(self, stage, outdir):
-        return [f'{outdir}/{tag}.{ftype.suffix}' for tag,ftype in stage.outputs]
+        return [f'{outdir}/{stage.name}/{tag}.{ftype.suffix}' for tag,ftype in stage.outputs]
 
     def find_inputs(self, stage, data_elements):
         inputs = []
@@ -108,6 +108,8 @@ class Pipeline:
             sec = self.stage_execution_config[stage.name]
             app = stage.generate(self.dfk, sec.nprocess, sec.site, log_dir, mpi_command=self.mpi_command)
             inputs = self.find_inputs(stage, data_elements)
+            stage_output_dir = f'{output_dir}/{stage.name}'
+            os.makedirs(stage_output_dir, exist_ok=True) # TODO: Maybe add a warning if it exists?
             outputs = self.find_outputs(stage, output_dir)
             # All pipeline stages implicitly get the overall configuration file
             inputs.append(File(stages_config))
