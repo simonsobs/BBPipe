@@ -5,6 +5,8 @@ import parsl
 import argparse
 from . import Pipeline, PipelineStage
 from . import sites
+import time
+import shutil
 
 # Add the current dir to the path - often very useful
 sys.path.append(os.getcwd())
@@ -18,12 +20,28 @@ def run(pipeline_config_filename, dry_run=False):
     """
     Runs the pipeline
     """
+
+    # Get current time in Unix milliseconds to define log directory
+    init_time_ms = int(time.time()*1e3)
+
     # YAML input file.
     pipe_config = yaml.load(open(pipeline_config_filename))
+    output_dir = pipe_config['output_dir']
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Log directory should not already exist
+    log_dir = f'{output_dir}/run_{str(init_time_ms)}'
+    os.makedirs(log_dir, exist_ok=False)
+
+    # Copy the main config files into the log directory
+    shutil.copyfile(pipeline_config_filename,f'{log_dir}/pipeline_config.yml')
+    stages_config = pipe_config['config']
+    shutil.copyfile(stages_config,f'{log_dir}/stages_config.yml')
 
     # Optional logging of pipeline infrastructure to
     # file.
-    log_file = pipe_config.get('pipeline_log')
+    log_file = f'{log_dir}/pipeline_log.txt'
+
     if log_file:
         parsl.set_file_logger(log_file)
 
@@ -48,12 +66,9 @@ def run(pipeline_config_filename, dry_run=False):
     # launcher_config = pipe_config['launcher']
 
     # Inputs and outputs
-    output_dir = pipe_config['output_dir']
     inputs = pipe_config['inputs']
-    log_dir = pipe_config['log_dir']
     resume = pipe_config['resume']
 
-    stages_config = pipe_config['config']
 
     for module in modules:
         __import__(module)

@@ -43,9 +43,3 @@ resume: False
 # Put all the output files in this directory:
 output_dir: ./test/outputs
 
-# Put the logs from the individual stages in this directory:
-log_dir: ./test/logs
-
-# Put the log for the overall pipeline infrastructure in this file:
-pipeline_log: log.txt
-

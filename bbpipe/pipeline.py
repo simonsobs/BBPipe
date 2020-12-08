@@ -100,8 +100,6 @@ class Pipeline:
         data_elements = overall_inputs.copy()
         futures = []
 
-        os.makedirs(output_dir, exist_ok=True)
-        os.makedirs(log_dir, exist_ok=True)
 
         if resume:
             print("Since parameter 'resume' is True we will skip steps whose outputs exist already")
