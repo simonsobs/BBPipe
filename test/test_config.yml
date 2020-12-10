@@ -1,0 +1,6 @@
+global:
+  nside: 32
+
+PowerSpecter:
+  lmin: 10
+  lmax: 64
