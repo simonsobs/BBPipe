@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description='Run a Ceci pipeline from a configu
 parser.add_argument('pipeline_config', help='Pipeline configuration file in YAML format.')
 parser.add_argument('--export-cwl', type=str, help='Exports pipeline in CWL format to provided path and exits')
 parser.add_argument('--dry-run', action='store_true', help='Just print out the commands the pipeline would run without running them')
-parser.add_argument('--python-cmd', type=str, default='python3', help='Exports pipeline in CWL format to provided path and exits')
+parser.add_argument('--python-cmd', type=str, default='python3', help='Command that calls the python interpreter')
 
 def run(pipeline_config_filename, dry_run=False, pycmd='python3'):
     """
