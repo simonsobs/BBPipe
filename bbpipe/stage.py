@@ -525,7 +525,7 @@ the input called 'config'.
     def usage(cls):
         stage_names = "\n- ".join(cls.pipeline_stages.keys())
         sys.stderr.write(f"""
-Usage: python -m txpipe <stage_name> <stage_arguments>
+Usage: python -m <module_name> <stage_name> <stage_arguments>
 
 If no stage_arguments are given then usage information
 for the chosen stage will be given.
@@ -639,7 +639,8 @@ I currently know about these stages:
         return function
 
     @classmethod
-    def generate_command(cls, external_inputs, config, outdir, nprocess=1, mpi_command='mpirun -n'):
+    def generate_command(cls, external_inputs, config, outdir, nprocess=1,
+                         mpi_command='mpirun -n', python_command='python3'):
         """
         Generate a command line that will run the stage
         """
@@ -672,11 +673,12 @@ I currently know about these stages:
 
         # We just return this, instead of wrapping it in a
         # parsl job
-        cmd = f'{launcher} python3 -m {module} {flags} {mpi_flag}'
+        cmd = f'{launcher} {python_command} -m {module} {flags} {mpi_flag}'
         return cmd
 
     @classmethod
-    def generate(cls, dfk, nprocess, site_name, log_dir, mpi_command='mpirun -n'):
+    def generate(cls, dfk, nprocess, site_name, log_dir,
+                 mpi_command='mpirun -n', python_command='python3'):
         """
         Build a parsl bash app that executes this pipeline stage
         """
@@ -712,7 +714,7 @@ I currently know about these stages:
         template = f"""
 @parsl.App('bash', dfk, sites=['{site_name}'])
 def {cls.name}(inputs, outputs, stdout='{log_dir}/{cls.name}.out', stderr='{log_dir}/{cls.name}.err'):
-    cmd = '{launcher} python3 -m {module} {flags} {mpi_flag}'.format(inputs=inputs,outputs=outputs)
+    cmd = '{launcher} {python_command} -m {module} {flags} {mpi_flag}'.format(inputs=inputs,outputs=outputs)
     print("Compiling command:")
     print(cmd)
     return cmd

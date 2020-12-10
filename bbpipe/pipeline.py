@@ -11,10 +11,11 @@ class StageExecutionConfig:
         self.nprocess = info.get('nprocess', 1)
 
 class Pipeline:
-    def __init__(self, launcher_config, stages):
+    def __init__(self, launcher_config, stages, pycmd='python3'):
         self.stage_execution_config = {}
         self.stage_names = []
         self.mpi_command = launcher_config['mpi_command']
+        self.python_command = pycmd
         self.dfk = parsl.DataFlowKernel(launcher_config)
         for info in stages:
             self.add_stage(info)
@@ -91,7 +92,10 @@ class Pipeline:
 
         for stage in stages:
             sec = self.stage_execution_config[stage.name]
-            cmd = stage.generate_command(overall_inputs, stages_config, output_dir, sec.nprocess, self.mpi_command)
+            cmd = stage.generate_command(overall_inputs, stages_config, output_dir,
+                                         nprocess=sec.nprocess,
+                                         mpi_command=self.mpi_command,
+                                         python_command=self.python_command)
             print(cmd)
             print()
 
@@ -106,7 +110,9 @@ class Pipeline:
 
         for stage in stages:
             sec = self.stage_execution_config[stage.name]
-            app = stage.generate(self.dfk, sec.nprocess, sec.site, log_dir, mpi_command=self.mpi_command)
+            app = stage.generate(self.dfk, sec.nprocess, sec.site, log_dir,
+                                 mpi_command=self.mpi_command,
+                                 python_command=self.python_command)
             inputs = self.find_inputs(stage, data_elements)
             stage_output_dir = f'{output_dir}/{stage.name}'
             os.makedirs(stage_output_dir, exist_ok=True) # TODO: Maybe add a warning if it exists?
