@@ -3,6 +3,7 @@ from parsl.data_provider.files import File
 from .stage import PipelineStage
 import os
 import sys
+import warnings
 
 class StageExecutionConfig:
     def __init__(self, info):
@@ -30,7 +31,7 @@ class Pipeline:
         del self.stage_execution_config[name]
 
     def find_outputs(self, stage, outdir):
-        return [f'{outdir}/{tag}.{ftype.suffix}' for tag,ftype in stage.outputs]
+        return [f'{outdir}/{stage.name}/{tag}.{ftype.suffix}' for tag,ftype in stage.outputs]
 
     def find_inputs(self, stage, data_elements):
         inputs = []
@@ -104,8 +105,6 @@ class Pipeline:
         data_elements = overall_inputs.copy()
         futures = []
 
-        os.makedirs(output_dir, exist_ok=True)
-        os.makedirs(log_dir, exist_ok=True)
 
         if resume:
             print("Since parameter 'resume' is True we will skip steps whose outputs exist already")
@@ -116,6 +115,11 @@ class Pipeline:
                                  mpi_command=self.mpi_command,
                                  python_command=self.python_command)
             inputs = self.find_inputs(stage, data_elements)
+            stage_output_dir = f'{output_dir}/{stage.name}'
+            if os.path.isdir(stage_output_dir):
+                warnings.warn("Pipeline stage output directory already exists. " + \
+                              "Previous outputs may be overwritten.")
+            os.makedirs(stage_output_dir, exist_ok=True)
             outputs = self.find_outputs(stage, output_dir)
             # All pipeline stages implicitly get the overall configuration file
             inputs.append(File(stages_config))
