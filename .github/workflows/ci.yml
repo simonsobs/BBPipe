@@ -35,7 +35,7 @@ jobs:
 
       - name: Unit tests
         run: |
-          export PYTHONPATH=$PYTHONPATH:$PWD
+          export PATH=$PATH:$HOME/.local/bin
           bbpipe test/test_ini.yml --python-cmd=python
           pytest -vv test/
 
