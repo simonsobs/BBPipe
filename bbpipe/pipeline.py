@@ -12,12 +12,13 @@ class StageExecutionConfig:
         self.nprocess = info.get('nprocess', 1)
 
 class Pipeline:
-    def __init__(self, launcher_config, stages, pycmd='python3'):
+    def __init__(self, launcher_config, stages, log_dir, pycmd='python3'):
+        self.log_dir = log_dir
         self.stage_execution_config = {}
         self.stage_names = []
         self.mpi_command = launcher_config['mpi_command']
         self.python_command = pycmd
-        self.dfk = parsl.DataFlowKernel(launcher_config)
+        self.dfk = parsl.DataFlowKernel(launcher_config,rundir=self.log_dir)
         for info in stages:
             self.add_stage(info)
 
@@ -100,7 +101,7 @@ class Pipeline:
             print(cmd)
             print()
 
-    def run(self, overall_inputs, output_dir, log_dir, resume, stages_config):
+    def run(self, overall_inputs, output_dir, resume, stages_config):
         stages = self.ordered_stages(overall_inputs)
         data_elements = overall_inputs.copy()
         futures = []
@@ -111,7 +112,7 @@ class Pipeline:
 
         for stage in stages:
             sec = self.stage_execution_config[stage.name]
-            app = stage.generate(self.dfk, sec.nprocess, sec.site, log_dir,
+            app = stage.generate(self.dfk, sec.nprocess, sec.site, self.log_dir,
                                  mpi_command=self.mpi_command,
                                  python_command=self.python_command)
             inputs = self.find_inputs(stage, data_elements)
@@ -147,8 +148,8 @@ class Pipeline:
             try:
                 future.result()
             except parsl.app.errors.AppFailure:
-                stdout_file = f'{log_dir}/{future._bbpipe_name}.err'
-                stderr_file = f'{log_dir}/{future._bbpipe_name}.out'
+                stdout_file = f'{self.log_dir}/{future._bbpipe_name}.err'
+                stderr_file = f'{self.log_dir}/{future._bbpipe_name}.out'
                 sys.stderr.write(f"""
 *************************************************
 Error running pipeline stage {future._bbpipe_name}.

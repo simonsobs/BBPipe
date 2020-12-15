@@ -75,12 +75,12 @@ def run(pipeline_config_filename, dry_run=False, pycmd='python3'):
         __import__(module)
 
     # Create and run pipeline
-    pipeline = Pipeline(launcher_config, stages, pycmd=pycmd)
+    pipeline = Pipeline(launcher_config, stages, log_dir, pycmd=pycmd)
 
     if dry_run:
         pipeline.dry_run(inputs, output_dir, stages_config)
     else:
-        pipeline.run(inputs, output_dir, log_dir, resume, stages_config)
+        pipeline.run(inputs, output_dir, resume, stages_config)
 
 def export_cwl(args):
     """
