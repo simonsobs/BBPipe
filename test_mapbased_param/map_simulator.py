@@ -2,17 +2,18 @@ from bbpipe import PipelineStage
 from .types import FitsFile, TextFile
 import numpy as np
 import matplotlib
-# matplotlib.use('agg')
-# matplotlib.use('tkagg')
+
 import matplotlib.pyplot as pl
-import pysm
-from pysm.nominal import models
+import pysm3 as pysm
+from pysm3 import models
 from . import mk_noise_map2 as mknm
 from . import V3calc as V3
 import healpy as hp
 import copy
 import glob
 
+import fgbuster
+from fgbuster.observation_helpers import get_instrument, get_sky, get_observation, standardize_instrument
 
 def noise_covariance_estimation(self, binary_mask):
     """
@@ -112,7 +113,7 @@ class BBMapSim(PipelineStage):
 
     def run(self) :
 
-        nhits, noise_maps, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+        nhits, noise_maps, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
@@ -126,10 +127,13 @@ class BBMapSim(PipelineStage):
             binary_mask[np.where(nhits<1e-6)[0]] = 0.0
 
         # GENERATE CMB AND FOREGROUNDS
-        d_config = models(self.config['dust_model'], self.config['nside'])
-        s_config = models(self.config['sync_model'], self.config['nside'])
-        c_config = models(self.config['cmb_model'], self.config['nside'])
-       
+        # d_config = models(self.config['dust_model'], self.config['nside'])
+        # s_config = models(self.config['sync_model'], self.config['nside'])
+        # c_config = models(self.config['cmb_model'], self.config['nside'])
+        d_config = self.config['dust_model']
+        s_config = self.config['sync_model']
+        c_config = self.config['cmb_model']
+
         # performing the CMB simulation with synfast
         if self.config['cmb_sim_no_pysm']:
             Cl_BB_prim = self.config['r_input']*hp.read_cl(self.get_input('Cl_BB_prim_r1'))[2]
@@ -139,20 +143,30 @@ class BBMapSim(PipelineStage):
             Cl_TT = Cl_lens[0]#[:l_max_prim]
             Cl_EE = Cl_lens[1]#[:l_max_prim]
             Cl_TE = Cl_lens[3]#[:l_max_prim]
-            sky_config = {'cmb' : '', 'dust' : d_config, 'synchrotron' : s_config}
-            sky = pysm.Sky(sky_config)
+            # sky_config = {'cmb' : '', 'dust' : d_config, 'synchrotron' : s_config}
+            # sky = pysm.Sky(sky_config)
+            # sky = pysm.Sky(nside=self.config['nside'], preset_strings=[self.config['dust_model'], self.config['sync_model']])
+            sky = get_sky(self.config['nside'], d_config+s_config)
             Cl_BB = Cl_BB_prim[:l_max_lens] + Cl_BB_lens
             cmb_sky = hp.synfast([Cl_TT, Cl_EE, Cl_BB, Cl_TE, Cl_EE*0.0, Cl_EE*0.0], nside=self.config['nside'], new=True)
         else:
-            sky_config = {'cmb' : c_config, 'dust' : d_config, 'synchrotron' : s_config}
-            sky = pysm.Sky(sky_config)
-      
-        sky_config_CMB = {'cmb' : c_config}
-        sky_CMB = pysm.Sky(sky_config_CMB)
-        sky_config_dust = {'dust' : d_config}
-        sky_dust = pysm.Sky(sky_config_dust)
-        sky_config_sync = {'synchrotron' : s_config}
-        sky_sync = pysm.Sky(sky_config_sync)
+            # sky_config = {'cmb' : c_config, 'dust' : d_config, 'synchrotron' : s_config}
+            # sky = pysm.Sky(sky_config)
+            # sky = pysm.Sky(nside=self.config['nside'], preset_strings=[self.config['cmb_model'], self.config['dust_model'], self.config['sync_model']])
+            sky = get_sky(self.config['nside'], c_config+d_config+s_config)   
+
+        # sky_config_CMB = {'cmb' : c_config}
+        # sky_CMB = pysm.Sky(sky_config_CMB)
+        # sky_CMB = pysm.Sky(nside=self.config['nside'], preset_strings=[self.config['cmb_model']])
+        sky_CMB = get_sky(self.config['nside'], c_config)   
+        # sky_config_dust = {'dust' : d_config}
+        # sky_dust = pysm.Sky(sky_config_dust)
+        # sky_dust = pysm.Sky(nside=self.config['nside'], preset_strings=[self.config['dust_model']])
+        sky_dust = get_sky(self.config['nside'], d_config)   
+        # sky_config_sync = {'synchrotron' : s_config}
+        # sky_sync = pysm.Sky(sky_config_sync)
+        # sky_sync = pysm.Sky(nside=self.config['nside'], preset_strings=[self.config['sync_model']])
+        sky_sync = get_sky(self.config['nside'], s_config)   
 
         # DEFINE INSTRUMENT AND SCAN SKY
         if self.config['instrument'] == 'SO':
@@ -175,12 +189,12 @@ class BBMapSim(PipelineStage):
 
         instrument_config = {
             'nside' : self.config['nside'],
-            'frequencies' : freqs, 
+            'frequency' : freqs, 
             'use_smoothing' : False,
             'beams' : fwhm, 
             'add_noise' : False,
-            'sens_I' : nlev/np.sqrt(2),
-            'sens_P' : nlev,
+            'depth_i' : nlev/np.sqrt(2),
+            'depth_p' : nlev,
             'noise_seed' : 1234,
             'use_bandpass' : False,
             'channels': channels,
@@ -190,24 +204,32 @@ class BBMapSim(PipelineStage):
             'output_prefix' : self.config['tag'],
             }
 
-        instrument = pysm.Instrument(instrument_config)
+        ###################################
+
+        # instrument = pysm.Instrument(instrument_config)
         instrument_config_150GHz = copy.deepcopy(instrument_config)
-        instrument_config_150GHz['frequencies'] = np.array([150.0])
-        instrument_config_150GHz['sens_I'] = np.array([1.0])
-        instrument_config_150GHz['sens_P'] = np.array([1.0])
-        instrument_150GHz = pysm.Instrument(instrument_config_150GHz)
+        instrument_config_150GHz['frequency'] = np.array([150.0])
+        instrument_config_150GHz['depth_i'] = np.array([1.0])
+        instrument_config_150GHz['depth_p'] = np.array([1.0])
+        instrument_150GHz = standardize_instrument(instrument_config_150GHz)
 
         # instrument.observe(sky)
-        freq_maps = instrument.observe(sky, write_outputs=False)[0]
+        # freq_maps = instrument.observe(sky, write_outputs=False)[0]
+        instrument = standardize_instrument(instrument_config)
+        freq_maps = get_observation(instrument, sky) 
+
         if self.config['cmb_sim_no_pysm']:
             # adding CMB in this case
             for i in range(freq_maps.shape[0]):
                 freq_maps[i,:,:] += cmb_sky[:,:]
             CMB_template_150GHz = cmb_sky
         else:
-            CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
-        dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
-        sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
+            # CMB_template_150GHz = instrument_150GHz.observe(sky_CMB, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
+            CMB_template_150GHz = get_observation(instrument_150GHz, sky_CMB).reshape((3,noise_maps.shape[1]))
+        # dust_template_150GHz = instrument_150GHz.observe(sky_dust, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
+        dust_template_150GHz = get_observation(instrument_150GHz, sky_dust).reshape((3,noise_maps.shape[1]))
+        # sync_template_150GHz = instrument_150GHz.observe(sky_sync, write_outputs=False)[0].reshape((3,noise_maps.shape[1]))
+        sync_template_150GHz = get_observation(instrument_150GHz, sky_sync).reshape((3,noise_maps.shape[1]))
 
         # restructuration of the freq maps, of size {n_stokes x n_freqs, n_pix}
         # print('shape of freq_maps = ', freq_maps.shape)
@@ -227,7 +249,7 @@ class BBMapSim(PipelineStage):
         if self.config['noise_option']=='white_noise':
             nlev_map = freq_maps*0.0
             for i in range(len(instrument_config['frequencies'])):
-                nlev_map[3*i:3*i+3,:] = np.array([instrument_config['sens_I'][i], instrument_config['sens_P'][i], instrument_config['sens_P'][i]])[:,np.newaxis]*np.ones((3,freq_maps.shape[-1]))
+                nlev_map[3*i:3*i+3,:] = np.array([instrument_config['depth_i'][i], instrument_config['depth_p'][i], instrument_config['depth_p'][i]])[:,np.newaxis]*np.ones((3,freq_maps.shape[-1]))
             # nlev_map = np.vstack(([instrument_config['sens_I'], instrument_config['sens_P'], instrument_config['sens_P']]))
             nlev_map /= hp.nside2resol(self.config['nside'], arcmin=True)
             noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)*binary_mask
@@ -287,6 +309,8 @@ class BBMapSim(PipelineStage):
         hp.write_map(self.get_output('CMB_template_150GHz'), CMB_template_150GHz, overwrite=True)
         hp.write_map(self.get_output('dust_template_150GHz'), dust_template_150GHz, overwrite=True)
         hp.write_map(self.get_output('sync_template_150GHz'), sync_template_150GHz, overwrite=True)
+
+        print(' >>> completed map simulator step')
 
 if __name__ == '__main__':
     results = PipelineStage.main()

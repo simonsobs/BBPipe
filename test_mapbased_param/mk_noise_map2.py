@@ -105,7 +105,7 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
 
     mps_no=np.array(mps_no)
 
-    return msk,mps_no,nlev
+    return msk,mps_no,nlev,nll
 
 # nside_run=512
 # mask,maps,nlev=get_noise_sim()

@@ -9,7 +9,7 @@ def so_V3_LA_bands():
 def so_V3_LA_beams():
     ## returns the LAC beams in arcminutes
     beam_LAC_27 = 7.4
-    beam_LAC_39 = 5.1
+    beam_LAC_39 = 5.13
     beam_LAC_93 = 2.2
     beam_LAC_145 = 1.4
     beam_LAC_225 =1.0
@@ -181,6 +181,7 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
     #     1: baseline,
     #     2: goal
     # one_over_f_mode
+    #     3: super pessimistic
     #     0: pessimistic
     #     1: optimistic
     #     2: none
@@ -209,15 +210,14 @@ def so_V3_SA_noise(sensitivity_mode,one_over_f_mode,SAC_yrs_LF,f_sky,ell_max,del
     S_SA_225 = np.array([11,8.6,5.7])  * np.sqrt(1./NTubes_UHF)
     S_SA_280 = np.array([26,22,14])    * np.sqrt(1./NTubes_UHF)
     # 1/f pol:  see http://simonsobservatory.wikidot.com/review-of-hwp-large-aperture-2017-10-04
-    f_knee_pol_SA_27  = np.array([30.,15.,1.])
-    f_knee_pol_SA_39  = np.array([30.,15.,1.])  ## from QUIET
-    f_knee_pol_SA_93  = np.array([50.,25.,1.])
-    f_knee_pol_SA_145 = np.array([50.,25.,1.])  ## from ABS, improving possible by scanning faster
-    f_knee_pol_SA_225 = np.array([70.,35.,1.])
-    f_knee_pol_SA_280 = np.array([100.,40.,1.])
+    f_knee_pol_SA_27  = np.array([30.,15.,1.,90.])
+    f_knee_pol_SA_39  = np.array([30.,15.,1.,90.])  ## from QUIET
+    f_knee_pol_SA_93  = np.array([50.,25.,1.,150.])
+    f_knee_pol_SA_145 = np.array([50.,25.,1.,150.])  ## from ABS, improving possible by scanning faster
+    f_knee_pol_SA_225 = np.array([70.,35.,1.,210.])
+    f_knee_pol_SA_280 = np.array([100.,40.,1.,300.])
     #alpha_pol =np.array([-2.4,-2.4,-2.5,-3,-3,-3])  ## roughly consistent with Yuji's table, but ectrapolated
     alpha_pol =np.array([-2.4,-2.4,-2.4,-2.4,-2.4,-2.4])  ## roughly consistent with Yuji's table, but ectrapolated
-    
 
     ####################################################################
     ## calculate the survey area and time
