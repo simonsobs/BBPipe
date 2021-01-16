@@ -1,16 +1,67 @@
 from bbpipe import PipelineStage
 from .types import FitsFile, TextFile, NumpyFile
 import numpy as np
-import pylab as pl
+import matplotlib
+# matplotlib.use('agg')
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as pl
 import fgbuster as fg
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
 from fgbuster.separation_recipes import weighted_comp_sep
 from fgbuster.algebra import Wd
-import pysm
-from pysm.common import bandpass_convert_units, K_RJ2Jysr, K_CMB2Jysr, convert_units
+import pysm3
 import copy 
 import sys
+from . import mk_noise_map2 as mknm
+from fgbuster.observation_helpers import standardize_instrument
+import healpy as hp
+import sys
+
+
+# def _format_alms(alms, mask_lmin=None):                                                                                                                                                                     
+#     lmax = hp.Alm.getlmax(alms.shape[-1])                                                                                                                                                                   
+#     alms = np.asarray(alms, order='C')                                                                                                                                                                      
+#     alms = alms.view(np.float64)                                                                                                                                                                            
+#     em = hp.Alm.getlm(lmax)[1]                                                                                                                                                                              
+#     em = np.stack((em, em), axis=-1).reshape(-1)                                                                                                                                                            
+#     mask_em = [m != 0 for m in em]                                                                                                                                                                          
+#     alms[..., mask_em] *= np.sqrt(2)                                                                                                                                                                        
+#     alms[..., np.arange(1, lmax+1, 2)] = hp.UNSEEN  # Mask imaginary m = 0                                                                                                                                  
+#     alms = np.swapaxes(alms, 0, -1)                                                                                                                                                                         
+#     if mask_lmin is not None:                                                                                                                                                                               
+#         alms[mask_lmin, ...] = 0                                                                                                                                                                            
+#     return alms
+
+def _intersect_mask(maps):
+    if hp.pixelfunc.is_ma(maps):
+        mask = maps.mask
+    else:
+        mask = maps == hp.UNSEEN
+
+    # Mask entire pixel if any of the frequencies in the pixel is masked
+    return np.any(mask, axis=tuple(range(maps.ndim-1)))
+
+def _format_alms(alms, lmin=0, nulling_option=True):                                                                                                                                                                             
+    lmax = hp.Alm.getlmax(alms.shape[-1])                                                                                                                                                                   
+    alms = np.asarray(alms, order='C')                                                                                                                                                                      
+    alms = alms.view(np.float64)                                                                                                                                                                            
+    em = hp.Alm.getlm(lmax)[1]                                                                                                                                                                              
+    em = np.stack((em, em), axis=-1).reshape(-1)                                                                                                                                                            
+    mask_em = [m != 0 for m in em]                                                                                                                                                           
+    alms[..., mask_em] *= np.sqrt(2)                                                                                                                                                                        
+    if nulling_option: 
+        alms[..., np.arange(1, lmax+1, 2)] = hp.UNSEEN  # Mask imaginary m = 0                                                                                                                                  
+        mask_alms = _intersect_mask(alms)                                                                                                                                                                       
+        alms[..., mask_alms] = 0  # Thus no contribution to the spectral likelihood                                                                                                                             
+    alms = np.swapaxes(alms, 0, -1)                                                                                                                                                                         
+    if lmin != 0:                                                                                                                                                                                           
+        ell = hp.Alm.getlm(lmax)[0]                                                                                                                                                                         
+        ell = np.stack((ell, ell), axis=-1).reshape(-1)                                                                                                                                                     
+        mask_lmin = [l < lmin for l in ell]                                                                                                                                                                 
+        if nulling_option: alms[mask_lmin, ...] = hp.UNSEEN                                                                                                                                                                            
+    return alms
+
 
 class BBMapParamCompSep(PipelineStage):
     """
@@ -21,7 +72,7 @@ class BBMapParamCompSep(PipelineStage):
     """
     name='BBMapParamCompSep'
     inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),
-                ('noise_maps',FitsFile)]
+                ('noise_maps',FitsFile),('norm_hits_map', FitsFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
                  ('A_maxL',NumpyFile),('post_compsep_noise',FitsFile), ('mask_patches', FitsFile)]
 
@@ -36,7 +87,7 @@ class BBMapParamCompSep(PipelineStage):
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
 
         # reorganization of maps
-        instrument = {'frequencies':np.array(self.config['frequencies'])}
+        instrument = {'frequency':np.array(self.config['frequencies'])}
         if self.config['bandpass']:
             if self.config['instrument'] == 'SO':
                 bandpass = 0.3*instrument['frequencies']
@@ -52,14 +103,14 @@ class BBMapParamCompSep(PipelineStage):
             #             (1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
             #             /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
             #          for i in range(len(instrument['frequencies'])) ]
-            for i in range(len(instrument['frequencies'])):
-                freqs_loc = np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)
+            for i in range(len(instrument['frequency'])):
+                freqs_loc = np.linspace(instrument['frequency'][i]-bandpass[i]/2, instrument['frequency'][i]+bandpass[i]/2, num=num_steps)
                 # bandpass_loc = (np.ones(num_steps)*\
                 #     convert_units('uK_RJ','Jysr', freqs_loc))/\
                 #     np.sum( np.ones(num_steps)*\
                 #         convert_units('uK_RJ','Jysr', freqs_loc)*\
                 #             (bandpass[i]/(num_steps-1)))
-                bandpass_loc = freqs_loc**-2/(instrument['frequencies'][i]*1.0)**-2
+                bandpass_loc = freqs_loc**-2/(instrument['frequency'][i]*1.0)**-2
                 inst_freq.append((freqs_loc, bandpass_loc))
 
             # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
@@ -72,20 +123,21 @@ class BBMapParamCompSep(PipelineStage):
             #          for i in range(len(instrument['frequencies'])) ]
             # redefining frequencies entry to dictionary
             instr_ = copy.deepcopy(instrument)
-            instr_['frequencies'] = inst_freq
+            instr_['frequency'] = inst_freq
             instr_['channels'] = inst_freq
-            instr_['channel_names'] = [str(instrument['frequencies'][i]) for i in range(len(instrument['frequencies']))]
+            instr_['channel_names'] = [str(instrument['frequency'][i]) for i in range(len(instrument['frequency']))]
             instr_['use_bandpass'] = True
             instrument_ = pysm.Instrument(instr_)
         else:
             instrument_ = copy.deepcopy(instrument)
 
+        instrument_ = standardize_instrument(instrument_)
 
         ind = 0
-        frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        noise_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        for f in range(len(instrument['frequencies'])) : 
+        frequency_maps_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
+        noise_maps_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
+        noise_cov_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
+        for f in range(len(instrument_.frequency)) : 
             for i in range(3): 
                 frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
                 noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
@@ -113,13 +165,10 @@ class BBMapParamCompSep(PipelineStage):
             filter_window = np.array([0,]+[1.0/np.sqrt(1.0+(ell_knee*1.0/ell)**2.4) for ell in range(1,lmax)])
             print('high-pass filtering frequency maps')
             for f in range(frequency_maps_.shape[0]):
-                # applying this beam window through smoothing
                 alms = hp.map2alm(frequency_maps_[f])
                 for alms_ in alms:
                     hp.almxfl(alms_, filter_window, inplace=True) 
                 frequency_maps_[f] = hp.alm2map(alms, nside=self.config['nside'])
-            # np.save('freq_maps_post_filtering', frequency_maps_)
-            # sys.exit()
 
 
 
@@ -149,6 +198,7 @@ class BBMapParamCompSep(PipelineStage):
             # observed patches
             obs_pix = np.where(binary_mask!=0.0)[0]
             if self.config['fixed_delta_beta_slicing']:
+                print(' -> fixed delta beta (from PySM) slicing in the definition of the patches')
                 # thickness of the corresponding patches
                 delta_Bd_patch = np.abs(np.max(Bd_template[obs_pix])-np.min(Bd_template[obs_pix]))/(self.config['Nspec'])
                 # definition of slices so that it includes the max of Bd as the last step
@@ -156,7 +206,18 @@ class BBMapParamCompSep(PipelineStage):
                 for i in range(self.config['Nspec']):
                     pix_within_patch = np.where((Bd_template[obs_pix] >= slices[i] ) & (Bd_template[obs_pix] < slices[i+1]))[0]
                     mask_patches[i,obs_pix[pix_within_patch]] = 1
+            elif self.config['North_South_split']:
+                print(' -> consider North and South patches as independent')
+                # just use the observed pixels, otherwise this is time consuming
+                lats = np.array([ hp.pix2ang(ipix=obs_pix[i], nside=self.config['nside'])[0] for i in range(len(obs_pix))])
+                if self.config['Nspec']!= 2: 
+                    print('            /!\ you cannot choose this spliting with Nspec!=2 /!\ ')
+                # define South patch
+                mask_patches[0,obs_pix[np.where(lats<=np.pi/2)[0]]] = 1
+                # define North patch
+                mask_patches[1,obs_pix[np.where(lats>=np.pi/2)[0]]] = 1
             else:
+                print(' -> constant number of pixels in the definition of delta beta (from PySM) slices')
                 # tune bins of a histogram so that 
                 # each entry has the same number of counts
                 def histedges_equalN(x, nbin):
@@ -189,14 +250,65 @@ class BBMapParamCompSep(PipelineStage):
             mask_patch_ = mask_patches[i_patch]
 
             # filtering masked regions of the patch ... 
-            frequency_maps__ = frequency_maps_*1.0
+            frequency_maps__ = frequency_maps_*1.0  
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             print('actual component separation ... ')
+            if self.config['harmonic_comp_sep']:
+                print('     ... in harmonic space')
+                lmax = 2*self.config['nside']-1
+
+                # converting the observed frequency maps into alm (real-only arrays for fgbuster)
+                for f in range(frequency_maps__.shape[0]):
+                    for s in range(frequency_maps__.shape[1]):
+                        alm_ = hp.map2alm(frequency_maps__[f,s], lmax=lmax)
+                        alm = _format_alms(alm_, lmin=self.config['lmin'])
+                        alm_noise = _format_alms(hp.map2alm(noise_maps_[f,s], lmax=lmax), lmin=self.config['lmin'])
+                        if f==0 and s==0: 
+                            frequency_maps__loc = np.zeros((frequency_maps__.shape[0], frequency_maps__.shape[1], len(alm)))
+                            noise_maps__loc = np.zeros((frequency_maps__.shape[0], frequency_maps__.shape[1], len(alm)))
+                        frequency_maps__loc[f,s] = alm
+                        noise_maps__loc[f,s] = alm_noise
+
+                # grabbing the Nl for each frequency channel
+                nhits, noise_maps_sim, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+                                            knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
+                                                nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
+                                                    no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
+                
+                # building the noise covariance -- expending the Nl to every {l,m} couples
+                ell_em = hp.Alm.getlm(lmax, np.arange(len(alm_)))[0]                                                                                                                                           
+                ell_em = np.stack((ell_em, ell_em), axis=-1).reshape(-1) # For transformation into real alms                                                                                                            
+
+                #Format the inverse noise matrix
+                print('frequency_maps__loc.shape = ',frequency_maps__loc.shape)
+                noise_cov__loc = np.ones_like(frequency_maps__loc)
+                noise_cov__loc_ = np.ones((frequency_maps__loc.shape[0], frequency_maps__loc.shape[1], len(alm_)), dtype='complex')
+                
+                for f in range(frequency_maps__.shape[0]):
+                    for s in range(frequency_maps__loc.shape[1]):
+                        noise_cov__loc[f,s,:] = np.array([nll[f,l] for l in ell_em])
+            else:
+                print('     ... in pixel space')
+                noise_cov__loc = noise_cov__*1.0
+                frequency_maps__loc = frequency_maps__*1.0
+
+
             res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
-                         data=frequency_maps__, cov=noise_cov__, nside=self.config['nside_patch'], 
+                         data=frequency_maps__loc, cov=noise_cov__loc, nside=self.config['nside_patch'], 
                             options=options, tol=tol, method=method)
+
+            print('fit of spectral indices -> ', res.x)
+            print('estimated error bar on spectral indices -> ', np.sqrt(np.diag(res.Sigma)))
+
+            if self.config['harmonic_comp_sep']:
+                print('          >>> building s = Wd in pixel space')
+                A_ev = A.evaluator(instrument_.frequency)
+                frequency_maps_nside = hp.get_nside(frequency_maps__[0])
+                prewhiten_factors = _get_prewhiten_factors(instrument_, frequency_maps__.shape, frequency_maps_nside)
+                invN = np.zeros(prewhiten_factors.shape+prewhiten_factors.shape[-1:])
+                res.s = Wd(A_ev(res.x), frequency_maps__.T, invN=invN)
 
             resx.append(res.x)
             resS.append(res.Sigma)
@@ -213,7 +325,7 @@ class BBMapParamCompSep(PipelineStage):
             
             print('re-organizing outputs of the component separation ... ')
             A = MixingMatrix(*components)
-            A_ev = A.evaluator(instrument['frequencies'])
+            A_ev = A.evaluator(instrument_.frequency)
             A_maxL = A_ev(res.x)
 
             if i_patch == 0 :
@@ -221,13 +333,13 @@ class BBMapParamCompSep(PipelineStage):
                 A_maxL_v = np.zeros((mask_patches.shape[0], A_maxL.shape[0], A_maxL.shape[1]))
             A_maxL_v[i_patch,:,:] = A_maxL*1.0
 
-            A_maxL_loc = np.zeros((2*len(instrument['frequencies']), 6))
+            A_maxL_loc = np.zeros((2*len(instrument_.frequency), 6))
 
             # reshaping quantities of interest
-            noise_cov_diag = np.zeros((2*len(instrument['frequencies']), 2*len(instrument['frequencies']), noise_cov.shape[1]))
-            noise_maps__ = np.zeros((2*len(instrument['frequencies']), noise_cov.shape[1]))
+            noise_cov_diag = np.zeros((2*len(instrument_.frequency), 2*len(instrument_.frequency), noise_cov.shape[1]))
+            noise_maps__ = np.zeros((2*len(instrument_.frequency), noise_cov.shape[1]))
 
-            for f in range(len(instrument['frequencies'])):
+            for f in range(len(instrument_.frequency)):
                 A_maxL_loc[2*f,:2] = A_maxL[f,0]
                 A_maxL_loc[2*f+1,:2] = A_maxL[f,0]
                 A_maxL_loc[2*f,2:4] = A_maxL[f,1]
@@ -260,7 +372,7 @@ class BBMapParamCompSep(PipelineStage):
                         noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                         inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
                         res.s_unfiltered[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(frequency_maps_unfiltered[:,s,p])
-                res.s = res.s_unfiltered
+                res.s = res.s_unfiltered*1.0
 
             # the noise if the combination (sum) of the noise_after_comp_sep
             # recovered on each of the sub masks

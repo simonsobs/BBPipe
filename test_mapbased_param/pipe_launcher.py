@@ -80,11 +80,13 @@ def grabargs():
     parser.add_argument("--Nsims_bias", type=int, help = "number of simulations performed to estimate the noise bias", default=100)
     parser.add_argument("--extra_apodization", action='store_true', help = "perform an extra apodization of the mask, prior to rescaling by Nhits", default=False)
     parser.add_argument("--fixed_delta_beta_slicing", action='store_true', help = "when Nspec!=0, regions are defined by constant delta(Bd)", default=False)
+    parser.add_argument("--North_South_split", action='store_true', help = "when Nspec!=0, regions are defined by being in the Galactic North or South", default=False)
     parser.add_argument("--bandpass", action='store_true', help = "include non-zero bandpasses in the component separation", default=False)
     parser.add_argument("--instrument", type=str, help = "specifies the instrument bbpipe should consider, SO, CMBS4, etc.", default='SO')
     parser.add_argument("--path_to_dust_template", type=str, help = "path to e.g. PySM dust template", default="/global/cscratch1/sd/josquin/SO_sims/dust_beta.fits")
     parser.add_argument("--pixel_based_noise_cov", action='store_true', help = "pixel-based estimation of the noise covariance matrix", default=False)
     parser.add_argument("--highpass_filtering", action='store_true', help = "high-pass filtering of raw frequency maps to whiten the noise prior to spectral indices estimation", default=False)
+    parser.add_argument("--harmonic_comp_sep", action='store_true', help = "performing the estimation of spectral indices in harmonic space", default=False)
 
     args = parser.parse_args()
 
@@ -159,17 +161,18 @@ pipeline_log: '''+os.path.join(path_to_temp_files,'log'+id_tag+'.txt')+'''
 
 ######################################
 #### CONFIG.YML
-def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0, \
+def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
 				noise_option='white_noise', dust_marginalization=True, 
-                sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,\
-                apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,\
-                cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9, \
+                sync_marginalization=True, path_to_temp_files='./', r_input=0.000, AL_input=1.000,
+                apotype='C2', aposize=10.0, include_stat_res=False, AL_marginalization=False,
+                cmb_sim_no_pysm=False, no_inh=False, nside=512, nside_patch=0, nlb=9,
                 external_sky_sims='', external_noise_sims='',
                 external_binary_mask='', external_noise_cov='',
                 Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', 
-                mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, instrument='SO', \
-                frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='', \
-                pixel_based_noise_cov=False, highpass_filtering=False):
+                mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, North_South_split=False, 
+                instrument='SO',
+                frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='',
+                pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False):
     '''
     function generating the config file
     '''
@@ -217,8 +220,10 @@ BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
     smart_multipatch: False
     fixed_delta_beta_slicing: '''+str(fixed_delta_beta_slicing)+'''
+    North_South_split: '''+str(North_South_split)+'''
     path_to_dust_template: \''''+str(path_to_dust_template)+'''\'
     highpass_filtering: '''+str(highpass_filtering)+'''
+    harmonic_comp_sep: '''+str(harmonic_comp_sep)+'''
 
 BBClEstimation:
     aposize:  '''+str(aposize)+'''
@@ -305,8 +310,9 @@ def main():
                 Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing,\
+                North_South_split=args.North_South_split,\
                 instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass, path_to_dust_template=args.path_to_dust_template,\
-                pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering )
+                pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, harmonic_comp_sep=args.harmonic_comp_sep )
 
         # submit call 
         # time.sleep(10*rank)
