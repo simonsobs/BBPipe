@@ -372,6 +372,7 @@ class BBCompSep(PipelineStage):
             dx = self.chi_sq_dx(params)
         like = -0.5 * np.einsum('i, ij, j', dx, self.invcov, dx)
         return prior + like
+    #test
 
     def emcee_sampler(self):
         """
