@@ -8,7 +8,7 @@ import matplotlib.pyplot as pl
 import fgbuster as fg
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from fgbuster.mixingmatrix import MixingMatrix
-from fgbuster.separation_recipes import weighted_comp_sep
+from fgbuster.separation_recipes import weighted_comp_sep, _get_prewhiten_factors
 from fgbuster.algebra import Wd
 import pysm3
 import copy 
@@ -72,9 +72,11 @@ class BBMapParamCompSep(PipelineStage):
     """
     name='BBMapParamCompSep'
     inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),
-                ('noise_maps',FitsFile),('norm_hits_map', FitsFile)]
+                ('noise_maps',FitsFile),('norm_hits_map', FitsFile),('freq_maps_unbeamed',FitsFile),
+                ('instrument', NumpyFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
-                 ('A_maxL',NumpyFile),('post_compsep_noise',FitsFile), ('mask_patches', FitsFile)]
+                 ('A_maxL',NumpyFile),('post_compsep_noise',FitsFile), ('mask_patches', FitsFile),
+                 ('Bl_eff', FitsFile), ('W', NumpyFile)]
 
     def run(self) :
         #Read input mask
@@ -83,10 +85,12 @@ class BBMapParamCompSep(PipelineStage):
 
         #Read frequency maps and noise covariance
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
+        freq_maps_unbeamed=hp.read_map(self.get_input('freq_maps_unbeamed'),verbose=False, field=None)
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
 
         # reorganization of maps
+        '''
         instrument = {'frequency':np.array(self.config['frequencies'])}
         if self.config['bandpass']:
             if self.config['instrument'] == 'SO':
@@ -130,16 +134,19 @@ class BBMapParamCompSep(PipelineStage):
             instrument_ = pysm.Instrument(instr_)
         else:
             instrument_ = copy.deepcopy(instrument)
-
-        instrument_ = standardize_instrument(instrument_)
+        '''
+        # instrument_ = standardize_instrument(instrument_)
+        instrument_ = np.load(self.get_input('instrument'), allow_pickle=True).item()
 
         ind = 0
         frequency_maps_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
+        freq_maps_unbeamed_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
         noise_maps_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
         noise_cov_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
         for f in range(len(instrument_.frequency)) : 
             for i in range(3): 
                 frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
+                freq_maps_unbeamed_[f,i,:] =  freq_maps_unbeamed[ind,:]*1.0
                 noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
                 noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
                 ind += 1
@@ -170,10 +177,9 @@ class BBMapParamCompSep(PipelineStage):
                     hp.almxfl(alms_, filter_window, inplace=True) 
                 frequency_maps_[f] = hp.alm2map(alms, nside=self.config['nside'])
 
-
-
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
+        freq_maps_unbeamed_ = freq_maps_unbeamed_[:,1:,:]
         noise_maps_ = noise_maps_[:,1:,:]
         noise_cov_ = noise_cov_[:,1:,:]
 
@@ -252,8 +258,11 @@ class BBMapParamCompSep(PipelineStage):
             # filtering masked regions of the patch ... 
             frequency_maps__ = frequency_maps_*1.0  
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            freq_maps_unbeamed__ = freq_maps_unbeamed_*1.0  
+            freq_maps_unbeamed__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            
             print('actual component separation ... ')
             if self.config['harmonic_comp_sep']:
                 print('     ... in harmonic space')
@@ -294,7 +303,6 @@ class BBMapParamCompSep(PipelineStage):
                 noise_cov__loc = noise_cov__*1.0
                 frequency_maps__loc = frequency_maps__*1.0
 
-
             res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
                          data=frequency_maps__loc, cov=noise_cov__loc, nside=self.config['nside_patch'], 
                             options=options, tol=tol, method=method)
@@ -302,13 +310,15 @@ class BBMapParamCompSep(PipelineStage):
             print('fit of spectral indices -> ', res.x)
             print('estimated error bar on spectral indices -> ', np.sqrt(np.diag(res.Sigma)))
 
+            A = MixingMatrix(*components)
+
             if self.config['harmonic_comp_sep']:
                 print('          >>> building s = Wd in pixel space')
                 A_ev = A.evaluator(instrument_.frequency)
                 frequency_maps_nside = hp.get_nside(frequency_maps__[0])
                 prewhiten_factors = _get_prewhiten_factors(instrument_, frequency_maps__.shape, frequency_maps_nside)
                 invN = np.zeros(prewhiten_factors.shape+prewhiten_factors.shape[-1:])
-                res.s = Wd(A_ev(res.x), frequency_maps__.T, invN=invN)
+                res.s = Wd(A_ev(res.x), frequency_maps__.T, invN=invN)     
 
             resx.append(res.x)
             resS.append(res.Sigma)
@@ -324,7 +334,6 @@ class BBMapParamCompSep(PipelineStage):
                 optQU = 1
             
             print('re-organizing outputs of the component separation ... ')
-            A = MixingMatrix(*components)
             A_ev = A.evaluator(instrument_.frequency)
             A_maxL = A_ev(res.x)
 
@@ -332,6 +341,13 @@ class BBMapParamCompSep(PipelineStage):
                 # defined output mixing matrix as {npatch, ncomp, nfreq}
                 A_maxL_v = np.zeros((mask_patches.shape[0], A_maxL.shape[0], A_maxL.shape[1]))
             A_maxL_v[i_patch,:,:] = A_maxL*1.0
+
+            invN = np.diag(hp.nside2resol(self.config['nside'], arcmin=True) / (instrument_.depth_p))**2
+            inv_AtNA = np.linalg.inv(A_maxL.T.dot(invN).dot(A_maxL))
+            W = inv_AtNA.dot( A_maxL.T ).dot(invN)
+            if i_patch == 0 :
+                W_v = np.zeros((mask_patches.shape[0], W.shape[0], W.shape[1]))
+            W_v[i_patch,:,:] = W*1.0
 
             A_maxL_loc = np.zeros((2*len(instrument_.frequency), 6))
 
@@ -361,7 +377,9 @@ class BBMapParamCompSep(PipelineStage):
                     noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                     inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
                     noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
-
+                    if self.config['common_beam_correction']!=0.0:
+                        if ((p==obs_pix[0]) and (s==0)): print(' -> re-estimating res.s from unbeamed freq maps!')
+                        res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed_[:,s,p])
 
             if self.config['highpass_filtering']:
                 print('re-estimating post comp sep sky maps from un-filtered frequency maps')
@@ -379,6 +397,55 @@ class BBMapParamCompSep(PipelineStage):
             for f in range(noise_after_comp_sep.shape[0]):
                 noise_after_comp_sep_[2*f,:] += noise_after_comp_sep[f,0,:]*1.0
                 noise_after_comp_sep_[2*f+1,:] += noise_after_comp_sep[f,1,:]*1.0
+
+            # compute the effective Bl output of component separation
+            if ((self.config['common_beam_correction'] != 0.0) and (not self.config['effective_beam_correction'])):
+                Bl_loc = []
+                Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=3*self.config['nside'])        
+                for f in range(len(self.config['frequencies'])):
+                    Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_.fwhm[f]/60), lmax=3*self.config['nside'])
+                    Bl_loc.append( Bl_gauss_common/Bl_gauss_fwhm )
+
+                invN = np.diag(hp.nside2resol(self.config['nside'], arcmin=True) / (instrument_.depth_p))**2
+                inv_AtNA = np.linalg.inv(A_maxL.T.dot(invN).dot(A_maxL))
+                Bl_eff = inv_AtNA.dot( A_maxL.T ).dot(invN).dot(Bl_loc)[0]
+            elif self.config['effective_beam_correction']:
+                # Bl_loc2 = []
+                # Bl_loc = []
+                # for f in range(len(self.config['frequencies'])):
+                    # print('beam = ', instrument_.fwhm[f])
+                    # Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_.fwhm[f]/60), lmax=3*self.config['nside'])
+                    # Bl_loc2.append( Bl_gauss_fwhm )
+                    # Bl_loc.append( Bl_gauss_fwhm )
+
+                # print(W.shape)
+                # print(np.array(Bl_loc).shape)
+                # Bl_eff2_inv = np.einsum('if, fl, jf -> lij', W, np.array(Bl_loc), W)
+                # Bl_eff2 = np.linalg.inv(Bl_eff2_inv)
+                # Bl_eff = W.dot(np.array(Bl_loc))[0]#np.sqrt(Bl_eff2[:,0,0]/np.max(Bl_eff2[:,0,0]))
+                # Bl_eff[Bl_eff!=Bl_eff] = 0.0
+                # np.save('Bl_eff_v1', Bl_eff)
+
+                # AtBlA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL, axis=0), np.array(Bl_loc2), np.mean(A_maxL, axis=0))
+                # inv_AtBlA = np.linalg.inv(AtBlA)
+                # Bl_eff_ = np.diagonal(inv_AtBlA, axis1=-2,axis2=-1)
+                # # Bl_eff = np.sqrt(np.abs(Bl_eff_[:,0])/np.abs(np.max(Bl_eff_[:,0])))
+                # Bl_eff = np.sqrt(Bl_eff_[:,0]/np.max(Bl_eff_))
+                # Bl_eff[Bl_eff!=Bl_eff] = 0.0
+                # np.save('Bl_eff_v2', Bl_eff)
+                Bl_loc = []
+                for f in range(len(self.config['frequencies'])):
+                    Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_.fwhm[f]/60), lmax=3*self.config['nside'])
+                    Bl_loc.append( (1.0/Bl_gauss_fwhm)**2 )
+                AtBlA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL_v, axis=0), np.array(Bl_loc), np.mean(A_maxL_v, axis=0))
+                # AtBlA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Bl_loc), A_maxL)
+                inv_AtBlA = np.linalg.inv(AtBlA)
+                Bl_eff_ = np.diagonal(inv_AtBlA, axis1=-2,axis2=-1)#[:,0]
+                Bl_eff = np.sqrt(Bl_eff_[:,0]/np.max(Bl_eff_))
+                Bl_eff[Bl_eff!=Bl_eff] = 1.0
+                Bl_eff *= hp.gauss_beam( np.radians(np.mean(instrument_.fwhm)/60), lmax=3*self.config['nside'])
+            else:
+                Bl_eff = np.zeros_like( hp.gauss_beam( 1.0/60, lmax=3*self.config['nside']) )
 
             # reshape map_estimated_ from the recovered sky signals ... 
             # set to zeros areas with hp.UNSEEN
@@ -420,6 +487,7 @@ class BBMapParamCompSep(PipelineStage):
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
+        np.save(self.get_output('W'), W)
 
         hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
@@ -444,6 +512,8 @@ class BBMapParamCompSep(PipelineStage):
             np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
         else:
             np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x, list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
+
+        hp.fitsfunc.write_cl(self.get_output('Bl_eff'), np.array(Bl_eff), overwrite=True)
 
 if __name__ == '__main__':
     results = PipelineStage.main()

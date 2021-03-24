@@ -1,5 +1,5 @@
 from bbpipe import PipelineStage
-from .types import FitsFile, TextFile
+from .types import FitsFile, TextFile, NumpyFile
 import numpy as np
 import matplotlib
 
@@ -11,6 +11,7 @@ from . import V3calc as V3
 import healpy as hp
 import copy
 import glob
+import os
 
 import fgbuster
 from fgbuster.observation_helpers import get_instrument, get_sky, get_observation, standardize_instrument
@@ -109,7 +110,8 @@ class BBMapSim(PipelineStage):
     name='BBMapSim'
     inputs= [('binary_mask',FitsFile),('norm_hits_map', FitsFile),('Cl_BB_prim_r1', FitsFile),('Cl_BB_lens', FitsFile)]
     outputs=[('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_maps',FitsFile),\
-            ('CMB_template_150GHz',FitsFile),('dust_template_150GHz',FitsFile),('sync_template_150GHz',FitsFile)]
+            ('CMB_template_150GHz',FitsFile),('dust_template_150GHz',FitsFile),('sync_template_150GHz',FitsFile),
+            ('freq_maps_unbeamed', FitsFile), ('instrument', NumpyFile)]
 
     def run(self) :
 
@@ -173,11 +175,13 @@ class BBMapSim(PipelineStage):
             fwhm = V3.so_V3_SA_beams()
             freqs = V3.so_V3_SA_bands()
         elif self.config['instrument'] == 'CMBS4':
-            fwhm = np.array([11, 72.8, 72.8, 25.5, 22.7, 25.5, 22.7, 13, 13])
-            freqs = np.array([20, 30, 40, 85, 95, 145, 155, 220, 270])
+            fwhm = np.array([11, 72.8, 25.5, 22.7, 25.5, 13, 10])
+            # freqs = np.array([20, 30, 40, 85, 95, 145, 155, 220, 270])
+            freqs = np.array([20, 30, 40, 90, 150, 220, 270])
             # nlev = np.array([6.09, 2.44, 3.09, 0.61, 0.54, 0.85, 0.91, 2.34, 4.02])
             # nlev = np.array([5.07, 4.20, 5.31, 6.40, 5.64, 4.21, 4.51, 34.59, 59.32])/3
-            nlev = np.array([5.52, 4.56, 5.78, 6.96, 6.14, 4.31, 4.61, 35.62, 61.08])/3
+            # nlev = np.array([5.52, 4.56, 5.78, 6.96, 6.14, 4.31, 4.61, 35.62, 61.08])/3
+            nlev = np.array([9.42, 3.94, 4.98, 0.56, 0.90, 3.89, 6.67])
         else:
             print('I do not know this instrument')
             sys.exit()
@@ -191,7 +195,7 @@ class BBMapSim(PipelineStage):
             'nside' : self.config['nside'],
             'frequency' : freqs, 
             'use_smoothing' : False,
-            'beams' : fwhm, 
+            'fwhm' : fwhm, 
             'add_noise' : False,
             'depth_i' : nlev/np.sqrt(2),
             'depth_p' : nlev,
@@ -236,39 +240,61 @@ class BBMapSim(PipelineStage):
         freq_maps = freq_maps.reshape((3*len(self.config['frequencies']),hp.nside2npix(self.config['nside'])))
         # print('shape of freq_maps = ', freq_maps.shape)
 
-        if self.config['external_sky_sims']!='':
+        if self.config['combined_directory']!='':
             freq_maps *= 0.0
             print('freq_maps.shape = ', freq_maps.shape)
             print('EXTERNAL SKY-ONLY MAPS LOADED')
-            list_of_files = sorted(glob.glob(self.config['external_sky_sims']))   
-            print('       -> list_of_files :', list_of_files)
-            for f in range(len(list_of_files)):
-                print('loading ... ', list_of_files[f])
-                freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
+            for f in range(len(instrument.frequency)):
+                print('loading combined foregrounds map for frequency ', str(int(instrument.frequency[f])))
+                # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
+                freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(glob.glob(os.path.join(self.config['combined_directory'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_comb_*.fits'))[0], field=None), nside_out=self.config['nside'])
+
         # adding noise
-        if self.config['noise_option']=='white_noise':
+        if self.config['external_noise_sims']!='':
+            noise_maps = freq_maps*0.0
+            print('noise_maps.shape = ', noise_maps.shape)
+            print('EXTERNAL NOISE-ONLY MAPS LOADED')
+            # list_of_files = sorted(glob.glob(self.config['external_noise_sims']))   
+            # print('       -> list_of_files :', list_of_files)
+            # for f in range(len(list_of_files)):
+            for f in range(len(instrument.frequency)):
+                print('loading noise map for frequency ', str(int(instrument.frequency[f])))
+                # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
+                noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None), nside_out=self.config['nside'])
+            freq_maps += noise_maps*binary_mask
+        elif self.config['noise_option']=='white_noise':
             nlev_map = freq_maps*0.0
-            for i in range(len(instrument_config['frequencies'])):
-                nlev_map[3*i:3*i+3,:] = np.array([instrument_config['depth_i'][i], instrument_config['depth_p'][i], instrument_config['depth_p'][i]])[:,np.newaxis]*np.ones((3,freq_maps.shape[-1]))
+            for i in range(len(instrument.frequency)):
+                nlev_map[3*i:3*i+3,:] = np.array([instrument.depth_i[i], instrument.depth_p[i], instrument.depth_p[i]])[:,np.newaxis]*np.ones((3,freq_maps.shape[-1]))
             # nlev_map = np.vstack(([instrument_config['sens_I'], instrument_config['sens_P'], instrument_config['sens_P']]))
             nlev_map /= hp.nside2resol(self.config['nside'], arcmin=True)
             noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)*binary_mask
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='no_noise': 
             pass
-        elif self.config['external_noise_sims']!='':
-            noise_maps = freq_maps*0.0
-            print('noise_maps.shape = ', noise_maps.shape)
-            print('EXTERNAL NOISE-ONLY MAPS LOADED')
-            list_of_files = sorted(glob.glob(self.config['external_noise_sims']))   
-            print('       -> list_of_files :', list_of_files)
-            for f in range(len(list_of_files)):
-                noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
-            freq_maps += noise_maps*binary_mask
         else: 
             freq_maps += noise_maps*binary_mask
 
+        freq_maps_unbeamed = freq_maps*1.0
+
+        if self.config['common_beam_correction']!=0.0:
+            print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
+            Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
+            for f in range(len(instrument.frequency)):
+                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=2*self.config['nside'])
+                alms = hp.map2alm(freq_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                for alm_ in alms:
+                    hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
+
+                # should do it for the noise too
+                # alms = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                # for alm_ in alms:
+                #     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                # noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])
+
         freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
+        freq_maps_unbeamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         noise_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         # noise covariance 
@@ -309,6 +335,8 @@ class BBMapSim(PipelineStage):
         hp.write_map(self.get_output('CMB_template_150GHz'), CMB_template_150GHz, overwrite=True)
         hp.write_map(self.get_output('dust_template_150GHz'), dust_template_150GHz, overwrite=True)
         hp.write_map(self.get_output('sync_template_150GHz'), sync_template_150GHz, overwrite=True)
+        hp.write_map(self.get_output('freq_maps_unbeamed'), freq_maps_unbeamed, overwrite=True)
+        np.save(self.get_output('instrument'), instrument)
 
         print(' >>> completed map simulator step')
 

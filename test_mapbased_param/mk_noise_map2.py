@@ -49,7 +49,7 @@ def get_mask(nh, nside_out=512) :
     return msk
 
 def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
-                    norm_hits_map=None, no_inh=False, CMBS4='') :
+                    norm_hits_map=None, no_inh=False, CMBS4=''):#, extra_beaming=0.0) :
     """
     Generates noise simulation
     sensitivity : choice of sensitivity model for SAC's V3 
@@ -79,6 +79,8 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
 
     for i_n in np.arange(len(nll)) :
         n=nll[i_n]
+        # if extra_beaming!=0.0:
+            # n *= hp.gauss_beam( np.radians( extra_beaming/60), lmax=3*nside_out-1 )[2:]
         if CMBS4_opt:
             nl=np.zeros((3, 3*nside_out))
             for i in range(3): 

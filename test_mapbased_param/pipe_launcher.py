@@ -12,7 +12,8 @@ import string
 import glob
 import numpy as np
 import pylab as pl
-# import time
+import sys
+import healpy as hp
 
 ######################################################################################################
 # MPI VARIABLES
@@ -87,6 +88,9 @@ def grabargs():
     parser.add_argument("--pixel_based_noise_cov", action='store_true', help = "pixel-based estimation of the noise covariance matrix", default=False)
     parser.add_argument("--highpass_filtering", action='store_true', help = "high-pass filtering of raw frequency maps to whiten the noise prior to spectral indices estimation", default=False)
     parser.add_argument("--harmonic_comp_sep", action='store_true', help = "performing the estimation of spectral indices in harmonic space", default=False)
+    parser.add_argument("--combined_directory", type=str, help = "user provides a directory containing foregrounds, cmb, noise but needs to create a combined directory", default='')
+    parser.add_argument("--common_beam_correction",  help = "if not 0, correct for beam-convolution the input simulations, and convolve with this common beam (in arcmin)", default=0.0)
+    parser.add_argument("--effective_beam_correction", action='store_true', help = "correct the power spectra by the effective Bl", default=False)
 
     args = parser.parse_args()
 
@@ -172,7 +176,8 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, North_South_split=False, 
                 instrument='SO',
                 frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='',
-                pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False):
+                pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
+                common_beam_correction=0.0, effective_beam_correction=False, combined_directory=''):
     '''
     function generating the config file
     '''
@@ -203,6 +208,8 @@ global:
     instrument: \''''+str(instrument)+'''\'
     bandpass: '''+str(bandpass)+'''
     Nsims_bias:  '''+str(Nsims_bias)+'''
+    common_beam_correction: '''+str(common_beam_correction)+'''
+    effective_beam_correction: '''+str(effective_beam_correction)+'''
 
 BBMapSim:
     cmb_model: 'c1'
@@ -212,6 +219,7 @@ BBMapSim:
     cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
     external_sky_sims: \''''+str(external_sky_sims)+'''\'
     external_noise_sims: \''''+str(external_noise_sims)+'''\'
+    combined_directory: \''''+str(combined_directory)+'''\'
     external_binary_mask: \''''+str(external_binary_mask)+'''\'
     external_noise_cov: \''''+str(external_noise_cov)+'''\'
     pixel_based_noise_cov: '''+str(pixel_based_noise_cov)+'''
@@ -285,6 +293,40 @@ def main():
         print('I do not know this instrumental configuration')
         sys.exit()
 
+    if args.combined_directory != '':
+
+        if not os.path.exists(args.combined_directory): os.mkdir(args.combined_directory)
+
+        print('looking at on disk simulations but organizing them (e.g. combining CMB+foregrounds)')
+        list_of_sky_sim_folders = glob.glob(os.path.join(args.external_sky_sims, '*'))
+        if not list_of_sky_sim_folders:
+            print('the sky sim folder you provided looks empty!')
+            sys.exit()
+        list_of_noise_sim_folders = glob.glob(os.path.join(args.external_noise_sims, '*'))
+        if not list_of_noise_sim_folders:
+            print('the noise sim folder you provided looks empty!')
+            sys.exit()
+
+        if min([len(list_of_sky_sim_folders), len(list_of_noise_sim_folders)]) < args.Nsims:
+            print('there are less simulations on disk than the required Nsims argument you set')
+            sys.exit()
+
+        list_of_combined_directories = [] 
+        for i_sim in range(args.Nsims):
+            print('creating following repo: ', os.path.join(args.combined_directory, str(i_sim).zfill(4)))
+            list_of_combined_directories.append(os.path.join(args.combined_directory, str(i_sim).zfill(4)))
+            for f in frequencies:
+                if os.path.isfile(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits')): continue
+                dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'foregrounds/dust/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_dust_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
+                synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'foregrounds/synch/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_synch_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
+                cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
+                comb = dust + synch + cmb
+                if not os.path.exists(os.path.join(args.combined_directory, str(i_sim).zfill(4))): os.mkdir(os.path.join(args.combined_directory, str(i_sim).zfill(4)))
+                hp.write_map(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits'), comb)
+
+    else:
+        list_of_combined_directories = [args.external_sky_sims]
+        list_of_noise_sim_folders = [args.external_noise_sims]
     print('rank = ', rank, ' and sim_splits = ', simulations_split[rank])
     print('#'*10)
     ####################
@@ -305,25 +347,20 @@ def main():
                 apotype=args.apotype, aposize=args.aposize, include_stat_res=args.include_stat_res,\
                 AL_marginalization=args.AL_marginalization, cmb_sim_no_pysm=args.cmb_sim_no_pysm,\
                 no_inh=args.no_inh, nside=args.nside, nside_patch=args.nside_patch, nlb=args.nlb,\
-                external_sky_sims=args.external_sky_sims, external_noise_sims=args.external_noise_sims, \
+                external_sky_sims=args.external_sky_sims, external_noise_sims=list_of_noise_sim_folders[sim], \
                 external_binary_mask=args.external_binary_mask, external_noise_cov=args.external_noise_cov, \
                 Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing,\
                 North_South_split=args.North_South_split,\
-                instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass, path_to_dust_template=args.path_to_dust_template,\
-                pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, harmonic_comp_sep=args.harmonic_comp_sep )
+                instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass, \
+                path_to_dust_template=args.path_to_dust_template,\
+                pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, \
+                harmonic_comp_sep=args.harmonic_comp_sep, common_beam_correction=args.common_beam_correction,\
+                effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim] )
 
         # submit call 
-        # time.sleep(10*rank)
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
-        # p = subprocess.call("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"), shell=True, stdout=subprocess.PIPE)
-        # p = subprocess.Popen("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"), shell=True, stdout=subprocess.PIPE)
-
-
-        # p = subprocess.check_output("/global/homes/j/josquin/.local/cori/3.6-anaconda-5.2/bin/bbpipe "+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
-
-        # p = os.system( args.path_to_bbpipe+' '+os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
 
         # if output directory does not exist, then create it
         if not os.path.exists(os.path.join(args.path_to_temp_files,'outputs_'+id_tag)):
@@ -351,9 +388,6 @@ def main():
         fout.close()
 
         p = os.system('sbatch batch_'+id_tag+".sh")
-
-        # exit()
-
 
     ####################
     if mpi: barrier()

@@ -12,6 +12,7 @@ from . import mk_noise_map2 as mknm
 import scipy
 from fgbuster.algebra import W_dB, _mmm, _mm
 from fgbuster.component_model import CMB, Dust, Synchrotron
+from . import V3calc as V3
 
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     if custom_bins:
@@ -45,6 +46,7 @@ def KCMB2RJ(nu):
 
 def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo, 
                             w, n_cov, mask_patches, A_maxL, nhits_raw, ell_eff):
+                            # ,extra_beaming=0.0):
     """
     this function performs Nsims frequency-noise simulations
     on which is applied the map-making operator estimated from
@@ -75,10 +77,11 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         # looping over simulations
         print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
         # generating frequency-maps noise simulations
-        nhits, noise_maps_sim, nlev = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+        nhits, noise_maps_sim, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=nhits_raw,
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
+                                # ,extra_beaming=extra_beaming)
 
         # reformating the simulated noise maps 
         noise_maps_ = np.zeros((n_cov.shape[0], 3, W.shape[-1]))
@@ -132,12 +135,12 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     for i in range(self.config['Nspec']):
         beta_maxL[i,:] = param_beta[i,:2]
         Sigma[i,:,:] = np.array([[param_beta[i,2],param_beta[i,3]],[param_beta[i,3],param_beta[i,4]]])
-    instrument = {'frequencies':np.array(self.config['frequencies'])}
+    # instrument = {'frequencies':np.array(self.config['frequencies'])}
     components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
     A = MixingMatrix(*components)
-    A_ev = A.evaluator(instrument['frequencies'])
-    A_dB_ev = A.diff_evaluator(instrument['frequencies'])
+    A_ev = A.evaluator(instrument.frequency)
+    A_dB_ev = A.diff_evaluator(instrument.frequency)
     comp_of_dB = A.comp_of_dB
 
     Cl_stat_res_model = []
@@ -195,23 +198,26 @@ class BBClEstimation(PipelineStage):
     name='BBClEstimation'
     inputs=[('binary_mask_cut',FitsFile),('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile),
             ('A_maxL',NumpyFile),('noise_maps',FitsFile), ('post_compsep_noise',FitsFile), 
-            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),\
-            ('mask_patches', FitsFile),('noise_cov',FitsFile), ('fitted_spectral_parameters', TextFile)]
+            ('norm_hits_map', FitsFile), ('frequency_maps',FitsFile),('CMB_template_150GHz', FitsFile),
+            ('mask_patches', FitsFile),('noise_cov',FitsFile), ('fitted_spectral_parameters', TextFile),
+            ('Bl_eff', FitsFile), ('instrument', NumpyFile), ('W', NumpyFile)]
     
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
              ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
              ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile),
-             ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile)]
+             ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile), ('Bl_eff_', FitsFile)]
 
     def run(self):
 
         clean_map = hp.read_map(self.get_input('post_compsep_maps'),verbose=False, field=None, h=False)
         cov_map = hp.read_map(self.get_input('post_compsep_cov'),verbose=False, field=None, h=False)
         A_maxL = np.load(self.get_input('A_maxL'))
+        W = np.load(self.get_input('W'))
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
         post_compsep_noise=hp.read_map(self.get_input('post_compsep_noise'),verbose=False, field=None)
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         CMB_template_150GHz = hp.read_map(self.get_input('CMB_template_150GHz'), field=None)
+        Bl_eff = hp.fitsfunc.read_cl(self.get_input('Bl_eff'))
         
         nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
         nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
@@ -222,10 +228,16 @@ class BBClEstimation(PipelineStage):
         mask_patches = hp.read_map(self.get_input('mask_patches'), verbose=False, field=None)
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
         # reorganization of noise covariance 
-        instrument = {'frequencies':np.array(self.config['frequencies'])}
+        # instrument = {'frequencies':np.array(self.config['frequencies'])}
+        # fwhm = V3.so_V3_SA_beams()
+        # freqs = V3.so_V3_SA_bands()
+        # instrument = {'frequencies':np.array(freqs), 'fwhm':np.array(fwhm)}
+        instrument = np.load(self.get_input('instrument'), allow_pickle=True).item()
+
+
         ind = 0
-        noise_cov_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        for f in range(len(instrument['frequencies'])) : 
+        noise_cov_ = np.zeros((len(instrument.frequency), 3, frequency_maps.shape[-1]))
+        for f in range(len(instrument.frequency)) : 
             for i in range(3): 
                 noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
                 ind += 1
@@ -270,17 +282,6 @@ class BBClEstimation(PipelineStage):
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
 
-        def get_field(mp_q, mp_u, mask_apo, purify_e=False, purify_b=True) :
-            #This creates a spin-2 field with both pure E and B.
-            f2y=nmt.NmtField(mask_apo,[mp_q,mp_u],purify_e=purify_e,purify_b=purify_b)
-            return f2y
-
-        #We initialize two workspaces for the non-pure and pure fields:
-        # if ((self.config['noise_option']!='white_noise') and (self.config['noise_option']!='no_noise')):
-            # f2y0=get_field(mask_nh*mp_q_sim,mask_nh*mp_u_sim)
-        # else:
-        f2y0=get_field(mp_q_sim,mp_u_sim,mask_apo)
-        w.compute_coupling_matrix(f2y0,f2y0,b)
 
         #This wraps up the two steps needed to compute the power spectrum
         #once the workspace has been initialized
@@ -305,12 +306,58 @@ class BBClEstimation(PipelineStage):
         pl.savefig('test_NaMaster_simulated_CMB.pdf')
         pl.close()
         """
+        # ##############################
+        # ### compute the effective Bl output of component separation
 
-        ##############################
+        if ((self.config['common_beam_correction'] != 0.0) and (not self.config['effective_beam_correction'])):
+            Bl_loc = []
+            Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=3*self.config['nside'])        
+            for f in range(len(self.config['frequencies'])):
+                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=3*self.config['nside'])
+                Bl_loc.append( (Bl_gauss_fwhm/Bl_gauss_common)**2 )
+            AtBlA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL[:,:], axis=0), np.array(Bl_loc), np.mean(A_maxL[:,:], axis=0))
+            inv_AtBlA = np.linalg.inv(AtBlA)
+            Bl_eff_ = np.diagonal(inv_AtBlA, axis1=-2,axis2=-1)[:,0]
+            Bl_eff = np.sqrt(Bl_eff_/np.max(Bl_eff_))
+            # Bl_eff *= hp.gauss_beam(np.nside2resol(self.config['nside'])/np.sqrt(8*np.log(2)*log(2)), lmax=3*self.config['nside'])
+        elif self.config['effective_beam_correction']:
+            # Bl_loc = []
+            Bl_loc_ = []
+            for f in range(len(self.config['frequencies'])):
+                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=3*self.config['nside'])
+                # Bl_loc.append( (1.0/Bl_gauss_fwhm)**2 )
+                Bl_loc_.append( Bl_gauss_fwhm )
+            # AtBlA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL, axis=0), np.array(Bl_loc), np.mean(A_maxL, axis=0))
+            # AtBlA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Bl_loc), A_maxL)
+            # inv_AtBlA = np.linalg.inv(AtBlA)
+            # Bl_eff_ = np.diagonal(inv_AtBlA, axis1=-2,axis2=-1)#[:,0]
+            # Bl_eff = np.sqrt(Bl_eff_[:,0]/np.max(Bl_eff_))
+            Bl_eff = W.dot(Bl_loc_)[0]
+            # np.save('Bl_eff_', Bl_eff)
+            # Bl_eff = np.sqrt(Bl_eff_/np.max(Bl_eff_))
+            # Bl_eff *= hp.gauss_beam(hp.nside2resol(self.config['nside']), lmax=3*self.config['nside'])
+        else:
+            Bl_eff = np.zeros_like( hp.gauss_beam( 1.0/60, lmax=3*self.config['nside']) )
+
+        ###############################
+        def get_field(mp_q, mp_u, mask_apo, purify_e=False, purify_b=True) :
+            #This creates a spin-2 field with both pure E and B.
+            if ((self.config['common_beam_correction']!=0.0) and self.config['effective_beam_correction']):
+                print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
+                beam = Bl_eff
+            else:beam=None
+            f2y = nmt.NmtField(mask_apo, [mp_q,mp_u], purify_e=purify_e, purify_b=purify_b, beam=beam)
+            return f2y
+
+        #We initialize two workspaces for the non-pure and pure fields:
+        f2y0=get_field(mp_q_sim,mp_u_sim,mask_apo)
+        w.compute_coupling_matrix(f2y0,f2y0,b)
+        
+        ###############################
         ### compute noise bias in the comp sep maps
-        # if self.config['Nspec']==0.0:
         Cl_cov_clean_loc = []
         Cl_cov_freq = []
+        Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
         for f in range(len(self.config['frequencies'])):
             fn = get_field(mask*noise_maps[3*f+1,:], mask*noise_maps[3*f+2,:], mask_apo)
             Cl_cov_clean_loc.append(1.0/compute_master(fn, fn, w)[3] )
@@ -319,63 +366,14 @@ class BBClEstimation(PipelineStage):
         inv_AtNA = np.linalg.inv(AtNA)
         Cl_cov_clean = np.diagonal(inv_AtNA, axis1=-2,axis2=-1)    
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
-        
-        ###############################
 
+        print('estimating noise bias')
+        if self.config['common_beam_correction']!=0.0 : print('        with an beam appied on noise power spectra of ', self.config['common_beam_correction'], ' arcmin')
         Cl_noise_bias, Cl_noise_freq = noise_bias_estimation(self, compute_master, get_field, mask, 
                 mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw, ell_eff)
-        Cl_noise_bias = np.vstack((ell_eff,np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
+                # , extra_beaming=self.config['common_beam_correction'])
+        Cl_noise_bias = np.vstack((ell_eff, np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
 
-        #### compute the square root of the covariance 
-        # first, reshape the covariance to be square 
-        # cov_map_reshaped = cov_map.reshape(int(np.sqrt(cov_map.shape[0])), int(np.sqrt(cov_map.shape[0])), cov_map.shape[-1])
-        """
-        # second compute the square root of it
-        cov_sq = np.zeros((cov_map_reshaped.shape[0], cov_map_reshaped.shape[1], cov_map_reshaped.shape[2]))
-        for p in obs_pix:
-            cov_sq[:,:,p] = scipy.linalg.sqrtm(cov_map_reshaped[:,:,p])
-
-        # perform N simulations of noise maps, with covariance cov
-        Cl_cov_freq = [] 
-        for i_sim in range(100):
-            # generate noise following the covariance 
-            noise_map_loc = np.zeros((cov_sq.shape[0],cov_sq.shape[-1]))
-            for p in obs_pix:
-                noise_map_loc[:,p] = cov_sq[:,:,p].dot(np.random.normal(0.0,1.0,size=cov_sq.shape[0]))
-            # take power spectrum of the generated noise maps
-            for c in range(int(cov_sq.shape[0]/2)):
-                # Q and U for each component: e,g, CMB, dust, sync
-                fn = get_field( mask*noise_map_loc[2*c,:], mask*noise_map_loc[2*c+1,:] )
-                Cl_cov_freq.append(compute_master(fn, fn, w)[3])
-        np.save('Cl_cov_clean_sim', Cl_cov_freq)
-        Cl_cov_freq_ = Cl_cov_clean*1.0
-        Cl_cov_freq_[1] = np.mean(Cl_cov_freq[::cov_sq.shape[0]], axis=0)
-        Cl_cov_freq_[2] = np.mean(Cl_cov_freq[1::cov_sq.shape[0]], axis=0)
-        Cl_cov_freq_[3] = np.mean(Cl_cov_freq[2::cov_sq.shape[0]], axis=0)
-
-        np.save('Cl_cov_clean', Cl_cov_freq_)
-        # pl.loglog(Cl_cov_clean[1], 'r-')
-        # pl.show()
-        # exit()
-        """
-
-        # simpler approach is Eq. 31 from Stompor et al 2016, 1609.03807
-        # Cl_noise = 1/npix sum_pix ( AtNA_inv )
-        """
-        print(cov_map_reshaped[0,0,obs_pix] )
-        print('------')
-        print(cov_map_reshaped[1,1,obs_pix] )
-        print('------')
-        w_inv_Q = np.mean( cov_map_reshaped[0,0,obs_pix] )
-        w_inv_U = np.mean( cov_map_reshaped[1,1,obs_pix] ) 
-        # these quantities should be normalized to the pixel size
-        pixel_size_in_rad = hp.nside2resol(self.config['nside'])
-        print('w_inv_Q = ', w_inv_Q)
-        print('w_inv_U = ', w_inv_U)
-        print('Cl_cov_clean[1][0] = ', Cl_cov_clean[1][0])
-        import sys
-        sys.exit() 
-        """
         ### delensing if bmodes_template is provided
         if self.config['bmodes_template'] != '':
             bmodes_template = hp.read_map(self.config['bmodes_template'])
@@ -402,6 +400,7 @@ class BBClEstimation(PipelineStage):
             ## signal spectra
             if comp_i > 1: purify_b_=False
             else: purify_b_=True
+
             fyp_i=get_field(mask*clean_map[2*comp_i], mask*clean_map[2*comp_i+1], mask_apo, purify_b=purify_b_)
             # fyp_i=get_field(clean_map[2*comp_i], clean_map[2*comp_i+1], purify_b=purify_b_)
             fyp_j=get_field(mask*clean_map[2*comp_j], mask*clean_map[2*comp_j+1], mask_apo, purify_b=purify_b_)
@@ -433,14 +432,14 @@ class BBClEstimation(PipelineStage):
         hp.fitsfunc.write_cl(self.get_output('Cl_cov_freq'), np.array(Cl_cov_freq), overwrite=True)
         hp.fitsfunc.write_cl(self.get_output('Cl_noise_bias'), np.array(Cl_noise_bias), overwrite=True)
 
-        ###### 
+        ######################
         # cross power spectra of the input frequency maps 
         # -> this is useful to estimate the statistical
         # foregrounds residuals
         ind = 0
-        instrument = {'frequencies':np.array(self.config['frequencies'])}
-        frequency_maps_ = np.zeros((len(instrument['frequencies']), 3, frequency_maps.shape[-1]))
-        for f in range(len(instrument['frequencies'])) : 
+        # instrument = {'frequencies':np.array(self.config['frequencies'])}
+        frequency_maps_ = np.zeros((len(instrument.frequency), 3, frequency_maps.shape[-1]))
+        for f in range(len(instrument.frequency)) : 
             for i in range(3): 
                 frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
                 ind += 1
@@ -481,11 +480,12 @@ class BBClEstimation(PipelineStage):
         # np.save('Cl_stat_res_noise_bias', Cl_stat_res_noise_bias)
         Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0) - Cl_stat_res_noise_bias, np.std(Cl_stat_res_model, axis=0)))
         hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
+        
+        hp.fitsfunc.write_cl(self.get_output('Bl_eff_'), np.array(Bl_eff), overwrite=True)
 
         ########
         # outputting apodized mask
         hp.write_map(self.get_output('mask_apo'), mask_apo, overwrite=True)
-
 
 if __name__ == '__main__':
     results = PipelineStage.main()
