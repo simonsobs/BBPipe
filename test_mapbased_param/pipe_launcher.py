@@ -297,7 +297,7 @@ def main():
 
         if not os.path.exists(args.combined_directory): os.mkdir(args.combined_directory)
 
-        print('looking at on disk simulations but organizing them (e.g. combining CMB+foregrounds)')
+        print('looking for simulations on disk and organizing them (e.g. combining CMB+foregrounds)')
         list_of_sky_sim_folders = glob.glob(os.path.join(args.external_sky_sims, '*'))
         if not list_of_sky_sim_folders:
             print('the sky sim folder you provided looks empty!')
@@ -307,9 +307,9 @@ def main():
             print('the noise sim folder you provided looks empty!')
             sys.exit()
 
-        if min([len(list_of_sky_sim_folders), len(list_of_noise_sim_folders)]) < args.Nsims:
-            print('there are less simulations on disk than the required Nsims argument you set')
-            sys.exit()
+        # if min([len(list_of_sky_sim_folders), len(list_of_noise_sim_folders)]) < args.Nsims:
+            # print('there are less simulations on disk than the required Nsims argument you set')
+            # sys.exit()
 
         list_of_combined_directories = [] 
         for i_sim in range(args.Nsims):
@@ -323,7 +323,6 @@ def main():
                 comb = dust + synch + cmb
                 if not os.path.exists(os.path.join(args.combined_directory, str(i_sim).zfill(4))): os.mkdir(os.path.join(args.combined_directory, str(i_sim).zfill(4)))
                 hp.write_map(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits'), comb)
-
     else:
         list_of_combined_directories = [args.external_sky_sims]
         list_of_noise_sim_folders = [args.external_noise_sims]
