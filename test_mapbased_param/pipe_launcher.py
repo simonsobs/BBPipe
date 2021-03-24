@@ -317,9 +317,9 @@ def main():
             list_of_combined_directories.append(os.path.join(args.combined_directory, str(i_sim).zfill(4)))
             for f in frequencies:
                 if os.path.isfile(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits')): continue
-                dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'foregrounds/dust/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_dust_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
-                synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'foregrounds/synch/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_synch_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
-                cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
+                dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/gaussian/dust/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_dust_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
+                synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/gaussian/synch/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_synch_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
+                cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r0_20201207/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
                 comb = dust + synch + cmb
                 if not os.path.exists(os.path.join(args.combined_directory, str(i_sim).zfill(4))): os.mkdir(os.path.join(args.combined_directory, str(i_sim).zfill(4)))
                 hp.write_map(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits'), comb)
@@ -329,6 +329,7 @@ def main():
         list_of_noise_sim_folders = [args.external_noise_sims]
     print('rank = ', rank, ' and sim_splits = ', simulations_split[rank])
     print('#'*10)
+
     ####################
     for sim in simulations_split[rank]:
         id_tag_rank = format(rank, '05d')
@@ -398,14 +399,20 @@ def main():
         # read the estimated_cosmo_params.txt in each directory 
         r_all = []
         Ad_all = []
+        AL_all = []
         sigma_all = []
         sigma_Ad_all = []
+        sigma_AL_all = []
         for dir_ in list_output_dir:
             estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
             if args.dust_marginalization: 
                 r_, sigma_, Ad_, sigma_Ad_=estimated_parameters
                 sigma_Ad_all.append(sigma_Ad_)
-                Ad_all.append(Ad_)            
+                Ad_all.append(Ad_) 
+            elif args.AL_marginalization:
+                r_, AL_, sigma_, sigma_AL_=estimated_parameters
+                sigma_AL_all.append(sigma_AL_)
+                AL_all.append(AL_) 
             else: r_, sigma_=estimated_parameters
             r_all.append(r_)
             sigma_all.append(sigma_)
@@ -417,11 +424,26 @@ def main():
         frame = legend.get_frame()
         frame.set_edgecolor('white')
         legend.get_frame().set_alpha(0.3)
+        pl.set_xscale('log')
         pl.xlabel('tensor-to-scalar ratio', fontsize=16)
-        pl.xlabel('number of simulations', fontsize=16)
+        pl.ylabel('number of simulations', fontsize=16)
         pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         pl.close()
-    
+        
+        if args.AL_marginalization:
+            pl.figure()
+            pl.hist( AL_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            pl.hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
+            pl.set_xscale('log')
+            legend=pl.legend()
+            frame = legend.get_frame()
+            frame.set_edgecolor('white')
+            legend.get_frame().set_alpha(0.3)
+            pl.xlabel(r'$A_{\rm lens}$', fontsize=16)
+            pl.ylabel('number of simulations', fontsize=16)
+            pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_AL_and_sigma_'+args.tag+'.pdf'))
+            pl.close()
+
     if mpi: barrier()
     
     exit()
