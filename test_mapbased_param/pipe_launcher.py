@@ -391,7 +391,7 @@ def main():
         fout.close()
 
         # submit the job if the final products have not be produced already
-        if os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
+        if os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
             print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
         else:
             p = os.system('sbatch batch_'+id_tag+".sh")
