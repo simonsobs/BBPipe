@@ -35,8 +35,9 @@ except ModuleNotFoundError:
 ## JUST GENERATING A RANDOM STRING ;) 
 rand_string = ''*10
 if rank==0:
-	rand_string = ''.join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10) )
+    rand_string = ''.join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10) )
 if mpi: rand_string = comm.bcast( rand_string, root=0 )
+
 
 ######################################################################################################
 ## INPUT ARGUMENTS
@@ -430,7 +431,7 @@ def main():
         frame = legend.get_frame()
         frame.set_edgecolor('white')
         legend.get_frame().set_alpha(0.3)
-        pl.set_xscale('log')
+        pl.xscale('log')
         pl.xlabel('tensor-to-scalar ratio', fontsize=16)
         pl.ylabel('number of simulations', fontsize=16)
         pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
@@ -440,7 +441,7 @@ def main():
             pl.figure()
             pl.hist( AL_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
             pl.hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
-            pl.set_xscale('log')
+            pl.xscale('log')
             legend=pl.legend()
             frame = legend.get_frame()
             frame.set_edgecolor('white')
