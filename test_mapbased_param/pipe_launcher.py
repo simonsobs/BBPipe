@@ -460,8 +460,10 @@ def main():
             # pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_AL_and_sigma_'+args.tag+'.pdf'))
             # pl.close()
         
-        for ax_ in ax:
-            ax_.set_xscale('log')
+        # for ax_ in ax:
+        for i in range(ax.shape[0]):
+            for j in range(ax.shape[1]):
+                ax[i,j].set_xscale('log')
 
         f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         pl.close()
