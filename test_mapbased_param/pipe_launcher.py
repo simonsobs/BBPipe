@@ -381,7 +381,7 @@ def main():
 #SBATCH -C haswell\n\
 #SBATCH -q regular\n\
 #SBATCH -J test_BBpipe\n\
-#SBATCH -t 00:45:00\n\
+#SBATCH -t 01:00:00\n\
 \n")
 
         for line in fin.readlines():
@@ -424,32 +424,46 @@ def main():
             r_all.append(r_)
             sigma_all.append(sigma_)
 
-        pl.figure()
-        pl.hist( r_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
-        pl.hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
-        legend=pl.legend()
-        frame = legend.get_frame()
-        frame.set_edgecolor('white')
-        legend.get_frame().set_alpha(0.3)
-        pl.xscale('log')
-        pl.xlabel('tensor-to-scalar ratio', fontsize=16)
-        pl.ylabel('number of simulations', fontsize=16)
-        pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
-        pl.close()
+        if args.AL_marginalization:
+            f, ax = pl.subplots(2, 2, sharey=True)
+        else:
+            f, ax = pl.subplots(1, 2, sharey=True)
+        ax[0].set_title('measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
+        ax[0].hist( r_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8)
+        ax[1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
+        ax[1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
+        # legend=pl.legend()
+        # frame = legend.get_frame()
+        # frame.set_edgecolor('white')
+        # legend.get_frame().set_alpha(0.3)
+        # pl.xscale('log')
+        ax[0].set_xlabel('tensor-to-scalar ratio', fontsize=16)
+        ax[0].set_ylabel('number of simulations', fontsize=16)
+        ax[1].set_xlabel('tensor-to-scalar ratio', fontsize=16)
+        ax[1].set_ylabel('number of simulations', fontsize=16)
+        # pl.close()
         
         if args.AL_marginalization:
-            pl.figure()
-            pl.hist( AL_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
-            pl.hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
-            pl.xscale('log')
-            legend=pl.legend()
-            frame = legend.get_frame()
-            frame.set_edgecolor('white')
-            legend.get_frame().set_alpha(0.3)
-            pl.xlabel(r'$A_{\rm lens}$', fontsize=16)
-            pl.ylabel('number of simulations', fontsize=16)
-            pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_AL_and_sigma_'+args.tag+'.pdf'))
-            pl.close()
+            # pl.figure()
+            ax[2].hist( AL_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            ax[3].hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
+            # pl.xscale('log')
+            # legend=pl.legend()
+            # frame = legend.get_frame()
+            # frame.set_edgecolor('white')
+            # legend.get_frame().set_alpha(0.3)
+            ax[2].xlabel(r'$A_{\rm lens}$', fontsize=16)
+            ax[2].ylabel('number of simulations', fontsize=16)
+            ax[3].xlabel(r'$A_{\rm lens}$', fontsize=16)
+            ax[3].ylabel('number of simulations', fontsize=16)
+            # pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_AL_and_sigma_'+args.tag+'.pdf'))
+            # pl.close()
+        
+        for ax_ in ax:
+            ax_.set_xscale('log')
+
+        f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
+        pl.close()
 
     if mpi: barrier()
     
