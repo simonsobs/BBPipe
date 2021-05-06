@@ -424,6 +424,12 @@ def main():
             r_all.append(r_)
             sigma_all.append(sigma_)
 
+        # saving all products 
+        np.save(os.path.join(args.path_to_temp_files,'r_all_'+args.tag), r_all)
+        np.save(os.path.join(args.path_to_temp_files,'sigma_all_'+args.tag), sigma_all)
+        np.save(os.path.join(args.path_to_temp_files,'AL_all_'+args.tag), AL_all)
+        np.save(os.path.join(args.path_to_temp_files,'sigma_AL_all_'+args.tag), sigma_AL_all)
+
         # if args.AL_marginalization:
         f, ax = pl.subplots(2, 2, sharey=True)
         # else:
@@ -438,10 +444,10 @@ def main():
         # frame.set_edgecolor('white')
         # legend.get_frame().set_alpha(0.3)
         # pl.xscale('log')
-        ax[0,0].set_xlabel('tensor-to-scalar ratio', fontsize=16)
-        ax[0,0].set_ylabel('number of simulations', fontsize=16)
-        ax[0,1].set_xlabel('tensor-to-scalar ratio', fontsize=16)
-        ax[0,1].set_ylabel('number of simulations', fontsize=16)
+        ax[0,0].set_xlabel('tensor-to-scalar ratio', fontsize=12)
+        ax[0,0].set_ylabel('# of sims', fontsize=12)
+        ax[0,1].set_xlabel('tensor-to-scalar ratio', fontsize=12)
+        ax[0,1].set_ylabel('# of sims', fontsize=12)
         # pl.close()
         
         if args.AL_marginalization:
@@ -453,10 +459,10 @@ def main():
             # frame = legend.get_frame()
             # frame.set_edgecolor('white')
             # legend.get_frame().set_alpha(0.3)
-            ax[1,0].set_xlabel(r'$A_{\rm lens}$', fontsize=16)
-            ax[1,0].set_ylabel('number of simulations', fontsize=16)
-            ax[1,1].set_xlabel(r'$A_{\rm lens}$', fontsize=16)
-            ax[1,1].set_ylabel('number of simulations', fontsize=16)
+            ax[1,0].set_xlabel(r'$A_{\rm lens}$', fontsize=12)
+            ax[1,0].set_ylabel('number of simulations', fontsize=12)
+            ax[1,1].set_xlabel(r'$A_{\rm lens}$', fontsize=12)
+            ax[1,1].set_ylabel('number of simulations', fontsize=12)
             # pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_AL_and_sigma_'+args.tag+'.pdf'))
             # pl.close()
         
