@@ -428,9 +428,9 @@ def main():
             f, ax = pl.subplots(2, 2, sharey=True)
         else:
             f, ax = pl.subplots(1, 2, sharey=True)
-        ax[0].set_title('measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
+        ax[0].title.set_text('measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
         ax[0].hist( r_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8)
-        ax[1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
+        ax[1].title.set_text('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
         ax[1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
         # legend=pl.legend()
         # frame = legend.get_frame()
