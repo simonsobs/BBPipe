@@ -269,7 +269,7 @@ class BBMapSim(PipelineStage):
                 # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
 
                 if self.config['Nico_noise_combination']:
-                    noise = combine_noise_maps(self.config['isim'], instrument.frequency[f], factors)
+                    noise_loc = combine_noise_maps(self.config['isim'], instrument.frequency[f], factors)
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
 
