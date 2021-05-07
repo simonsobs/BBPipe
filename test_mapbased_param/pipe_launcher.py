@@ -314,7 +314,7 @@ def main():
             sys.exit()
         if args.Nico_noise_combination:
             print('we will combine white and one over f noise in map_simulator')
-            list_of_noise_sim_folders['']*len(list_of_sky_sim_folders)
+            list_of_noise_sim_folders = ['']*len(list_of_sky_sim_folders)
 
         list_of_combined_directories = [] 
         for i_sim in range(args.Nsims):
