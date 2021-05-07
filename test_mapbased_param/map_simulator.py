@@ -16,6 +16,12 @@ import os
 import fgbuster
 from fgbuster.observation_helpers import get_instrument, get_sky, get_observation, standardize_instrument
 
+
+import sys
+sys.path.append('/global/cfs/cdirs/sobs/users/krach/BBSims/NOISE_20201207/')
+from combine_noise import *
+
+
 def noise_covariance_estimation(self, binary_mask):
     """
     Estimation of the pixel-based covariance matrix
@@ -254,13 +260,20 @@ class BBMapSim(PipelineStage):
             noise_maps = freq_maps*0.0
             print('noise_maps.shape = ', noise_maps.shape)
             print('EXTERNAL NOISE-ONLY MAPS LOADED')
-            # list_of_files = sorted(glob.glob(self.config['external_noise_sims']))   
-            # print('       -> list_of_files :', list_of_files)
-            # for f in range(len(list_of_files)):
+
+            if self.config['Nico_noise_combination']:
+                factors = compute_noise_factors(self.config['sensitivity_mode'], self.config['knee_mode'])
+
             for f in range(len(instrument.frequency)):
                 print('loading noise map for frequency ', str(int(instrument.frequency[f])))
                 # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
-                noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None), nside_out=self.config['nside'])
+
+                if self.config['Nico_noise_combination']:
+                    noise = combine_noise_maps(self.config['isim'], instrument.frequency[f], factors)
+                else:
+                    noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
+
+                noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='white_noise':
             nlev_map = freq_maps*0.0

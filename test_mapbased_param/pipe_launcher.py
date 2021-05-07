@@ -178,7 +178,8 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 instrument='SO',
                 frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='',
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
-                common_beam_correction=0.0, effective_beam_correction=False, combined_directory=''):
+                common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
+                Nico_noise_combination=False, isim=0):
     '''
     function generating the config file
     '''
@@ -224,6 +225,8 @@ BBMapSim:
     external_binary_mask: \''''+str(external_binary_mask)+'''\'
     external_noise_cov: \''''+str(external_noise_cov)+'''\'
     pixel_based_noise_cov: '''+str(pixel_based_noise_cov)+'''
+    Nico_noise_combination: '''+str(Nico_noise_combination)+'''
+    isim:  '''+str(isim)+'''
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
@@ -303,14 +306,13 @@ def main():
         if not list_of_sky_sim_folders:
             print('the sky sim folder you provided looks empty!')
             sys.exit()
+
         list_of_noise_sim_folders = glob.glob(os.path.join(args.external_noise_sims, '*'))
-        if not list_of_noise_sim_folders:
+        if not list_of_noise_sim_folders and not args.Nico_noise_combination:
             print('the noise sim folder you provided looks empty!')
             sys.exit()
-
-        # if min([len(list_of_sky_sim_folders), len(list_of_noise_sim_folders)]) < args.Nsims:
-            # print('there are less simulations on disk than the required Nsims argument you set')
-            # sys.exit()
+        if args.Nico_noise_combination:
+            print('we will combine white and one over f noise in map_simulator')
 
         list_of_combined_directories = [] 
         for i_sim in range(args.Nsims):
@@ -361,7 +363,8 @@ def main():
                 path_to_dust_template=args.path_to_dust_template,\
                 pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, \
                 harmonic_comp_sep=args.harmonic_comp_sep, common_beam_correction=args.common_beam_correction,\
-                effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim] )
+                effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
+                Nico_noise_combination=args.Nico_noise_combination, isim=sim)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
