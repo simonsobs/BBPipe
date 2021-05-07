@@ -92,6 +92,7 @@ def grabargs():
     parser.add_argument("--combined_directory", type=str, help = "user provides a directory containing foregrounds, cmb, noise but needs to create a combined directory", default='')
     parser.add_argument("--common_beam_correction",  help = "if not 0, correct for beam-convolution the input simulations, and convolve with this common beam (in arcmin)", default=0.0)
     parser.add_argument("--effective_beam_correction", action='store_true', help = "correct the power spectra by the effective Bl", default=False)
+    parser.add_argument("--Nico_noise_combination", action='store_true', help = "Perform the combination of white with one over f noise", default=False)
 
     args = parser.parse_args()
 
