@@ -382,8 +382,10 @@ class BBMapParamCompSep(PipelineStage):
                     if self.config['common_beam_correction']!=0.0:
                         if ((p==obs_pix[0]) and (s==0)): print(' -> re-estimating res.s from unbeamed freq maps!')
                         res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed__[:,s,p])
-            if self.config['harmonic_comp_sep']:
-                res.invAtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
+                    if self.config['harmonic_comp_sep']:
+                        for c1 in range(res.A_maxL.shape[0]):
+                            for c2 in range(res.A_maxL.shape[0]):
+                                res.invAtNA[c1,c2,s,p] = np.linalg.inv(A_maxL[c1,:].T.dot(noise_cov_inv).dot(A_maxL[c2,:]))
 
             if self.config['highpass_filtering']:
                 print('re-estimating post comp sep sky maps from un-filtered frequency maps')
