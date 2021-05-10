@@ -385,7 +385,7 @@ class BBMapParamCompSep(PipelineStage):
                     if self.config['harmonic_comp_sep']:
                         for c1 in range(res.A_maxL.shape[0]):
                             for c2 in range(res.A_maxL.shape[0]):
-                                res.invAtNA[c1,c2,s,p] = np.linalg.inv(A_maxL[c1,:].T.dot(noise_cov_inv).dot(A_maxL[c2,:]))
+                                res.invAtNA[c1,c2,s,p] = inv_AtNA[c1,c2]
 
             if self.config['highpass_filtering']:
                 print('re-estimating post comp sep sky maps from un-filtered frequency maps')
