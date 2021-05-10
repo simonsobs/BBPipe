@@ -320,7 +320,7 @@ class BBMapParamCompSep(PipelineStage):
                 invN = np.zeros(prewhiten_factors.shape+prewhiten_factors.shape[-1:])
                 res.s = Wd(A_ev(res.x), frequency_maps__.T, invN=invN)     
                 res.s = np.swapaxes(res.s,-1,0)
-                
+
 
             resx.append(res.x)
             resS.append(res.Sigma)
@@ -381,7 +381,6 @@ class BBMapParamCompSep(PipelineStage):
                     noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
                     if self.config['common_beam_correction']!=0.0:
                         if ((p==obs_pix[0]) and (s==0)): print(' -> re-estimating res.s from unbeamed freq maps!')
-                        print(res.s.shape, inv_AtNA.shape, A_maxL.shape, freq_maps_unbeamed__.shape)
                         res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed__[:,s,p])
 
             if self.config['highpass_filtering']:
