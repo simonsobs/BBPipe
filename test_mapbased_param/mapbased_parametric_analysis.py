@@ -379,7 +379,8 @@ class BBMapParamCompSep(PipelineStage):
                     noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
                     if self.config['common_beam_correction']!=0.0:
                         if ((p==obs_pix[0]) and (s==0)): print(' -> re-estimating res.s from unbeamed freq maps!')
-                        res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed_[:,s,p])
+                        print(res.s.shape, inv_AtNA.shape, A_maxL.shape, freq_maps_unbeamed__.shape)
+                        res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed__[:,s,p])
 
             if self.config['highpass_filtering']:
                 print('re-estimating post comp sep sky maps from un-filtered frequency maps')
