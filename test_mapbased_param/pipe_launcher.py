@@ -422,7 +422,7 @@ def main():
         for dir_ in list_output_dir:
             try:
                 estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
-            except FileNotFoundError:
+            except IOError:
                 if args.force_histogram:
                     continue
                 else:
