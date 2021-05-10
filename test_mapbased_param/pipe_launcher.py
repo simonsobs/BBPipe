@@ -93,7 +93,7 @@ def grabargs():
     parser.add_argument("--common_beam_correction",  help = "if not 0, correct for beam-convolution the input simulations, and convolve with this common beam (in arcmin)", default=0.0)
     parser.add_argument("--effective_beam_correction", action='store_true', help = "correct the power spectra by the effective Bl", default=False)
     parser.add_argument("--Nico_noise_combination", action='store_true', help = "Perform the combination of white with one over f noise", default=False)
-
+    parser.add_argument("--force_histogram", action='store_true', help = "compute histogram although all jobs are not run", default=False)
     args = parser.parse_args()
 
     return args
@@ -400,6 +400,8 @@ def main():
         # submit the job if the final products have not be produced already
         if os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
             print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
+        elif args.force_histogram:
+            continue
         else:
             p = os.system('sbatch batch_'+id_tag+".sh")
 
@@ -417,7 +419,10 @@ def main():
         sigma_Ad_all = []
         sigma_AL_all = []
         for dir_ in list_output_dir:
-            estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+            try:
+                estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+            except FileNotFoundError:
+                continue
             if args.dust_marginalization: 
                 r_, sigma_, Ad_, sigma_Ad_=estimated_parameters
                 sigma_Ad_all.append(sigma_Ad_)
