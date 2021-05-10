@@ -373,6 +373,7 @@ class BBMapParamCompSep(PipelineStage):
             obs_pix = np.where(mask_patch_==1.0)[0]
 
             for p in obs_pix:
+                res.s = np.swapaxes(res.s,-1,0)
                 for s in range(2):
                     noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                     inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
