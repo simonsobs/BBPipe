@@ -319,6 +319,8 @@ class BBMapParamCompSep(PipelineStage):
                 prewhiten_factors = _get_prewhiten_factors(instrument_, frequency_maps__.shape, frequency_maps_nside)
                 invN = np.zeros(prewhiten_factors.shape+prewhiten_factors.shape[-1:])
                 res.s = Wd(A_ev(res.x), frequency_maps__.T, invN=invN)     
+                res.s = np.swapaxes(res.s,-1,0)
+                
 
             resx.append(res.x)
             resS.append(res.Sigma)
@@ -373,7 +375,6 @@ class BBMapParamCompSep(PipelineStage):
             obs_pix = np.where(mask_patch_==1.0)[0]
 
             for p in obs_pix:
-                res.s = np.swapaxes(res.s,-1,0)
                 for s in range(2):
                     noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                     inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
