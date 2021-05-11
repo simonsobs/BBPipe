@@ -460,6 +460,8 @@ class BBMapParamCompSep(PipelineStage):
                     ress[i,j,np.where(ress[i,j,:]==hp.UNSEEN)[0]] = 0.0
             print('maps_estimated = ',maps_estimated)
             maps_estimated += ress.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
+            for i in range(maps_estimated.shape[0]):
+                print(np.where(maps_estimated[i]==hp.UNSEEN)[0])
             print('maps_estimated = ',maps_estimated)
 
             # reshaping and saving the covariance matrix (reorganization of the invAtNA matrix)
