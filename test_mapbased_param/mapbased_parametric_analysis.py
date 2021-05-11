@@ -383,7 +383,8 @@ class BBMapParamCompSep(PipelineStage):
                         if ((p==obs_pix[0]) and (s==0)): print(' -> re-estimating res.s from unbeamed freq maps!')
                         res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed__[:,s,p])
                     if self.config['harmonic_comp_sep']:
-                        if ((p==obs_pix[0]) and (s==0)): res.invAtNA = np.zeros((res.s.shape[0], res.s.shape[1], res.s.shape[2]))
+                        if ((p==obs_pix[0]) and (s==0)): res.invAtNA = np.zeros((res.s.shape[0],res.s.shape[0], res.s.shape[1], res.s.shape[2]))
+                        print(inv_AtNA.shape)
                         res.invAtNA[:,:,s,p] = inv_AtNA
 
             if self.config['highpass_filtering']:
