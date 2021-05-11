@@ -389,7 +389,7 @@ class BBMapParamCompSep(PipelineStage):
             if self.config['highpass_filtering']:
                 print('re-estimating post comp sep sky maps from un-filtered frequency maps')
                 print('although using estimated spectral indices from high-pass filtered maps')
-                res.s_unfiltered = res.s*0.0
+                res.s_unfiltered = np.zeros_like(res.s)
                 for p in obs_pix:
                     for s in range(2):
                         noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
