@@ -570,6 +570,7 @@ class BBREstimation(PipelineStage):
                     for ir in range(len(r_v)):
                         for ia in range(len(AL_v)):
                             logL[ir,ia] = likelihood_on_r_computation( [r_v[ir], AL_v[ia]] )
+                        print(ir*100.0/len(r_v))
                 else:
                     logL = r_v*0.0
                     for ir in range(len(r_v)):
