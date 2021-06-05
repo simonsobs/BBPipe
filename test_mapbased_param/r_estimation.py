@@ -560,7 +560,7 @@ class BBREstimation(PipelineStage):
 
                     logL = 0.0 
                     for b in range(len(ClBB_obs)):
-                        logL += np.sum((2* bins.get_ell_list(b)+1))*fsky_eff/2*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
+                        logL += np.sum((2* bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                     return logL
 
                 # gridding -2log(L)
@@ -586,10 +586,15 @@ class BBREstimation(PipelineStage):
                     ind = np.unravel_index(np.argmin(logL, axis=None), logL.shape)
                     r_fit = r_v[ind[0]]
                     AL_fit = AL_v[ind[1]]
-                    ind_sigma_r = np.argmin(np.abs( (logL[ind[0]:,ind[1]] - logL[ind[0],ind[1]]) - 2.3 ))
-                    ind_sigma_AL = np.argmin(np.abs( (logL[ind[0],ind[1]:] - logL[ind[0],ind[1]]) - 2.3 ))    
-                    sigma_r_fit =  r_v[ind_sigma_r+ind[0]] - r_fit
-                    sigma_AL_fit =  AL_v[ind_sigma_AL+ind[1]] - AL_fit
+                    # ind_sigma_r = np.argmin(np.abs( (logL[ind[0]:,ind[1]] - logL[ind[0],ind[1]]) - 2.3 ))
+                    # ind_sigma_AL = np.argmin(np.abs( (logL[ind[0],ind[1]:] - logL[ind[0],ind[1]]) - 2.3 ))    
+                    # sigma_r_fit =  r_v[ind_sigma_r+ind[0]] - r_fit
+                    # sigma_AL_fit =  AL_v[ind_sigma_AL+ind[1]] - AL_fit
+                    likelihood_on_r_normed = likelihood_on_r/np.sum( likelihood_on_r )
+                    dr = r_v[1]-r_v[0]
+                    dAL = AL_v[1]-AL_v[0]
+                    sigma_r_fit = np.sqrt(np.sum(likelihood_on_r_normed*(r_v - r_fit)**2*dr))
+                    sigma_AL_fit = np.sqrt(np.sum(likelihood_on_r_normed*(AL_v - AL_fit)**2*dAL))
                     r_fit = [r_fit, AL_fit]
                     sigma_r_fit = [sigma_r_fit, sigma_AL_fit]
                 else:
