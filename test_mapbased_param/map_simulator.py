@@ -262,7 +262,9 @@ class BBMapSim(PipelineStage):
             print('EXTERNAL NOISE-ONLY MAPS LOADED')
 
             if self.config['Nico_noise_combination']:
-                factors = compute_noise_factors(self.config['sensitivity_mode'], self.config['knee_mode'])
+                if self.config['knee_mode'] == 2 : knee_mode_loc = None
+                else: knee_mode_loc = self.config['knee_mode']
+                factors = compute_noise_factors(self.config['sensitivity_mode'], )
 
             for f in range(len(instrument.frequency)):
                 print('loading noise map for frequency ', str(int(instrument.frequency[f])))
