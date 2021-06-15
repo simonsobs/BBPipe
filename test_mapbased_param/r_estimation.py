@@ -536,16 +536,16 @@ class BBREstimation(PipelineStage):
                         if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])
                                             &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
                                                 linewidth=2.0, alpha=0.8)
-                        np.save('ell_bins', ell_v_loc)
-                        np.save('DCl_noise',  norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
-                        np.save('DCl_stat_res', norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
-                        np.save('DCl_Alens0p5', norm*( 0.5*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]) )
-                        np.save('DCl_Alens0p3', norm*( 0.3*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]) )
-                        np.save('DCl_Alens0p1', norm*( 0.1*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]) )
-                        np.save('DCl_r0p1', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.1)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
-                        np.save('DCl_r0p01', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.01)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
-                        np.save('DCl_r0p003', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.003)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
-                        np.save('DCl_r0p001', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.001)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
+                        # np.save('ell_bins', ell_v_loc)
+                        # np.save('DCl_noise',  norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
+                        # np.save('DCl_stat_res', norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
+                        # np.save('DCl_Alens0p5', norm*( 0.5*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]) )
+                        # np.save('DCl_Alens0p3', norm*( 0.3*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]) )
+                        # np.save('DCl_Alens0p1', norm*( 0.1*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]) )
+                        # np.save('DCl_r0p1', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.1)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
+                        # np.save('DCl_r0p01', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.01)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
+                        # np.save('DCl_r0p003', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.003)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
+                        # np.save('DCl_r0p001', norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*0.001)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] )
 
                         # pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
                                         # linewidth=3.0, alpha=1.0, label='true CMB template @ 150GHz')
@@ -626,11 +626,11 @@ class BBREstimation(PipelineStage):
                 cs = pl.contourf(X, Y, gridded_chi2.T, levels)
                 pl.xlabel('tensor-to-scalar ratio $r$')
                 pl.ylabel('lensing amplitude $A_L$')
-                pl.xscale('log')
+                # pl.xscale('log')
                 pl.savefig(self.get_output('likelihood_on_r'))
             else:
                 pl.figure()
-                pl.semilogx(r_v, gridded_likelihood)
+                pl.plot(r_v, gridded_likelihood)
                 pl.ylabel('likelihood')
                 pl.xlabel('tensor-to-scalar ratio $r$')
                 pl.savefig(self.get_output('likelihood_on_r'))
@@ -648,6 +648,7 @@ class BBREstimation(PipelineStage):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
         elif self.config['AL_marginalization']:
             np.save(self.get_output('gridded_likelihood'), gridded_likelihood )
+            np.save(self.get_output('gridded_chi2'), gridded_chi2 )
         else:
             np.save(self.get_output('gridded_likelihood'), samples)
 

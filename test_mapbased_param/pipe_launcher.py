@@ -94,6 +94,8 @@ def grabargs():
     parser.add_argument("--effective_beam_correction", action='store_true', help = "correct the power spectra by the effective Bl", default=False)
     parser.add_argument("--Nico_noise_combination", action='store_true', help = "Perform the combination of white with one over f noise", default=False)
     parser.add_argument("--force_histogram", action='store_true', help = "compute histogram although all jobs are not run", default=False)
+    parser.add_argument("--sky_type", type=str, help = "type of sky input Gaussian, d0s0 or d1s1", default="d0s0")
+
     args = parser.parse_args()
 
     return args
@@ -325,12 +327,17 @@ def main():
                 if not os.path.isfile(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits')):
 
                     if os.path.isfile(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits')): continue
-                    # dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/gaussian/foregrounds/dust/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_dust_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
-                    dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d0s0/foregrounds/dust/SO_SAT_'+str(f)+'_dust_d0s0*.fits'))[0], field=None)
-                    # dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/dust/SO_SAT_'+str(f)+'_dust_d1s1*.fits'))[0], field=None)
-                    # synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/gaussian/foregrounds/synch/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_synch_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
-                    synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d0s0/foregrounds/synch/SO_SAT_'+str(f)+'_synch_d0s0*.fits'))[0], field=None)
-                    # synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/synch/SO_SAT_'+str(f)+'_synch_d1s1*.fits'))[0], field=None)
+
+                    if args.sky_type == 'Gaussian':
+                        dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/gaussian/foregrounds/dust/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_dust_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
+                        synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/gaussian/foregrounds/synch/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_synch_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None)
+                    elif args.sky_type == 'd0s0':
+                        dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d0s0/foregrounds/dust/SO_SAT_'+str(f)+'_dust_d0s0*.fits'))[0], field=None)
+                        synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d0s0/foregrounds/synch/SO_SAT_'+str(f)+'_synch_d0s0*.fits'))[0], field=None)
+                    elif args.sky_type == 'd1s1':
+                        dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/dust/SO_SAT_'+str(f)+'_dust_d1s1*.fits'))[0], field=None)                    
+                        synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/synch/SO_SAT_'+str(f)+'_synch_d1s1*.fits'))[0], field=None)
+
                     cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r0_20201207/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
                     comb = dust + synch + cmb
                     if not os.path.exists(os.path.join(args.combined_directory, str(i_sim).zfill(4))): os.mkdir(os.path.join(args.combined_directory, str(i_sim).zfill(4)))
