@@ -272,6 +272,9 @@ class BBMapSim(PipelineStage):
 
                 if self.config['Nico_noise_combination']:
                     noise_loc = combine_noise_maps(self.config['isim'], instrument.frequency[f], factors)
+                    if not self.config['no_inh']:
+                        # renormalize the noise map to take into account the effect of inhomogeneous noise
+                        noise_loc /= np.sqrt(nh/np.max(nh))
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
 
