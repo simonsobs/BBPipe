@@ -8,7 +8,6 @@ import os
 def rotation_C2G(mp_C, nside_h=512):
 
     nside_l=hp.npix2nside(len(mp_C))
-    # nside_h=512
     ipixG=np.arange(hp.nside2npix(nside_h))
     thG,phiG=hp.pix2ang(nside_h,ipixG)
     r=hp.Rotator(coord=['G','C'])
@@ -18,6 +17,21 @@ def rotation_C2G(mp_C, nside_h=512):
     mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
 
     return mp_G
+
+
+def rotation_G2C(mp_G, nside_h=512):
+
+    nside_l=hp.npix2nside(len(mp_G))
+    ipixC=np.arange(hp.nside2npix(nside_h))
+    thC,phiC=hp.pix2ang(nside_h,ipixC)
+    r=hp.Rotator(coord=['C','G'])
+    thG,phiG=r(thC,phiC)
+    ipixG=hp.ang2pix(nside_l,thG,phiG)
+
+    mp_C=hp.ud_grade(mp_G[ipixG],nside_out=nside_l)
+
+    return mp_C
+
 
 def get_nhits(nside_out=512) :
     """
@@ -70,8 +84,12 @@ def get_noise_sim(sensitivity=2,knee_mode=1,ny_lf=1.,nside_out=512, \
 
     if CMBS4=='CMBS4':CMBS4_opt = True
     else: CMBS4_opt = False
+
+    if no_inh: remove_kluge = True
+    else: remove_kluge = False
+
     ll,nll,nlev=v3.so_V3_SA_noise(sensitivity,knee_mode,ny_lf,fsky,3*nside_out,\
-            remove_kluge=True, CMBS4=CMBS4_opt)
+            remove_kluge=remove_kluge, CMBS4=CMBS4_opt)
     zer0=1E-6
     id_cut=np.where(nh<zer0)[0]
     nh[id_cut]=np.amax(nh) #zer0
