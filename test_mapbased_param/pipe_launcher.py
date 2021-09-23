@@ -461,45 +461,47 @@ def main():
         np.save(os.path.join(args.path_to_temp_files,'sigma_AL_all_'+args.tag), sigma_AL_all)
 
         # if args.AL_marginalization:
-        f, ax = pl.subplots(2, 2, sharey=True)
+            # f, ax = pl.subplots(2, 2, sharey=True)
+        f, ax = pl.subplots(1, 2, sharey=True)
         # else:
             # f, ax = pl.subplots(1, 2, sharey=True)
+            # f, ax = pl.subplots(1, 1)
 
-        ax[0,0].set_title('measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
-        ax[0,0].hist( r_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8)
-        ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
-        ax[0,1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
+        ax[0].set_title('measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
+        ax[0].hist( r_all, 50, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8)
+        # ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
+        # ax[0,1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
         # legend=pl.legend()
         # frame = legend.get_frame()
         # frame.set_edgecolor('white')
         # legend.get_frame().set_alpha(0.3)
         # pl.xscale('log')
-        ax[0,0].set_xlabel('tensor-to-scalar ratio', fontsize=12)
-        ax[0,0].set_ylabel('# of sims', fontsize=12)
-        ax[0,1].set_xlabel('tensor-to-scalar ratio', fontsize=12)
-        ax[0,1].set_ylabel('# of sims', fontsize=12)
+        ax[0].set_xlabel('tensor-to-scalar ratio', fontsize=12)
+        ax[0].set_ylabel('# of sims', fontsize=12)
+        # ax[0,1].set_xlabel('tensor-to-scalar ratio', fontsize=12)
+        # ax[0,1].set_ylabel('# of sims', fontsize=12)
         # pl.close()
         
         if args.AL_marginalization:
             # pl.figure()
-            ax[1,0].hist( AL_all, 20, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
-            ax[1,1].hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
+            ax[1].hist( AL_all, 50, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            # ax[1,1].hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
             # pl.xscale('log')
             # legend=pl.legend()
             # frame = legend.get_frame()
             # frame.set_edgecolor('white')
             # legend.get_frame().set_alpha(0.3)
-            ax[1,0].set_xlabel(r'$A_{\rm lens}$', fontsize=12)
-            ax[1,0].set_ylabel('number of simulations', fontsize=12)
-            ax[1,1].set_xlabel(r'$A_{\rm lens}$', fontsize=12)
-            ax[1,1].set_ylabel('number of simulations', fontsize=12)
+            ax[1].set_xlabel(r'$A_{\rm lens}$', fontsize=12)
+            ax[1].set_ylabel('number of simulations', fontsize=12)
+            # ax[1,1].set_xlabel(r'$A_{\rm lens}$', fontsize=12)
+            # ax[1,1].set_ylabel('number of simulations', fontsize=12)
             # pl.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_AL_and_sigma_'+args.tag+'.pdf'))
             # pl.close()
         
         # for ax_ in ax:
-        for i in range(ax.shape[0]):
-            for j in range(ax.shape[1]):
-                ax[i,j].set_xscale('log')
+        for i in range(len(ax)):
+            # for j in range(ax.shape[1]):
+            ax[i].set_xscale('log')
 
         f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         pl.close()
