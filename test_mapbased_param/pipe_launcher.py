@@ -467,8 +467,10 @@ def main():
             # f, ax = pl.subplots(1, 2, sharey=True)
             # f, ax = pl.subplots(1, 1)
 
-        ax[0].set_title('measured r, '+str(np.mean(r_all))+' +/- '+str(np.std(r_all)))
+        ax[0].set_title('measured r, '+str(round(np.mean(r_all),5))+' +/- '+str(round(np.std(r_all),5)))
         ax[0].hist( r_all, 50, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8)
+        ax[0].axvline(x=0.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
         # ax[0,1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
         # legend=pl.legend()
@@ -484,7 +486,10 @@ def main():
         
         if args.AL_marginalization:
             # pl.figure()
+            ax[1].set_title('measured $A_L$, '+str(round(np.mean(AL_all),5))+' +/- '+str(round(np.std(AL_all),5)))
             ax[1].hist( AL_all, 50, color='DarkGray', histtype='step', linewidth=4.0, alpha=0.8, label='measured r, '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            ax[0].axvline(x=1.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+            ax[0].axvline(x=np.mean(AL_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
             # ax[1,1].hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
             # pl.xscale('log')
             # legend=pl.legend()
@@ -499,9 +504,9 @@ def main():
             # pl.close()
         
         # for ax_ in ax:
-        for i in range(len(ax)):
+        # for i in range(len(ax)):
             # for j in range(ax.shape[1]):
-            ax[i].set_xscale('log')
+            # ax[i].set_xscale('log')
 
         f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         pl.close()
