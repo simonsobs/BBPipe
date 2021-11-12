@@ -219,10 +219,23 @@ class BBClEstimation(PipelineStage):
         CMB_template_150GHz = hp.read_map(self.get_input('CMB_template_150GHz'), field=None)
         Bl_eff = hp.fitsfunc.read_cl(self.get_input('Bl_eff'))
         
-        nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
-        nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
-        nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
-        
+        # nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
+        # nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
+        # nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
+        nh=hp.ud_grade(hp.read_map(self.get_input('norm_hits_map')),nside_out=self.config['nside'])
+        nhg=hp.smoothing(nh,fwhm=np.pi/180,verbose=False)
+        nhg[nhg<0]=0
+        # nh/=np.amax(nh)
+        nhg/=np.amax(nhg)
+        ZER0 = 1e-3
+        # mpb=np.zeros_like(nh); mpb[nh>ZER0]=1
+        mpbg=np.zeros_like(nhg); mpbg[nhg>ZER0]=1
+        # print("Apodize 1")
+        # msk=nmt.mask_apodization(mpb, self.config['aposize'], apotype=self.config['apotype'])
+        # print("Apodize 2")
+        mskg=nmt.mask_apodization(mpbg, self.config['aposize'], apotype=self.config['apotype'])
+
+
         p = np.loadtxt(self.get_input('fitted_spectral_parameters'))
 
         mask_patches = hp.read_map(self.get_input('mask_patches'), verbose=False, field=None)
@@ -233,7 +246,6 @@ class BBClEstimation(PipelineStage):
         # freqs = V3.so_V3_SA_bands()
         # instrument = {'frequencies':np.array(freqs), 'fwhm':np.array(fwhm)}
         instrument = np.load(self.get_input('instrument'), allow_pickle=True).item()
-
 
         ind = 0
         noise_cov_ = np.zeros((len(instrument.frequency), 3, frequency_maps.shape[-1]))
@@ -256,20 +268,21 @@ class BBClEstimation(PipelineStage):
         mask =  hp.read_map(self.get_input('binary_mask_cut'))
         obs_pix = np.where(mask!=0)[0]
         
-
         if self.config['mask_apo'] != '':
             mask_apo = hp.read_map(self.config['mask_apo'], verbose=False, field=None, h=False)
             mask_apo = hp.ud_grade(mask_apo, nside_out=self.config['nside'])
         else:
             if self.config['extra_apodization']:
-                mask_apo = nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
-            else: mask_apo = mask*1.0
+                mask_apo = mskg*1.0#nmt.mask_apodization(mask, self.config['aposize'], apotype=self.config['apotype'])
+            else: 
+                mask_apo = mpb*1.0#mask*1.0
 
             if ((self.config['noise_option']!='white_noise') 
                     and (self.config['noise_option']!='no_noise')):
-                nh = hp.smoothing(nh, fwhm=1*np.pi/180.0, verbose=False) 
-                nh /= nh.max()
-                mask_apo *= nh
+                # nh = hp.smoothing(nh, fwhm=1*np.pi/180.0, verbose=False) 
+                # nh /= nh.max()
+                # mask_apo *= nh
+                mask_apo *= nhg
 
         fsky_eff = np.mean(mask_apo)
         print('fsky_eff = ', fsky_eff)
