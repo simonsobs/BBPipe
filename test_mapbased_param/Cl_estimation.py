@@ -219,7 +219,7 @@ class BBClEstimation(PipelineStage):
         CMB_template_150GHz = hp.read_map(self.get_input('CMB_template_150GHz'), field=None)
         Bl_eff = hp.fitsfunc.read_cl(self.get_input('Bl_eff'))
         
-        # nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
+        nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
         # nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
         # nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
         nh=hp.ud_grade(hp.read_map(self.get_input('norm_hits_map')),nside_out=self.config['nside'])
