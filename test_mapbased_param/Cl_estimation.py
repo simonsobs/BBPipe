@@ -265,7 +265,7 @@ class BBClEstimation(PipelineStage):
                                          nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
 
         print('building mask ... ')
-        mask =  hp.read_map(self.get_input('binary_mask_cut'))
+        mask =  mpbg#hp.read_map(self.get_input('binary_mask_cut'))
         obs_pix = np.where(mask!=0)[0]
         
         if self.config['mask_apo'] != '':
