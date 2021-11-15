@@ -203,7 +203,7 @@ class BBClEstimation(PipelineStage):
             ('Bl_eff', FitsFile), ('instrument', NumpyFile), ('W', NumpyFile)]
     
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
-             ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
+             ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), 
              ('mask_apo', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile), 
              ('Bl_eff_', FitsFile)]
 
@@ -458,6 +458,7 @@ class BBClEstimation(PipelineStage):
         # removing I from all maps
         frequency_maps_ = frequency_maps_[:,1:,:]
         Nfreq = frequency_maps_.shape[0]
+        """
         Cl_fgs = np.zeros((Nfreq, Nfreq, len(ell_eff) ))
         for fi in range(Nfreq):
             for fj in range(Nfreq):
@@ -471,7 +472,7 @@ class BBClEstimation(PipelineStage):
                     Cl_fgs[fi,fj,:] = compute_master(fgs_i, fgs_j, w)[3]
 
         np.save(self.get_output('Cl_fgs'),  Cl_fgs)
-
+        """
         ########
         # estimation of the input CMB map cross spectrum
         cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], mask_apo, purify_b=True)
