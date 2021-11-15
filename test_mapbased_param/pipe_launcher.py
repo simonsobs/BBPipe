@@ -95,6 +95,7 @@ def grabargs():
     parser.add_argument("--Nico_noise_combination", action='store_true', help = "Perform the combination of white with one over f noise", default=False)
     parser.add_argument("--force_histogram", action='store_true', help = "compute histogram although all jobs are not run", default=False)
     parser.add_argument("--sky_type", type=str, help = "type of sky input Gaussian, d0s0 or d1s1", default="d0s0")
+    parser.add_argument("--time", type=str, help = "duration of the submitted job", default="01:00:00")
 
     args = parser.parse_args()
 
@@ -401,7 +402,7 @@ def main():
 #SBATCH -C haswell\n\
 #SBATCH -q regular\n\
 #SBATCH -J test_BBpipe\n\
-#SBATCH -t 01:00:00\n\
+#SBATCH -t "+args.time+"\n\
 \n")
 
         for line in fin.readlines():

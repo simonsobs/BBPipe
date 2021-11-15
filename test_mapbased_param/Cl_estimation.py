@@ -204,8 +204,8 @@ class BBClEstimation(PipelineStage):
     
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
              ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile),
-             ('Cl_CMB_template_150GHz', NumpyFile), ('mask_apo', FitsFile),
-             ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile), ('Bl_eff_', FitsFile)]
+             ('mask_apo', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile), 
+             ('Bl_eff_', FitsFile)]
 
     def run(self):
 
@@ -256,14 +256,12 @@ class BBClEstimation(PipelineStage):
         # removing I from all maps
         noise_cov_ = noise_cov_[:,1:,:]
 
-
         nside_map = hp.get_nside(clean_map[0])
         print('nside_map = ', nside_map)
         
         w=nmt.NmtWorkspace()
         b = binning_definition(self.config['nside'], lmin=self.config['lmin'], lmax=self.config['lmax'],\
                                          nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
-
         print('building mask ... ')
         mask =  mpbg#hp.read_map(self.get_input('binary_mask_cut'))
         obs_pix = np.where(mask!=0)[0]
@@ -434,10 +432,10 @@ class BBClEstimation(PipelineStage):
 
             ind += 1
 
-        print('ind = ', ind)
-        print('shape(Cl_clean) = ', len(Cl_clean))
-        print('Cl_clean = ', Cl_clean)
-        print('shape(Cl_noise) = ', len(Cl_noise))
+        # print('ind = ', ind)
+        # print('shape(Cl_clean) = ', len(Cl_clean))
+        # print('Cl_clean = ', Cl_clean)
+        # print('shape(Cl_noise) = ', len(Cl_noise))
         print('all components = ', components)
         print('saving to disk ... ')
         hp.fitsfunc.write_cl(self.get_output('Cl_clean'), np.array(Cl_clean), overwrite=True)
@@ -478,8 +476,8 @@ class BBClEstimation(PipelineStage):
         # estimation of the input CMB map cross spectrum
         cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], mask_apo, purify_b=True)
         # cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
-        Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
-        np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
+        # Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
+        # np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
 
         ########
         # estimation of the modeled statistical residuals, from simulation

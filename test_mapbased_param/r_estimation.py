@@ -81,9 +81,8 @@ class BBREstimation(PipelineStage):
 
     name='BBREstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), 
-                ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('Cl_fgs', NumpyFile), 
-                    ('fitted_spectral_parameters', TextFile), ('Cl_CMB_template_150GHz', NumpyFile),
-                        ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile)]
+                ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('fitted_spectral_parameters', TextFile),
+                    ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
                 ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
@@ -112,8 +111,8 @@ class BBREstimation(PipelineStage):
                              nlb=self.config['nlb'], custom_bins=self.config['custom_bins'])
 
         ################ STATISTICAL FOREGROUNDS RESIDUALS MODELING
-        Cl_fgs = np.load(self.get_input('Cl_fgs'))
-        Cl_CMB_template_150GHz = np.load(self.get_input('Cl_CMB_template_150GHz'))
+        # Cl_fgs = np.load(self.get_input('Cl_fgs'))
+        # Cl_CMB_template_150GHz = np.load(self.get_input('Cl_CMB_template_150GHz'))
         p = np.loadtxt(self.get_input('fitted_spectral_parameters'))
         ## the length of p is always n_params  + (nparams*(nparams+1)/2)
         ## = nparams + (nparams**2/2 + nparams/2)
