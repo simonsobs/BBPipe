@@ -253,7 +253,7 @@ class BBMapParamCompSep(PipelineStage):
             # we udgrade this map to the actual working resolution
             patch_template = hp.ud_grade(low_res_patch_template, nside_out=self.config['nside'])
             # and apply the SO sky mask
-            path_template *= binary_mask
+            patch_template *= binary_mask
             # make slices through this map. Define the regions of interest
             mask_patches = np.zeros((self.config['number_of_independent_patches'], len(patch_template)))
             # observed patches
