@@ -308,7 +308,7 @@ class BBMapParamCompSep(PipelineStage):
                             options=options, tol=tol, method=method)
 
             print('fit of spectral indices -> ', res.x)
-            print('estimated error bar on spectral indices -> ', np.sqrt(np.diag(res.Sigma)))
+            print('estimated error bar on spectral indices -> ', res.Sigma)
 
             A = MixingMatrix(*components)
 
