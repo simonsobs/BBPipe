@@ -53,7 +53,8 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     A_maxL and the noise covariance matrix
     """
     # output operator will be of size ncomp x npixels
-    if mask_patches.shape[0] == self.config['Nspec']: Npatch = mask_patches.shape[0]
+    if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
+        Npatch = mask_patches.shape[0]
     else: 
         Npatch = 1
         mask_patches = mask_patches[np.newaxis,:]
@@ -116,7 +117,8 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     given the noisy frequency maps and the error bar covariance, Sigma
     '''
 
-    if mask_patches.shape[0] == self.config['Nspec']: Npatch = mask_patches.shape[0]
+    if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
+        Npatch = mask_patches.shape[0]
     else: 
         Npatch = 1
         mask_patches = mask_patches[np.newaxis,:]
@@ -128,11 +130,11 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     #         for s in range(2):
     #             noise_cov_inv[:,s,p] = 1.0/n_cov[:,s,p]
 
-    if self.config['Nspec'] == 0: Nspec=1
-    else: Nspec = self.config['Nspec']
+    if self.config['number_of_independent_patches'] == 0: Nspec=1
+    else: Nspec = self.config['number_of_independent_patches']
     beta_maxL = np.zeros((Nspec,2))
     Sigma =  np.zeros((Nspec,2,2))
-    for i in range(self.config['Nspec']):
+    for i in range(self.config['number_of_independent_patches']):
         beta_maxL[i,:] = param_beta[i,:2]
         Sigma[i,:,:] = np.array([[param_beta[i,2],param_beta[i,3]],[param_beta[i,3],param_beta[i,4]]])
     # instrument = {'frequencies':np.array(self.config['frequencies'])}
@@ -292,7 +294,6 @@ class BBClEstimation(PipelineStage):
         #Read power spectrum and provide function to generate simulated skies
         cltt,clee,clbb,clte = hp.read_cl(self.config['Cls_fiducial'])[:,:4000]
         mp_t_sim,mp_q_sim,mp_u_sim=hp.synfast([cltt,clee,clbb,clte], nside=nside_map, new=True, verbose=False)
-
 
         #This wraps up the two steps needed to compute the power spectrum
         #once the workspace has been initialized

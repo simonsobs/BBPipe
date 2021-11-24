@@ -239,7 +239,28 @@ class BBMapParamCompSep(PipelineStage):
                     pix = np.where((Bd_template[obs_pix] >= bins[ind]) & (Bd_template[obs_pix] < bins[ind+1]) )[0]
                     mask_patches[ind,obs_pix[pix]] = 1.0
                     ind += 1
+            self.config['number_of_independent_patches'] = self.config['Nspec']
 
+        elif self.config['nside_patch']!=0.0:
+            print('nside_patch != 0 !! building and analysis independent Bd regions ... ')
+            # make a nside_patch resolution of the binary mask
+            low_res_binary_mask = hp.ud_grade(binary_mask, nside_out=self.config['nside_patch'])
+            obs_low_res_pix =  np.where(low_res_binary_mask!=0.0)[0]
+            self.config['number_of_independent_patches'] = len(obs_low_res_pix)
+            # make a nside_patch map with the Nobs observed patches denoted from 1 to Nobs
+            low_res_patch_template = np.zeros_like(low_res_binary_mask)
+            low_res_patch_template[obs_low_res_pix] = np.arange(self.config['number_of_independent_patches'])
+            # we udgrade this map to the actual working resolution
+            patch_template = hp.ud_grade(low_res_patch_template, nside_out=self.config['nside'])
+            # and apply the SO sky mask
+            path_template *= binary_mask
+            # make slices through this map. Define the regions of interest
+            mask_patches = np.zeros((self.config['number_of_independent_patches'], len(patch_template)))
+            # observed patches
+            obs_pix = np.where(binary_mask!=0.0)[0]
+            for i in range(self.config['number_of_independent_patches']):
+                pix_within_patch = np.where(patch_template == i)[0]
+                mask_patches[i,obs_pix[pix_within_patch]] = 1
         else:
             mask_patches = binary_mask[np.newaxis,:]
 
@@ -514,11 +535,12 @@ class BBMapParamCompSep(PipelineStage):
         all_combinations = []
         [all_combinations.append(str(A.params[i])+' x '+str(A.params[j])) for i, j in zip(list(np.triu_indices(len(A.params))[0]),list(np.triu_indices(len(A.params))[1]) )]
         [column_names.append(all_combinations[i]) for i in range(len(all_combinations))]
-        if self.config['Nspec']!=0.0:
+        if self.config['number_of_independent_patches']!=0.0:
             column = np.hstack((resx[0],  list(resS[0][np.triu_indices(len(A.params))])))
-            for p in range(self.config['Nspec'])[1:]:
+            for p in range(self.config['number_of_independent_patches'])[1:]:
                 column_ = np.hstack((resx[p],  list(resS[p][np.triu_indices(len(A.params))])))
                 column = np.vstack((column, column_))
+
             np.savetxt(self.get_output('fitted_spectral_parameters'), column, comments=column_names)
         else:
             np.savetxt(self.get_output('fitted_spectral_parameters'), np.hstack((res.x, list(res.Sigma[np.triu_indices(len(A.params))]))), comments=column_names)
