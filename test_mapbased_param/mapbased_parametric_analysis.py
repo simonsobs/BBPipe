@@ -325,7 +325,7 @@ class BBMapParamCompSep(PipelineStage):
                 frequency_maps__loc = frequency_maps__*1.0
 
             res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
-                         data=frequency_maps__loc, cov=noise_cov__loc, nside=self.config['nside_patch'], 
+                         data=frequency_maps__loc, cov=noise_cov__loc,
                             options=options, tol=tol, method=method)
 
             print('fit of spectral indices -> ', res.x)
