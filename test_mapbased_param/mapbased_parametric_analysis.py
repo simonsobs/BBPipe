@@ -247,6 +247,7 @@ class BBMapParamCompSep(PipelineStage):
             low_res_binary_mask = hp.ud_grade(binary_mask, nside_out=self.config['nside_patch'])
             obs_low_res_pix =  np.where(low_res_binary_mask!=0.0)[0]
             self.config['number_of_independent_patches'] = len(obs_low_res_pix)
+            print( 'number_of_independent_patches = ', self.config['number_of_independent_patches'])
             # make a nside_patch map with the Nobs observed patches denoted from 1 to Nobs
             low_res_patch_template = np.zeros_like(low_res_binary_mask)
             low_res_patch_template[obs_low_res_pix] = np.arange(self.config['number_of_independent_patches'])
@@ -254,14 +255,8 @@ class BBMapParamCompSep(PipelineStage):
             patch_template = hp.ud_grade(low_res_patch_template, nside_out=self.config['nside'])
             # and apply the SO sky mask
             patch_template *= binary_mask
-            import pylab as pl
-            import healpy as hp
-            # pl.figure()
-            hp.mollview(patch_template)
-            pl.savefig('path_template.png')
-            pl.close()
             # make slices through this map. Define the regions of interest
-            mask_patches = np.zeros((self.config['number_of_independent_patches'], len(binary_mask)))
+            mask_patches = np.ones((self.config['number_of_independent_patches'], len(binary_mask)))*hp.UNSEEN
             # observed patches
             obs_pix = np.where(binary_mask!=0.0)[0]
             for i in range(self.config['number_of_independent_patches']):
