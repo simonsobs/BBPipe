@@ -256,9 +256,10 @@ class BBMapParamCompSep(PipelineStage):
             patch_template *= binary_mask
             import pylab as pl
             import healpy as hp
-            pl.figure()
+            # pl.figure()
             hp.mollview(patch_template)
-            pl.show()
+            pl.savefig('path_template.png')
+            pl.close()
             # make slices through this map. Define the regions of interest
             mask_patches = np.zeros((self.config['number_of_independent_patches'], len(binary_mask)))
             # observed patches
