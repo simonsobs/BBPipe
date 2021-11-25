@@ -256,8 +256,9 @@ class BBMapParamCompSep(PipelineStage):
             # and apply the SO sky mask
             patch_template *= binary_mask
             patch_template[np.where(binary_mask==0)[0]] = hp.UNSEEN
+            hp.mollview(patch_template);pl.savefig('patch_template.png');pl.close()
             # make slices through this map. Define the regions of interest
-            mask_patches = np.ones((self.config['number_of_independent_patches'], len(binary_mask)))
+            mask_patches = np.zeros((self.config['number_of_independent_patches'], len(binary_mask)))
             # observed patches
             # obs_pix = np.where(binary_mask!=0.0)[0]
             for i in range(self.config['number_of_independent_patches']):
