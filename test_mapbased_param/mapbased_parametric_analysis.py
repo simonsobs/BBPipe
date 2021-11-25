@@ -258,10 +258,11 @@ class BBMapParamCompSep(PipelineStage):
             # make slices through this map. Define the regions of interest
             mask_patches = np.ones((self.config['number_of_independent_patches'], len(binary_mask)))*hp.UNSEEN
             # observed patches
-            obs_pix = np.where(binary_mask!=0.0)[0]
+            # obs_pix = np.where(binary_mask!=0.0)[0]
             for i in range(self.config['number_of_independent_patches']):
                 pix_within_patch = np.where(patch_template == i)[0]
-                mask_patches[i,obs_pix[pix_within_patch]] = 1
+                mask_patches[i,pix_within_patch] = 1
+                hp.mollview(mask_patches[i]); pl.savefig('mask_'+str(i)+'.png');pl.close()
         else:
             mask_patches = binary_mask[np.newaxis,:]
 
