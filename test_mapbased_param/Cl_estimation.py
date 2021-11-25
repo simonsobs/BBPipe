@@ -53,11 +53,18 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     A_maxL and the noise covariance matrix
     """
     # output operator will be of size ncomp x npixels
-    if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
-        Npatch = mask_patches.shape[0]
-    else: 
+    # if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
+    #     Npatch = mask_patches.shape[0]
+    # else: 
+    #     Npatch = 1
+    #     mask_patches = mask_patches[np.newaxis,:]
+
+    if len(mask_patches.shape) <= 1:
         Npatch = 1
         mask_patches = mask_patches[np.newaxis,:]
+    else:
+        Npatch = mask_patches.shape[0]
+
     for i_patch in range(Npatch):
         obs_pix = np.where(mask_patches[i_patch,:]!=0)[0]
         # building the (possibly pixel-dependent) mixing matrix
@@ -116,12 +123,18 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     This function simulate statistical foregrounds residuals
     given the noisy frequency maps and the error bar covariance, Sigma
     '''
+    
+    # if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
+    #     Npatch = mask_patches.shape[0]
+    # else: 
+    #     Npatch = 1
+    #     mask_patches = mask_patches[np.newaxis,:]
 
-    if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
-        Npatch = mask_patches.shape[0]
-    else: 
+    if len(mask_patches.shape) <= 1:
         Npatch = 1
         mask_patches = mask_patches[np.newaxis,:]
+    else:
+        Npatch = mask_patches.shape[0]
 
     # noise_cov_inv = np.zeros_like(n_cov)
     # for p in range(Npatch):
@@ -130,11 +143,13 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     #         for s in range(2):
     #             noise_cov_inv[:,s,p] = 1.0/n_cov[:,s,p]
 
-    if self.config['number_of_independent_patches'] == 0: Nspec=1
-    else: Nspec = self.config['number_of_independent_patches']
-    beta_maxL = np.zeros((Nspec,2))
-    Sigma =  np.zeros((Nspec,2,2))
-    for i in range(self.config['number_of_independent_patches']):
+    # if self.config['number_of_independent_patches'] == 0: Nspec=1
+    # else: Nspec = self.config['number_of_independent_patches']
+
+
+    beta_maxL = np.zeros((Npatch,2))
+    Sigma =  np.zeros((Npatch,2,2))
+    for i in range(Npatch):
         beta_maxL[i,:] = param_beta[i,:2]
         Sigma[i,:,:] = np.array([[param_beta[i,2],param_beta[i,3]],[param_beta[i,3],param_beta[i,4]]])
     # instrument = {'frequencies':np.array(self.config['frequencies'])}

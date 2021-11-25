@@ -82,7 +82,8 @@ class BBREstimation(PipelineStage):
     name='BBREstimation'
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), 
                 ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('fitted_spectral_parameters', TextFile),
-                    ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile)]
+                    ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile),
+                        ('mask_patches', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
                 ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
@@ -95,6 +96,7 @@ class BBREstimation(PipelineStage):
         Cl_cov_clean = hp.read_cl(self.get_input('Cl_cov_clean'))
         Cl_cov_freq = hp.read_cl(self.get_input('Cl_cov_freq'))
         fsky_eff = np.loadtxt(self.get_input('fsky_eff'))       
+        mask_patches = hp.read_map(self.get_input('mask_patches'), verbose=False, field=None)
         
         print('cosmological analysis now ... ')
         ## data first
@@ -118,11 +120,11 @@ class BBREstimation(PipelineStage):
         ## = nparams + (nparams**2/2 + nparams/2)
         ## = nparams**2 /2 + nparams*3/2
         ## it would be nice to have this not hardcoded eventually 
-        if self.config['number_of_independent_patches'] == 0: Nspec=1
-        else: Nspec = self.config['number_of_independent_patches']
+        if len(mask_patches.shape)<=1:Nspec=1
+        else: Nspec=mask_patches.shape[0]
         beta_maxL = np.zeros((Nspec,2))
         Sigma =  np.zeros((Nspec,2,2))
-        for i in range(self.config['number_of_independent_patches']):
+        for i in range(Nspec):
             beta_maxL[i,:] = p[i,:2]
             Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
         instrument = {'frequencies':np.array(self.config['frequencies'])}
