@@ -70,8 +70,9 @@ class NpzFile(DataFile):
     A data file in yaml format.
     """
     suffix = 'npz'
-
-class DirFile(DataFile) :
+class PklFile(DataFile):
+    suffix = 'pkl'
+class DirFile(DataFile):
     """
     A dummy type
     """
