@@ -311,7 +311,7 @@ Missing these names on the command line:
             else:
                 param_type=type_dict[def_val] if type(def_val) == type else type_dict[type(def_val)]
                 default=def_val if type(def_val) != type else None
-                if param_type is 'boolean':
+                if param_type == 'boolean':
                     input_binding = cwlgen.CommandLineBinding(prefix='--{}'.format(opt))
                 else:
                     input_binding = cwlgen.CommandLineBinding(prefix='--{}='.format(opt), separate=False)
