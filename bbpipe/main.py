@@ -26,7 +26,7 @@ def run(pipeline_config_filename, dry_run=False, pycmd='python3'):
     init_time_ms = int(time.time()*1e3)
 
     # YAML input file.
-    pipe_config = yaml.load(open(pipeline_config_filename))
+    pipe_config = yaml.safe_load(open(pipeline_config_filename))
     output_dir = pipe_config['output_dir']
     os.makedirs(output_dir, exist_ok=True)
 
@@ -88,7 +88,7 @@ def export_cwl(args):
     """
     path = args.export_cwl
     # YAML input file.
-    config = yaml.load(open(args.pipeline_config))
+    config = yaml.safe_load(open(args.pipeline_config))
 
     # Python modules in which to search for pipeline stages
     modules = config['modules'].split()
