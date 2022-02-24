@@ -123,12 +123,6 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     This function simulate statistical foregrounds residuals
     given the noisy frequency maps and the error bar covariance, Sigma
     '''
-    
-    # if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
-    #     Npatch = mask_patches.shape[0]
-    # else: 
-    #     Npatch = 1
-    #     mask_patches = mask_patches[np.newaxis,:]
 
     if len(mask_patches.shape) <= 1:
         Npatch = 1
@@ -152,7 +146,7 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     for i in range(Npatch):
         beta_maxL[i,:] = param_beta[i,:2]
         Sigma[i,:,:] = np.array([[param_beta[i,2],param_beta[i,3]],[param_beta[i,3],param_beta[i,4]]])
-    # instrument = {'frequencies':np.array(self.config['frequencies'])}
+    instrument = {'frequencies':np.array(self.config['frequencies'])}
     components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
     A = MixingMatrix(*components)
@@ -189,6 +183,7 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
                 else:
                     W_dB_maxL_av += W_dB_maxL
                     Sigma_av += Sigma[p]
+                    
         fn = get_field_func(mask*res_map[0], mask*res_map[1], mask_apo)
         Cl_stat_res_model.append(Cl_func(fn, fn, w)[3] )
 
