@@ -146,12 +146,11 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
     for i in range(Npatch):
         beta_maxL[i,:] = param_beta[i,:2]
         Sigma[i,:,:] = np.array([[param_beta[i,2],param_beta[i,3]],[param_beta[i,3],param_beta[i,4]]])
-    instrument = {'frequency':np.array(self.config['frequencies'])}
     components = [CMB(), Dust(150., temp=20.0), Synchrotron(150.)]
 
     A = MixingMatrix(*components)
-    A_ev = A.evaluator(instrument.frequency)
-    A_dB_ev = A.diff_evaluator(instrument.frequency)
+    A_ev = A.evaluator(np.array(self.config['frequencies']))
+    A_dB_ev = A.diff_evaluator(np.array(self.config['frequencies']))
     comp_of_dB = A.comp_of_dB
 
     Cl_stat_res_model = []
