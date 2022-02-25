@@ -173,8 +173,10 @@ def Cl_stat_res_model_func(self, freq_maps, param_beta,
             delta_beta = np.random.multivariate_normal( np.zeros_like(Sigma[p][0,:]),
                                  Sigma[p], 
                                  size=Sigma[p].shape[0] )
+
             if p == 0: res_map = np.diag(delta_beta).dot(Y)
             else: res_map += np.diag(delta_beta).dot(Y)
+            
             if i ==0:
                 if p == 0 :
                     W_dB_maxL_av = W_dB_maxL
@@ -501,7 +503,7 @@ class BBClEstimation(PipelineStage):
             Cl_stat_res_noise_bias = np.zeros_like(Cl_noise_bias)
         # np.save('Cl_stat_res_model', Cl_stat_res_model)
         # np.save('Cl_stat_res_noise_bias', Cl_stat_res_noise_bias)
-        Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0) - Cl_stat_res_noise_bias, np.std(Cl_stat_res_model, axis=0)))
+        Cl_stat_res_model = np.vstack((ell_eff,np.mean(Cl_stat_res_model, axis=0) - Cl_noise_bias, np.std(Cl_stat_res_model, axis=0)))
         hp.fitsfunc.write_cl(self.get_output('Cl_stat_res_model'), np.array(Cl_stat_res_model), overwrite=True)
         
         hp.fitsfunc.write_cl(self.get_output('Bl_eff_'), np.array(Bl_eff), overwrite=True)
