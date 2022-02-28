@@ -249,7 +249,7 @@ class BBREstimation(PipelineStage):
 
                     # including statistical foregrounds residuals
                     if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])
-                                            &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
+                                            &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='green', linestyle='--',
                                                 linewidth=2.0, alpha=0.8)
                     # including true CMB template @ 150GHz
                     # pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], linestyle=':', color='red', 
@@ -504,6 +504,9 @@ class BBREstimation(PipelineStage):
                                                      label='true CMB noise post comp sep', linestyle=':', color='Cyan')
                         pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
+                        pl.loglog( ell_v_loc, np.abs(norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                - norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
+                                                label='input noise - estimated noise', linestyle=':', color='DarkBlue')
 
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
@@ -535,7 +538,7 @@ class BBREstimation(PipelineStage):
                         #                             color='k', linestyle='-', linewidth=2.0, alpha=0.8)
 
                         if self.config['include_stat_res']: pl.loglog( ell_v_loc, norm*Cl_stat_res_model[1][(ell_v>=self.config['lmin'])
-                                            &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='r', linestyle='--',
+                                            &(ell_v<=self.config['lmax'])], label='modeled stat residuals', color='green', linestyle='--',
                                                 linewidth=2.0, alpha=0.8)
                         # np.save('ell_bins', ell_v_loc)
                         # np.save('DCl_noise',  norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])])
