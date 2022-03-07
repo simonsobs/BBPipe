@@ -63,6 +63,33 @@ def _format_alms(alms, lmin=0, nulling_option=True):
     return alms
 
 
+def rotation_C2G(mp_C, nside_h=512):
+
+    nside_l=hp.npix2nside(len(mp_C))
+    ipixG=np.arange(hp.nside2npix(nside_h))
+    thG,phiG=hp.pix2ang(nside_h,ipixG)
+    r=hp.Rotator(coord=['G','C'])
+    thC,phiC=r(thG,phiG)
+    ipixC=hp.ang2pix(nside_l,thC,phiC)
+
+    mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
+
+    return mp_G
+
+
+def rotation_G2C(mp_G, nside_h=512):
+
+    nside_l=hp.npix2nside(len(mp_G))
+    ipixC=np.arange(hp.nside2npix(nside_h))
+    thC,phiC=hp.pix2ang(nside_h,ipixC)
+    r=hp.Rotator(coord=['C','G'])
+    thG,phiG=r(thC,phiC)
+    ipixG=hp.ang2pix(nside_l,thG,phiG)
+
+    mp_C=hp.ud_grade(mp_G[ipixG],nside_out=nside_l)
+
+    return mp_C
+
 class BBMapParamCompSep(PipelineStage):
     """
     Stage that performs three things:
@@ -214,14 +241,20 @@ class BBMapParamCompSep(PipelineStage):
                     mask_patches[i,obs_pix[pix_within_patch]] = 1
             elif self.config['North_South_split']:
                 print(' -> consider North and South patches as independent')
+                # convert mask into galactic coordinates 
+                binary_mask_gal = rotation_C2G(binary_mask, nside_h=self.config['nside'])
+                obs_pix_gal = np.where(binary_mask_gal!=0.0)[0]
                 # just use the observed pixels, otherwise this is time consuming
-                lats = np.array([ hp.pix2ang(ipix=obs_pix[i], nside=self.config['nside'])[0] for i in range(len(obs_pix))])
+                lats_gal = np.array([ hp.pix2ang(ipix=obs_pix_gal[i], nside=self.config['nside'])[0] for i in range(len(obs_pix_gal))])
                 if self.config['Nspec']!= 2: 
                     print('            /!\ you cannot choose this spliting with Nspec!=2 /!\ ')
                 # define South patch
-                mask_patches[0,obs_pix[np.where(lats<=np.pi/2)[0]]] = 1
+                mask_patches_gal = np.zeros((self.config['Nspec'], len(Bd_template)))
+                mask_patches_gal[0,obs_pix_gal[np.where(lats_gal<=np.pi/2)[0]]] = 1
                 # define North patch
-                mask_patches[1,obs_pix[np.where(lats>=np.pi/2)[0]]] = 1
+                mask_patches_gal[1,obs_pix_gal[np.where(lats_gal>=np.pi/2)[0]]] = 1
+                for i in range(mask_patches_gal.shape[0]):
+                    mask_patches[i] = rotation_G2C(mask_patches_gal[i], nside_h=self.config['nside'])
             else:
                 print(' -> constant number of pixels in the definition of delta beta (from PySM) slices')
                 # tune bins of a histogram so that 
