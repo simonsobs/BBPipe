@@ -17,7 +17,8 @@ from . import mk_noise_map2 as mknm
 from fgbuster.observation_helpers import standardize_instrument
 import healpy as hp
 import sys
-
+import kmeans_radec
+from kmeans_radec import KMeans, kmeans_sample
 
 # def _format_alms(alms, mask_lmin=None):                                                                                                                                                                     
 #     lmax = hp.Alm.getlmax(alms.shape[-1])                                                                                                                                                                   
@@ -89,6 +90,26 @@ def rotation_G2C(mp_G, nside_h=512):
     mp_C=hp.ud_grade(mp_G[ipixG],nside_out=nside_l)
 
     return mp_C
+
+
+def get_regions(mask, n_regions, unassigned=hp.UNSEEN):
+    """ Generates `n_regions` regions of roughly equal area
+    for a given sky mask `mask`, assuming HEALPix "RING"
+    ordering. Returns a HEALPix map where each pixel holds
+    the index of the region it is assigned to. Unassigned
+    pixels will take the `unassigned` value.
+    """
+    npix = len(mask)
+    hp.npix2nside(npix)
+    ipix = np.arange(npix)
+    ra, dec = hp.pix2ang(nside, ipix, lonlat=True)
+    goodpix = mask > 0
+    km = kmeans_sample(np.array([ra[goodpix], dec[goodpix]]).T,
+                       n_regions, maxiter=100, tol=1.0e-5,
+                       verbose=False)
+    map_ids = np.full(npix, unassigned)
+    map_ids[ipix[goodpix]] = km.labels
+    return map_ids
 
 class BBMapParamCompSep(PipelineStage):
     """
@@ -255,6 +276,11 @@ class BBMapParamCompSep(PipelineStage):
                 mask_patches_gal[1,obs_pix_gal[np.where(lats_gal>=np.pi/2)[0]]] = 1
                 for i in range(mask_patches_gal.shape[0]):
                     mask_patches[i] = rotation_G2C(mask_patches_gal[i], nside_h=self.config['nside'])
+            elif self.config['kmeans']:
+                regions = get_regions(binary_mask, self.config['Nspec'])
+                for i in range(self.config['Nspec']):
+                    pix_within_patch = np.where(regions==i)[0]
+                    mask_patches[i,pix_within_patch] = 1
             else:
                 print(' -> constant number of pixels in the definition of delta beta (from PySM) slices')
                 # tune bins of a histogram so that 

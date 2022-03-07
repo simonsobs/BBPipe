@@ -83,6 +83,7 @@ def grabargs():
     parser.add_argument("--extra_apodization", action='store_true', help = "perform an extra apodization of the mask, prior to rescaling by Nhits", default=False)
     parser.add_argument("--fixed_delta_beta_slicing", action='store_true', help = "when Nspec!=0, regions are defined by constant delta(Bd)", default=False)
     parser.add_argument("--North_South_split", action='store_true', help = "when Nspec!=0, regions are defined by being in the Galactic North or South", default=False)
+    parser.add_argument("--kmeans", action='store_true', help = "when Nspec!=0, regions are derived using kmeans", default=False)
     parser.add_argument("--bandpass", action='store_true', help = "include non-zero bandpasses in the component separation", default=False)
     parser.add_argument("--instrument", type=str, help = "specifies the instrument bbpipe should consider, SO, CMBS4, etc.", default='SO')
     parser.add_argument("--path_to_dust_template", type=str, help = "path to e.g. PySM dust template", default="/global/cscratch1/sd/josquin/SO_sims/dust_beta.fits")
@@ -179,7 +180,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 external_binary_mask='', external_noise_cov='',
                 Nspec=0.0, Nsims_bias=100, dust_model='d1', sync_model='s1', extra_apodization='False', 
                 mask_apo='',bmodes_template='', fixed_delta_beta_slicing=False, North_South_split=False, 
-                instrument='SO',
+                kmeans=False, instrument='SO',
                 frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='',
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
@@ -237,6 +238,7 @@ BBMapParamCompSep:
     smart_multipatch: False
     fixed_delta_beta_slicing: '''+str(fixed_delta_beta_slicing)+'''
     North_South_split: '''+str(North_South_split)+'''
+    kmeans: '''+str(kmeans)+'''
     path_to_dust_template: \''''+str(path_to_dust_template)+'''\'
     highpass_filtering: '''+str(highpass_filtering)+'''
     harmonic_comp_sep: '''+str(harmonic_comp_sep)+'''
@@ -376,7 +378,7 @@ def main():
                 Nspec=args.Nspec, Nsims_bias=args.Nsims_bias,\
                 dust_model=args.dust_model, sync_model=args.sync_model, extra_apodization=args.extra_apodization,\
                 mask_apo=args.mask_apo, bmodes_template=args.bmodes_template, fixed_delta_beta_slicing=args.fixed_delta_beta_slicing,\
-                North_South_split=args.North_South_split,\
+                North_South_split=args.North_South_split, kmeans=args.kmeans, \
                 instrument=args.instrument, frequencies=frequencies, bandpass=args.bandpass, \
                 path_to_dust_template=args.path_to_dust_template,\
                 pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, \
