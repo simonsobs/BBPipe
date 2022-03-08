@@ -263,14 +263,15 @@ class BBMapParamCompSep(PipelineStage):
             elif self.config['North_South_split']:
                 print(' -> consider North and South patches as independent')
                 # convert mask into galactic coordinates 
-                binary_mask_gal = rotation_C2G(binary_mask, nside_h=self.config['nside'])
+                nside_high_res = 2048
+                binary_mask_gal = rotation_C2G(binary_mask, nside_h=nside_high_res) # high resolution ! 
                 obs_pix_gal = np.where(binary_mask_gal!=0.0)[0]
                 # just use the observed pixels, otherwise this is time consuming
-                lats_gal = np.array([ hp.pix2ang(ipix=obs_pix_gal[i], nside=self.config['nside'])[0] for i in range(len(obs_pix_gal))])
+                lats_gal = np.array([ hp.pix2ang(ipix=obs_pix_gal[i], nside=nside_high_res)[0] for i in range(len(obs_pix_gal))])
                 if self.config['Nspec']!= 2: 
                     print('            /!\ you cannot choose this spliting with Nspec!=2 /!\ ')
                 # define South patch
-                mask_patches_gal = np.zeros((self.config['Nspec'], len(Bd_template)))
+                mask_patches_gal = np.zeros((self.config['Nspec'], 12*nside_high_res**2))
                 mask_patches_gal[0,obs_pix_gal[np.where(lats_gal<=np.pi/2)[0]]] = 1
                 # define North patch
                 mask_patches_gal[1,obs_pix_gal[np.where(lats_gal>=np.pi/2)[0]]] = 1
@@ -403,7 +404,6 @@ class BBMapParamCompSep(PipelineStage):
                 res.s = Wd(A_ev(res.x), frequency_maps__.T, invN=invN)     
                 res.s = np.swapaxes(res.s,-1,0)
 
-
             resx.append(res.x)
             resS.append(res.Sigma)
 
@@ -497,29 +497,6 @@ class BBMapParamCompSep(PipelineStage):
                 inv_AtNA = np.linalg.inv(A_maxL.T.dot(invN).dot(A_maxL))
                 Bl_eff = inv_AtNA.dot( A_maxL.T ).dot(invN).dot(Bl_loc)[0]
             elif self.config['effective_beam_correction']:
-                # Bl_loc2 = []
-                # Bl_loc = []
-                # for f in range(len(self.config['frequencies'])):
-                    # print('beam = ', instrument_.fwhm[f])
-                    # Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_.fwhm[f]/60), lmax=3*self.config['nside'])
-                    # Bl_loc2.append( Bl_gauss_fwhm )
-                    # Bl_loc.append( Bl_gauss_fwhm )
-
-                # print(W.shape)
-                # print(np.array(Bl_loc).shape)
-                # Bl_eff2_inv = np.einsum('if, fl, jf -> lij', W, np.array(Bl_loc), W)
-                # Bl_eff2 = np.linalg.inv(Bl_eff2_inv)
-                # Bl_eff = W.dot(np.array(Bl_loc))[0]#np.sqrt(Bl_eff2[:,0,0]/np.max(Bl_eff2[:,0,0]))
-                # Bl_eff[Bl_eff!=Bl_eff] = 0.0
-                # np.save('Bl_eff_v1', Bl_eff)
-
-                # AtBlA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL, axis=0), np.array(Bl_loc2), np.mean(A_maxL, axis=0))
-                # inv_AtBlA = np.linalg.inv(AtBlA)
-                # Bl_eff_ = np.diagonal(inv_AtBlA, axis1=-2,axis2=-1)
-                # # Bl_eff = np.sqrt(np.abs(Bl_eff_[:,0])/np.abs(np.max(Bl_eff_[:,0])))
-                # Bl_eff = np.sqrt(Bl_eff_[:,0]/np.max(Bl_eff_))
-                # Bl_eff[Bl_eff!=Bl_eff] = 0.0
-                # np.save('Bl_eff_v2', Bl_eff)
                 Bl_loc = []
                 for f in range(len(self.config['frequencies'])):
                     Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_.fwhm[f]/60), lmax=3*self.config['nside'])
