@@ -92,7 +92,7 @@ def rotation_G2C(mp_G, nside_h=512):
     return mp_C
 
 
-def get_regions(mask, n_regions, unassigned=hp.UNSEEN):
+def get_regions(mask, n_regions, nside, unassigned=hp.UNSEEN):
     """ Generates `n_regions` regions of roughly equal area
     for a given sky mask `mask`, assuming HEALPix "RING"
     ordering. Returns a HEALPix map where each pixel holds
@@ -278,7 +278,7 @@ class BBMapParamCompSep(PipelineStage):
                 for i in range(mask_patches_gal.shape[0]):
                     mask_patches[i] = rotation_G2C(mask_patches_gal[i], nside_h=self.config['nside'])
             elif self.config['kmeans']:
-                regions = get_regions(binary_mask, self.config['Nspec'])
+                regions = get_regions(binary_mask, self.config['Nspec'], self.config['nside'])
                 for i in range(self.config['Nspec']):
                     pix_within_patch = np.where(regions==i)[0]
                     mask_patches[i,pix_within_patch] = 1
