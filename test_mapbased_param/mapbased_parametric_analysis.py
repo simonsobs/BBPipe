@@ -67,13 +67,15 @@ def _format_alms(alms, lmin=0, nulling_option=True):
 def rotation_C2G(mp_C, nside_h=512):
 
     nside_l=hp.npix2nside(len(mp_C))
-    ipixG=np.arange(hp.nside2npix(nside_h))
+    # ipixG=np.arange(hp.nside2npix(nside_h))
+    ipixG=np.arange(hp.nside2npix(nside_l))
     thG,phiG=hp.pix2ang(nside_h,ipixG)
     r=hp.Rotator(coord=['G','C'])
     thC,phiC=r(thG,phiG)
     ipixC=hp.ang2pix(nside_l,thC,phiC)
 
-    mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
+    # mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
+    mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_h)
 
     return mp_G
 
@@ -81,13 +83,15 @@ def rotation_C2G(mp_C, nside_h=512):
 def rotation_G2C(mp_G, nside_h=512):
 
     nside_l=hp.npix2nside(len(mp_G))
-    ipixC=np.arange(hp.nside2npix(nside_h))
+    # ipixC=np.arange(hp.nside2npix(nside_h))
+    ipixC=np.arange(hp.nside2npix(nside_l))
     thC,phiC=hp.pix2ang(nside_h,ipixC)
     r=hp.Rotator(coord=['C','G'])
     thG,phiG=r(thC,phiC)
     ipixG=hp.ang2pix(nside_l,thG,phiG)
 
-    mp_C=hp.ud_grade(mp_G[ipixG],nside_out=nside_l)
+    # mp_C=hp.ud_grade(mp_G[ipixG], nside_out=nside_l)
+    mp_C=hp.ud_grade(mp_G[ipixG], nside_out=nside_h)
 
     return mp_C
 
