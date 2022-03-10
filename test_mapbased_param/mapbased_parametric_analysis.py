@@ -67,15 +67,15 @@ def _format_alms(alms, lmin=0, nulling_option=True):
 def rotation_C2G(mp_C, nside_h=512):
 
     nside_l=hp.npix2nside(len(mp_C))
-    # ipixG=np.arange(hp.nside2npix(nside_h))
-    ipixG=np.arange(hp.nside2npix(nside_l))
+    ipixG=np.arange(hp.nside2npix(nside_h))
+    # ipixG=np.arange(hp.nside2npix(nside_l))
     thG,phiG=hp.pix2ang(nside_h,ipixG)
     r=hp.Rotator(coord=['G','C'])
     thC,phiC=r(thG,phiG)
     ipixC=hp.ang2pix(nside_l,thC,phiC)
 
-    # mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
-    mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_h)
+    mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_l)
+    # mp_G=hp.ud_grade(mp_C[ipixC],nside_out=nside_h)
 
     return mp_G
 
@@ -83,15 +83,15 @@ def rotation_C2G(mp_C, nside_h=512):
 def rotation_G2C(mp_G, nside_h=512):
 
     nside_l=hp.npix2nside(len(mp_G))
-    # ipixC=np.arange(hp.nside2npix(nside_h))
-    ipixC=np.arange(hp.nside2npix(nside_l))
+    ipixC=np.arange(hp.nside2npix(nside_h))
+    # ipixC=np.arange(hp.nside2npix(nside_l))
     thC,phiC=hp.pix2ang(nside_h,ipixC)
     r=hp.Rotator(coord=['C','G'])
     thG,phiG=r(thC,phiC)
     ipixG=hp.ang2pix(nside_l,thG,phiG)
 
-    # mp_C=hp.ud_grade(mp_G[ipixG], nside_out=nside_l)
-    mp_C=hp.ud_grade(mp_G[ipixG], nside_out=nside_h)
+    mp_C=hp.ud_grade(mp_G[ipixG], nside_out=nside_l)
+    # mp_C=hp.ud_grade(mp_G[ipixG], nside_out=nside_h)
 
     return mp_C
 
@@ -268,7 +268,8 @@ class BBMapParamCompSep(PipelineStage):
                 print(' -> consider North and South patches as independent')
                 # convert mask into galactic coordinates 
                 nside_high_res = 2048
-                binary_mask_gal = rotation_C2G(binary_mask, nside_h=nside_high_res) # high resolution ! 
+                binary_mask_high_res = hp.ud_grade(binary_mask, nside_out=nside_high_res)
+                binary_mask_gal = rotation_C2G(binary_mask_high_res, nside_h=nside_high_res) # high resolution ! 
                 obs_pix_gal = np.where(binary_mask_gal!=0.0)[0]
                 # just use the observed pixels, otherwise this is time consuming
                 lats_gal = np.array([ hp.pix2ang(ipix=obs_pix_gal[i], nside=nside_high_res)[0] for i in range(len(obs_pix_gal))])
@@ -280,7 +281,9 @@ class BBMapParamCompSep(PipelineStage):
                 # define North patch
                 mask_patches_gal[1,obs_pix_gal[np.where(lats_gal>=np.pi/2)[0]]] = 1
                 for i in range(mask_patches_gal.shape[0]):
-                    mask_patches[i] = rotation_G2C(mask_patches_gal[i], nside_h=self.config['nside'])
+                    mask_high_res = rotation_G2C(mask_patches_gal[i], nside_h=nside_high_res)
+                    mask_patches[i] = hp.ud_grade(mask_high_res, nside_out=self.config['nside'])
+                    del mask_high_res
             elif self.config['kmeans']:
                 regions = get_regions(binary_mask, self.config['Nspec'], self.config['nside'])
                 for i in range(self.config['Nspec']):
