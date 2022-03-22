@@ -2,8 +2,8 @@ from bbpipe import PipelineStage
 from .types import FitsFile, TextFile, NumpyFile
 import numpy as np
 import matplotlib
-# matplotlib.use('agg')
-matplotlib.use('TkAgg')
+matplotlib.use('agg')
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as pl
 import fgbuster as fg
 from fgbuster.component_model import CMB, Dust, Synchrotron
