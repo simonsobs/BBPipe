@@ -97,6 +97,7 @@ def grabargs():
     parser.add_argument("--force_histogram", action='store_true', help = "compute histogram although all jobs are not run", default=False)
     parser.add_argument("--sky_type", type=str, help = "type of sky input Gaussian, d0s0 or d1s1", default="d0s0")
     parser.add_argument("--time", type=str, help = "duration of the submitted job", default="01:00:00")
+    parser.add_argument("--noise_cov_beam_correction", action='store_true', help = "correct the noise covariance to deal with the common beam convolution", default=False)
 
     args = parser.parse_args()
 
@@ -232,6 +233,7 @@ BBMapSim:
     pixel_based_noise_cov: '''+str(pixel_based_noise_cov)+'''
     Nico_noise_combination: '''+str(Nico_noise_combination)+'''
     isim:  '''+str(isim)+'''
+    noise_cov_beam_correction: '''+str(noise_cov_beam_correction)+'''
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
@@ -384,7 +386,7 @@ def main():
                 pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, \
                 harmonic_comp_sep=args.harmonic_comp_sep, common_beam_correction=args.common_beam_correction,\
                 effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
-                Nico_noise_combination=args.Nico_noise_combination, isim=sim)
+                Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
