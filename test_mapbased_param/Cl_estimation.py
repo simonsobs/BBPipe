@@ -218,7 +218,7 @@ class BBClEstimation(PipelineStage):
     outputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), 
              ('Cl_cov_freq', FitsFile), ('fsky_eff',TextFile), 
              ('mask_apo', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile), 
-             ('Bl_eff_', FitsFile)]
+             ('Bl_eff_', FitsFile), ('Cl_CMB_template_150GHz', FitsFile)]
 
     def run(self):
 
@@ -488,9 +488,9 @@ class BBClEstimation(PipelineStage):
         ########
         # estimation of the input CMB map cross spectrum
         cmb_i=get_field(mask*CMB_template_150GHz[1,:], mask*CMB_template_150GHz[2,:], mask_apo, purify_b=True)
-        # cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
-        # Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
-        # np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
+        cmb_i=get_field(CMB_template_150GHz[1,:], CMB_template_150GHz[2,:], purify_b=True)
+        Cl_CMB_template_150GHz = compute_master(cmb_i, cmb_i, w)[3]
+        np.save(self.get_output('Cl_CMB_template_150GHz'),  Cl_CMB_template_150GHz)
 
         ########
         # estimation of the modeled statistical residuals, from simulation

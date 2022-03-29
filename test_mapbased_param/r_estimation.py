@@ -83,7 +83,7 @@ class BBREstimation(PipelineStage):
     inputs=[('Cl_clean', FitsFile),('Cl_noise', FitsFile),('Cl_cov_clean', FitsFile), ('Cl_BB_prim_r1', FitsFile), 
                 ('Cl_BB_lens', FitsFile), ('fsky_eff',TextFile), ('fitted_spectral_parameters', TextFile),
                     ('Cl_cov_freq', FitsFile), ('Cl_noise_bias', FitsFile), ('Cl_stat_res_model', FitsFile),
-                        ('mask_patches', FitsFile)]
+                        ('mask_patches', FitsFile), ('Cl_CMB_template_150GHz', FitsFile)]
     outputs=[('estimated_cosmo_params', TextFile), ('likelihood_on_r', PdfFile), 
                 ('power_spectrum_post_comp_sep', PdfFile), ('gridded_likelihood', NumpyFile)]
 
@@ -114,7 +114,7 @@ class BBREstimation(PipelineStage):
 
         ################ STATISTICAL FOREGROUNDS RESIDUALS MODELING
         # Cl_fgs = np.load(self.get_input('Cl_fgs'))
-        # Cl_CMB_template_150GHz = np.load(self.get_input('Cl_CMB_template_150GHz'))
+        Cl_CMB_template_150GHz = np.load(self.get_input('Cl_CMB_template_150GHz'))[(ell_v>=lmin)&(ell_v<=lmax)]
         p = np.loadtxt(self.get_input('fitted_spectral_parameters'))
         ## the length of p is always n_params  + (nparams*(nparams+1)/2)
         ## = nparams + (nparams**2/2 + nparams/2)
@@ -511,6 +511,8 @@ class BBREstimation(PipelineStage):
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                         pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
+                        pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz, label='input CMB @ 150GHz', linestyle='-', color='Marroon', linewidth=2.0, alpha=0.8)
+                        pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] - Cl_CMB_template_150GHz), label='estimated noiseless residuals', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         
                         pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - noise', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='--', linewidth=2.0, alpha=0.8)
