@@ -431,6 +431,8 @@ def main():
         list_output_dir = glob.glob(os.path.join(args.path_to_temp_files,'outputs_'+args.tag+'*'))
         # read the estimated_cosmo_params.txt in each directory 
         r_all = []
+        Bd_all = []
+        Bs_all = []
         Ad_all = []
         AL_all = []
         sigma_all = []
@@ -439,6 +441,7 @@ def main():
         for dir_ in list_output_dir:
             try:
                 estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+                spectral_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'fitted_spectral_parameters.txt'))
             except IOError:
                 if args.force_histogram:
                     continue
@@ -454,18 +457,26 @@ def main():
                 sigma_AL_all.append(sigma_AL_)
                 AL_all.append(AL_) 
             else: r_, sigma_=estimated_parameters
+
             r_all.append(r_)
             sigma_all.append(sigma_)
+
+            for i in range(spectral_parameters.shape[0]):
+                Bd_all.append(spectral_parameters[i,0])
+                Bs_all.append(spectral_parameters[i,1])
 
         # saving all products 
         np.save(os.path.join(args.path_to_temp_files,'r_all_'+args.tag), r_all)
         np.save(os.path.join(args.path_to_temp_files,'sigma_all_'+args.tag), sigma_all)
         np.save(os.path.join(args.path_to_temp_files,'AL_all_'+args.tag), AL_all)
         np.save(os.path.join(args.path_to_temp_files,'sigma_AL_all_'+args.tag), sigma_AL_all)
+        np.save(os.path.join(args.path_to_temp_files,'Bd_all_'+args.tag), Bd_all)
+        np.save(os.path.join(args.path_to_temp_files,'Bs_all_'+args.tag), Bs_all)
 
         # if args.AL_marginalization:
             # f, ax = pl.subplots(2, 2, sharey=True)
         f, ax = pl.subplots(1, 2, sharey=True)
+        f_, ax_ = pl.subplots(1, 2, sharey=True)
         # else:
             # f, ax = pl.subplots(1, 2, sharey=True)
             # f, ax = pl.subplots(1, 1)
@@ -486,6 +497,20 @@ def main():
         # ax[0,1].set_xlabel('tensor-to-scalar ratio', fontsize=12)
         # ax[0,1].set_ylabel('# of sims', fontsize=12)
         # pl.close()
+
+        ax_[0].set_title('r = '+str(round(np.mean(Bd_all),5))+' +/- '+str(round(np.std(Bd_all),5)), fontsize=10)
+        ax_[0].hist( Bd_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
+        ax_[0].axvline(x=1.54, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax_[0].axvline(x=np.mean(Bd_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax_[0].set_xlabel(r'$\beta_d$', fontsize=12)
+        ax_[0].set_ylabel('# of sims', fontsize=12)
+
+        ax_[1].set_title('r = '+str(round(np.mean(Bs_all),5))+' +/- '+str(round(np.std(Bs_all),5)), fontsize=10)
+        ax_[1].hist( Bs_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
+        ax_[1].axvline(x=-3.1, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax_[1].axvline(x=np.mean(Bs_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax_[1].set_xlabel(r'$\beta_s$', fontsize=12)
+        ax_[1].set_ylabel('# of sims', fontsize=12)
         
         if args.AL_marginalization:
             # pl.figure()
@@ -512,6 +537,7 @@ def main():
             # ax[i].set_xscale('log')
 
         f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
+        f_.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_Bd_Bs_'+args.tag+'.pdf'))
         pl.close()
 
     if mpi: barrier()
