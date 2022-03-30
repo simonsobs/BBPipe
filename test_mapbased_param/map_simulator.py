@@ -128,7 +128,6 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
         noise_p = noise_p.swapaxes(-1,0)
         noise_p = noise_p.swapaxes(1,2)
 
-
         noise_p_beam_ = np.zeros((noise_p.shape[0],noise_p.shape[1], 12*nside_out**2))
         for f in range(noise_p.shape[0]):
             if nside_out!=nside_in: noise_p_loc = hp.ud_grade(noise_p[f], nside_out=nside_out)
