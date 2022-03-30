@@ -118,7 +118,8 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     ratio_av = np.zeros(len(instrument['frequency']))
 
     for i_sim in range(10):
-        noise_p=np.random.normal(size=((len(instrument['frequency']), 3, 12*nside_in**2)))
+        # noise_p=np.random.normal(size=((len(instrument['frequency']), 3, 12*nside_in**2)))
+        noise_p=np.random.normal(size=((len(instrument['frequency']), 3, 12*nside_out**2)))
         sigma_p=instrument['depth_p']/hp.nside2resol(nside_in, arcmin=True)
         N_p=np.diag(sigma_p**2)
         L_p=scipy.linalg.sqrtm(N_p)
@@ -126,6 +127,7 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
         noise_p = noise_p.swapaxes(-1,0)
         noise_p = noise_p.swapaxes(1,2)
 
+        '''
         noise_p_beam_ = np.zeros((noise_p.shape[0],noise_p.shape[1], 12*nside_out**2))
         for f in range(noise_p.shape[0]):
             noise_p_loc = hp.ud_grade(noise_p[f], nside_out=nside_out)
@@ -134,8 +136,8 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
             for alm_ in alms:
                 hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
             noise_p_beam_[f] = hp.alm2map(alms, nside_out)
-
         noise_p = noise_p_beam_*1.0
+        '''
 
         for f in range(noise_p.shape[0]):
             Q_std =  np.std(noise_p[f,1])*hp.nside2resol(nside_out, arcmin=True)
@@ -149,6 +151,8 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     ratio_av /= Nsims
     print('ratio uK-arcmin INPUT/OUTPUT = ',  ratio_av)
 
+    sys.exit()
+    
     cov_out = np.zeros_like(cov_in)
     for f in range(noise_p.shape[0]):
         cov_out[3*f:3*(f+1)] = cov_in[3*f:3*(f+1)] / ratio_av[f]**2
