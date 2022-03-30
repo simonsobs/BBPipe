@@ -117,7 +117,7 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     Bl_gauss_common = hp.gauss_beam( common_beam/60.0*np.pi/180.0, lmax=3*nside_in)    
     ratio_av = np.zeros(len(instrument['frequency']))
 
-    for i_sim in range(Nsims):
+    for i_sim in range(10):
         noise_p=np.random.normal(size=((len(instrument['frequency']), 3, 12*nside_in**2)))
         sigma_p=instrument['depth_p']/hp.nside2resol(nside_in, arcmin=True)
         N_p=np.diag(sigma_p**2)
