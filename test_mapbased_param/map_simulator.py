@@ -117,7 +117,8 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     Bl_gauss_common = hp.gauss_beam( np.radians(common_beam/60.0), lmax=2*nside_out)    
     ratio_av = np.zeros(len(instrument['frequency']))
 
-    for i_sim in range(10):
+    Nsims_loc = 10
+    for i_sim in range(Nsims_loc):
         # noise_p=np.random.normal(size=((len(instrument['frequency']), 3, 12*nside_in**2)))
         noise_p=np.random.normal(size=((len(instrument['frequency']), 3, 12*nside_out**2)))
         sigma_p=instrument['depth_p']/hp.nside2resol(nside_in, arcmin=True)
@@ -148,11 +149,11 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
             ratio_av[f] += (instrument['depth_p'][f]/Q_std+instrument['depth_p'][f]/U_std)/2.0
     
     # ratio is INPUT/OUTPUT
-    ratio_av /= Nsims
+    ratio_av /= Nsims_loc
     print('ratio uK-arcmin INPUT/OUTPUT = ',  ratio_av)
 
     sys.exit()
-    
+
     cov_out = np.zeros_like(cov_in)
     for f in range(noise_p.shape[0]):
         cov_out[3*f:3*(f+1)] = cov_in[3*f:3*(f+1)] / ratio_av[f]**2
