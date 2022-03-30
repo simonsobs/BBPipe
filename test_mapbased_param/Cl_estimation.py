@@ -45,19 +45,14 @@ def KCMB2RJ(nu):
 
 
 def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo, 
-                            w, n_cov, mask_patches, A_maxL, nhits_raw, ell_eff):
+                            w, n_cov, mask_patches, A_maxL, nhits_raw, ell_eff, 
+                                instrument):
                             # ,extra_beaming=0.0):
     """
     this function performs Nsims frequency-noise simulations
     on which is applied the map-making operator estimated from
     A_maxL and the noise covariance matrix
     """
-    # output operator will be of size ncomp x npixels
-    # if mask_patches.shape[0] == self.config['number_of_independent_patches']: 
-    #     Npatch = mask_patches.shape[0]
-    # else: 
-    #     Npatch = 1
-    #     mask_patches = mask_patches[np.newaxis,:]
 
     if len(mask_patches.shape) <= 1:
         Npatch = 1
@@ -98,6 +93,17 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             for i_ in range(3): 
                 noise_maps_[f,i_,:] += noise_maps_sim[ind,:]*1.0
                 ind += 1
+
+        if self.config['common_beam_correction']!=0.0:
+            print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
+            Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
+            for f in range(n_cov.shape[0]):
+                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=2*self.config['nside'])
+                alms = hp.map2alm(freq_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                for alm_ in alms:
+                    hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
         # compute Cl_noise for each frequency
@@ -393,7 +399,7 @@ class BBClEstimation(PipelineStage):
         print('estimating noise bias')
         if self.config['common_beam_correction']!=0.0 : print('        with an beam appied on noise power spectra of ', self.config['common_beam_correction'], ' arcmin')
         Cl_noise_bias, Cl_noise_freq = noise_bias_estimation(self, compute_master, get_field, mask, 
-                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw, ell_eff)
+                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw, ell_eff, instrument)
                 # , extra_beaming=self.config['common_beam_correction'])
         Cl_noise_bias = np.vstack((ell_eff, np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
 
