@@ -149,7 +149,11 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     ratio_av /= Nsims
     print('ratio uK-arcmin INPUT/OUTPUT = ',  ratio_av)
 
-    return cov_in / ratio_av**2
+    cov_out = np.zeros_like(cov_in)
+    for f in range(noise_p.shape[0]):
+        cov_out[3*f:3*(f+1)] = cov_in[3*f:3*(f+1)] / ratio_av[f]**2
+
+    return cov_out
 
 
 class BBMapSim(PipelineStage):
