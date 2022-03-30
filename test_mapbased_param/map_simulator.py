@@ -114,7 +114,7 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     if common_beam == 0: 
         return cov_in
 
-    Bl_gauss_common = hp.gauss_beam( common_beam/60.0*np.pi/180.0, lmax=3*nside_in)    
+    Bl_gauss_common = hp.gauss_beam( np.radians(common_beam/60.0), lmax=2*nside_out)    
     ratio_av = np.zeros(len(instrument['frequency']))
 
     for i_sim in range(10):
@@ -128,8 +128,9 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
 
         noise_p_beam_ = np.zeros((noise_p.shape[0],noise_p.shape[1], 12*nside_out**2))
         for f in range(noise_p.shape[0]):
-            Bl_gauss_fwhm = hp.gauss_beam( instrument['fwhm'][f]/60.0*np.pi/180.0, lmax=3*nside_in)
-            alms = hp.map2alm(noise_p[f], lmax=3*nside_in)
+            noise_p_loc = hp.ud_grade(noise_p[f], nside_out=nside_out)
+            Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument['fwhm'][f]/60.0), lmax=2*nside_out)
+            alms = hp.map2alm(noise_p_loc, lmax=3*nside_out)
             for alm_ in alms:
                 hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
             noise_p_beam_[f] = hp.alm2map(alms, nside_out)
@@ -148,7 +149,7 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     ratio_av /= Nsims
     print('ratio uK-arcmin INPUT/OUTPUT = ',  ratio_av)
 
-    return cov_out / ratio_av**2
+    return cov_in / ratio_av**2
 
 
 class BBMapSim(PipelineStage):
