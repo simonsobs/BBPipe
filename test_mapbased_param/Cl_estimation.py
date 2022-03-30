@@ -97,10 +97,10 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
             for f in range(n_cov.shape[0]):
                 Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=2*self.config['nside'])
-                alms = hp.map2alm(noise_maps_[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                alms = hp.map2alm(noise_maps_[f,:,:], lmax=3*self.config['nside'])
                 for alm_ in alms:
                     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
-                noise_maps_[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+                noise_maps_[f,:,:] = hp.alm2map(alms, self.config['nside'])  
 
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
@@ -395,7 +395,7 @@ class BBClEstimation(PipelineStage):
         Cl_cov_clean = np.vstack((ell_eff,Cl_cov_clean.swapaxes(0,1)))
 
         print('estimating noise bias')
-        if self.config['common_beam_correction']!=0.0 : print('        with an beam appied on noise power spectra of ', self.config['common_beam_correction'], ' arcmin')
+        if self.config['common_beam_correction']!=0.0 : print('        with a beam applied on noise power spectra of ', self.config['common_beam_correction'], ' arcmin')
         Cl_noise_bias, Cl_noise_freq = noise_bias_estimation(self, compute_master, get_field, mask, 
                 mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw, ell_eff, instrument)
                 # , extra_beaming=self.config['common_beam_correction'])
