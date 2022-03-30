@@ -114,7 +114,7 @@ class BBREstimation(PipelineStage):
 
         ################ STATISTICAL FOREGROUNDS RESIDUALS MODELING
         # Cl_fgs = np.load(self.get_input('Cl_fgs'))
-        Cl_CMB_template_150GHz = np.load(self.get_input('Cl_CMB_template_150GHz'))[(ell_v>=lmin)&(ell_v<=lmax)]
+        Cl_CMB_template_150GHz = hp.read_cl(self.get_input('Cl_CMB_template_150GHz'))[(ell_v>=lmin)&(ell_v<=lmax)]
         p = np.loadtxt(self.get_input('fitted_spectral_parameters'))
         ## the length of p is always n_params  + (nparams*(nparams+1)/2)
         ## = nparams + (nparams**2/2 + nparams/2)
