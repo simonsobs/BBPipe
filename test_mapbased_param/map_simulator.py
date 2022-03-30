@@ -294,7 +294,10 @@ class BBMapSim(PipelineStage):
             for f in range(len(instrument.frequency)):
                 print('loading combined foregrounds map for frequency ', str(int(instrument.frequency[f])))
                 # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
-                freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(glob.glob(os.path.join(self.config['combined_directory'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_comb_*.fits'))[0], field=None), nside_out=self.config['nside'])
+                loc_freq_map = hp.read_map(glob.glob(os.path.join(self.config['combined_directory'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_comb_*.fits'))[0], field=None)
+                NSIDE_INPUT_MAP = hp.npix2nside(len(loc_freq_map[0]))
+                freq_maps[3*f:3*(f+1),:] = hp.ud_grade(loc_freq_map, nside_out=self.config['nside'])
+                del loc_freq_map
 
         # adding noise
         if self.config['external_noise_sims']!='':
@@ -318,8 +321,6 @@ class BBMapSim(PipelineStage):
                         noise_loc /= np.sqrt(nh/np.max(nh))
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
-
-                NSIDE_INPUT_MAP = hp.npix2nside(len(noise_loc[0]))
                 noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='white_noise':
