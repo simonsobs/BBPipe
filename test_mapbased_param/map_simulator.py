@@ -12,6 +12,7 @@ import healpy as hp
 import copy
 import glob
 import os
+import scipy
 
 import fgbuster
 from fgbuster.observation_helpers import get_instrument, get_sky, get_observation, standardize_instrument
