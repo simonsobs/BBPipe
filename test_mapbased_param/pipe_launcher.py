@@ -185,7 +185,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='',
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
-                Nico_noise_combination=False, isim=0):
+                Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False):
     '''
     function generating the config file
     '''
