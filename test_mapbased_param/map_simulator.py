@@ -319,6 +319,7 @@ class BBMapSim(PipelineStage):
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
 
+                NSIDE_INPUT_MAP = hp.npix2nside(len(noise_loc[0]))
                 noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='white_noise':
