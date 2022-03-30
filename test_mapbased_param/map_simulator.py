@@ -152,8 +152,6 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
     ratio_av /= Nsims_loc
     print('ratio uK-arcmin INPUT/OUTPUT = ',  ratio_av)
 
-    sys.exit()
-
     cov_out = np.zeros_like(cov_in)
     for f in range(noise_p.shape[0]):
         cov_out[3*f:3*(f+1)] = cov_in[3*f:3*(f+1)] / ratio_av[f]**2
