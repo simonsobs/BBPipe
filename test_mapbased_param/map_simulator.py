@@ -146,7 +146,7 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
             print('white noise level = ', instrument['depth_p'][f],\
                      '//  Q-> ', Q_std, '//  U-> ', U_std,\
                      '// ratios -> ', instrument['depth_p'][f]/Q_std, ' / ', instrument['depth_p'][f]/U_std)
-            ratio_av[f] += (instrument['depth_p'][f]/Q_std+instrument['depth_p'][f]/U_std)#/2.0
+            ratio_av[f] += (instrument['depth_p'][f]/Q_std+instrument['depth_p'][f]/U_std)/2.0
     
     # ratio is INPUT/OUTPUT
     ratio_av /= Nsims_loc
