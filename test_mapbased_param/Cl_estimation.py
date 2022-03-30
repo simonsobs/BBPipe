@@ -47,7 +47,6 @@ def KCMB2RJ(nu):
 def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo, 
                             w, n_cov, mask_patches, A_maxL, nhits_raw, ell_eff, 
                                 instrument):
-                            # ,extra_beaming=0.0):
     """
     this function performs Nsims frequency-noise simulations
     on which is applied the map-making operator estimated from
@@ -84,7 +83,6 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                         knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
                             nside_out=self.config['nside'], norm_hits_map=nhits_raw,
                                 no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
-                                # ,extra_beaming=extra_beaming)
 
         # reformating the simulated noise maps 
         noise_maps_ = np.zeros((n_cov.shape[0], 3, W.shape[-1]))
@@ -99,10 +97,10 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
             for f in range(n_cov.shape[0]):
                 Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=2*self.config['nside'])
-                alms = hp.map2alm(freq_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                alms = hp.map2alm(noise_maps_[3*f:3*(f+1),:], lmax=3*self.config['nside'])
                 for alm_ in alms:
                     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
-                freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+                noise_maps_[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
 
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
