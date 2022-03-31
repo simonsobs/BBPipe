@@ -124,7 +124,7 @@ class BBREstimation(PipelineStage):
         else: Nspec=mask_patches.shape[0]
         beta_maxL = np.zeros((Nspec,2))
         Sigma =  np.zeros((Nspec,2,2))
-        if Nspec==0: p = p[np.newaxis,:]
+        if Nspec==1: p = p[np.newaxis,:]
         for i in range(Nspec):
             beta_maxL[i,:] = p[i,:2]
             Sigma[i,:,:] = np.array([[p[i,2],p[i,3]],[p[i,3],p[i,4]]])
