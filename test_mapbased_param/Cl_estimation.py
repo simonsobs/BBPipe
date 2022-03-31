@@ -14,6 +14,10 @@ from fgbuster.algebra import W_dB, _mmm, _mm
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from . import V3calc as V3
 
+import sys
+sys.path.append('/global/cfs/cdirs/sobs/users/krach/BBSims/NOISE_20201207/')
+from combine_noise import *
+
 def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
     if custom_bins:
         ells=np.arange(3*nside,dtype='int32') #Array of multipoles
@@ -78,11 +82,31 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
     for i in range(self.config['Nsims_bias']):
         # looping over simulations
         print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
-        # generating frequency-maps noise simulations
-        nhits, noise_maps_sim, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
-                        knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
-                            nside_out=self.config['nside'], norm_hits_map=nhits_raw,
-                                no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
+        
+        if self.config['external_noise_sims_for_noise_bias']:
+
+            if self.config['Nico_noise_combination']:
+                if self.config['knee_mode'] == 2 : knee_mode_loc = None
+                else: knee_mode_loc = self.config['knee_mode']
+                factors = compute_noise_factors(self.config['sensitivity_mode'], knee_mode_loc)
+
+            for f in range(len(instrument.frequency)):
+                print('loading noise map for frequency ', str(int(instrument.frequency[f])))
+                if self.config['Nico_noise_combination']:
+                    noise_loc = combine_noise_maps(i, instrument.frequency[f], factors)
+                    if not self.config['no_inh']:
+                        # renormalize the noise map to take into account the effect of inhomogeneous noise
+                        noise_loc /= np.sqrt(nhits_raw/np.max(nhits_raw))
+                else:
+                    noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
+                noise_maps_sim[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
+        else:
+            # generating frequency-maps noise simulations
+            np.random.seed(i)
+            nhits, noise_maps_sim, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+                            knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
+                                nside_out=self.config['nside'], norm_hits_map=nhits_raw,
+                                    no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
 
         # reformating the simulated noise maps 
         noise_maps_ = np.zeros((n_cov.shape[0], 3, W.shape[-1]))

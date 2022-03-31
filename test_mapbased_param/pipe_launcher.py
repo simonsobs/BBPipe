@@ -98,6 +98,7 @@ def grabargs():
     parser.add_argument("--sky_type", type=str, help = "type of sky input Gaussian, d0s0 or d1s1", default="d0s0")
     parser.add_argument("--time", type=str, help = "duration of the submitted job", default="01:00:00")
     parser.add_argument("--noise_cov_beam_correction", action='store_true', help = "correct the noise covariance to deal with the common beam convolution", default=False)
+    parser.add_argument("--external_noise_sims_for_noise_bias", action='store_true', help = "use external noise simulations to estimate the noise bias angular spectrum", default=False)
 
     args = parser.parse_args()
 
@@ -185,7 +186,8 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 frequencies=[27,39,93,145,225,280], bandpass=False, path_to_dust_template='',
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
-                Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False):
+                Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
+                external_noise_sims_for_noise_bias=False):
     '''
     function generating the config file
     '''
@@ -252,6 +254,7 @@ BBClEstimation:
     Cls_fiducial: './test_mapbased_param/Cls_Planck2018_lensed_scalar.fits'
     extra_apodization: '''+str(extra_apodization)+'''
     mask_apo: \''''+mask_apo+'''\'
+    external_noise_sims_for_noise_bias: '''+str(external_noise_sims_for_noise_bias)+'''
 
 BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
@@ -386,7 +389,8 @@ def main():
                 pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, \
                 harmonic_comp_sep=args.harmonic_comp_sep, common_beam_correction=args.common_beam_correction,\
                 effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
-                Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction)
+                Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction,
+                external_noise_sims_for_noise_bias=args.external_noise_sims_for_noise_bias)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
