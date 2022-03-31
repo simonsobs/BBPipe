@@ -331,6 +331,7 @@ class BBMapParamCompSep(PipelineStage):
                 pix_within_patch = np.where(patch_template == i)[0]
                 mask_patches[i,pix_within_patch] = 1
         else:
+            self.config['number_of_independent_patches'] = 0
             mask_patches = binary_mask[np.newaxis,:]
 
         noise_after_comp_sep_ = np.zeros((6, noise_cov.shape[1]))
