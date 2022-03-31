@@ -473,7 +473,7 @@ class BBMapParamCompSep(PipelineStage):
                     noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                     inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
                     W[:,:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv)
-                    noise_after_comp_sep[:,s,p] = W.dot(noise_maps_[:,s,p])
+                    noise_after_comp_sep[:,s,p] = W[:,:,s,p].dot(noise_maps_[:,s,p])
                     if self.config['common_beam_correction']!=0.0:
                         if ((p==obs_pix[0]) and (s==0)): print(' -> re-estimating res.s from unbeamed freq maps!')
                         res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed__[:,s,p])
