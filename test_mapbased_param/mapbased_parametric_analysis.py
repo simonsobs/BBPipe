@@ -434,10 +434,10 @@ class BBMapParamCompSep(PipelineStage):
                 A_maxL_v = np.zeros((mask_patches.shape[0], A_maxL.shape[0], A_maxL.shape[1]))
             A_maxL_v[i_patch,:,:] = A_maxL*1.0
 
-            # invN = np.diag(hp.nside2resol(self.config['nside'], arcmin=True) / (instrument_.depth_p))**2
-            # inv_AtNA = np.linalg.inv(A_maxL.T.dot(invN).dot(A_maxL))
-            invN = np.diag(1.0/noise_cov__loc[:,s,p])
-            inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(invN).dot(A_maxL_loc))
+            invN = np.diag(hp.nside2resol(self.config['nside'], arcmin=True) / (instrument_.depth_p))**2
+            inv_AtNA = np.linalg.inv(A_maxL.T.dot(invN).dot(A_maxL))
+            # invN = np.diag(1.0/noise_cov__loc[:,s,p])
+            # inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(invN).dot(A_maxL_loc))
             W = inv_AtNA.dot( A_maxL.T ).dot(invN)
             if i_patch == 0 :
                 W_v = np.zeros((mask_patches.shape[0], W.shape[0], W.shape[1]))
@@ -466,17 +466,21 @@ class BBMapParamCompSep(PipelineStage):
             noise_after_comp_sep = np.zeros((3,2, noise_cov.shape[1]))#*hp.UNSEEN
             obs_pix = np.where(mask_patch_==1.0)[0]
 
+            # W is of size {n_comp, n_freqs, n_stokes, n_pixels}
+            W = np.zeros((A_maxL.shape[1], noise_cov__.shape[0], 2, noise_cov__.shape[-1]))
             for p in obs_pix:
                 for s in range(2):
                     noise_cov_inv = np.diag(1.0/noise_cov__[:,s,p])
                     inv_AtNA = np.linalg.inv(A_maxL.T.dot(noise_cov_inv).dot(A_maxL))
-                    noise_after_comp_sep[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(noise_maps_[:,s,p])
+                    W[:,:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv)
+                    noise_after_comp_sep[:,s,p] = W.dot(noise_maps_[:,s,p])
                     if self.config['common_beam_correction']!=0.0:
                         if ((p==obs_pix[0]) and (s==0)): print(' -> re-estimating res.s from unbeamed freq maps!')
                         res.s[:,s,p] = inv_AtNA.dot( A_maxL.T ).dot(noise_cov_inv).dot(freq_maps_unbeamed__[:,s,p])
                     if self.config['harmonic_comp_sep']:
                         if ((p==obs_pix[0]) and (s==0)): res.invAtNA = np.zeros((res.s.shape[0],res.s.shape[0], res.s.shape[1], res.s.shape[2]))
                         res.invAtNA[:,:,s,p] = inv_AtNA
+            np.save('W_noise', W)
 
             if self.config['highpass_filtering']:
                 print('re-estimating post comp sep sky maps from un-filtered frequency maps')
