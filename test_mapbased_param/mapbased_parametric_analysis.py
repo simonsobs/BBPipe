@@ -331,7 +331,7 @@ class BBMapParamCompSep(PipelineStage):
                 pix_within_patch = np.where(patch_template == i)[0]
                 mask_patches[i,pix_within_patch] = 1
         else:
-            self.config['number_of_independent_patches'] = 0
+            self.config['number_of_independent_patches'] = 1
             mask_patches = binary_mask[np.newaxis,:]
 
         noise_after_comp_sep_ = np.zeros((6, noise_cov.shape[1]))
@@ -434,8 +434,10 @@ class BBMapParamCompSep(PipelineStage):
                 A_maxL_v = np.zeros((mask_patches.shape[0], A_maxL.shape[0], A_maxL.shape[1]))
             A_maxL_v[i_patch,:,:] = A_maxL*1.0
 
-            invN = np.diag(hp.nside2resol(self.config['nside'], arcmin=True) / (instrument_.depth_p))**2
-            inv_AtNA = np.linalg.inv(A_maxL.T.dot(invN).dot(A_maxL))
+            # invN = np.diag(hp.nside2resol(self.config['nside'], arcmin=True) / (instrument_.depth_p))**2
+            # inv_AtNA = np.linalg.inv(A_maxL.T.dot(invN).dot(A_maxL))
+            invN = np.diag(1.0/noise_cov__loc[:,s,p])
+            inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(invN).dot(A_maxL_loc))
             W = inv_AtNA.dot( A_maxL.T ).dot(invN)
             if i_patch == 0 :
                 W_v = np.zeros((mask_patches.shape[0], W.shape[0], W.shape[1]))
