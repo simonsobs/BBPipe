@@ -511,7 +511,7 @@ class BBREstimation(PipelineStage):
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                         pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
-                        pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz, label='input CMB @ 150GHz', linestyle='-', color='Marroon', linewidth=2.0, alpha=0.8)
+                        pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz, label='input CMB @ 150GHz', linestyle='-', color='maroon', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] - Cl_CMB_template_150GHz), label='estimated noiseless residuals', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         
                         pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - noise', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
