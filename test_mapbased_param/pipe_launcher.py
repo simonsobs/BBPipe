@@ -220,6 +220,8 @@ global:
     Nsims_bias:  '''+str(Nsims_bias)+'''
     common_beam_correction: '''+str(common_beam_correction)+'''
     effective_beam_correction: '''+str(effective_beam_correction)+'''
+    Nico_noise_combination: '''+str(Nico_noise_combination)+'''
+    external_noise_sims: \''''+str(external_noise_sims)+'''\'
 
 BBMapSim:
     cmb_model: 'c1'
@@ -228,12 +230,10 @@ BBMapSim:
     tag: 'SO_sims'
     cmb_sim_no_pysm: '''+str(cmb_sim_no_pysm)+'''
     external_sky_sims: \''''+str(external_sky_sims)+'''\'
-    external_noise_sims: \''''+str(external_noise_sims)+'''\'
     combined_directory: \''''+str(combined_directory)+'''\'
     external_binary_mask: \''''+str(external_binary_mask)+'''\'
     external_noise_cov: \''''+str(external_noise_cov)+'''\'
     pixel_based_noise_cov: '''+str(pixel_based_noise_cov)+'''
-    Nico_noise_combination: '''+str(Nico_noise_combination)+'''
     isim:  '''+str(isim)+'''
     noise_cov_beam_correction: '''+str(noise_cov_beam_correction)+'''
 
