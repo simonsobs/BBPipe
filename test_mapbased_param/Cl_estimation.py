@@ -84,7 +84,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
         
         if self.config['external_noise_sims_for_noise_bias']:
-
+            noise_maps_sim = np.zeros((n_cov.shape[0]*3, W.shape[-1]))
             if self.config['Nico_noise_combination']:
                 if self.config['knee_mode'] == 2 : knee_mode_loc = None
                 else: knee_mode_loc = self.config['knee_mode']
