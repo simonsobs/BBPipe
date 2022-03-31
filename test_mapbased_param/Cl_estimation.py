@@ -349,6 +349,7 @@ class BBClEstimation(PipelineStage):
             Bl_eff = np.sqrt(Bl_eff_/np.max(Bl_eff_))
             # Bl_eff *= hp.gauss_beam(np.nside2resol(self.config['nside'])/np.sqrt(8*np.log(2)*log(2)), lmax=3*self.config['nside'])
             '''
+            print('common beam correction but no effective beam correction')
             Bl_eff = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=3*self.config['nside'])        
         elif self.config['effective_beam_correction']:
             # Bl_loc = []
@@ -366,13 +367,15 @@ class BBClEstimation(PipelineStage):
             # np.save('Bl_eff_', Bl_eff)
             # Bl_eff = np.sqrt(Bl_eff_/np.max(Bl_eff_))
             # Bl_eff *= hp.gauss_beam(hp.nside2resol(self.config['nside']), lmax=3*self.config['nside'])
+            print('just effective beam correction')
         else:
+            print('NO beam correction')
             Bl_eff = np.zeros_like( hp.gauss_beam( 1.0/60, lmax=3*self.config['nside']) )
 
         ###############################
         def get_field(mp_q, mp_u, mask_apo, purify_e=False, purify_b=True) :
             #This creates a spin-2 field with both pure E and B.
-            if ((self.config['common_beam_correction']!=0.0) and self.config['effective_beam_correction']):
+            if ((self.config['common_beam_correction']!=0.0) or self.config['effective_beam_correction']):
                 print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
                 beam = Bl_eff
             else:beam=None
