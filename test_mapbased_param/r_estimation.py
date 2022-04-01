@@ -505,15 +505,15 @@ class BBREstimation(PipelineStage):
                                                      label='true CMB noise post comp sep', linestyle=':', color='Cyan')
                         pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
-                        pl.loglog( ell_v_loc, np.abs(norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                - norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
-                                                label='input noise - estimated noise', linestyle=':', color='DarkBlue')
+                        # pl.loglog( ell_v_loc, np.abs(norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                # - norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
+                                                # label='input noise - estimated noise', linestyle=':', color='DarkBlue')
 
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                         pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz, label='input CMB @ 150GHz', linestyle='-', color='maroon', linewidth=2.0, alpha=0.8)
-                        pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] - Cl_CMB_template_150GHz), label='estimated noiseless residuals', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
+                        pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] - Cl_CMB_template_150GHz), label='estimated noiseless residuals', color='red', linestyle=':', linewidth=2.0, alpha=0.8)
                         
                         pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - noise', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='--', linewidth=2.0, alpha=0.8)
@@ -655,7 +655,7 @@ class BBREstimation(PipelineStage):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
         elif self.config['AL_marginalization']:
             np.save(self.get_output('gridded_likelihood'), gridded_likelihood )
-            np.save(self.get_output('gridded_chi2'), gridded_chi2 )
+            # np.save(self.get_output('gridded_chi2'), gridded_chi2 )
         else:
             np.save(self.get_output('gridded_likelihood'), samples)
 
