@@ -358,16 +358,22 @@ class BBMapSim(PipelineStage):
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
 
                 # should do it for the noise too
-
                 alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
                 for alm_n in alms_n:
                     hp.almxfl(alm_n, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
                 noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])
 
 
+                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_150GHz.fwhm[0]/60), lmax=2*self.config['nside'])
+                alms = hp.map2alm(CMB_template_150GHz, lmax=3*self.config['nside'])
+                for alm_ in alms:
+                    hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                CMB_template_150GHz = hp.alm2map(alms, self.config['nside'])   
+
         freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         freq_maps_unbeamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         noise_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
+        CMB_template_150GHz[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         # noise covariance 
         if self.config['external_noise_cov']:
