@@ -308,7 +308,7 @@ class BBMapSim(PipelineStage):
                 del loc_freq_map
 
         # adding noise
-        if self.config['external_noise_sims']!='':
+        if self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
             noise_maps = freq_maps*0.0
             print('noise_maps.shape = ', noise_maps.shape)
             print('EXTERNAL NOISE-ONLY MAPS LOADED')
