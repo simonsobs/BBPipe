@@ -98,7 +98,6 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             for f in range(len(instrument.frequency)):
                 print('loading noise map for frequency ', str(int(instrument.frequency[f])))
                 if self.config['Nico_noise_combination']:
-                    breakpoint()
                     noise_loc = combine_noise_maps(i, instrument.frequency[f], factors)
                     if not self.config['no_inh']:
                         # renormalize the noise map to take into account the effect of inhomogeneous noise
@@ -121,7 +120,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             for i_ in range(3): 
                 noise_maps_[f,i_,:] = noise_maps_sim[ind,:]*1.0
                 ind += 1
-        '''
+
         if self.config['common_beam_correction']!=0.0:
             print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
             Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
@@ -131,7 +130,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 for alm_ in alms:
                     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
                 noise_maps_[f,:,:] = hp.alm2map(alms, self.config['nside'])  
-        '''
+
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
         np.save('noise_maps_bias', noise_maps_)

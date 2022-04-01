@@ -324,7 +324,6 @@ class BBMapSim(PipelineStage):
                 # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
 
                 if self.config['Nico_noise_combination']:
-                    breakpoint()
                     noise_loc = combine_noise_maps(self.config['isim'], instrument.frequency[f], factors)
                     if not self.config['no_inh']:
                         # renormalize the noise map to take into account the effect of inhomogeneous noise
@@ -359,12 +358,12 @@ class BBMapSim(PipelineStage):
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
 
                 # should do it for the noise too
-                '''
+
                 alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
                 for alm_n in alms_n:
                     hp.almxfl(alm_n, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
-                noise_maps[3*f:3*(f+1),:] = hp.alm2map(almsn, self.config['nside'])
-                '''
+                noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])
+
 
         freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         freq_maps_unbeamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
