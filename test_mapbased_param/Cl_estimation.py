@@ -155,7 +155,8 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         np.save('noise_after_comp_sep_bias', noise_after_comp_sep)
 
         # compute corresponding spectra
-        fn = get_field_func(mask*Q_noise_cmb, mask*U_noise_cmb, mask_apo)
+        # fn = get_field_func(mask*Q_noise_cmb, mask*U_noise_cmb, mask_apo)
+        fn = get_field_func(mask*noise_after_comp_sep[0,0], mask*noise_after_comp_sep[0,1], mask_apo)
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
 
     return Cl_noise_bias, np.mean(Cl_noise_freq, axis=0)
