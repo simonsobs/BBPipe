@@ -59,12 +59,13 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
 
     if len(mask_patches.shape) <= 1:
         Npatch = 1
-        mask_patches = mask_patches[np.newaxis,:]
+        mask_patches_ = mask_patches[np.newaxis,:]
     else:
         Npatch = mask_patches.shape[0]
+        mask_patches_ = mask_patches*1.0
 
     for i_patch in range(Npatch):
-        obs_pix = np.where(mask_patches[i_patch,:]!=0)[0]
+        obs_pix = np.where(mask_patches_[i_patch,:]!=0)[0]
         # building the (possibly pixel-dependent) mixing matrix
         A_maxL_loc = A_maxL[i_patch]
 
@@ -77,6 +78,8 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
                 W[:,:,s,p] += inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
         np.save('W_noise_bias', W)
+        np.save('A_maxL_loc', A_maxL_loc)
+        np.save('noise_cov_inv', noise_cov_inv)
     # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
     Cl_noise_bias = []
     for i in range(self.config['Nsims_bias']):
