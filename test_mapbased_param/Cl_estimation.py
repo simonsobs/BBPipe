@@ -98,6 +98,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             for f in range(len(instrument.frequency)):
                 print('loading noise map for frequency ', str(int(instrument.frequency[f])))
                 if self.config['Nico_noise_combination']:
+                    breakpoint()
                     noise_loc = combine_noise_maps(i, instrument.frequency[f], factors)
                     if not self.config['no_inh']:
                         # renormalize the noise map to take into account the effect of inhomogeneous noise
@@ -118,7 +119,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         ind = 0
         for f in range(n_cov.shape[0]): 
             for i_ in range(3): 
-                noise_maps_[f,i_,:] += noise_maps_sim[ind,:]*1.0
+                noise_maps_[f,i_,:] = noise_maps_sim[ind,:]*1.0
                 ind += 1
         '''
         if self.config['common_beam_correction']!=0.0:
