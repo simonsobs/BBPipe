@@ -80,6 +80,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         np.save('W_noise_bias', W)
         np.save('A_maxL_loc', A_maxL_loc)
         np.save('n_cov', n_cov)
+        np.save('obs_pix_', obs_pix)
     # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
     Cl_noise_bias = []
     for i in range(self.config['Nsims_bias']):
