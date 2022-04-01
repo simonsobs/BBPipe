@@ -78,10 +78,10 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 noise_cov_inv = np.diag(1.0/n_cov[:,s,p])
                 inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
                 W[:,:,s,p] += inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
-        np.save('W_noise_bias', W)
-        np.save('A_maxL_loc', A_maxL_loc)
-        np.save('n_cov', n_cov)
-        np.save('obs_pix_', obs_pix)
+        # np.save('W_noise_bias', W)
+        # np.save('A_maxL_loc', A_maxL_loc)
+        # np.save('n_cov', n_cov)
+        # np.save('obs_pix_', obs_pix)
     # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
     Cl_noise_bias = []
     for i in range(self.config['Nsims_bias']):
@@ -133,15 +133,27 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
 
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
+        np.save('noise_maps_bias', noise_maps_)
+
         # compute Cl_noise for each frequency
         print('        -> computing noise power spectrum for each frequency map')
         if i == 0 : Cl_noise_freq = np.zeros((self.config['Nsims_bias'],noise_maps_.shape[0],len(ell_eff)))
         for f in range(noise_maps_.shape[0]):
             fn = get_field_func(mask*noise_maps_[f,0,:], mask*noise_maps_[f,1,:], mask_apo)
             Cl_noise_freq[i,f,:] = (Cl_func(fn, fn, w)[3] )
+        
         # propagate noise through the map-making equation
-        Q_noise_cmb = np.einsum('fp,fp->p', W[0,:,0,:], noise_maps_[:,0])
-        U_noise_cmb = np.einsum('fp,fp->p', W[0,:,1,:], noise_maps_[:,1])
+        # Q_noise_cmb = np.einsum('fp,fp->p', W[0,:,0,:], noise_maps_[:,0])
+        # U_noise_cmb = np.einsum('fp,fp->p', W[0,:,1,:], noise_maps_[:,1])
+        noise_after_comp_sep = np.zeros((3,2, mask_patches_.shape[1]))#*hp.UNSEEN
+        for i_patch in range(Npatch):
+            obs_pix = np.where(mask_patches_[i_patch,:]==1)[0]
+            for p in obs_pix:
+                for s in range(2):
+                    noise_after_comp_sep[:,s,p] = W[:,:,s,p].dot(noise_maps_[:,s,p])
+
+        np.save('noise_after_comp_sep_bias', noise_after_comp_sep)
+
         # compute corresponding spectra
         fn = get_field_func(mask*Q_noise_cmb, mask*U_noise_cmb, mask_apo)
         Cl_noise_bias.append(Cl_func(fn, fn, w)[3] )
