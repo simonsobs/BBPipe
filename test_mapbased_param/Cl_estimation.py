@@ -379,7 +379,7 @@ class BBClEstimation(PipelineStage):
         # ### compute the effective Bl output of component separation
 
         if ((self.config['common_beam_correction'] != 0.0) and (not self.config['effective_beam_correction'])):
-            '''
+
             Bl_loc = []
             Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=3*self.config['nside'])        
             for f in range(len(self.config['frequencies'])):
@@ -390,9 +390,9 @@ class BBClEstimation(PipelineStage):
             Bl_eff_ = np.diagonal(inv_AtBlA, axis1=-2,axis2=-1)[:,0]
             Bl_eff = np.sqrt(Bl_eff_/np.max(Bl_eff_))
             # Bl_eff *= hp.gauss_beam(np.nside2resol(self.config['nside'])/np.sqrt(8*np.log(2)*log(2)), lmax=3*self.config['nside'])
-            '''
+
             print('common beam correction but no effective beam correction')
-            Bl_eff = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=3*self.config['nside'])        
+            # Bl_eff = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=3*self.config['nside'])        
         elif self.config['effective_beam_correction']:
             # Bl_loc = []
             Bl_loc_ = []
