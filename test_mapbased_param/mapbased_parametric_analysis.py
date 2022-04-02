@@ -123,7 +123,7 @@ class BBMapParamCompSep(PipelineStage):
         * estimate components' covariance
     """
     name='BBMapParamCompSep'
-    inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),
+    inputs= [('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_cov_beamed',FitsFile),
                 ('noise_maps',FitsFile),('norm_hits_map', FitsFile),('freq_maps_unbeamed',FitsFile),
                 ('instrument', NumpyFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
@@ -139,54 +139,9 @@ class BBMapParamCompSep(PipelineStage):
         frequency_maps=hp.read_map(self.get_input('frequency_maps'),verbose=False, field=None)
         freq_maps_unbeamed=hp.read_map(self.get_input('freq_maps_unbeamed'),verbose=False, field=None)
         noise_cov=hp.read_map(self.get_input('noise_cov'),verbose=False, field=None)
+        noise_cov_beamed=hp.read_map(self.get_input('noise_cov_beamed'),verbose=False, field=None)
         noise_maps=hp.read_map(self.get_input('noise_maps'),verbose=False, field=None)
 
-        # reorganization of maps
-        '''
-        instrument = {'frequency':np.array(self.config['frequencies'])}
-        if self.config['bandpass']:
-            if self.config['instrument'] == 'SO':
-                bandpass = 0.3*instrument['frequencies']
-                print('you should check the definition of bandpasses')
-                print('now is only implemented the formalism for CMB-S4')
-                sys.exit()
-            elif self.config['instrument'] == 'CMBS4':
-                bandpass = np.array([5.0, 9.0, 12.0, 20.4, 22.8, 31.9, 34.1, 48.4, 59.4])
-            # convert and renormalize bandpasses 
-            inst_freq=[]
-            num_steps = 100
-            # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
-            #             (1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
-            #             /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_CMB','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
-            #          for i in range(len(instrument['frequencies'])) ]
-            for i in range(len(instrument['frequency'])):
-                freqs_loc = np.linspace(instrument['frequency'][i]-bandpass[i]/2, instrument['frequency'][i]+bandpass[i]/2, num=num_steps)
-                # bandpass_loc = (np.ones(num_steps)*\
-                #     convert_units('uK_RJ','Jysr', freqs_loc))/\
-                #     np.sum( np.ones(num_steps)*\
-                #         convert_units('uK_RJ','Jysr', freqs_loc)*\
-                #             (bandpass[i]/(num_steps-1)))
-                bandpass_loc = freqs_loc**-2/(instrument['frequency'][i]*1.0)**-2
-                inst_freq.append((freqs_loc, bandpass_loc))
-
-            # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
-            #             (1.0/num_steps*np.ones(num_steps)*convert_units('uK_RJ','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps)))\
-            #             /np.sum( 1.0/num_steps*np.ones(num_steps)*convert_units('uK_RJ','Jysr', np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps))*(bandpass[i]/(num_steps-1)))))\
-            #          for i in range(len(instrument['frequencies'])) ]
-            # [inst_freq.append((np.linspace(instrument['frequencies'][i]-bandpass[i]/2, instrument['frequencies'][i]+bandpass[i]/2, num=num_steps), \
-            #             (1.0/num_steps*np.ones(num_steps)))\
-            #             /np.sum( 1.0/num_steps*np.ones(num_steps)*(bandpass[i]/(num_steps-1))))\
-            #          for i in range(len(instrument['frequencies'])) ]
-            # redefining frequencies entry to dictionary
-            instr_ = copy.deepcopy(instrument)
-            instr_['frequency'] = inst_freq
-            instr_['channels'] = inst_freq
-            instr_['channel_names'] = [str(instrument['frequency'][i]) for i in range(len(instrument['frequency']))]
-            instr_['use_bandpass'] = True
-            instrument_ = pysm.Instrument(instr_)
-        else:
-            instrument_ = copy.deepcopy(instrument)
-        '''
         # instrument_ = standardize_instrument(instrument_)
         instrument_ = np.load(self.get_input('instrument'), allow_pickle=True).item()
 
@@ -195,12 +150,14 @@ class BBMapParamCompSep(PipelineStage):
         freq_maps_unbeamed_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
         noise_maps_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
         noise_cov_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
+        noise_cov_beamed_ = np.zeros((len(instrument_.frequency), 3, frequency_maps.shape[-1]))
         for f in range(len(instrument_.frequency)) : 
             for i in range(3): 
                 frequency_maps_[f,i,:] =  frequency_maps[ind,:]*1.0
                 freq_maps_unbeamed_[f,i,:] =  freq_maps_unbeamed[ind,:]*1.0
                 noise_maps_[f,i,:] =  noise_maps[ind,:]*1.0
                 noise_cov_[f,i,:] = noise_cov[ind,:]*1.0
+                noise_cov_beamed_[f,i,:] = noise_cov_beamed[ind,:]*1.0
                 ind += 1
         
 
@@ -234,6 +191,7 @@ class BBMapParamCompSep(PipelineStage):
         freq_maps_unbeamed_ = freq_maps_unbeamed_[:,1:,:]
         noise_maps_ = noise_maps_[:,1:,:]
         noise_cov_ = noise_cov_[:,1:,:]
+        noise_cov_beamed_ = noise_cov_beamed_[:,1:,:]
 
         # perform component separation
         # assuming inhomogeneous noise
@@ -353,6 +311,8 @@ class BBMapParamCompSep(PipelineStage):
             freq_maps_unbeamed__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             noise_cov__ = noise_cov_*1.0
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
+            noise_cov_beamed__ = noise_cov_beamed_*1.0
+            noise_cov_beamed__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             
             print('actual component separation ... ')
             if self.config['harmonic_comp_sep']:
@@ -384,17 +344,25 @@ class BBMapParamCompSep(PipelineStage):
                 #Format the inverse noise matrix
                 print('frequency_maps__loc.shape = ',frequency_maps__loc.shape)
                 noise_cov__loc = np.ones_like(frequency_maps__loc)
-                noise_cov__loc_ = np.ones((frequency_maps__loc.shape[0], frequency_maps__loc.shape[1], len(alm_)), dtype='complex')
-                
+                noise_cov_beamed__loc = np.ones_like(frequency_maps__loc)
                 for f in range(frequency_maps__.shape[0]):
                     for s in range(frequency_maps__loc.shape[1]):
                         noise_cov__loc[f,s,:] = np.array([nll[f,l] for l in ell_em])
+                        print('/!\ I should include the effective beam convolution here ... ')
+                        sys.exit()
+                        noise_cov_beamed__loc[f,s,:] = np.array([nll[f,l] for l in ell_em])
             else:
                 print('     ... in pixel space')
                 noise_cov__loc = noise_cov__*1.0
+                noise_cov_beamed__loc = noise_cov_beamed__*1.0
                 frequency_maps__loc = frequency_maps__*1.0
 
-            res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
+            if self.config['common_beam_correction']!=0.0:
+                res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
+                         data=frequency_maps__loc, cov=noise_cov_beamed__loc,
+                            options=options, tol=tol, method=method)
+            else:
+                res = fg.separation_recipes.weighted_comp_sep(components, instrument_,
                          data=frequency_maps__loc, cov=noise_cov__loc,
                             options=options, tol=tol, method=method)
 

@@ -358,17 +358,16 @@ class BBMapSim(PipelineStage):
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
 
                 # should do it for the noise too
-                alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
-                for alm_n in alms_n:
-                    hp.almxfl(alm_n, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
-                noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])
+                # alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                # for alm_n in alms_n:
+                #     hp.almxfl(alm_n, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                # noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])
 
-
-                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_150GHz.fwhm[0]/60), lmax=2*self.config['nside'])
-                alms = hp.map2alm(CMB_template_150GHz, lmax=3*self.config['nside'])
-                for alm_ in alms:
-                    hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
-                CMB_template_150GHz = hp.alm2map(alms, self.config['nside'])   
+                # Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument_150GHz.fwhm[0]/60), lmax=2*self.config['nside'])
+                # alms = hp.map2alm(CMB_template_150GHz, lmax=3*self.config['nside'])
+                # for alm_ in alms:
+                #     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                # CMB_template_150GHz = hp.alm2map(alms, self.config['nside'])   
 
         freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         freq_maps_unbeamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
@@ -392,13 +391,16 @@ class BBMapSim(PipelineStage):
             # we put it to square !
             noise_cov *= noise_cov
 
-        if self.config['noise_cov_beam_correction']:
+        # if self.config['noise_cov_beam_correction']:
+        if self.config['common_beam_correction']!=0.0:
             print('/////////// noise_cov_beam_correction after beam convolution ///////////////')
-            noise_cov = noise_covariance_correction(cov_in=noise_cov, instrument=instrument_config, 
+            noise_cov_beamed = noise_covariance_correction(cov_in=noise_cov, instrument=instrument_config, 
                             common_beam=self.config['common_beam_correction'], nside_in=NSIDE_INPUT_MAP, 
                                 nside_out=self.config['nside'], Nsims=self.config['Nsims_bias'])
-
+        else: noise_cov_beamed = noise_cov*1.0
+        
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
+        noise_cov_beamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         if self.config['pixel_based_noise_cov']:
             noise_cov_pp_v2 = noise_correlation_estimation(self, binary_mask)
@@ -414,6 +416,7 @@ class BBMapSim(PipelineStage):
         hp.write_map(self.get_output('binary_mask_cut'), binary_mask, overwrite=True)
         hp.write_map(self.get_output('frequency_maps'), freq_maps, overwrite=True, column_names=column_names)
         hp.write_map(self.get_output('noise_cov'), noise_cov, overwrite=True, column_names=column_names)
+        hp.write_map(self.get_output('noise_cov_beamed'), noise_cov_beamed, overwrite=True, column_names=column_names)
         hp.write_map(self.get_output('noise_maps'), noise_maps, overwrite=True, column_names=column_names)
         hp.write_map(self.get_output('CMB_template_150GHz'), CMB_template_150GHz, overwrite=True)
         hp.write_map(self.get_output('dust_template_150GHz'), dust_template_150GHz, overwrite=True)

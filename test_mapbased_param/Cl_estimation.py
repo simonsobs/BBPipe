@@ -491,7 +491,6 @@ class BBClEstimation(PipelineStage):
             # fyp_j_noise=get_field(mask_nh*post_compsep_noise[2*comp_j], mask_nh*post_compsep_noise[2*comp_j+1], purify_b=True)
             fyp_j_noise=get_field(mask*post_compsep_noise[2*comp_j], mask*post_compsep_noise[2*comp_j+1], mask_apo, purify_b=True)
             # fyp_j_noise=get_field(post_compsep_noise[2*comp_j], post_compsep_noise[2*comp_j+1], purify_b=True)
-
             Cl_noise.append(compute_master(fyp_i_noise, fyp_j_noise, w)[3])
 
             ind += 1
