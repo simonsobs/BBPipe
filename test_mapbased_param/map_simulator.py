@@ -166,7 +166,7 @@ class BBMapSim(PipelineStage):
     inputs= [('binary_mask',FitsFile),('norm_hits_map', FitsFile),('Cl_BB_prim_r1', FitsFile),('Cl_BB_lens', FitsFile)]
     outputs=[('binary_mask_cut',FitsFile),('frequency_maps',FitsFile),('noise_cov',FitsFile),('noise_maps',FitsFile),\
             ('CMB_template_150GHz',FitsFile),('dust_template_150GHz',FitsFile),('sync_template_150GHz',FitsFile),
-            ('freq_maps_unbeamed', FitsFile), ('instrument', NumpyFile)]
+            ('freq_maps_unbeamed', FitsFile), ('instrument', NumpyFile), ('noise_cov_beamed',FitsFile)]
 
     def run(self) :
 
@@ -398,7 +398,7 @@ class BBMapSim(PipelineStage):
                             common_beam=self.config['common_beam_correction'], nside_in=NSIDE_INPUT_MAP, 
                                 nside_out=self.config['nside'], Nsims=self.config['Nsims_bias'])
         else: noise_cov_beamed = noise_cov*1.0
-        
+
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         noise_cov_beamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
