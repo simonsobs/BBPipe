@@ -121,19 +121,19 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 noise_maps_[f,i_,:] = noise_maps_sim[ind,:]*1.0
                 ind += 1
 
-        if self.config['common_beam_correction']!=0.0:
-            print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
-            Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
-            for f in range(n_cov.shape[0]):
-                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=2*self.config['nside'])
-                alms = hp.map2alm(noise_maps_[f,:,:], lmax=3*self.config['nside'])
-                for alm_ in alms:
-                    hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
-                noise_maps_[f,:,:] = hp.alm2map(alms, self.config['nside'])  
+        # if self.config['common_beam_correction']!=0.0:
+        #     print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
+        #     Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
+        #     for f in range(n_cov.shape[0]):
+        #         Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=2*self.config['nside'])
+        #         alms = hp.map2alm(noise_maps_[f,:,:], lmax=3*self.config['nside'])
+        #         for alm_ in alms:
+        #             hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+        #         noise_maps_[f,:,:] = hp.alm2map(alms, self.config['nside'])  
 
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
-        np.save('noise_maps_bias', noise_maps_)
+        # np.save('noise_maps_bias', noise_maps_)
 
         # compute Cl_noise for each frequency
         print('        -> computing noise power spectrum for each frequency map')
