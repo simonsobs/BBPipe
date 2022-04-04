@@ -449,12 +449,12 @@ class BBMapParamCompSep(PipelineStage):
                         if ((p==obs_pix[0]) and (s==0)): res.invAtNA = np.zeros((res.s.shape[0],res.s.shape[0], res.s.shape[1], res.s.shape[2]))
                         res.invAtNA[:,:,s,p] = inv_AtNA
 
-            # np.save('W_noise', W)
-            # np.save('noise_cov__', noise_cov__)
-            # np.save('A_maxL', A_maxL)
-            # np.save('obs_pix', obs_pix)
-            # np.save('noise_maps_', noise_maps_)
-            # np.save('noise_after_comp_sep', noise_after_comp_sep)
+            np.save('W_noise', W)
+            np.save('noise_cov__', noise_cov__)
+            np.save('A_maxL', A_maxL)
+            np.save('obs_pix', obs_pix)
+            np.save('noise_maps_', noise_maps_)
+            np.save('noise_after_comp_sep', noise_after_comp_sep)
 
             if self.config['highpass_filtering']:
                 print('re-estimating post comp sep sky maps from un-filtered frequency maps')

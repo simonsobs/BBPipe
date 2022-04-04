@@ -220,8 +220,8 @@ class BBREstimation(PipelineStage):
                     pl.loglog( ell_v_loc, norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='true noise post comp sep', linestyle=':', color='Cyan')
                     # true noise bias - observed noise bias 
-                    # pl.loglog( ell_v_loc, norm*np.abs(Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]-Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
-                                                # label='noise difference', linestyle=':', color='purple')
+                    pl.loglog( ell_v_loc, norm*np.abs(Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]-Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
+                                                label='noise difference', linestyle=':', color='purple')
                     # true noise bias on dust
                     # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
@@ -505,9 +505,9 @@ class BBREstimation(PipelineStage):
                                                      label='true CMB noise post comp sep', linestyle=':', color='Cyan')
                         pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='estimated noise post comp sep', linestyle=':', color='DarkBlue')
-                        # pl.loglog( ell_v_loc, np.abs(norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                # - norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
-                                                # label='input noise - estimated noise', linestyle=':', color='DarkBlue')
+                        pl.loglog( ell_v_loc, np.abs(norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
+                                                - norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
+                                                label='input noise - estimated noise', linestyle=':', color='DarkBlue')
 
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
