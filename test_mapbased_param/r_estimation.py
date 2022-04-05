@@ -505,8 +505,7 @@ class BBREstimation(PipelineStage):
                                                      label='true CMB noise post comp sep', linestyle='--', color='Cyan', alpha=0.5)
                         pl.loglog( ell_v_loc, norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                 label='estimated noise post comp sep', linestyle='--', color='DarkBlue', alpha=0.5)
-                        pl.loglog( ell_v_loc, np.abs(norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                                - norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
+                        pl.loglog( ell_v_loc, np.abs(norm*Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] - norm*Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]),
                                                 label='input noise - estimated noise', linestyle=':', color='fuchsia', alpha=0.5)
 
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
@@ -615,8 +614,8 @@ class BBREstimation(PipelineStage):
                 return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
             if self.config['AL_marginalization']:
-                # r_v = np.logspace(-5,0,num=1000)
-                r_v = np.linspace(-0.01,0.1,num=1000)
+                # r_v = np.logspace(-5,0,num=500)
+                r_v = np.linspace(-0.01,0.1,num=500)
                 AL_v = np.linspace(0.75, 1.25, num=len(r_v))
                 r_v =[r_v, AL_v]
             else:
@@ -631,6 +630,7 @@ class BBREstimation(PipelineStage):
                 X,Y = np.meshgrid(r_v[0], r_v[1])
                 levels=[np.min(gridded_chi2), np.min(gridded_chi2)+2.3,np.min(gridded_chi2)+6.17,np.min(gridded_chi2)+11.8]
                 cs = pl.contourf(X, Y, gridded_chi2.T, levels)
+                pl.xscale('log') # log scale for r
                 pl.xlabel('tensor-to-scalar ratio $r$')
                 pl.ylabel('lensing amplitude $A_L$')
                 # pl.xscale('log')
