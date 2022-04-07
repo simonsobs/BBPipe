@@ -305,13 +305,13 @@ class BBMapParamCompSep(PipelineStage):
             mask_patch_ = mask_patches[i_patch]
 
             # filtering masked regions of the patch ... 
-            frequency_maps__ = frequency_maps_*1.0  
+            frequency_maps__ = copy.deepcopy(frequency_maps_)
             frequency_maps__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
-            freq_maps_unbeamed__ = freq_maps_unbeamed_*1.0  
+            freq_maps_unbeamed__ = copy.deepcopy(freq_maps_unbeamed_)
             freq_maps_unbeamed__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
-            noise_cov__ = noise_cov_*1.0
+            noise_cov__ = copy.deepcopy(noise_cov_)
             noise_cov__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
-            noise_cov_beamed__ = noise_cov_beamed_*1.0
+            noise_cov_beamed__ = copy.deepcopy(noise_cov_beamed_)
             noise_cov_beamed__[:,:,np.where(mask_patch_==0)[0]] = hp.UNSEEN
             
             print('actual component separation ... ')

@@ -77,7 +77,8 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             for s in range(2):
                 noise_cov_inv = np.diag(1.0/n_cov[:,s,p])
                 inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
-                W[:,:,s,p] += inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
+                W[:,:,s,p] = inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
+
         np.save('W_noise_bias'+str(i_patch), W)
         np.save('A_maxL_bias'+str(i_patch), A_maxL_loc)
         np.save('n_cov_bias'+str(i_patch), n_cov)
@@ -94,7 +95,6 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 if self.config['knee_mode'] == 2 : knee_mode_loc = None
                 else: knee_mode_loc = self.config['knee_mode']
                 factors = compute_noise_factors(self.config['sensitivity_mode'], knee_mode_loc)
-
             for f in range(len(instrument.frequency)):
                 print('loading noise map for frequency ', str(int(instrument.frequency[f])))
                 if self.config['Nico_noise_combination']:
