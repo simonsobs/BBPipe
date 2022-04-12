@@ -467,6 +467,9 @@ def main():
             r_all.append(r_)
             sigma_all.append(sigma_)
 
+            if len(spectral_parameters.shape) == 1:
+                spectral_parameters = spectral_parameters.shape[np.newaxis]
+
             for i in range(spectral_parameters.shape[0]):
                 Bd_all.append(spectral_parameters[i,0])
                 Bs_all.append(spectral_parameters[i,1])
