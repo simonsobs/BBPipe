@@ -131,7 +131,8 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
         noise_p_beam_ = np.zeros((noise_p.shape[0],noise_p.shape[1], 12*nside_out**2))
         for f in range(noise_p.shape[0]):
             # if nside_out!=nside_in: noise_p_loc = hp.ud_grade(noise_p[f], nside_out=nside_out)
-            # else: noise_p_loc = noise_p[f]*1.0
+            # else: 
+            noise_p_loc = noise_p[f]*1.0
             Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument['fwhm'][f]/60.0), lmax=2*nside_out)
             alms = hp.map2alm(noise_p_loc, lmax=3*nside_out)
             for alm_ in alms:
