@@ -130,8 +130,8 @@ def noise_covariance_correction(cov_in, instrument, common_beam, nside_in, nside
 
         noise_p_beam_ = np.zeros((noise_p.shape[0],noise_p.shape[1], 12*nside_out**2))
         for f in range(noise_p.shape[0]):
-            if nside_out!=nside_in: noise_p_loc = hp.ud_grade(noise_p[f], nside_out=nside_out)
-            else: noise_p_loc = noise_p[f]*1.0
+            # if nside_out!=nside_in: noise_p_loc = hp.ud_grade(noise_p[f], nside_out=nside_out)
+            # else: noise_p_loc = noise_p[f]*1.0
             Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument['fwhm'][f]/60.0), lmax=2*nside_out)
             alms = hp.map2alm(noise_p_loc, lmax=3*nside_out)
             for alm_ in alms:
@@ -305,7 +305,12 @@ class BBMapSim(PipelineStage):
                 # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
                 loc_freq_map = hp.read_map(glob.glob(os.path.join(self.config['combined_directory'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_comb_*.fits'))[0], field=None)
                 NSIDE_INPUT_MAP = hp.npix2nside(len(loc_freq_map[0]))
-                freq_maps[3*f:3*(f+1),:] = hp.ud_grade(loc_freq_map, nside_out=self.config['nside'])
+                alms = hp.map2alm(freq_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
+                for alm_ in alms:
+                    hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
+                freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+                # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(loc_freq_map, nside_out=self.config['nside'])
                 del loc_freq_map
 
         # adding noise
@@ -330,7 +335,13 @@ class BBMapSim(PipelineStage):
                         noise_loc /= np.sqrt(nh/np.max(nh))
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
-                noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
+                # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
+                alms = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
+                for alm_ in alms:
+                    hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
+                noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='white_noise':
             nlev_map = freq_maps*0.0
