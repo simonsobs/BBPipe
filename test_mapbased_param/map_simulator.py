@@ -303,7 +303,7 @@ class BBMapSim(PipelineStage):
             for f in range(len(instrument.frequency)):
                 print('loading combined foregrounds map for frequency ', str(int(instrument.frequency[f])))
                 # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(
-                freq_maps_loc = hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside']
+                freq_maps_loc = hp.read_map(list_of_files[f], field=None)
                 # loc_freq_map = hp.read_map(glob.glob(os.path.join(self.config['combined_directory'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_comb_*.fits'))[0], field=None)
                 NSIDE_INPUT_MAP = hp.npix2nside(len(loc_freq_map[0]))
                 alms = hp.map2alm(freq_maps_loc, lmax=3*self.config['nside'])
