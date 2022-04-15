@@ -336,7 +336,7 @@ class BBMapSim(PipelineStage):
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
                 # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
-                alms = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                alms = hp.map2alm(noise_loc, lmax=3*self.config['nside'])
                 Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
                 for alm_ in alms:
                     hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
