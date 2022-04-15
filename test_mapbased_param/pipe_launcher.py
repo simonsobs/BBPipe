@@ -507,14 +507,14 @@ def main():
         # ax[0,1].set_ylabel('# of sims', fontsize=12)
         # pl.close()
 
-        ax_[0].set_title('r = '+str(round(np.mean(Bd_all),5))+' +/- '+str(round(np.std(Bd_all),5)), fontsize=10)
+        ax_[0].set_title(r'$\beta_d$ = '+str(round(np.mean(Bd_all),5))+' +/- '+str(round(np.std(Bd_all),5)), fontsize=10)
         ax_[0].hist( Bd_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
         ax_[0].axvline(x=1.54, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[0].axvline(x=np.mean(Bd_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[0].set_xlabel(r'$\beta_d$', fontsize=12)
         ax_[0].set_ylabel('# of sims', fontsize=12)
 
-        ax_[1].set_title('r = '+str(round(np.mean(Bs_all),5))+' +/- '+str(round(np.std(Bs_all),5)), fontsize=10)
+        ax_[1].set_title(r'$\beta_s$ = '+str(round(np.mean(Bs_all),5))+' +/- '+str(round(np.std(Bs_all),5)), fontsize=10)
         ax_[1].hist( Bs_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
         ax_[1].axvline(x=-3.1, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[1].axvline(x=np.mean(Bs_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
