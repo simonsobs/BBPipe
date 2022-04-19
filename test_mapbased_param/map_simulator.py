@@ -330,14 +330,6 @@ class BBMapSim(PipelineStage):
 
                 if self.config['Nico_noise_combination']:
                     noise_loc = combine_noise_maps(self.config['isim'], instrument.frequency[f], factors)
-                    breakpoint()
-                    if not self.config['no_inh']:
-                        # renormalize the noise map to take into account the effect of inhomogeneous noise
-                        # noise_loc /= np.sqrt(nh/np.max(nh))
-                        print('rescaling the noise maps with hits map')
-                        nhits_ = hp.ud_grade(nhits, nside_out=hp.npix2nside(noise_loc.shape[1]))
-                        noise_loc /= np.sqrt(nhits_/np.max(nhits_))
-                        breakpoint()
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
                 # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
@@ -345,6 +337,15 @@ class BBMapSim(PipelineStage):
                 Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
                 for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
                 noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+
+                if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
+                    # renormalize the noise map to take into account the effect of inhomogeneous noise
+                    print('rescaling the noise maps with hits map')
+                    # noise_loc /= np.sqrt(nh/np.max(nh))
+                    nhits_nz = np.where(nhits!=0)[0]
+                    noise_maps[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
+                    breakpoint()
+
                 breakpoint()
 
                 print('f=', f, ' NOISE ', noise_maps[3*f:3*(f+1),:])
