@@ -63,8 +63,8 @@ def noise_correlation_estimation(self, binary_mask):
     theta_v = np.arccos(costheta_v)
    
     nh = hp.ud_grade(hp.read_map(self.get_input('norm_hits_map')), nside_out=self.config['nside'])
-    msk=mknm.get_mask(nh, nside_out=self.config['nside'])
-    fsky=np.mean(msk)
+    msk = mknm.get_mask(nh, nside_out=self.config['nside'])
+    fsky = np.mean(msk)
 
     ## grab the noise angular power spectra
     print('estimating N_ell')
@@ -333,7 +333,8 @@ class BBMapSim(PipelineStage):
                     noise_loc = combine_noise_maps(self.config['isim'], instrument.frequency[f], factors)
                     if not self.config['no_inh']:
                         # renormalize the noise map to take into account the effect of inhomogeneous noise
-                        noise_loc /= np.sqrt(nh/np.max(nh))
+                        # noise_loc /= np.sqrt(nh/np.max(nh))
+                        noise_loc /= np.sqrt(nhits/np.max(nhits))
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
                 # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
@@ -343,6 +344,7 @@ class BBMapSim(PipelineStage):
                 noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
 
                 print('f=', f, ' NOISE ', noise_maps[3*f:3*(f+1),:])
+                pl.figure()
                 hp.mollview(noise_maps[3*f,:], sub=131)
                 hp.mollview(noise_maps[3*f+1,:], sub=132)
                 hp.mollview(noise_maps[3*f+2,:], sub=133)
