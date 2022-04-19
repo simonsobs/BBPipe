@@ -343,6 +343,10 @@ class BBMapSim(PipelineStage):
                 noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
 
                 print('f=', f, ' NOISE ', noise_maps[3*f:3*(f+1),:])
+                hp.mollview(noise_maps[3*f,:], sub=131)
+                hp.mollview(noise_maps[3*f+1,:], sub=132)
+                hp.mollview(noise_maps[3*f+2,:], sub=133)
+                pl.show()
 
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='white_noise':
