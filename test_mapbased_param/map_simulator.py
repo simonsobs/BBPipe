@@ -298,8 +298,7 @@ class BBMapSim(PipelineStage):
 
         if self.config['combined_directory']!='':
             freq_maps *= 0.0
-            print('freq_maps.shape = ', freq_maps.shape)
-            print('EXTERNAL SKY-ONLY MAPS LOADED')
+            print('LOADING EXTERNAL SKY-ONLY MAPS')
             for f in range(len(instrument.frequency)):
                 print('loading combined foregrounds map for frequency ', str(int(instrument.frequency[f])))
                 # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
@@ -317,8 +316,8 @@ class BBMapSim(PipelineStage):
         # adding noise
         if self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
             noise_maps = freq_maps*0.0
-            print('noise_maps.shape = ', noise_maps.shape)
-            print('EXTERNAL NOISE-ONLY MAPS LOADED')
+            # print('noise_maps.shape = ', noise_maps.shape)
+            print('LOADING EXTERNAL NOISE-ONLY MAPS')
 
             if self.config['Nico_noise_combination']:
                 if self.config['knee_mode'] == 2 : knee_mode_loc = None
@@ -334,7 +333,8 @@ class BBMapSim(PipelineStage):
                     if not self.config['no_inh']:
                         # renormalize the noise map to take into account the effect of inhomogeneous noise
                         # noise_loc /= np.sqrt(nh/np.max(nh))
-                        noise_loc /= np.sqrt(nhits/np.max(nhits))
+                        nhits_ = hp.ud_grade(nhits, nside_out=hp.npix2nside(noise_loc.shape[1]))
+                        noise_loc /= np.sqrt(nhits_/np.max(nhits_))
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
                 # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
