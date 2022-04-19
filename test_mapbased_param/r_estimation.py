@@ -630,7 +630,7 @@ class BBREstimation(PipelineStage):
                 X,Y = np.meshgrid(r_v[0], r_v[1])
                 levels=[np.min(gridded_chi2), np.min(gridded_chi2)+2.3,np.min(gridded_chi2)+6.17,np.min(gridded_chi2)+11.8]
                 cs = pl.contourf(X, Y, gridded_chi2.T, levels)
-                pl.xscale('log') # log scale for r
+                # pl.xscale('log') # log scale for r
                 pl.xlabel('tensor-to-scalar ratio $r$')
                 pl.ylabel('lensing amplitude $A_L$')
                 # pl.xscale('log')
