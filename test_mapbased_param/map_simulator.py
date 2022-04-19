@@ -312,7 +312,7 @@ class BBMapSim(PipelineStage):
                 # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(loc_freq_map, nside_out=self.config['nside'])
                 del loc_freq_map
 
-            breakpoint()
+            print('f=', f, ' freq_maps = ', freq_maps[3*f:3*(f+1),:])
 
         # adding noise
         if self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
@@ -342,6 +342,8 @@ class BBMapSim(PipelineStage):
                 for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
                 noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
 
+                print('f=', f, ' NOISE ', noise_maps[3*f:3*(f+1),:])
+
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='white_noise':
             nlev_map = freq_maps*0.0
@@ -349,7 +351,7 @@ class BBMapSim(PipelineStage):
                 nlev_map[3*i:3*i+3,:] = np.array([instrument.depth_i[i], instrument.depth_p[i], instrument.depth_p[i]])[:,np.newaxis]*np.ones((3,freq_maps.shape[-1]))
             # nlev_map = np.vstack(([instrument_config['sens_I'], instrument_config['sens_P'], instrument_config['sens_P']]))
             nlev_map /= hp.nside2resol(self.config['nside'], arcmin=True)
-            noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)*binary_mask
+            noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='no_noise': 
             pass
@@ -367,6 +369,9 @@ class BBMapSim(PipelineStage):
                 for alm_ in alms:
                     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
+
+
+                print('f=', f, ' freq_maps = ', freq_maps[3*f:3*(f+1),:])
 
                 # should do it for the noise too
                 # alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
