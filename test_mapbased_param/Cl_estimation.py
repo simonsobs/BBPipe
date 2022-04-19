@@ -49,7 +49,7 @@ def KCMB2RJ(nu):
 
 
 def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo, 
-                            w, n_cov, mask_patches, A_maxL, nhits_raw, ell_eff, 
+                            w, n_cov, mask_patches, A_maxL, nhits, ell_eff, 
                                 instrument):
     """
     this function performs Nsims frequency-noise simulations
@@ -111,15 +111,15 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
                     # renormalize the noise map to take into account the effect of inhomogeneous noise
                     print('rescaling the noise maps with hits map')
-                    nhits_nz = np.where(nhits_raw!=0)[0]
-                    noise_maps_sim[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits_raw[nhits_nz]/np.max(nhits_raw[nhits_nz]))
+                    nhits_nz = np.where(nhits!=0)[0]
+                    noise_maps_sim[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
                     # renormalize the noise map to take into account the effect of inhomogeneous noise
         else:
             # generating frequency-maps noise simulations
             np.random.seed(i)
             nhits, noise_maps_sim, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
                             knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
-                                nside_out=self.config['nside'], norm_hits_map=nhits_raw,
+                                nside_out=self.config['nside'], norm_hits_map=nhits,
                                     no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
 
         # reformating the simulated noise maps 
@@ -288,7 +288,7 @@ class BBClEstimation(PipelineStage):
         Bl_eff = hp.fitsfunc.read_cl(self.get_input('Bl_eff'))
         
         nhits_raw = hp.read_map(self.get_input('norm_hits_map'))
-        # nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
+        nhits = hp.ud_grade(nhits_raw,nside_out=self.config['nside'])
         # nh = mknm.get_mask(nhits, nside_out=self.config['nside'])
         nh=hp.ud_grade(hp.read_map(self.get_input('norm_hits_map')),nside_out=self.config['nside'])
         nhg=hp.smoothing(nh,fwhm=np.pi/180,verbose=False)
@@ -454,7 +454,7 @@ class BBClEstimation(PipelineStage):
         print('estimating noise bias')
         if self.config['common_beam_correction']!=0.0 : print('        with a beam applied on noise power spectra of ', self.config['common_beam_correction'], ' arcmin')
         Cl_noise_bias, Cl_noise_freq = noise_bias_estimation(self, compute_master, get_field, mask, 
-                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits_raw, ell_eff, instrument)
+                mask_apo, w, noise_cov_, mask_patches, A_maxL, nhits, ell_eff, instrument)
                 # , extra_beaming=self.config['common_beam_correction'])
         Cl_noise_bias = np.vstack((ell_eff, np.mean(Cl_noise_bias, axis=0), np.std(Cl_noise_bias, axis=0)))
 
