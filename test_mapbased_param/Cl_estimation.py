@@ -112,7 +112,6 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                     # renormalize the noise map to take into account the effect of inhomogeneous noise
                     print('rescaling the noise maps with hits map')
                     nhits_nz = np.where(nhits!=0)[0]
-                    breakpoint()
                     noise_maps_sim[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
                     # renormalize the noise map to take into account the effect of inhomogeneous noise
         else:
