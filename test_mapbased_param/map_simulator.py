@@ -344,9 +344,6 @@ class BBMapSim(PipelineStage):
                     # noise_loc /= np.sqrt(nh/np.max(nh))
                     nhits_nz = np.where(nhits!=0)[0]
                     noise_maps[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
-                    breakpoint()
-
-                breakpoint()
 
                 print('f=', f, ' NOISE ', noise_maps[3*f:3*(f+1),:])
                 # pl.figure()
