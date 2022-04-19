@@ -99,12 +99,21 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 print('loading noise map for frequency ', str(int(instrument.frequency[f])))
                 if self.config['Nico_noise_combination']:
                     noise_loc = combine_noise_maps(i, instrument.frequency[f], factors)
-                    if not self.config['no_inh']:
-                        # renormalize the noise map to take into account the effect of inhomogeneous noise
-                        noise_loc /= np.sqrt(nhits_raw/np.max(nhits_raw))
                 else:
                     noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
-                noise_maps_sim[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
+                # noise_maps_sim[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
+                
+                alms = hp.map2alm(noise_loc, lmax=3*self.config['nside'])
+                Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
+                for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
+                noise_maps_sim[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+
+                if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
+                    # renormalize the noise map to take into account the effect of inhomogeneous noise
+                    print('rescaling the noise maps with hits map')
+                    nhits_nz = np.where(nhits_raw!=0)[0]
+                    noise_maps_sim[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits_raw[nhits_nz]/np.max(nhits_raw[nhits_nz]))
+                    # renormalize the noise map to take into account the effect of inhomogeneous noise
         else:
             # generating frequency-maps noise simulations
             np.random.seed(i)
