@@ -310,8 +310,9 @@ class BBMapSim(PipelineStage):
                 for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
                 # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(loc_freq_map, nside_out=self.config['nside'])
-                breakpoint()
                 del loc_freq_map
+
+            breakpoint()
 
         # adding noise
         if self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
