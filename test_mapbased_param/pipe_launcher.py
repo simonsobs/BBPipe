@@ -99,6 +99,7 @@ def grabargs():
     parser.add_argument("--time", type=str, help = "duration of the submitted job", default="01:00:00")
     parser.add_argument("--noise_cov_beam_correction", action='store_true', help = "correct the noise covariance to deal with the common beam convolution", default=False)
     parser.add_argument("--external_noise_sims_for_noise_bias", action='store_true', help = "use external noise simulations to estimate the noise bias angular spectrum", default=False)
+    parser.add_argument("--bypass_noise_cov", action='store_true', help = "use the exact input noise simulation to estimate the noise covariance", default=False)
 
     args = parser.parse_args()
 
@@ -187,7 +188,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
                 Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
-                external_noise_sims_for_noise_bias=False):
+                external_noise_sims_for_noise_bias=False, bypass_noise_cov=False):
     '''
     function generating the config file
     '''
@@ -236,6 +237,7 @@ BBMapSim:
     pixel_based_noise_cov: '''+str(pixel_based_noise_cov)+'''
     isim:  '''+str(isim)+'''
     noise_cov_beam_correction: '''+str(noise_cov_beam_correction)+'''
+    bypass_noise_cov: '''+str(bypass_noise_cov)+'''
 
 BBMapParamCompSep:
     nside_patch: '''+str(nside_patch)+'''
@@ -390,7 +392,8 @@ def main():
                 harmonic_comp_sep=args.harmonic_comp_sep, common_beam_correction=args.common_beam_correction,\
                 effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
                 Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction,
-                external_noise_sims_for_noise_bias=args.external_noise_sims_for_noise_bias)
+                external_noise_sims_for_noise_bias=args.external_noise_sims_for_noise_bias, \
+                bypass_noise_cov=bypass_noise_cov)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
