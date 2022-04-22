@@ -363,6 +363,7 @@ class BBMapSim(PipelineStage):
             freq_maps += noise_maps*binary_mask
 
         freq_maps_unbeamed = freq_maps*1.0
+        noise_maps_beamed = noise_maps*1.0
 
         if self.config['common_beam_correction']!=0.0:
             print('  -> common beam correction: correcting for frequency-dependent beams and convolving with a common beam')
@@ -373,6 +374,12 @@ class BBMapSim(PipelineStage):
                 for alm_ in alms:
                     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
+
+                alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                for alm_ in alms:
+                    hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                noise_maps_beamed[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
+
 
 
                 print('f=', f, ' freq_maps = ', freq_maps[3*f:3*(f+1),:])
@@ -392,12 +399,14 @@ class BBMapSim(PipelineStage):
         freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         freq_maps_unbeamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         noise_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
+        noise_maps_beamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         CMB_template_150GHz[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         # noise covariance 
         if self.config['external_noise_cov']:
             noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
         elif self.config['bypass_noise_cov']:
+            noise_cov_beamed = noise_maps_beamed**2
             noise_cov = noise_maps**2
         else:
             noise_cov = freq_maps*0.0
