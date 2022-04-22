@@ -405,6 +405,7 @@ class BBMapSim(PipelineStage):
         # noise covariance 
         if self.config['external_noise_cov']:
             noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
+            noise_cov_beamed = noise_cov*1.0
         elif self.config['bypass_noise_cov']:
             noise_cov_beamed = noise_maps_beamed**2
             noise_cov = noise_maps**2
@@ -421,6 +422,7 @@ class BBMapSim(PipelineStage):
                 noise_cov /= np.sqrt(nhits/np.amax(nhits))
             # we put it to square !
             noise_cov *= noise_cov
+            noise_cov_beamed = noise_cov*1.0
 
         # if self.config['noise_cov_beam_correction']:
         if ((self.config['common_beam_correction']!=0.0) and (not self.config['bypass_noise_cov'])):
@@ -428,7 +430,7 @@ class BBMapSim(PipelineStage):
             noise_cov_beamed = noise_covariance_correction(cov_in=noise_cov, instrument=instrument_config, 
                             common_beam=self.config['common_beam_correction'], nside_in=NSIDE_INPUT_MAP, 
                                 nside_out=self.config['nside'], Nsims=self.config['Nsims_bias'])
-        else: noise_cov_beamed = noise_cov*1.0
+        # else: noise_cov_beamed = noise_cov*1.0
 
 
         noise_cov[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
