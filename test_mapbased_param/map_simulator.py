@@ -423,7 +423,7 @@ class BBMapSim(PipelineStage):
             noise_cov *= noise_cov
 
         # if self.config['noise_cov_beam_correction']:
-        if self.config['common_beam_correction']!=0.0:
+        if ((self.config['common_beam_correction']!=0.0) and (not self.config['bypass_noise_cov'])):
             print('/////////// noise_cov_beam_correction after beam convolution ///////////////')
             noise_cov_beamed = noise_covariance_correction(cov_in=noise_cov, instrument=instrument_config, 
                             common_beam=self.config['common_beam_correction'], nside_in=NSIDE_INPUT_MAP, 
