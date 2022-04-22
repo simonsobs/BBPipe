@@ -85,10 +85,8 @@ def noise_covariance_estimation(self, map_shape, instrument, nhits):
                     hp.almxfl(alms_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
                 noise_maps_beamed[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])   
 
-
         noise_cov += noise_maps**2
-        noise_cov_beamed  += noise_maps_beamed**2
-
+        noise_cov_beamed += noise_maps_beamed**2
 
     return noise_cov/self.config['Nsims_bias'], noise_cov_beamed/self.config['Nsims_bias']
 
@@ -480,7 +478,16 @@ class BBMapSim(PipelineStage):
             noise_cov_beamed = noise_cov*1.0
         elif self.config['bypass_noise_cov']:
             print('/// BYPASS NOISE COV')
-            noise_cov, noise_cov_beamed = noise_covariance_estimation(self, freq_maps.shape, instrument, nhits)
+            tag = ''
+            for f in instrument.frequency: tag += str(f)+'_'
+            for key in ['common_beam_correction', 'no_inh', 'Nico_noise_combination', 'Nsims_bias', 'nside']:
+                tag += key+'_'+self.config[key]
+            path_to_noise_cov = os.path.join('/global/cscratch/sd/josquin/bypass_noise_cov_'+tag)
+            if not os.path.exists(path_to_noise_cov+'.npy'):
+                noise_cov, noise_cov_beamed = noise_covariance_estimation(self, freq_maps.shape, instrument, nhits)
+                np.save(path_to_noise_cov, (noise_cov, noise_cov_beamed) )
+            else: 
+                noise_cov, noise_cov_beamed = np.load(path_to_noise_cov+'.npy')
         else:
             print('/// WHITE NOISE COV')
             noise_cov = freq_maps*0.0
