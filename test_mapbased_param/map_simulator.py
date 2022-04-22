@@ -23,12 +23,13 @@ sys.path.append('/global/cfs/cdirs/sobs/users/krach/BBSims/NOISE_20201207/')
 from combine_noise import *
 
 
-def noise_covariance_estimation(self, map_shape, instrument, nhits_nz):
+def noise_covariance_estimation(self, map_shape, instrument, nhits):
     """
     Estimation of the noise covariance matrix
     """
     noise_cov = np.zeros(map_shape)
     noise_cov_beamed = np.zeros(map_shape)
+    nhits_nz = np.where(nhits!=0)[0]
 
     for i_sim in range(self.config['Nsims_bias']):
 
@@ -58,9 +59,6 @@ def noise_covariance_estimation(self, map_shape, instrument, nhits_nz):
 
                 if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
                     # renormalize the noise map to take into account the effect of inhomogeneous noise
-                    # print('rescaling the noise maps with hits map')
-
-                    nhits_nz = np.where(nhits!=0)[0]
                     noise_maps[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
 
         elif self.config['noise_option']=='white_noise':
@@ -482,7 +480,7 @@ class BBMapSim(PipelineStage):
             noise_cov_beamed = noise_cov*1.0
         elif self.config['bypass_noise_cov']:
             print('/// BYPASS NOISE COV')
-            noise_cov, noise_cov_beamed = noise_covariance_estimation(self, freq_maps.shape, instrument, nhits_nz)
+            noise_cov, noise_cov_beamed = noise_covariance_estimation(self, freq_maps.shape, instrument, nhits)
         else:
             print('/// WHITE NOISE COV')
             noise_cov = freq_maps*0.0
