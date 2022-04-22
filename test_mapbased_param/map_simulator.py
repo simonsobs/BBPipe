@@ -376,8 +376,8 @@ class BBMapSim(PipelineStage):
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
 
                 alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
-                for alms_n in alms:
-                    hp.almxfl(alms_n, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                for alms_ in alms_n:
+                    hp.almxfl(alms_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
                 noise_maps_beamed[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
 
                 print('f=', f, ' freq_maps = ', freq_maps[3*f:3*(f+1),:])
