@@ -23,10 +23,83 @@ sys.path.append('/global/cfs/cdirs/sobs/users/krach/BBSims/NOISE_20201207/')
 from combine_noise import *
 
 
-def noise_covariance_estimation(self, binary_mask):
+def noise_covariance_estimation(self, map_shape, instrument):
+    """
+    Estimation of the noise covariance matrix
+    """
+    noise_cov = np.zeros(map_shape)
+    noise_cov_beamed = np.zeros(map_shape)
+
+    for i_sim in range(self.config['Nsims_bias']):
+
+        if self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
+            noise_maps = np.zeros(map_shape)
+            # print('noise_maps.shape = ', noise_maps.shape)
+            print('LOADING EXTERNAL NOISE-ONLY MAPS')
+
+            if self.config['Nico_noise_combination']:
+                if self.config['knee_mode'] == 2 : knee_mode_loc = None
+                else: knee_mode_loc = self.config['knee_mode']
+                factors = compute_noise_factors(self.config['sensitivity_mode'], knee_mode_loc)
+
+            for f in range(len(instrument.frequency)):
+                print('loading noise map for frequency ', str(int(instrument.frequency[f])))
+                # noise_maps[3*f:3*(f+1),:] = hp.ud_grade(hp.read_map(list_of_files[f], field=None), nside_out=self.config['nside'])
+
+                if self.config['Nico_noise_combination']:
+                    noise_loc = combine_noise_maps(i_sim, instrument.frequency[f], factors)
+                else:
+                    noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
+
+                alms = hp.map2alm(noise_loc, lmax=3*self.config['nside'])
+                Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
+                for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
+                noise_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+
+                if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
+                    # renormalize the noise map to take into account the effect of inhomogeneous noise
+                    print('rescaling the noise maps with hits map')
+
+                    nhits_nz = np.where(nhits!=0)[0]
+                    noise_maps[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
+
+        elif self.config['noise_option']=='white_noise':
+            np.random.seed(i_sim)
+            nlev_map = np.zeros(map_shape)
+            for f in range(len(instrument.frequency)):
+                nlev_map[3*f:3*f+3,:] = np.array([instrument.depth_i[f], instrument.depth_p[f], instrument.depth_p[f]])[:,np.newaxis]*np.ones((3,map_shape[-1]))
+            nlev_map /= hp.nside2resol(self.config['nside'], arcmin=True)
+            noise_maps = np.random.normal(freq_maps*0.0, nlev_map, map_shape)
+
+        elif self.config['noise_option']=='no_noise': 
+            pass
+
+        noise_maps_beamed = noise_maps*1.0
+
+        if self.config['common_beam_correction']!=0.0:
+
+            Bl_gauss_common = hp.gauss_beam( np.radians(self.config['common_beam_correction']/60), lmax=2*self.config['nside'])        
+            for f in range(len(instrument.frequency)):
+                Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=2*self.config['nside'])
+
+                alms_n = hp.map2alm(noise_maps_beamed[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                for alms_ in alms_n:
+                    hp.almxfl(alms_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                noise_maps_beamed[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])   
+
+
+        noise_cov += noise_maps**2
+        noise_cov_beamed  += noise_maps_beamed**2
+
+
+    return noise_cov/self.config['Nsims_bias'], noise_cov_beamed/self.config['Nsims_bias']
+
+
+def pp_noise_covariance_estimation(self, binary_mask):
     """
     Estimation of the pixel-based covariance matrix
     """
+
     for i in range(self.config['Nsims_bias']):
         # looping over simulations
         print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
@@ -54,6 +127,9 @@ def noise_covariance_estimation(self, binary_mask):
 def great_circle_distance(coord1, coord2):
 
     return np.arccos( np.sin(coord1[1])*np.sin(coord2[1]) + np.cos(coord1[1])*np.cos(coord2[1])*np.cos(coord2[0]-coord1[0]) )
+
+
+
 
 def noise_correlation_estimation(self, binary_mask):
     from scipy.special import legendre
@@ -345,8 +421,7 @@ class BBMapSim(PipelineStage):
                     nhits_nz = np.where(nhits!=0)[0]
                     noise_maps[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
 
-                print('f=', f, ' NOISE ', noise_maps[3*f:3*(f+1),:])
-
+                # print('f=', f, ' NOISE ', noise_maps[3*f:3*(f+1),:])
 
             freq_maps += noise_maps*binary_mask
         elif self.config['noise_option']=='white_noise':
@@ -375,12 +450,12 @@ class BBMapSim(PipelineStage):
                     hp.almxfl(alm_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
                 freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])   
 
-                alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
-                for alms_ in alms_n:
-                    hp.almxfl(alms_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
-                noise_maps_beamed[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])   
-
                 print('f=', f, ' freq_maps = ', freq_maps[3*f:3*(f+1),:])
+
+                # alms_n = hp.map2alm(noise_maps_beamed[3*f:3*(f+1),:], lmax=3*self.config['nside'])
+                # for alms_ in alms_n:
+                #     hp.almxfl(alms_, Bl_gauss_common/Bl_gauss_fwhm, inplace=True)             
+                # noise_maps_beamed[3*f:3*(f+1),:] = hp.alm2map(alms_n, self.config['nside'])   
 
                 # should do it for the noise too
                 # alms_n = hp.map2alm(noise_maps[3*f:3*(f+1),:], lmax=3*self.config['nside'])
@@ -397,7 +472,7 @@ class BBMapSim(PipelineStage):
         freq_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         freq_maps_unbeamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         noise_maps[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
-        noise_maps_beamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
+        # noise_maps_beamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
         CMB_template_150GHz[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         # noise covariance 
@@ -405,8 +480,7 @@ class BBMapSim(PipelineStage):
             noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
             noise_cov_beamed = noise_cov*1.0
         elif self.config['bypass_noise_cov']:
-            noise_cov_beamed = noise_maps_beamed**2
-            noise_cov = noise_maps**2
+            noise_cov, noise_cov_beamed = noise_covariance_estimation(self, freq_maps.shape, instrument)
         else:
             noise_cov = freq_maps*0.0
             # nlev /= hp.nside2resol(self.config['nside'], arcmin=True)
@@ -435,10 +509,10 @@ class BBMapSim(PipelineStage):
         noise_cov_beamed[:,np.where(binary_mask==0)[0]] = hp.UNSEEN
 
         if self.config['pixel_based_noise_cov']:
-            noise_cov_pp_v2 = noise_correlation_estimation(self, binary_mask)
+            noise_cov_pp_v2 = pp_noise_correlation_estimation(self, binary_mask)
             np.save('noise_cov_pp_v2', noise_cov_pp_v2)
 
-            noise_cov_pp = noise_covariance_estimation(self, binary_mask)
+            noise_cov_pp = pp_noise_covariance_estimation(self, binary_mask)
             np.save('noise_cov_pp', noise_cov_pp)
 
         # save on disk frequency maps, noise maps, noise_cov, binary_mask
