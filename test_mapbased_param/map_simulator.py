@@ -35,7 +35,7 @@ def noise_covariance_estimation(self, map_shape, instrument):
         if self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
             noise_maps = np.zeros(map_shape)
             # print('noise_maps.shape = ', noise_maps.shape)
-            print('LOADING EXTERNAL NOISE-ONLY MAPS')
+            print('NOISE COV ESTIMATION LOADING EXTERNAL NOISE-ONLY MAPS, SIM#',i_sim,'/',self.config['Nsims_bias'])
 
             if self.config['Nico_noise_combination']:
                 if self.config['knee_mode'] == 2 : knee_mode_loc = None
@@ -58,7 +58,7 @@ def noise_covariance_estimation(self, map_shape, instrument):
 
                 if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
                     # renormalize the noise map to take into account the effect of inhomogeneous noise
-                    print('rescaling the noise maps with hits map')
+                    # print('rescaling the noise maps with hits map')
 
                     nhits_nz = np.where(nhits!=0)[0]
                     noise_maps[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
