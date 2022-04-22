@@ -477,11 +477,14 @@ class BBMapSim(PipelineStage):
 
         # noise covariance 
         if self.config['external_noise_cov']:
+            print('/// EXT NOISE COV')
             noise_cov = hp.read_map(self.config['external_noise_cov'], field=None)
             noise_cov_beamed = noise_cov*1.0
         elif self.config['bypass_noise_cov']:
+            print('/// BYPASS NOISE COV')
             noise_cov, noise_cov_beamed = noise_covariance_estimation(self, freq_maps.shape, instrument)
         else:
+            print('/// WHITE NOISE COV')
             noise_cov = freq_maps*0.0
             # nlev /= hp.nside2resol(self.config['nside'], arcmin=True)
             noise_cov[::3,:] = nlev[:,np.newaxis]/np.sqrt(2.0)
