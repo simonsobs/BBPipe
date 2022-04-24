@@ -490,6 +490,7 @@ class BBREstimation(PipelineStage):
                         pl.figure( figsize=(10,7), facecolor='w', edgecolor='k' )
                         ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
                         norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
+                        print('doing the figure. r_loc=', r_loc, ' and AL_loc = ', AL_loc)
                         pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                      label='primordial BB, r = '+str(r_loc)[:6], linestyle='--', color='Purple', linewidth=2.0 )
                         pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
@@ -609,7 +610,13 @@ class BBREstimation(PipelineStage):
                     ind_sigma = np.argmin(np.abs( (logL[np.argmin(logL):] - logL[np.argmin(logL)]) - 1.00 ))    
                     sigma_r_fit =  r_v[ind_sigma+np.argmin(logL)] - r_fit
 
+                print('i am inside the function and r_fit is = ', r_fit)
+                print('going to produce the figure now ... ')
+
                 likelihood_on_r_computation( r_fit, make_figure=True )
+
+
+                print('i am inside the function, before the "return", and r_fit is = ', r_fit)
 
                 return r_fit, sigma_r_fit, likelihood_on_r, chi2
 
