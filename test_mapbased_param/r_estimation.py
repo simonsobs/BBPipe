@@ -491,7 +491,7 @@ class BBREstimation(PipelineStage):
                         ell_v_loc = ell_v[(ell_v>=lmin)&(ell_v<=lmax)]
                         norm = ell_v_loc*(ell_v_loc+1)/2/np.pi
                         pl.loglog( ell_v_loc, norm*bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
-                                     label='primordial BB, r = '+str(r_loc)[:5], linestyle='--', color='Purple', linewidth=2.0 )
+                                     label='primordial BB, r = '+str(r_loc)[:6], linestyle='--', color='Purple', linewidth=2.0 )
                         pl.loglog( ell_v_loc, norm*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])], 
                                     label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
                         if self.config['AL_marginalization']:
