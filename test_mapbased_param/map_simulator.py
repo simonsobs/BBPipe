@@ -482,7 +482,7 @@ class BBMapSim(PipelineStage):
             for f in instrument.frequency: tag += str(f)+'_'
             for key in ['common_beam_correction', 'no_inh', 'Nico_noise_combination', 'Nsims_bias', 'nside', 'sensitivity_mode', 'knee_mode']:
                 tag += key+'_'+str(self.config[key])
-            path_to_noise_cov = os.path.join('/global/cscratch/sd/josquin/bypass_noise_cov_'+tag)
+            path_to_noise_cov = os.path.join('/global/cscratch1/sd/josquin/bypass_noise_cov_'+tag)
             if not os.path.exists(path_to_noise_cov+'.npy'):
                 print('noise covariance is not on disk yet. Computing it now.')
                 noise_cov, noise_cov_beamed = noise_covariance_estimation(self, freq_maps.shape, instrument, nhits)
