@@ -79,10 +79,10 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 inv_AtNA = np.linalg.inv(A_maxL_loc.T.dot(noise_cov_inv).dot(A_maxL_loc))
                 W[:,:,s,p] = inv_AtNA.dot(A_maxL_loc.T ).dot(noise_cov_inv)
 
-        np.save('W_noise_bias'+str(i_patch), W)
-        np.save('A_maxL_bias'+str(i_patch), A_maxL_loc)
-        np.save('n_cov_bias'+str(i_patch), n_cov)
-        np.save('obs_pix_bias'+str(i_patch), obs_pix)
+        # np.save('W_noise_bias'+str(i_patch), W)
+        # np.save('A_maxL_bias'+str(i_patch), A_maxL_loc)
+        # np.save('n_cov_bias'+str(i_patch), n_cov)
+        # np.save('obs_pix_bias'+str(i_patch), obs_pix)
     # can we call fgbuster.algebra.W() or fgbuster.algebra.Wd() directly?
     Cl_noise_bias = []
     for i in range(self.config['Nsims_bias']):
@@ -142,7 +142,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
 
         # only keeping Q and U
         noise_maps_ = noise_maps_[:,1:,:]
-        np.save('noise_maps_bias', noise_maps_)
+        # np.save('noise_maps_bias', noise_maps_)
 
         # compute Cl_noise for each frequency
         print('        -> computing noise power spectrum for each frequency map')
@@ -161,7 +161,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
                 for s in range(2):
                     noise_after_comp_sep[:,s,p] = W[:,:,s,p].dot(noise_maps_[:,s,p])
 
-        np.save('noise_after_comp_sep_bias', noise_after_comp_sep)
+        # np.save('noise_after_comp_sep_bias', noise_after_comp_sep)
 
         # compute corresponding spectra
         # fn = get_field_func(mask*Q_noise_cmb, mask*U_noise_cmb, mask_apo)
