@@ -100,6 +100,7 @@ def grabargs():
     parser.add_argument("--noise_cov_beam_correction", action='store_true', help = "correct the noise covariance to deal with the common beam convolution", default=False)
     parser.add_argument("--external_noise_sims_for_noise_bias", action='store_true', help = "use external noise simulations to estimate the noise bias angular spectrum", default=False)
     parser.add_argument("--bypass_noise_cov", action='store_true', help = "use the exact input noise simulation to estimate the noise covariance", default=False)
+    parser.add_argument("--lmax", type=int, help = "lmax for the harmonic analysis", default=1024)
 
     args = parser.parse_args()
 
@@ -188,7 +189,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
                 Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
-                external_noise_sims_for_noise_bias=False, bypass_noise_cov=False):
+                external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmax=1024):
     '''
     function generating the config file
     '''
@@ -203,7 +204,7 @@ global:
     frequencies: '''+str(frequencies)+'''
     nside: '''+str(nside)+'''
     lmin: 30
-    lmax: '''+str(int(2*nside))+'''
+    lmax: '''+str(lmax)+'''
     nlb: '''+str(nlb)+'''
     custom_bins: True
     noise_option: \''''+str(noise_option)+'''\'
@@ -361,6 +362,9 @@ def main():
     print('rank = ', rank, ' and sim_splits = ', simulations_split[rank])
     print('#'*10)
 
+    if args.lmax != int(2*args.nside): lmax_loc = int(2*args.nside)
+    else: lmax_loc = args.lmax
+
     ####################
     for sim in simulations_split[rank]:
         id_tag_rank = format(rank, '05d')
@@ -393,7 +397,7 @@ def main():
                 effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
                 Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction,
                 external_noise_sims_for_noise_bias=args.external_noise_sims_for_noise_bias, \
-                bypass_noise_cov=args.bypass_noise_cov)
+                bypass_noise_cov=args.bypass_noise_cov, lmax=lmax_loc)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
