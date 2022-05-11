@@ -371,6 +371,15 @@ def main():
         id_tag_sim = format(sim, '05d')
         id_tag = args.tag+'_'+id_tag_rank+'_'+id_tag_sim
         print('id_tag = ', id_tag)
+
+        # submit the job if the final products have not be produced already
+        if os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
+            print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
+            continue
+        elif args.force_histogram:
+            print(' force histogram option = not submitting the job ')
+            continue
+
         # create test.yml
         generate_pipe_yml(id_tag, path_to_temp_files=args.path_to_temp_files, 
             path_to_binary_mask=args.path_to_binary_mask, path_to_norm_hits=args.path_to_norm_hits, 
@@ -427,14 +436,7 @@ def main():
         fin.close()
         fout.close()
 
-        # submit the job if the final products have not be produced already
-        if os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
-            print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
-        elif args.force_histogram:
-            print(' force histogram option = not submitting the job ')
-            continue
-        else:
-            p = os.system('sbatch batch_'+id_tag+".sh")
+        p = os.system('sbatch batch_'+id_tag+".sh")
 
     ####################
     if mpi: barrier()
