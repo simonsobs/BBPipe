@@ -410,7 +410,7 @@ def main():
                 effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
                 Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction,
                 external_noise_sims_for_noise_bias=args.external_noise_sims_for_noise_bias, \
-                bypass_noise_cov=args.bypass_noise_cov, lmax=lmax_loc)
+                bypass_noise_cov=args.bypass_noise_cov, lmax=lmax_loc, exact_noise_bias=args.exact_noise_bias)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
