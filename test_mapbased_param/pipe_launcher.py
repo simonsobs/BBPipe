@@ -101,6 +101,7 @@ def grabargs():
     parser.add_argument("--external_noise_sims_for_noise_bias", action='store_true', help = "use external noise simulations to estimate the noise bias angular spectrum", default=False)
     parser.add_argument("--bypass_noise_cov", action='store_true', help = "use the exact input noise simulation to estimate the noise covariance", default=False)
     parser.add_argument("--lmax", type=int, help = "lmax for the harmonic analysis", default=1024)
+    parser.add_argument("--exact_noise_bias"action='store_true', help = "use the exact same noise realization to estimate the noise bias", default=False)
 
     args = parser.parse_args()
 
@@ -189,7 +190,8 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
                 Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
-                external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmax=1024):
+                external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmax=1024, 
+                exact_noise_bias=False):
     '''
     function generating the config file
     '''
@@ -258,6 +260,8 @@ BBClEstimation:
     extra_apodization: '''+str(extra_apodization)+'''
     mask_apo: \''''+mask_apo+'''\'
     external_noise_sims_for_noise_bias: '''+str(external_noise_sims_for_noise_bias)+'''
+    isim:  '''+str(isim)+'''
+    exact_noise_bias: '''+str(exact_noise_bias)+'''
 
 BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
