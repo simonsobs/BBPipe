@@ -412,9 +412,11 @@ class BBClEstimation(PipelineStage):
             # Bl_loc = []
             Bl_loc_ = []
             for f in range(len(self.config['frequencies'])):
+                # the frequency dependent beam
                 Bl_gauss_fwhm = hp.gauss_beam( np.radians(instrument.fwhm[f]/60), lmax=3*self.config['nside'])
-                # Bl_loc.append( (1.0/Bl_gauss_fwhm)**2 )
-                Bl_loc_.append( Bl_gauss_fwhm )
+                # the pixel window function that was applied initially to the input frequency maps (during downgrading)
+                Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=3*self.config['nside'])
+                Bl_loc_.append( Bl_gauss_fwhm*Bl_gauss_pix )
             # AtBlA = np.einsum('fi, fl, fj -> lij', np.mean(A_maxL, axis=0), np.array(Bl_loc), np.mean(A_maxL, axis=0))
             # AtBlA = np.einsum('fi, fl, fj -> lij', A_maxL, np.array(Bl_loc), A_maxL)
             # inv_AtBlA = np.linalg.inv(AtBlA)
