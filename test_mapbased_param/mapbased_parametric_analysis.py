@@ -506,11 +506,11 @@ class BBMapParamCompSep(PipelineStage):
                 for j in range(ress.shape[1]):
                     ress[i,j,np.where(ress[i,j,:]==hp.UNSEEN)[0]] = 0.0
                     ress[i,j,np.where(ress[i,j,:]!=ress[i,j,:])[0]] = 0.0
-            print('maps_estimated = ',maps_estimated)
+            # print('maps_estimated = ',maps_estimated)
             maps_estimated += ress.reshape((res.s.shape[0]*res.s.shape[1], res.s.shape[2]))
-            for i in range(maps_estimated.shape[0]):
-                print(np.where(maps_estimated[i]==hp.UNSEEN)[0])
-            print('maps_estimated = ',maps_estimated)
+            # for i in range(maps_estimated.shape[0]):
+                # print(np.where(maps_estimated[i]==hp.UNSEEN)[0])
+            # print('maps_estimated = ',maps_estimated)
 
             # reshaping and saving the covariance matrix (reorganization of the invAtNA matrix)
             # so that it is (n_stokes x n_components )^2 for each sky pixel
