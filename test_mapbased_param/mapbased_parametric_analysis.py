@@ -128,7 +128,7 @@ class BBMapParamCompSep(PipelineStage):
                 ('instrument', NumpyFile)]
     outputs=[('post_compsep_maps',FitsFile), ('post_compsep_cov',FitsFile), ('fitted_spectral_parameters',TextFile),
                  ('A_maxL',NumpyFile),('post_compsep_noise',FitsFile), ('mask_patches', FitsFile),
-                 ('Bl_eff', FitsFile), ('W', NumpyFile)]
+                 ('Bl_eff', FitsFile), ('W', NumpyFile), ('Wpix', NumpyFile)]
 
     def run(self) :
         #Read input mask
@@ -544,7 +544,8 @@ class BBMapParamCompSep(PipelineStage):
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
-        np.save(self.get_output('W'), W_)
+        np.save(self.get_output('W'), W)
+        np.save(self.get_output('Wpix'), W_)
 
         hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)
