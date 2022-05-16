@@ -366,7 +366,7 @@ def main():
     print('rank = ', rank, ' and sim_splits = ', simulations_split[rank])
     print('#'*10)
 
-    if args.lmax != int(2*args.nside): lmax_loc = int(2*args.nside)
+    if args.lmax > int(2*args.nside): lmax_loc = int(2*args.nside)
     else: lmax_loc = args.lmax
 
     ####################
