@@ -142,8 +142,8 @@ class BBREstimation(PipelineStage):
 
         # Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[2:3*self.config['nside']+2])
         Cl_BB_lens_bin = bins.bin_cell(self.config['A_lens']*Cl_BB_lens[:3*self.config['nside']])
-        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v_eff>=lmin)&(ell_v_eff<=lmax)]
-        ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v_eff>=lmin)&(ell_v_eff<=lmax)]*0.0
+        ClBB_model_other_than_prim = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]
+        ClBB_model_other_than_prim_and_lens = Cl_BB_lens_bin[(ell_v>=lmin)&(ell_v<=lmax)]*0.0
 
         if self.config['noise_option']!='no_noise': 
             """
@@ -511,8 +511,8 @@ class BBREstimation(PipelineStage):
                         # pl.loglog( ell_v_loc, norm*Cl_noise[2][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])],
                                                      # label='actual dust noise post comp sep', linestyle=':', color='DarkGray')
                         pl.loglog( ell_v_loc, norm*Cl_dust_obs, label='estimated dust template @ 150GHz', linestyle='-', color='DarkGray', linewidth=2.0, alpha=0.8)
-                        pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz, label='input CMB @ 150GHz', linestyle='-', color='maroon', linewidth=2.0, alpha=0.8)
-                        pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] - Cl_CMB_template_150GHz), label='estimated noiseless residuals', color='red', linestyle=':', linewidth=2.0, alpha=0.8)
+                        # pl.loglog( ell_v_loc, norm*Cl_CMB_template_150GHz, label='input CMB @ 150GHz', linestyle='-', color='maroon', linewidth=2.0, alpha=0.8)
+                        # pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])] - Cl_CMB_template_150GHz), label='estimated noiseless residuals', color='red', linestyle=':', linewidth=2.0, alpha=0.8)
                         
                         pl.loglog( ell_v_loc, norm*(ClBB_obs-Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), label='observed BB - noise', color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                         pl.loglog( ell_v_loc, norm*ClBB_obs, label='observed BB', color='red', linestyle='--', linewidth=2.0, alpha=0.8)

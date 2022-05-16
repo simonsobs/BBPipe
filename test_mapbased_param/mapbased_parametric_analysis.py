@@ -544,7 +544,7 @@ class BBMapParamCompSep(PipelineStage):
 
         ## SAVING PRODUCTS
         np.save(self.get_output('A_maxL'), A_maxL_v)
-        np.save(self.get_output('W'), W)
+        np.save(self.get_output('W'), W_)
 
         hp.write_map(self.get_output('mask_patches'), mask_patches, overwrite=True)
         hp.write_map(self.get_output('post_compsep_noise'), noise_after_comp_sep_, overwrite=True)

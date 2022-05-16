@@ -380,14 +380,16 @@ class BBMapSim(PipelineStage):
                 alms = hp.map2alm(loc_freq_map, lmax=3*self.config['nside'])
                 Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
                 for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
-                freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+                freq_maps[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])
                 # freq_maps[3*f:3*(f+1),:] = hp.ud_grade(loc_freq_map, nside_out=self.config['nside'])
                 del loc_freq_map
 
             print('f=', f, ' freq_maps = ', freq_maps[3*f:3*(f+1),:])
 
         # adding noise
-        if self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
+        if self.config['noise_option']=='no_noise': 
+            pass
+        elif self.config['external_noise_sims']!='' or self.config['Nico_noise_combination']:
             noise_maps = freq_maps*0.0
             # print('noise_maps.shape = ', noise_maps.shape)
             print('LOADING EXTERNAL NOISE-ONLY MAPS')
@@ -429,8 +431,6 @@ class BBMapSim(PipelineStage):
             nlev_map /= hp.nside2resol(self.config['nside'], arcmin=True)
             noise_maps = np.random.normal(freq_maps*0.0, nlev_map, freq_maps.shape)
             freq_maps += noise_maps*binary_mask
-        elif self.config['noise_option']=='no_noise': 
-            pass
         else: 
             freq_maps += noise_maps*binary_mask
 
