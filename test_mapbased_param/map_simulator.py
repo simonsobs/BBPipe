@@ -367,6 +367,7 @@ class BBMapSim(PipelineStage):
         # print('shape of freq_maps = ', freq_maps.shape)
         freq_maps = freq_maps.reshape((3*len(self.config['frequencies']),hp.nside2npix(self.config['nside'])))
         # print('shape of freq_maps = ', freq_maps.shape)
+        NSIDE_INPUT_MAP = hp.npix2nside(len(freq_maps[0]))
 
         if self.config['combined_directory']!='':
             freq_maps *= 0.0
