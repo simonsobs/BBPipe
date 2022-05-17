@@ -318,6 +318,16 @@ class BBMapParamCompSep(PipelineStage):
             if self.config['harmonic_comp_sep']:
                 print('     ... in harmonic space')
                 lmax = 2*self.config['nside']-1
+                
+                # grabbing the Nl for each frequency channel
+                nhits, noise_maps_sim, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
+                                            knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
+                                                nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
+                                                    no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
+
+                # extra cut on hits so that the noise is quite homogeneous over the analyzed patch. 
+                low_hits_pixels = np.where(nhits < self.config['cut_on_hits'])[0]
+                frequency_maps__[f,s,low_hits_pixels] = hp.UNSEEN
 
                 # converting the observed frequency maps into alm (real-only arrays for fgbuster)
                 for f in range(frequency_maps__.shape[0]):
@@ -331,12 +341,6 @@ class BBMapParamCompSep(PipelineStage):
                         frequency_maps__loc[f,s] = alm
                         noise_maps__loc[f,s] = alm_noise
 
-                # grabbing the Nl for each frequency channel
-                nhits, noise_maps_sim, nlev, nll = mknm.get_noise_sim(sensitivity=self.config['sensitivity_mode'], 
-                                            knee_mode=self.config['knee_mode'],ny_lf=self.config['ny_lf'],
-                                                nside_out=self.config['nside'], norm_hits_map=hp.read_map(self.get_input('norm_hits_map')),
-                                                    no_inh=self.config['no_inh'], CMBS4=self.config['instrument'])
-                
                 # building the noise covariance -- expending the Nl to every {l,m} couples
                 ell_em = hp.Alm.getlm(lmax, np.arange(len(alm_)))[0]                                                                                                                                           
                 ell_em = np.stack((ell_em, ell_em), axis=-1).reshape(-1) # For transformation into real alms                                                                                                            

@@ -90,6 +90,7 @@ def grabargs():
     parser.add_argument("--pixel_based_noise_cov", action='store_true', help = "pixel-based estimation of the noise covariance matrix", default=False)
     parser.add_argument("--highpass_filtering", action='store_true', help = "high-pass filtering of raw frequency maps to whiten the noise prior to spectral indices estimation", default=False)
     parser.add_argument("--harmonic_comp_sep", action='store_true', help = "performing the estimation of spectral indices in harmonic space", default=False)
+    parser.add_argument("--cut_on_hits", type=float, help = "cut on hits for the harmonic comp sep", default=0.9)
     parser.add_argument("--combined_directory", type=str, help = "user provides a directory containing foregrounds, cmb, noise but needs to create a combined directory", default='')
     parser.add_argument("--common_beam_correction",  help = "if not 0, correct for beam-convolution the input simulations, and convolve with this common beam (in arcmin)", default=0.0)
     parser.add_argument("--effective_beam_correction", action='store_true', help = "correct the power spectra by the effective Bl", default=False)
@@ -191,7 +192,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
                 Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
                 external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmax=1024, 
-                exact_noise_bias=False):
+                exact_noise_bias=False, cut_on_hits=0.9):
     '''
     function generating the config file
     '''
@@ -251,6 +252,7 @@ BBMapParamCompSep:
     path_to_dust_template: \''''+str(path_to_dust_template)+'''\'
     highpass_filtering: '''+str(highpass_filtering)+'''
     harmonic_comp_sep: '''+str(harmonic_comp_sep)+'''
+    cut_on_hits: '''+str(cut_on_hits)+'''
 
 BBClEstimation:
     aposize:  '''+str(aposize)+'''
@@ -410,7 +412,7 @@ def main():
                 effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
                 Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction,
                 external_noise_sims_for_noise_bias=args.external_noise_sims_for_noise_bias, \
-                bypass_noise_cov=args.bypass_noise_cov, lmax=lmax_loc, exact_noise_bias=args.exact_noise_bias)
+                bypass_noise_cov=args.bypass_noise_cov, lmax=lmax_loc, exact_noise_bias=args.exact_noise_bias, cut_on_hits=args.cut_on_hits)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
