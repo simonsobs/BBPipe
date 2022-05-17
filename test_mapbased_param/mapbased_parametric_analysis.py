@@ -327,17 +327,17 @@ class BBMapParamCompSep(PipelineStage):
 
                 # extra cut on hits so that the noise is quite homogeneous over the analyzed patch. 
                 low_hits_pixels = np.where(nhits < self.config['cut_on_hits'])[0]
-                frequency_maps__[:,:,low_hits_pixels] = hp.UNSEEN
+                freq_maps_unbeamed__[:,:,low_hits_pixels] = hp.UNSEEN
 
                 # converting the observed frequency maps into alm (real-only arrays for fgbuster)
-                for f in range(frequency_maps__.shape[0]):
-                    for s in range(frequency_maps__.shape[1]):
-                        alm_ = hp.map2alm(frequency_maps__[f,s], lmax=lmax)
+                for f in range(freq_maps_unbeamed__.shape[0]):
+                    for s in range(freq_maps_unbeamed__.shape[1]):
+                        alm_ = hp.map2alm(freq_maps_unbeamed__[f,s], lmax=lmax)
                         alm = _format_alms(alm_, lmin=self.config['lmin'])
                         alm_noise = _format_alms(hp.map2alm(noise_maps_[f,s], lmax=lmax), lmin=self.config['lmin'])
                         if f==0 and s==0: 
-                            frequency_maps__loc = np.zeros((frequency_maps__.shape[0], frequency_maps__.shape[1], len(alm)))
-                            noise_maps__loc = np.zeros((frequency_maps__.shape[0], frequency_maps__.shape[1], len(alm)))
+                            frequency_maps__loc = np.zeros((freq_maps_unbeamed__.shape[0], freq_maps_unbeamed__.shape[1], len(alm)))
+                            noise_maps__loc = np.zeros((freq_maps_unbeamed__.shape[0], freq_maps_unbeamed__.shape[1], len(alm)))
                         frequency_maps__loc[f,s] = alm
                         noise_maps__loc[f,s] = alm_noise
 
@@ -349,11 +349,11 @@ class BBMapParamCompSep(PipelineStage):
                 print('frequency_maps__loc.shape = ',frequency_maps__loc.shape)
                 noise_cov__loc = np.ones_like(frequency_maps__loc)
                 noise_cov_beamed__loc = np.ones_like(frequency_maps__loc)
-                for f in range(frequency_maps__.shape[0]):
-                    for s in range(frequency_maps__loc.shape[1]):
+                for f in range(freq_maps_unbeamed__.shape[0]):
+                    for s in range(freq_maps_unbeamed__.shape[1]):
                         noise_cov__loc[f,s,:] = np.array([nll[f,l] for l in ell_em])
-                        print('/!\ I should include the effective beam convolution here ... ')
-                        sys.exit()
+                        # print('/!\ I should include the effective beam convolution here ... ')
+                        # sys.exit()
                         noise_cov_beamed__loc[f,s,:] = np.array([nll[f,l] for l in ell_em])
             else:
                 print('     ... in pixel space')
