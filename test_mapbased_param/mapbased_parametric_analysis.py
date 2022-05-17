@@ -327,7 +327,7 @@ class BBMapParamCompSep(PipelineStage):
 
                 # extra cut on hits so that the noise is quite homogeneous over the analyzed patch. 
                 low_hits_pixels = np.where(nhits < self.config['cut_on_hits'])[0]
-                frequency_maps__[f,s,low_hits_pixels] = hp.UNSEEN
+                frequency_maps__[:,:,low_hits_pixels] = hp.UNSEEN
 
                 # converting the observed frequency maps into alm (real-only arrays for fgbuster)
                 for f in range(frequency_maps__.shape[0]):
