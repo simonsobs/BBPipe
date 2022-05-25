@@ -427,13 +427,23 @@ def main():
         fin = open("log_"+id_tag+".txt", "rt")
         fout = open("batch_"+id_tag+".sh", "wt")
 
+#         fout.write("#!/bin/bash\n\
+# #SBATCH -N 1\n\
+# #SBATCH -C haswell\n\
+# #SBATCH -q regular\n\
+# #SBATCH -J test_BBpipe\n\
+# #SBATCH -t "+args.time+"\n\
+# \n")
+
         fout.write("#!/bin/bash\n\
-#SBATCH -N 1\n\
-#SBATCH -C haswell\n\
-#SBATCH -q regular\n\
-#SBATCH -J test_BBpipe\n\
-#SBATCH -t "+args.time+"\n\
+#SBATCH --qos=shared\n\
+#SBATCH --constraint=haswell\n\
+#SBATCH --time= "+args.time+"\n\
+#SBATCH --nodes=1\n\
+#SBATCH --ntasks=1\n\
+#SBATCH --cpus-per-task=1\n\
 \n")
+
 
         for line in fin.readlines():
             if line != '\n':
