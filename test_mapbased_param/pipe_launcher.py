@@ -438,7 +438,7 @@ def main():
         fout.write("#!/bin/bash\n\
 #SBATCH --qos=shared\n\
 #SBATCH --constraint=haswell\n\
-#SBATCH --time= "+args.time+"\n\
+#SBATCH --time="+args.time+"\n\
 #SBATCH --nodes=1\n\
 #SBATCH --ntasks=1\n\
 #SBATCH --cpus-per-task=1\n\
