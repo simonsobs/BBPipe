@@ -92,33 +92,44 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
 
     for i in i_range:
         # looping over simulations
-        print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias']))
+        print('noise simulation # '+str(i)+' / '+str(self.config['Nsims_bias_Nl']))
         
         if self.config['external_noise_sims_for_noise_bias']:
-            noise_maps_sim = np.zeros((n_cov.shape[0]*3, W.shape[-1]))
-            if self.config['Nico_noise_combination']:
-                if self.config['knee_mode'] == 2 : knee_mode_loc = None
-                else: knee_mode_loc = self.config['knee_mode']
-                factors = compute_noise_factors(self.config['sensitivity_mode'], knee_mode_loc)
-            for f in range(len(instrument.frequency)):
-                print('loading noise map for frequency ', str(int(instrument.frequency[f])))
-                if self.config['Nico_noise_combination']:
-                    noise_loc = combine_noise_maps(i, instrument.frequency[f], factors)
-                else:
-                    noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
-                # noise_maps_sim[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
-                
-                alms = hp.map2alm(noise_loc, lmax=3*self.config['nside'])
-                Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
-                for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
-                noise_maps_sim[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+            
+            tag = ''
+            for f in instrument.frequency: tag += str(f)+'_'
+            for key in ['common_beam_correction', 'no_inh', 'Nico_noise_combination', 'Nsims_bias_Nl', 'nside', 'sensitivity_mode', 'knee_mode']:
+                tag += key+'_'+str(self.config[key])
+            path_to_noise_maps = os.path.join('/global/cscratch1/sd/josquin/ext_noise_maps_'+tag)
+            if not os.path.exists(path_to_noise_maps+'.npy'):
 
-                if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
-                    # renormalize the noise map to take into account the effect of inhomogeneous noise
-                    print('rescaling the noise maps with hits map')
-                    nhits_nz = np.where(nhits!=0)[0]
-                    noise_maps_sim[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
-                    # renormalize the noise map to take into account the effect of inhomogeneous noise
+                noise_maps_sim = np.zeros((n_cov.shape[0]*3, W.shape[-1]))
+                if self.config['Nico_noise_combination']:
+                    if self.config['knee_mode'] == 2 : knee_mode_loc = None
+                    else: knee_mode_loc = self.config['knee_mode']
+                    factors = compute_noise_factors(self.config['sensitivity_mode'], knee_mode_loc)
+                for f in range(len(instrument.frequency)):
+                    print('loading noise map for frequency ', str(int(instrument.frequency[f])))
+                    if self.config['Nico_noise_combination']:
+                        noise_loc = combine_noise_maps(i, instrument.frequency[f], factors)
+                    else:
+                        noise_loc = hp.read_map(glob.glob(os.path.join(self.config['external_noise_sims'],'SO_SAT_'+str(int(instrument.frequency[f]))+'_noise_FULL_*_white_20201207.fits'))[0], field=None)
+                    # noise_maps_sim[3*f:3*(f+1),:] = hp.ud_grade(noise_loc, nside_out=self.config['nside'])
+                    
+                    alms = hp.map2alm(noise_loc, lmax=3*self.config['nside'])
+                    Bl_gauss_pix = hp.gauss_beam( hp.nside2resol(self.config['nside']), lmax=2*self.config['nside'])        
+                    for alm_ in alms: hp.almxfl(alm_, Bl_gauss_pix, inplace=True)             
+                    noise_maps_sim[3*f:3*(f+1),:] = hp.alm2map(alms, self.config['nside'])  
+
+                    if ((not self.config['no_inh']) and (self.config['Nico_noise_combination'])):
+                        # renormalize the noise map to take into account the effect of inhomogeneous noise
+                        print('rescaling the noise maps with hits map')
+                        nhits_nz = np.where(nhits!=0)[0]
+                        noise_maps_sim[3*f:3*(f+1),nhits_nz] /= np.sqrt(nhits[nhits_nz]/np.max(nhits[nhits_nz]))
+                        # renormalize the noise map to take into account the effect of inhomogeneous noise
+                np.save(path_to_noise_maps, noise_maps_sim, allow_pickle=True)
+            else:
+                noise_maps_sim = np.load(path_to_noise_maps+'.npy')
         else:
             # generating frequency-maps noise simulations
             np.random.seed(i)
