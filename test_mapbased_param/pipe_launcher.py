@@ -80,6 +80,7 @@ def grabargs():
     parser.add_argument("--external_noise_cov", type=str, help = "path to the external noise covariance", default='')
     parser.add_argument("--bmodes_template", type=str, help = "path to an estimated B-modes template, for delensing purposes", default='')
     parser.add_argument("--Nsims_bias", type=int, help = "number of simulations performed to estimate the noise bias", default=100)
+    parser.add_argument("--Nsims_bias_Nl", type=int, help = "number of simulations performed to estimate the noise bias in ell-space", default=None)
     parser.add_argument("--extra_apodization", action='store_true', help = "perform an extra apodization of the mask, prior to rescaling by Nhits", default=False)
     parser.add_argument("--fixed_delta_beta_slicing", action='store_true', help = "when Nspec!=0, regions are defined by constant delta(Bd)", default=False)
     parser.add_argument("--North_South_split", action='store_true', help = "when Nspec!=0, regions are defined by being in the Galactic North or South", default=False)
@@ -192,7 +193,10 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
                 Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
                 external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmax=1024, 
-                exact_noise_bias=False, cut_on_hits=0.9):
+                exact_noise_bias=False, cut_on_hits=0.9, Nsims_bias_Nl=None):
+    
+    if Nsims_bias_Nl is None: Nsims_bias_Nl=Nsims_bias
+
     '''
     function generating the config file
     '''
@@ -264,6 +268,7 @@ BBClEstimation:
     external_noise_sims_for_noise_bias: '''+str(external_noise_sims_for_noise_bias)+'''
     isim:  '''+str(isim)+'''
     exact_noise_bias: '''+str(exact_noise_bias)+'''
+    Nsims_bias_Nl: '''+str(Nsims_bias_Nl)+'''
 
 BBREstimation:
     dust_marginalization: '''+str(dust_marginalization)+'''
@@ -409,10 +414,11 @@ def main():
                 path_to_dust_template=args.path_to_dust_template,\
                 pixel_based_noise_cov=args.pixel_based_noise_cov, highpass_filtering=args.highpass_filtering, \
                 harmonic_comp_sep=args.harmonic_comp_sep, common_beam_correction=args.common_beam_correction,\
-                effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],
-                Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction,
+                effective_beam_correction=args.effective_beam_correction, combined_directory=list_of_combined_directories[sim],\
+                Nico_noise_combination=args.Nico_noise_combination, isim=sim, noise_cov_beam_correction=args.noise_cov_beam_correction,\
                 external_noise_sims_for_noise_bias=args.external_noise_sims_for_noise_bias, \
-                bypass_noise_cov=args.bypass_noise_cov, lmax=lmax_loc, exact_noise_bias=args.exact_noise_bias, cut_on_hits=args.cut_on_hits)
+                bypass_noise_cov=args.bypass_noise_cov, lmax=lmax_loc, exact_noise_bias=args.exact_noise_bias, cut_on_hits=args.cut_on_hits,\
+                Nsims_bias_Nl=args.Nsims_bias_Nl)
 
         # submit call 
         print("subprocess call = ", args.path_to_bbpipe,  os.path.join(args.path_to_temp_files, "test_"+id_tag+".yml"))
