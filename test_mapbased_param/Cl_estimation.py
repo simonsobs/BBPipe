@@ -13,6 +13,7 @@ import scipy
 from fgbuster.algebra import W_dB, _mmm, _mm
 from fgbuster.component_model import CMB, Dust, Synchrotron
 from . import V3calc as V3
+import os
 
 import sys
 sys.path.append('/global/cfs/cdirs/sobs/users/krach/BBSims/NOISE_20201207/')
@@ -100,8 +101,8 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
             for key in ['common_beam_correction', 'no_inh', 'Nico_noise_combination', 'Nsims_bias_Nl', 'nside', 'sensitivity_mode', 'knee_mode']:
                 tag += key+'_'+str(self.config[key])
             path_to_noise_maps = os.path.join('/global/cscratch1/sd/josquin/ext_noise_maps_'+tag)
+            
             if not os.path.exists(path_to_noise_maps+'.npy'):
-
                 noise_maps_sim = np.zeros((n_cov.shape[0]*3, W.shape[-1]))
                 if self.config['Nico_noise_combination']:
                     if self.config['knee_mode'] == 2 : knee_mode_loc = None
