@@ -96,8 +96,7 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         
         if self.config['external_noise_sims_for_noise_bias']:
             
-            tag = ''
-            for f in instrument.frequency: tag += str(f)+'_'
+            tag = 'sim_'+str(i)+'_'
             for key in ['common_beam_correction', 'no_inh', 'Nico_noise_combination', 'Nsims_bias_Nl', 'nside', 'sensitivity_mode', 'knee_mode']:
                 tag += key+'_'+str(self.config[key])
             path_to_noise_maps = os.path.join('/global/cscratch1/sd/josquin/ext_noise_maps_'+tag)
