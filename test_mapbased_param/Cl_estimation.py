@@ -174,9 +174,10 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         noise_after_comp_sep = np.zeros((3,2, mask_patches_.shape[1]))#*hp.UNSEEN
         for i_patch in range(Npatch):
             obs_pix = np.where(mask_patches_[i_patch,:]==1)[0]
-            for p in obs_pix:
-                for s in range(2):
-                    noise_after_comp_sep[:,s,p] = W[:,:,s,p].dot(noise_maps_[:,s,p])
+            # for p in obs_pix:
+                # for s in range(2):
+                    # noise_after_comp_sep[:,s,p] = W[:,:,s,p].dot(noise_maps_[:,s,p])
+            noise_after_comp_sep[:,:,obs_pix] = np.einsum('ijsp, jsp -> isp', W[:,:,:,obs_pix], noise_maps_[:,:,obs_pix])
         # np.save('noise_after_comp_sep_bias', noise_after_comp_sep)
 
         # compute corresponding spectra
