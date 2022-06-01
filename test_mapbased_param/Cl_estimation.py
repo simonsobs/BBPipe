@@ -163,9 +163,10 @@ def noise_bias_estimation(self, Cl_func, get_field_func, mask, mask_apo,
         # compute Cl_noise for each frequency
         print('        -> computing noise power spectrum for each frequency map')
         if i == 0 : Cl_noise_freq = np.zeros((self.config['Nsims_bias'],noise_maps_.shape[0],len(ell_eff)))
-        for f in range(noise_maps_.shape[0]):
-            fn = get_field_func(mask*noise_maps_[f,0,:], mask*noise_maps_[f,1,:], mask_apo)
-            Cl_noise_freq[i,f,:] = (Cl_func(fn, fn, w)[3] )
+        if self.config['include_stat_res']:
+            for f in range(noise_maps_.shape[0]):
+                fn = get_field_func(mask*noise_maps_[f,0,:], mask*noise_maps_[f,1,:], mask_apo)
+                Cl_noise_freq[i,f,:] = (Cl_func(fn, fn, w)[3] )
         
         # propagate noise through the map-making equation
         # Q_noise_cmb = np.einsum('fp,fp->p', W[0,:,0,:], noise_maps_[:,0])
