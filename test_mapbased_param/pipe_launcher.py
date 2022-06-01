@@ -104,6 +104,8 @@ def grabargs():
     parser.add_argument("--bypass_noise_cov", action='store_true', help = "use the exact input noise simulation to estimate the noise covariance", default=False)
     parser.add_argument("--lmax", type=int, help = "lmax for the harmonic analysis", default=1024)
     parser.add_argument("--exact_noise_bias", action='store_true', help = "use the exact same noise realization to estimate the noise bias", default=False)
+    parser.add_argument("--qos", type=str, help = "type of queue at NERSC, shared, regular, debug, etc.", default="shared")
+
 
     args = parser.parse_args()
 
@@ -442,14 +444,13 @@ def main():
 # \n")
 
         fout.write("#!/bin/bash\n\
-#SBATCH --qos=shared\n\
+#SBATCH --qos="+args.qos+"\n\
 #SBATCH --constraint=haswell\n\
 #SBATCH --time="+args.time+"\n\
 #SBATCH --nodes=1\n\
 #SBATCH --ntasks=1\n\
 #SBATCH --cpus-per-task=1\n\
 \n")
-
 
         for line in fin.readlines():
             if line != '\n':
