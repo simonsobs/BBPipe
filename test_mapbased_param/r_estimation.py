@@ -383,31 +383,37 @@ class BBREstimation(PipelineStage):
             
 
             ######################################
-            for p in ['r', 'Ad']:
+            for p in ['r', 'Ad', 'AL']:
                 if p == 'r': ind = 0
-                else : ind = 1
+                elif p == 'Ad': ind = 1
+                else : ind = 2
                 counts, bins, patches = pl.hist(samples[:,ind], 500)
                 pl.close()
                 bins_av = [(bins[i]+bins[i+1])/2 for i in range(len(bins)-1)]
-                ind_r_fit = np.argmax(counts)
+                ind_fit = np.argmax(counts)
                 if p == 'r':
-                    r_fit = bins_av[ind_r_fit]
+                    r_fit = bins_av[ind_fit]
+                elif p == 'Ad': 
+                    Ad_fit = bins_av[ind_fit]
                 else:
-                    Ad_fit = bins_av[ind_r_fit]
+                    AL_fit = bins_av[ind_fit]
+
                 sum_ = 0.0
                 sum_tot = 0.0
-                for i in range(len(counts))[ind_r_fit:]:
+                for i in range(len(counts))[ind_fit:]:
                     sum_tot += counts[i]*(bins[i+1] - bins[i])
 
-                for i in range(len(counts))[ind_r_fit:]:
+                for i in range(len(counts))[ind_fit:]:
                     sum_ += counts[i]*(bins[i+1] - bins[i])
                     if sum_ > 0.68*sum_tot:
                         break
                 # sigma(r) is the distance between peak and 68% of the integral
                 if p == 'r':
                     sigma_r_fit = bins_av[i-1] - r_fit
-                else:
+                elif p == 'Ad': 
                     sigma_Ad_fit = bins_av[i-1] - Ad_fit
+                else:
+                    sigma_AL_fit = bins_av[i-1] - AL_fit
             ########################################
 
 
@@ -463,7 +469,14 @@ class BBREstimation(PipelineStage):
             pl.savefig(self.get_output('likelihood_on_r'))
             pl.close()
 
-            likelihood_on_r_with_stat_and_sys_res( [r_fit, Ad_fit], make_figure=True, tag='' )
+            if self.config['sync_marginalization']:
+                if self.config['AL_marginalization']: p_fit = [r_fit, Ad_fit, As_fit, AL_fit]
+                else: p_fit = [r_fit, Ad_fit, As_fit]
+            else:
+                if self.config['AL_marginalization']: p_fit = [r_fit, Ad_fit, AL_fit]
+                else: p_fit = [r_fit, Ad_fit]
+
+            likelihood_on_r_with_stat_and_sys_res(p_fit , make_figure=True, tag='' )
 
         else:
 
@@ -653,7 +666,7 @@ class BBREstimation(PipelineStage):
             to_be_saved = np.hstack((r_fit,  sigma_r_fit))
             extra_tag = ''
         np.savetxt(self.get_output('estimated_cosmo_params'+extra_tag), to_be_saved, comments=column_names)
-        
+
         if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization']) and (not self.config['AL_marginalization'])):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
         elif self.config['AL_marginalization']:
