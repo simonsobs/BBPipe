@@ -660,7 +660,10 @@ class BBREstimation(PipelineStage):
         print('sigma_r_fit = ', sigma_r_fit)
         column_names = ['r', 'L(r)']
         if self.config['dust_marginalization']:
-            to_be_saved = np.hstack((r_fit, sigma_r_fit, Ad_fit, sigma_Ad_fit))
+            if self.config['AL_marginalization']:
+                to_be_saved = np.hstack((r_fit, Ad_fit, AL_fit, sigma_r_fit, sigma_Ad_fit, sigma_AL_fit))
+            else:
+                to_be_saved = np.hstack((r_fit, sigma_r_fit, Ad_fit, sigma_Ad_fit))
         else:
             to_be_saved = np.hstack((r_fit,  sigma_r_fit))
 
