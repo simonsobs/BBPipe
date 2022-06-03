@@ -648,9 +648,12 @@ class BBREstimation(PipelineStage):
         column_names = ['r', 'L(r)']
         if self.config['dust_marginalization']:
             to_be_saved = np.hstack((r_fit, sigma_r_fit, Ad_fit, sigma_Ad_fit))
+            extra_tag = '_dust_marg'
         else:
             to_be_saved = np.hstack((r_fit,  sigma_r_fit))
-        np.savetxt(self.get_output('estimated_cosmo_params'), to_be_saved, comments=column_names)
+            extra_tag = ''
+        np.savetxt(self.get_output('estimated_cosmo_params'+extra_tag), to_be_saved, comments=column_names)
+        
         if ((not self.config['dust_marginalization']) and (not self.config['sync_marginalization']) and (not self.config['AL_marginalization'])):
             np.save(self.get_output('gridded_likelihood'), np.hstack((r_v,  gridded_likelihood)))
         elif self.config['AL_marginalization']:

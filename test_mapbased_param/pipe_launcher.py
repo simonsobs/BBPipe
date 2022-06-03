@@ -105,7 +105,7 @@ def grabargs():
     parser.add_argument("--lmax", type=int, help = "lmax for the harmonic analysis", default=1024)
     parser.add_argument("--exact_noise_bias", action='store_true', help = "use the exact same noise realization to estimate the noise bias", default=False)
     parser.add_argument("--qos", type=str, help = "type of queue at NERSC, shared, regular, debug, etc.", default="shared")
-
+    parser.add_argument("--force_cosmo_analysis", action='store_true', help = "even if previous cosmo analysis has been performed, this forces the submission of extra cosmo analysis", default=False)
 
     args = parser.parse_args()
 
@@ -386,7 +386,9 @@ def main():
         print('id_tag = ', id_tag)
 
         # submit the job if the final products have not be produced already
-        if os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
+        if args.force_cosmo_analysis:
+            print(' forcing cosmo analysis, i.e. submitting jobs with only the last stage ')
+        elif os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
             print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
             continue
         elif args.force_histogram:
@@ -398,7 +400,7 @@ def main():
             path_to_binary_mask=args.path_to_binary_mask, path_to_norm_hits=args.path_to_norm_hits, 
             path_to_ClBBlens=args.path_to_ClBBlens, path_to_ClBBprim=args.path_to_ClBBprim)
         # create config.yml
-        print(list_of_noise_sim_folders[sim])
+        # print(list_of_noise_sim_folders[sim])
         generate_config_yml(id_tag, sensitivity_mode=args.sensitivity_mode, knee_mode=args.knee_mode,\
                 ny_lf=args.ny_lf, noise_option=args.noise_option, dust_marginalization=args.dust_marginalization,\
                 sync_marginalization=args.sync_marginalization,\
@@ -454,8 +456,11 @@ def main():
 
         for line in fin.readlines():
             if line != '\n':
-                fout.write('srun -n 1 -c 1 '+line)
-            # else: fout.write(line)
+                if args.force_cosmo_analysis:
+                    if 'BBREstimation' in line:
+                        fout.write('srun -n 1 -c 1 '+line)
+                else:
+                    fout.write('srun -n 1 -c 1 '+line)
         fin.close()
         fout.close()
 
