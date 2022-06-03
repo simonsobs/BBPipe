@@ -481,10 +481,17 @@ def main():
         sigma_all = []
         sigma_Ad_all = []
         sigma_AL_all = []
+        Cl_BB_all = []
         for dir_ in list_output_dir:
             try:
                 estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
                 spectral_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'fitted_spectral_parameters.txt'))
+                lmin = 30
+                lmax = args.lmax
+                Cl_clean = hp.read_cl(os.path.join(args.path_to_temp_files,dir_,'Cl_clean.fits'))
+                ell_v = Cl_clean[0]
+                ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                Cl_noise = hp.read_cl(os.path.join(args.path_to_temp_files,dir_,'Cl_noise_bias.fits'))[1][(ell_v>=lmin)&(ell_v<=lmax)]
             except IOError:
                 if args.force_histogram:
                     continue
@@ -503,6 +510,7 @@ def main():
 
             r_all.append(r_)
             sigma_all.append(sigma_)
+            Cl_BB_all.append(ClBB_obs-Cl_noise)
 
             if len(spectral_parameters.shape) == 1:
                 spectral_parameters = spectral_parameters[np.newaxis]
@@ -518,6 +526,7 @@ def main():
         np.save(os.path.join(args.path_to_temp_files,'sigma_AL_all_'+args.tag), sigma_AL_all)
         np.save(os.path.join(args.path_to_temp_files,'Bd_all_'+args.tag), Bd_all)
         np.save(os.path.join(args.path_to_temp_files,'Bs_all_'+args.tag), Bs_all)
+        np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_'+args.tag), Cl_BB_all)
 
         # if args.AL_marginalization:
             # f, ax = pl.subplots(2, 2, sharey=True)
