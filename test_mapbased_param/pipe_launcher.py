@@ -598,7 +598,7 @@ def main():
                 bins_AL_m[b] = (bins_AL[b+1]+bins_AL[b])/2
             # find the max 
             print('n_AL = ', n_AL)
-            AL_fit = bins_AL_m[np.argmax(n_AL)]
+            AL_fit = bins_AL_m[np.argmax(n_AL[1:-1])+1]
             print('AL_fit=', AL_fit)
             ax[1].axvline(x=AL_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
             # find the positive error bar
