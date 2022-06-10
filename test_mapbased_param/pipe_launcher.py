@@ -536,10 +536,28 @@ def main():
             # f, ax = pl.subplots(1, 2, sharey=True)
             # f, ax = pl.subplots(1, 1)
 
-        ax[0].set_title('r = '+str(round(np.mean(r_all),5))+' +/- '+str(round(np.std(r_all),5)), fontsize=10)
-        ax[0].hist( r_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
+        # ax[0].set_title('r = '+str(round(np.mean(r_all),5))+' +/- '+str(round(np.std(r_all),5)), fontsize=10)
+        n_r,bins,_ = ax[0].hist( r_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
         ax[0].axvline(x=0.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
-        ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
+
+        # find the max 
+        r_fit = bins[np.argmax(n)]
+        ax[0].axvline(x=r_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
+        # find the positive error bar
+        rs_pos = bins[bins > r_fit]
+        plike_pos = n[bins > r_fit]
+        cum_pos = np.cumsum(plike_pos)
+        cum_pos /= cum_pos[-1]
+        sigma_r_pos = rs_pos[np.argmin(np.abs(cum_pos -  0.68))] - r_fit
+        # find the positive error bar
+        rs_neg = bins[bins < r_fit]
+        plike_neg = n[bins < r_fit]
+        cum_neg = np.cumsum(plike_neg[::-1])
+        cum_neg /= cum_neg[-1]
+        sigma_r_neg = r_fit - rs_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
+        ax[0].set_title('r = '+str(round(bins[np.argmax(n)],5))+' + '+str(round(sigma_r_pos,5))+' - '+str(round(sigma_r_neg,5)), fontsize=10)
+
+        # ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
         # ax[0,1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
         # legend=pl.legend()
@@ -554,15 +572,15 @@ def main():
         # pl.close()
 
         ax_[0].set_title(r'$\beta_d$ = '+str(round(np.mean(Bd_all),5))+' +/- '+str(round(np.std(Bd_all),5)), fontsize=10)
-        ax_[0].hist( Bd_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
+        ax_[0].hist( Bd_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
         ax_[0].axvline(x=1.54, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[0].axvline(x=np.mean(Bd_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[0].set_xlabel(r'$\beta_d$', fontsize=12)
         ax_[0].set_ylabel('# of sims', fontsize=12)
 
         ax_[1].set_title(r'$\beta_s$ = '+str(round(np.mean(Bs_all),5))+' +/- '+str(round(np.std(Bs_all),5)), fontsize=10)
-        ax_[1].hist( Bs_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
-        ax_[1].axvline(x=-3.1, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax_[1].hist( Bs_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
+        ax_[1].axvline(x=-3.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[1].axvline(x=np.mean(Bs_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[1].set_xlabel(r'$\beta_s$', fontsize=12)
         ax_[1].set_ylabel('# of sims', fontsize=12)
@@ -570,7 +588,7 @@ def main():
         if args.AL_marginalization:
             # pl.figure()
             ax[1].set_title('$A_L$ = '+str(round(np.mean(AL_all),5))+' +/- '+str(round(np.std(AL_all),5)), fontsize=10)
-            ax[1].hist( AL_all, 40, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)#, label='r = '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            ax[1].hist( AL_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)#, label='r = '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
             ax[1].axvline(x=1.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
             ax[1].axvline(x=np.mean(AL_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
             # ax[1,1].hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
