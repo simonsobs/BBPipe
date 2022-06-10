@@ -550,11 +550,11 @@ def main():
         # find the positive error bar
         rs_pos = bins_m[bins_m > r_fit]
         plike_pos = n_r[bins_m > r_fit]
-        print('n_r[bins_m > r_fit] = ', n_r[bins_m > r_fit])
+        print('n_r[bins_m > r_fit] = ',plike_pos)
         cum_pos = np.cumsum(plike_pos)
         cum_pos /= cum_pos[-1]
         sigma_r_pos = rs_pos[np.argmin(np.abs(cum_pos -  0.68))] - r_fit
-        print('rs_pos[np.argmin(np.abs(cum_pos -  0.68))] = ', rs_pos[np.argmin(np.abs(cum_pos -  0.68))])
+        print('rs_pos[np.argmin(np.abs(cum_pos -  0.68))] = ', sigma_r_pos)
         # find the positive error bar
         rs_neg = bins_m[bins_m < r_fit]
         plike_neg = n_r[bins_m < r_fit]
