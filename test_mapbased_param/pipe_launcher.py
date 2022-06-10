@@ -561,7 +561,7 @@ def main():
         cum_neg = np.cumsum(plike_neg[::-1])
         cum_neg /= cum_neg[-1]
         sigma_r_neg = r_fit - rs_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
-        print('r = '+str(r_fit)+' + '+str(sigma_r_pos)+' - '+str(sigma_r_neg)
+        print('r = '+str(r_fit)+' + '+str(sigma_r_pos)+' - '+str(sigma_r_neg))
         ax[0].set_title('r = '+str(round(r_fit,5))+' + '+str(round(sigma_r_pos,7))+' - '+str(round(sigma_r_neg,7)), fontsize=10)
 
         # ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
