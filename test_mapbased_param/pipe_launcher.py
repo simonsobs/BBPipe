@@ -550,22 +550,16 @@ def main():
         # find the positive error bar
         rs_pos = bins_m[bins_m > r_fit]
         plike_pos = n_r[bins_m > r_fit]
-        print('n_r[bins_m > r_fit] = ', plike_pos)
         cum_pos = np.cumsum(plike_pos)
-        print('cum_pos = ', cum_pos)
         cum_pos /= cum_pos[-1]
-        print('cum_pos = ', cum_pos)
         sigma_r_pos = rs_pos[np.argmin(np.abs(cum_pos -  0.68))] - r_fit
-        print('rs_pos[np.argmin(np.abs(cum_pos -  0.68))] = ', sigma_r_pos)
         # find the positive error bar
         rs_neg = bins_m[bins_m < r_fit]
         plike_neg = n_r[bins_m < r_fit]
         cum_neg = np.cumsum(plike_neg[::-1])
         cum_neg /= cum_neg[-1]
         sigma_r_neg = r_fit - rs_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
-        print('r = '+str(r_fit)+' + '+str(sigma_r_pos)+' - '+str(sigma_r_neg))
-        ax[0].set_title('r = '+str(round(r_fit,5))+' + '+str(round(sigma_r_pos,7))+' - '+str(round(sigma_r_neg,7)), fontsize=10)
-
+        ax[0].set_title('$r = $'+str(round(r_fit,5))+'$^{+'+str(round(sigma_r_pos,5))+'}_{-'+str(round(sigma_r_neg,5))+'}$', fontsize=10)
         # ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
         # ax[0,1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
@@ -596,10 +590,31 @@ def main():
         
         if args.AL_marginalization:
             # pl.figure()
-            ax[1].set_title('$A_L$ = '+str(round(np.mean(AL_all),5))+' +/- '+str(round(np.std(AL_all),5)), fontsize=10)
-            ax[1].hist( AL_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)#, label='r = '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            # ax[1].set_title('$A_L$ = '+str(round(np.mean(AL_all),5))+' +/- '+str(round(np.std(AL_all),5)), fontsize=10)
+            n_AL,bins_AL,_ = ax[1].hist( AL_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)#, label='r = '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
             ax[1].axvline(x=1.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
-            ax[1].axvline(x=np.mean(AL_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
+            bins_AL_m = np.zeros_like(n_AL)
+            for b in range(len(bins_AL_m)-1):
+                bins_AL_m[b] = (bins_AL[b+1]+bins_AL[b])/2
+            # find the max 
+            AL_fit = bins_AL_m[np.argmax(n_AL)]
+            ax[1].axvline(x=AL_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
+            # find the positive error bar
+            AL_pos = bins_AL_m[bins_AL_m > AL_fit]
+            plike_pos = n_AL[bins_AL_m > AL_fit]
+            cum_pos = np.cumsum(plike_pos)
+            cum_pos /= cum_pos[-1]
+            sigma_AL_pos = AL_pos[np.argmin(np.abs(cum_pos -  0.68))] - AL_fit
+            # find the positive error bar
+            AL_neg = bins_AL_m[bins_AL_m < AL_fit]
+            plike_neg = n_AL[bins_AL_m < AL_fit]
+            cum_neg = np.cumsum(plike_neg[::-1])
+            cum_neg /= cum_neg[-1]
+            sigma_AL_neg = AL_fit - AL_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
+
+            ax[1].set_title('$A_L$ ='+str(round(AL_fit,5))+'$^{+'+str(round(sigma_AL_pos,5))+'}_{-'+str(round(sigma_AL_neg,5))+'}$', fontsize=10)
+
+            # ax[1].axvline(x=np.mean(AL_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
             # ax[1,1].hist( sigma_AL_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8, label='sigma(r), '+str(np.mean(sigma_AL_all))+' +/- '+str(np.std(sigma_AL_all)))
             # pl.xscale('log')
             # legend=pl.legend()
