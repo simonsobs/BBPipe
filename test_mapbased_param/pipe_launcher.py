@@ -541,21 +541,21 @@ def main():
         ax[0].axvline(x=0.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
 
         # find the max 
-        r_fit = bins[np.argmax(n)]
+        r_fit = bins[np.argmax(n_r)]
         ax[0].axvline(x=r_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # find the positive error bar
         rs_pos = bins[bins > r_fit]
-        plike_pos = n[bins > r_fit]
+        plike_pos = n_r[bins > r_fit]
         cum_pos = np.cumsum(plike_pos)
         cum_pos /= cum_pos[-1]
         sigma_r_pos = rs_pos[np.argmin(np.abs(cum_pos -  0.68))] - r_fit
         # find the positive error bar
         rs_neg = bins[bins < r_fit]
-        plike_neg = n[bins < r_fit]
+        plike_neg = n_r[bins < r_fit]
         cum_neg = np.cumsum(plike_neg[::-1])
         cum_neg /= cum_neg[-1]
         sigma_r_neg = r_fit - rs_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
-        ax[0].set_title('r = '+str(round(bins[np.argmax(n)],5))+' + '+str(round(sigma_r_pos,5))+' - '+str(round(sigma_r_neg,5)), fontsize=10)
+        ax[0].set_title('r = '+str(round(r_fit,5))+' + '+str(round(sigma_r_pos,5))+' - '+str(round(sigma_r_neg,5)), fontsize=10)
 
         # ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
