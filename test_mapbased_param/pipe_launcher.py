@@ -542,7 +542,7 @@ def main():
 
         bins_m = np.zeros_like(n_r)
         for b in range(len(bins_m)-1):
-            bins_m[b] = (bins[b+1]-bins[b])/2
+            bins_m[b] = (bins[b+1]+bins[b])/2
 
         # find the max 
         r_fit = bins_m[np.argmax(n_r)]
@@ -550,9 +550,11 @@ def main():
         # find the positive error bar
         rs_pos = bins_m[bins_m > r_fit]
         plike_pos = n_r[bins_m > r_fit]
-        print('n_r[bins_m > r_fit] = ',plike_pos)
+        print('n_r[bins_m > r_fit] = ', plike_pos)
         cum_pos = np.cumsum(plike_pos)
+        print('cum_pos = ', cum_pos)
         cum_pos /= cum_pos[-1]
+        print('cum_pos = ', cum_pos)
         sigma_r_pos = rs_pos[np.argmin(np.abs(cum_pos -  0.68))] - r_fit
         print('rs_pos[np.argmin(np.abs(cum_pos -  0.68))] = ', sigma_r_pos)
         # find the positive error bar
