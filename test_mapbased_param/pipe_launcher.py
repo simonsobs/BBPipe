@@ -607,10 +607,17 @@ def main():
             sigma_AL_pos = AL_pos[np.argmin(np.abs(cum_pos -  0.68))] - AL_fit
             # find the positive error bar
             AL_neg = bins_AL_m[bins_AL_m < AL_fit]
+            print('bins_AL_m=', bins_AL_m)
+            print('AL_fit=', AL_fit)
+            print('AL_neg = ', AL_neg)
             plike_neg = n_AL[bins_AL_m < AL_fit]
+            print('plike_neg = ', plike_neg)
             cum_neg = np.cumsum(plike_neg[::-1])
+            print('cum_neg = ', cum_neg)
             cum_neg /= cum_neg[-1]
+            print('cum_neg = ', cum_neg)
             sigma_AL_neg = AL_fit - AL_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
+            print('sigma_AL_neg = ', sigma_AL_neg)
 
             ax[1].set_title('$A_L$ ='+str(round(AL_fit,5))+'$^{+'+str(round(sigma_AL_pos,5))+'}_{-'+str(round(sigma_AL_neg,5))+'}$', fontsize=10)
 
