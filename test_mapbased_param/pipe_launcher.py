@@ -365,8 +365,20 @@ def main():
                         dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/dmsm/foregrounds/dust/SO_SAT_'+str(f)+'_dust_dmsm*.fits'))[0], field=None)                    
                         synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/dmsm/foregrounds/synch/SO_SAT_'+str(f)+'_synch_dmsm*.fits'))[0], field=None)
 
-                    # cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r0_20201207/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
-                    cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r_Alens_20211108/r001_Alens1/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
+                    if args.r_input == 0.0:
+                        if args.AL_input == 1.0:
+                            cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r0_20201207/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
+                        elif args.AL_input == 0.5:
+                            cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r_Alens_20211108/r0_Alens05/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
+                    elif args.r_input == 0.01:
+                        if args.AL_input == 1.0:
+                            cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r_Alens_20211108/r001_Alens1/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
+                        elif args.AL_input == 0.5:
+                            cmb = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'CMB_r_Alens_20211108/r001_Alens05/cmb/'+str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_cmb_'+str(i_sim).zfill(4)+'*.fits'))[0], field=None) 
+                    else:
+                        print('I do not know where to look for these input cosmo parameters ... ')
+                        sys.exit()
+
                     comb = dust + synch + cmb
                     if not os.path.exists(os.path.join(args.combined_directory, str(i_sim).zfill(4))): os.mkdir(os.path.join(args.combined_directory, str(i_sim).zfill(4)))
                     hp.write_map(os.path.join(args.combined_directory, str(i_sim).zfill(4)+'/SO_SAT_'+str(f)+'_comb_'+str(i_sim).zfill(4)+'.fits'), comb)
