@@ -629,7 +629,7 @@ class BBREstimation(PipelineStage):
             if self.config['AL_marginalization']:
                 # r_v = np.logspace(-5,0,num=500)
                 r_v = np.linspace(-0.01,0.1,num=500)
-                AL_v = np.linspace(0.75, 1.25, num=len(r_v))
+                AL_v = np.linspace(0.25, 1.5, num=len(r_v))
                 r_v =[r_v, AL_v]
             else:
                 r_v = np.logspace(-5,0,num=1000)
