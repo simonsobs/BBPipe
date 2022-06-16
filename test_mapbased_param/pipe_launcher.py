@@ -366,10 +366,10 @@ def main():
                         synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/dmsm/foregrounds/synch/SO_SAT_'+str(f)+'_synch_dmsm*.fits'))[0], field=None)
                     elif args.sky_type == 'd9s1':
                         dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20220516/d9/foregrounds/dust/SO_SAT_'+str(f)+'_dust_d9*.fits'))[0], field=None)                    
-                        synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/synch/SO_SAT_'+str(f)+'_synch_dmsm*.fits'))[0], field=None)
+                        synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/synch/SO_SAT_'+str(f)+'_synch_d1s1*.fits'))[0], field=None)
                     elif args.sky_type == 'dhs1':
                         dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20220516/dh/foregrounds/dust/SO_SAT_'+str(f)+'_dust_dh*.fits'))[0], field=None)                    
-                        synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/synch/SO_SAT_'+str(f)+'_synch_dmsm*.fits'))[0], field=None)
+                        synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/synch/SO_SAT_'+str(f)+'_synch_d1s1*.fits'))[0], field=None)
                     elif args.sky_type == 'd1s7':
                         dust = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20201207/realistic/d1s1/foregrounds/dust/SO_SAT_'+str(f)+'_dust_d1s1*.fits'))[0], field=None)                    
                         synch = hp.read_map( glob.glob(os.path.join(args.external_sky_sims, 'FG_20220516/s7/foregrounds/synch/SO_SAT_'+str(f)+'_synch_s7*.fits'))[0], field=None)                    
