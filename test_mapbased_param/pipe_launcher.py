@@ -515,7 +515,7 @@ def main():
                 ell_v = Cl_clean[0]
                 ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
                 Cl_noise = hp.read_cl(os.path.join(args.path_to_temp_files,dir_,'Cl_noise_bias.fits'))[1][(ell_v>=lmin)&(ell_v<=lmax)]
-                W = np.save(os.path.join(args.path_to_temp_files,dir_,'Wpix.npy'), allow_pickle=True)
+                W = np.load(os.path.join(args.path_to_temp_files,dir_,'Wpix.npy'), allow_pickle=True)
                 obs_pix = np.where(W[0,0,0]!=0)[0]
             except IOError:
                 if args.force_histogram:
