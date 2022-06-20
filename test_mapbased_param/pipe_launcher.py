@@ -576,7 +576,7 @@ def main():
         (mu_r, sigma_r) = norm.fit(r_all)
         y = norm.pdf( bins, mu_r, sigma_r)
         print('(mu_r, sigma_r)=', (mu_r, sigma_r))
-        ax[0].plot(bins, y, 'r--', linewidth=2)
+        ax[0].plot(bins, y*max(n_r)/max(y), 'r--', linewidth=2)
         r_fit = mu_r#bins_m[np.argmax(n_r)]
 
         ax[0].axvline(x=r_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
@@ -634,7 +634,7 @@ def main():
             (mu_AL, sigma_AL) = norm.fit(AL_all)
             print('(mu_AL, sigma_AL)=', (mu_AL, sigma_AL))
             y_AL = norm.pdf( bins_AL, mu_AL, sigma_AL)
-            ax[1].plot(bins_AL, y_AL, 'r--', linewidth=2)
+            ax[1].plot(bins_AL, y_AL*max(n_AL)/max(y_AL), 'r--', linewidth=2)
             AL_fit = mu_AL#bins_AL_m[np.argmax(n_AL[1:-1])+1]
             print('AL_fit=', AL_fit)
             ax[1].axvline(x=AL_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
