@@ -572,7 +572,13 @@ def main():
             bins_m[b] = (bins[b+1]+bins[b])/2
 
         # find the max 
-        r_fit = bins_m[np.argmax(n_r)]
+        from scipy.stats import norm
+        import matplotlib.mlab as mlab
+        (mu_r, sigma_r) = norm.fit(r_all)
+        y = mlab.normpdf( bins, mu, sigma)
+        ax[0].plot(bins, y, 'r--', linewidth=2)
+        r_fit = mu_r#bins_m[np.argmax(n_r)]
+
         ax[0].axvline(x=r_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # find the positive error bar
         rs_pos = bins_m[bins_m > r_fit]
@@ -625,7 +631,10 @@ def main():
                 bins_AL_m[b] = (bins_AL[b+1]+bins_AL[b])/2
             # find the max 
             print('n_AL = ', n_AL)
-            AL_fit = bins_AL_m[np.argmax(n_AL[1:-1])+1]
+            (mu_AL, sigma_AL) = norm.fit(AL_all)
+            y_AL = mlab.normpdf( bins_AL, mu_AL, sigma_AL)
+            ax[0].plot(bins_AL, y_AL, 'r--', linewidth=2)
+            AL_fit = mu_AL#bins_AL_m[np.argmax(n_AL[1:-1])+1]
             print('AL_fit=', AL_fit)
             ax[1].axvline(x=AL_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
             # find the positive error bar
