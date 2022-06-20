@@ -564,8 +564,8 @@ def main():
             # f, ax = pl.subplots(1, 1)
 
         # ax[0].set_title('r = '+str(round(np.mean(r_all),5))+' +/- '+str(round(np.std(r_all),5)), fontsize=10)
-        n_r,bins,_ = ax[0].hist( r_all, 20, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
-        ax[0].axvline(x=0.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+        n_r,bins,_ = ax[0].hist( r_all, 50, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
+        ax[0].axvline(x=0.0, color='r', linestyle='-', alpha=0.8, linewidth=2.0)
 
         bins_m = np.zeros_like(n_r)
         for b in range(len(bins_m)-1):
@@ -609,14 +609,14 @@ def main():
 
         ax_[0].set_title(r'$\beta_d$ = '+str(round(np.mean(Bd_all),5))+' +/- '+str(round(np.std(Bd_all),5)), fontsize=10)
         ax_[0].hist( Bd_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
-        ax_[0].axvline(x=1.54, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax_[0].axvline(x=1.54, color='r', linestyle='-', alpha=0.8, linewidth=2.0)
         ax_[0].axvline(x=np.mean(Bd_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[0].set_xlabel(r'$\beta_d$', fontsize=12)
         ax_[0].set_ylabel('# of sims', fontsize=12)
 
         ax_[1].set_title(r'$\beta_s$ = '+str(round(np.mean(Bs_all),5))+' +/- '+str(round(np.std(Bs_all),5)), fontsize=10)
         ax_[1].hist( Bs_all, 100, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
-        ax_[1].axvline(x=-3.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+        ax_[1].axvline(x=-3.0, color='r', linestyle='-', alpha=0.8, linewidth=2.0)
         ax_[1].axvline(x=np.mean(Bs_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         ax_[1].set_xlabel(r'$\beta_s$', fontsize=12)
         ax_[1].set_ylabel('# of sims', fontsize=12)
@@ -624,8 +624,8 @@ def main():
         if args.AL_marginalization:
             # pl.figure()
             # ax[1].set_title('$A_L$ = '+str(round(np.mean(AL_all),5))+' +/- '+str(round(np.std(AL_all),5)), fontsize=10)
-            n_AL,bins_AL,_ = ax[1].hist( AL_all, 20, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)#, label='r = '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
-            ax[1].axvline(x=1.0, color='r', linestyle='--', alpha=0.8, linewidth=2.0)
+            n_AL,bins_AL,_ = ax[1].hist( AL_all, 50, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)#, label='r = '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            ax[1].axvline(x=1.0, color='r', linestyle='-', alpha=0.8, linewidth=2.0)
             bins_AL_m = np.zeros_like(n_AL)
             for b in range(len(bins_AL_m)-1):
                 bins_AL_m[b] = (bins_AL[b+1]+bins_AL[b])/2
