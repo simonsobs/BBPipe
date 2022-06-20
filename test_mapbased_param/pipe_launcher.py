@@ -574,7 +574,7 @@ def main():
         # find the max 
         from scipy.stats import norm
         (mu_r, sigma_r) = norm.fit(r_all)
-        y = norm.pdf( bins, mu, sigma)
+        y = norm.pdf( bins, mu_r, sigma_r)
         ax[0].plot(bins, y, 'r--', linewidth=2)
         r_fit = mu_r#bins_m[np.argmax(n_r)]
 
