@@ -573,9 +573,8 @@ def main():
 
         # find the max 
         from scipy.stats import norm
-        import matplotlib.mlab as mlab
         (mu_r, sigma_r) = norm.fit(r_all)
-        y = mlab.normpdf( bins, mu, sigma)
+        y = norm.normpdf( bins, mu, sigma)
         ax[0].plot(bins, y, 'r--', linewidth=2)
         r_fit = mu_r#bins_m[np.argmax(n_r)]
 
@@ -632,7 +631,7 @@ def main():
             # find the max 
             print('n_AL = ', n_AL)
             (mu_AL, sigma_AL) = norm.fit(AL_all)
-            y_AL = mlab.normpdf( bins_AL, mu_AL, sigma_AL)
+            y_AL = norm.normpdf( bins_AL, mu_AL, sigma_AL)
             ax[0].plot(bins_AL, y_AL, 'r--', linewidth=2)
             AL_fit = mu_AL#bins_AL_m[np.argmax(n_AL[1:-1])+1]
             print('AL_fit=', AL_fit)
