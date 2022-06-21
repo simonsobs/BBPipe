@@ -507,7 +507,10 @@ def main():
         W_av_all = []
         for dir_ in list_output_dir:
             try:
-                estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+                if args.dust_marginalization: 
+                    estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params_dust_marg.txt'))
+                else:
+                    estimated_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
                 spectral_parameters = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'fitted_spectral_parameters.txt'))
                 lmin = 30
                 lmax = args.lmax
@@ -524,7 +527,12 @@ def main():
                     print('I am trying to do an histogram \n and this is a missing file: ', os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
                     sys.exit()
             if args.dust_marginalization: 
-                r_, sigma_, Ad_, sigma_Ad_=estimated_parameters
+                if args.AL_marginalization:
+                    r_, Ad_, AL_, sigma_, sigma_Ad_, sigma_AL_ = estimated_parameters
+                    AL_all.append(AL_) 
+                    sigma_AL_all.append(sigma_AL_)
+                else:
+                    r_, sigma_, Ad_, sigma_Ad_ = estimated_parameters
                 sigma_Ad_all.append(sigma_Ad_)
                 Ad_all.append(Ad_) 
             elif args.AL_marginalization:
