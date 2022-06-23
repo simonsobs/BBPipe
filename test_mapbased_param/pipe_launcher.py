@@ -410,6 +410,9 @@ def main():
         # submit the job if the final products have not be produced already
         if args.force_cosmo_analysis:
             print(' forcing cosmo analysis, i.e. submitting jobs with only the last stage ')
+        elif args.dust_marginalization and (os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params_dust_marg.txt'))):
+            print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params_dust_marg.txt'))
+            continue
         elif os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
             print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
             continue
