@@ -527,7 +527,10 @@ def main():
                 if args.force_histogram:
                     continue
                 else:
-                    print('I am trying to do an histogram \n and this is a missing file: ', os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
+                    if args.dust_marginalization: 
+                        print('I am trying to do an histogram \n and this is a missing file: ', os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params_dust_marg.txt'))
+                    else:
+                        print('I am trying to do an histogram \n and this is a missing file: ', os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
                     sys.exit()
             if args.dust_marginalization: 
                 if args.AL_marginalization:
