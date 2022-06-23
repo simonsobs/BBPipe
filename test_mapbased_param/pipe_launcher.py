@@ -413,7 +413,7 @@ def main():
         elif args.dust_marginalization and (os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params_dust_marg.txt'))):
             print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params_dust_marg.txt'))
             continue
-        elif os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')):
+        elif (os.path.isfile(os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt')) and not args.dust_marginalization):
             print('this has already been computed! '+os.path.join(args.path_to_temp_files,'outputs_'+id_tag,'estimated_cosmo_params.txt'))
             continue
         elif args.force_histogram:
