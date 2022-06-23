@@ -591,7 +591,8 @@ def main():
         y = norm.pdf( bins, mu_r, sigma_r)
         print('(mu_r, sigma_r)=', (mu_r, sigma_r))
         ax[0].plot(bins, y*max(n_r)/max(y), 'r--', linewidth=2)
-        r_fit = mu_r#bins_m[np.argmax(n_r)]
+        r_fit = mu_r
+        r_fit2 = bins_m[np.argmax(n_r)]
 
         ax[0].axvline(x=r_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # find the positive error bar
@@ -600,13 +601,26 @@ def main():
         cum_pos = np.cumsum(plike_pos)
         cum_pos /= cum_pos[-1]
         sigma_r_pos = rs_pos[np.argmin(np.abs(cum_pos -  0.68))] - r_fit
+        rs_pos2 = bins_m[bins_m > r_fit2]
+        plike_pos2 = n_r[bins_m > r_fit2]
+        cum_pos2 = np.cumsum(plike_pos2)
+        cum_pos2 /= cum_pos2[-1]
+        sigma_r_pos2 = rs_pos2[np.argmin(np.abs(cum_pos2 -  0.68))] - r_fit2
         # find the positive error bar
         rs_neg = bins_m[bins_m < r_fit]
         plike_neg = n_r[bins_m < r_fit]
         cum_neg = np.cumsum(plike_neg[::-1])
         cum_neg /= cum_neg[-1]
         sigma_r_neg = r_fit - rs_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
-        ax[0].set_title('$r = $'+str(round(r_fit,5))+'$^{+'+str(round(sigma_r_pos,5))+'}_{-'+str(round(sigma_r_neg,5))+'}$', fontsize=10)
+        
+        rs_neg2 = bins_m[bins_m < r_fit2]
+        plike_neg2 = n_r[bins_m < r_fit2]
+        cum_neg2 = np.cumsum(plike_neg2[::-1])
+        cum_neg2 /= cum_neg2[-1]
+        sigma_r_neg2 = r_fit2 - rs_neg2[::-1][np.argmin(np.abs(cum_neg2 -  0.68))]
+
+        ax[0].set_title('$r = $'+str(round(r_fit,5))+'$^{+'+str(round(sigma_r_pos,5))+'}_{-'+str(round(sigma_r_neg,5))+'}$'+'\n'+\
+                         '$r = $'+str(round(r_fit2,5))+'$^{+'+str(round(sigma_r_pos2,5))+'}_{-'+str(round(sigma_r_neg2,5))+'}$', fontsize=10)
         # ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
         # ax[0,1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
