@@ -297,7 +297,7 @@ class BBREstimation(PipelineStage):
 
                 logL = 0.0
                 for b in range(len(ClBB_obs)):
-                    logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff/2*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
+                    logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
                 if logL!=logL: 
                     logL = 0.0
                 return logL
@@ -313,8 +313,8 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust, AL = p_loc 
                     else:
                         r_loc, A_dust = p_loc 
-                if 0.0>r_loc or 0.0>A_dust:
-                # if 0.0>A_dust:
+                # if 0.0>r_loc or 0.0>A_dust:
+                if 0.0>A_dust:
                     return -np.inf
                 else: return 0.0
                 # if -1e-3<=r_loc  and 
@@ -346,7 +346,8 @@ class BBREstimation(PipelineStage):
                     labels =  ["r", "\Lambda_d", "\Lambda_s"]
             else:
                 if self.config['AL_marginalization']:
-                    bounds = [(0.0, None), (0.0, None), (0.0, None)]
+                    # bounds = [(0.0, None), (0.0, None), (0.0, None)]
+                    bounds = [(None, None), (None, None), (None, None)]
                     p0 = [1.0, 0.1, 1.0]
                     names = ["r", "\Lambda_d", "A_L"]
                     labels =  ["r", "\Lambda_d", "A_L"]
@@ -377,11 +378,10 @@ class BBREstimation(PipelineStage):
             ndim, nwalkers = self.config['ndim'], self.config['nwalkers']
             p0 = [np.random.rand(ndim) for i in range(nwalkers)]
             sampler = emcee.EnsembleSampler(nwalkers, ndim, neg_likelihood_on_r_with_stat_and_sys_res)#, threads=4)
-            sampler.run_mcmc(p0, 5000)
+            sampler.run_mcmc(p0, 10000)
 
-            samples = sampler.chain[:, 500:, :].reshape((-1, ndim))
+            samples = sampler.chain[:, 1000:, :].reshape((-1, ndim))
             
-
             ######################################
             for p in ['r', 'Ad', 'AL']:
                 if p == 'r': ind = 0
