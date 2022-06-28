@@ -358,7 +358,7 @@ class BBREstimation(PipelineStage):
                     p0 = [1.0,0.1]
                     names = ["r", "\Lambda_d",]
                     labels =  ["r", "\Lambda_d"]
-
+            '''
             Astat_best_fit_with_stat_res =  scipy.optimize.minimize( pos_likelihood_on_r_with_stat_and_sys_res, \
                     p0,\
                     tol=1e-18, method='TNC', \
@@ -372,6 +372,7 @@ class BBREstimation(PipelineStage):
 
             ### making plot after optimization
             likelihood_on_r_with_stat_and_sys_res( Astat_best_fit_with_stat_res['x'], make_figure=True )
+            '''
 
             ### sampling
             import emcee
@@ -416,10 +417,11 @@ class BBREstimation(PipelineStage):
                     sigma_AL_fit = bins_av[i-1] - AL_fit
             ########################################
 
-
+            '''
             truths = []
             for i in range(len(Astat_best_fit_with_stat_res['x'])):
                 truths.append(Astat_best_fit_with_stat_res['x'][i])
+            '''
 
             ### plotting 
             import getdist
