@@ -236,13 +236,18 @@ class BBREstimation(PipelineStage):
                     # true noise-debiased BB spectrum
                     # which should correspond to primordial BB + lensing BB + foregrounds residuals
                     pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
-                                                label='observed BB - actual noise = tot BB + residuals', 
+                                                label='observed BB - actual noise\n = tot BB + residuals', 
                                                 color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                     # modeled noise-debiased BB spectrum
                     # which should correspond to primordial BB + lensing BB + foregrounds residuals
                     pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
-                                                label='modeled BB - modeled noise = tot BB + residuals', 
+                                                label='modeled BB - modeled noise\n = tot BB + residuals', 
                                                 color='k', linestyle='-', linewidth=2.0, alpha=0.8)
+
+                    pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                                                     - A_dust*Cl_dust_obs - Cl_BB_lens_bin[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])]), 
+                                                label='modeled BB - modeled noise\n - modeled dust - lensing', 
+                                                color='r', linestyle=':', linewidth=2.0, alpha=0.8)
 
                     # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cov_model), 
                                                 # label='observed BB - modeled BB', 
