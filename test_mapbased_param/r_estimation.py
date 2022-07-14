@@ -236,12 +236,12 @@ class BBREstimation(PipelineStage):
                     # true noise-debiased BB spectrum
                     # which should correspond to primordial BB + lensing BB + foregrounds residuals
                     pl.loglog( ell_v_loc, norm*(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
-                                                label='observed BB - actual noise\n = tot BB + residuals', 
+                                                label='observed BB - actual noise', 
                                                 color='red', linestyle='-', linewidth=2.0, alpha=0.8)
                     # modeled noise-debiased BB spectrum
                     # which should correspond to primordial BB + lensing BB + foregrounds residuals
-                    pl.loglog( ell_v_loc, norm*(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
-                                                label='modeled BB - modeled noise\n = tot BB + residuals', 
+                    pl.loglog( ell_v_loc, norm*(Cov_model - Cl_noise_bias[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]), 
+                                                label='modeled BB - modeled noise', 
                                                 color='k', linestyle='-', linewidth=2.0, alpha=0.8)
 
                     pl.loglog( ell_v_loc, norm*np.abs(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]- A_dust*Cl_dust_obs), 
@@ -441,32 +441,10 @@ class BBREstimation(PipelineStage):
                 # legend_labels=legend_labels, line_args=[{'lw':2,'color':color_loc[0],'alpha':0.7},{'lw':2,'color':color_loc[1],'alpha':0.7}])
             # pl.savefig('./test_sampling_r_Adust.pdf')
 
-            ##############
-            # print(samps.getInlineLatex('r',limit=1))
-            # print(samps.getMeans())
-            # print(samps.getVars())
-            # ##############
-            # r_fit = samps.getMeans()[names.index("r")]
-            # # r_fit2 = samps.getBestFit()[names.index("r")]
-            # Ad_fit = samps.getMeans()[names.index("\Lambda_d")]
-            # # Ad_fit2 = samps.getBestFit()[names.index("\Lambda_d")]
-            # sigma_r_fit = np.sqrt(samps.getVars()[names.index("r")])
-            # sigma_Ad_fit = np.sqrt(samps.getVars()[names.index("\Lambda_d")])
-
-            #### another way of estimating error bars ..... 
-            # print('samples = ', samples)
-            # print('w/ shape = ', samples.shape)
-            # print('nbins = ', 500)
-            # print('r_fit = ', r_fit)
-            # print('sigma_r_fit = ', sigma_r_fit)
-            # exit()
-            ########
-
-
             # draw vertical and horizontal lines to display the input and fitted values 
             # g.subplots[0,0].set_title('r = '+str(r_fit)+' $\pm$ '+str(sigma_r_fit)+' , $A_d$ = '+str(Ad_fit)+' $\pm$ '+str(sigma_Ad_fit), fontsize=12)
             for ax in g.subplots[:,0]:
-                ax.axvline(0.0, color='k', ls=':')
+                ax.axvline(self.config['r_input'], color='k', ls=':')
                 ax.axvline(r_fit, color='gray', ls='--')
             # for ax in [g.subplots[1,0]]:
                 # ax.axhline(Ad_fit, color='gray', ls='--')
