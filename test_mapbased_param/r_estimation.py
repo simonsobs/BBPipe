@@ -205,7 +205,7 @@ class BBREstimation(PipelineStage):
                     norm_eff = ell_v_loc_eff*(ell_v_loc_eff+1)/2/np.pi
                     # theory BB primordial
                     pl.loglog( ell_v_loc_eff, norm*bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])],
-                                                label='primordial BB, r = '+str(r_loc), linestyle='--', color='Purple', linewidth=2.0 )
+                                                label='primordial BB, r = '+str(round(r_loc,6)), linestyle='--', color='Purple', linewidth=2.0 )
                     # theory lensing
                     pl.loglog( ell_v_loc_eff, norm*Cl_BB_lens_bin[(ell_v_loc_eff>=self.config['lmin'])&(ell_v_loc_eff<=self.config['lmax'])],
                                                 label='lensing BB', linestyle='-', color='DarkOrange', linewidth=2.0)
@@ -245,7 +245,7 @@ class BBREstimation(PipelineStage):
                                                 color='k', linestyle='-', linewidth=2.0, alpha=0.8)
 
                     pl.loglog( ell_v_loc, norm*np.abs(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]- A_dust*Cl_dust_obs), 
-                                                label='| observed BB - actual noise\n - modeled dust |', 
+                                                 label='| observed BB - actual noise\n - modeled dust |', 
                                                 color='r', linestyle=':', linewidth=2.0, alpha=0.8)
 
                     # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cov_model), 
@@ -276,6 +276,7 @@ class BBREstimation(PipelineStage):
                     pl.ylabel('$D_\ell$ $[\mu K^2]$', fontsize=20)
                     pl.ylim([1e-6,2e-1])
 
+                    """
                     subs = [ 1.0, 2.0, 5.0 ]  
                     ax.xaxis.set_major_locator( ticker.LogLocator( subs=subs ) )
                     ax.xaxis.set_minor_locator( ticker.LogLocator( subs=subs ) ) #set the ticks position
@@ -285,7 +286,7 @@ class BBREstimation(PipelineStage):
                     ax.yaxis.set_minor_locator( ticker.LogLocator( subs=subs ) ) #set the ticks position
                     ax.yaxis.set_major_formatter( ticker.NullFormatter() )   # remove the major ticks
                     ax.yaxis.set_minor_formatter( ticker.FuncFormatter(ticks_format) )
-
+                    """
                     for tick in ax.xaxis.get_major_ticks():
                         tick.label.set_fontsize(16)
                     for tick in ax.xaxis.get_minor_ticks():
