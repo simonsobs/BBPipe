@@ -244,8 +244,8 @@ class BBREstimation(PipelineStage):
                                                 label='modeled BB - modeled noise\n = tot BB + residuals', 
                                                 color='k', linestyle='-', linewidth=2.0, alpha=0.8)
 
-                    pl.loglog( ell_v_loc, norm*np.abs(Cov_model - Cl_cov_clean[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]- A_dust*Cl_dust_obs), 
-                                                label='| modeled BB - modeled noise\n - modeled dust |', 
+                    pl.loglog( ell_v_loc, norm*np.abs(ClBB_obs - Cl_noise[1][(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]- A_dust*Cl_dust_obs), 
+                                                label='| observed BB - actual noise\n - modeled dust |', 
                                                 color='r', linestyle=':', linewidth=2.0, alpha=0.8)
 
                     # pl.loglog( ell_v_loc, norm*(ClBB_obs - Cov_model), 
