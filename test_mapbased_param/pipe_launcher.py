@@ -510,6 +510,7 @@ def main():
         sigma_Ad_all = []
         sigma_AL_all = []
         Cl_BB_all = []
+        Cl_BB_all_dust_marg = []
         W_av_all = []
         for dir_ in list_output_dir:
             try:
@@ -524,6 +525,7 @@ def main():
                 ell_v = Cl_clean[0]
                 ClBB_obs = Cl_clean[1][(ell_v>=lmin)&(ell_v<=lmax)]
                 Cl_noise = hp.read_cl(os.path.join(args.path_to_temp_files,dir_,'Cl_noise_bias.fits'))[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                if args.dust_marginalization: Cl_dust = Cl_clean[2][(ell_v>=lmin)&(ell_v<=lmax)]
                 W = np.load(os.path.join(args.path_to_temp_files,dir_,'Wpix.npy'), allow_pickle=True)
                 obs_pix = np.where(W[0,0,0]!=0)[0]
             except IOError:
@@ -552,7 +554,10 @@ def main():
 
             r_all.append(r_)
             sigma_all.append(sigma_)
-            Cl_BB_all.append(ClBB_obs-Cl_noise)
+            if args.dust_marginalization:
+                Cl_BB_all_dust_marg.append(ClBB_obs-Cl_noise-Ad_*Cl_dust)
+            else:
+                Cl_BB_all.append(ClBB_obs-Cl_noise)
             W_av_all.append(np.mean(W[0,:,0,obs_pix].T, axis=1))
 
             if len(spectral_parameters.shape) == 1:
@@ -571,6 +576,7 @@ def main():
         np.save(os.path.join(args.path_to_temp_files,'Bs_all_'+args.tag), Bs_all)
         np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_'+args.tag), Cl_BB_all)
         np.save(os.path.join(args.path_to_temp_files,'W_av_all_'+args.tag), W_av_all)
+        if args.dust_marginalization: np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_dust_marg_'+args.tag), Cl_BB_all_dust_marg)
 
         # if args.AL_marginalization:
             # f, ax = pl.subplots(2, 2, sharey=True)
