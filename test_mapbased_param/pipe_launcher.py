@@ -575,7 +575,9 @@ def main():
         np.save(os.path.join(args.path_to_temp_files,'Bs_all_'+args.tag), Bs_all)
         np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_'+args.tag), Cl_BB_all)
         np.save(os.path.join(args.path_to_temp_files,'W_av_all_'+args.tag), W_av_all)
-        if args.dust_marginalization: np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_dust_marg_'+args.tag), Cl_BB_all_dust_marg)
+        if args.dust_marginalization: 
+            np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_dust_marg_'+args.tag), Cl_BB_all_dust_marg)
+            np.save(os.path.join(args.path_to_temp_files,'Ad_all_'+args.tag), Ad_all)
 
         # if args.AL_marginalization:
             # f, ax = pl.subplots(2, 2, sharey=True)
@@ -627,8 +629,8 @@ def main():
         cum_neg2 /= cum_neg2[-1]
         sigma_r_neg2 = r_fit2 - rs_neg2[::-1][np.argmin(np.abs(cum_neg2 -  0.68))]
 
-        ax[0].set_title('$r = $'+str(round(r_fit,5))+'$^{+'+str(round(sigma_r_pos,5))+'}_{-'+str(round(sigma_r_neg,5))+'}$'+'\n'+\
-                         '$r = $'+str(round(r_fit2,5))+'$^{+'+str(round(sigma_r_pos2,5))+'}_{-'+str(round(sigma_r_neg2,5))+'}$', fontsize=10)
+        ax[0].set_title('$r = $'+str(round(r_fit,5))+'$^{+'+str(round(sigma_r_pos,5))+'}_{-'+str(round(sigma_r_neg,5))+'}$')#+'\n'+\
+                         # '$r = $'+str(round(r_fit2,5))+'$^{+'+str(round(sigma_r_pos2,5))+'}_{-'+str(round(sigma_r_neg2,5))+'}$', fontsize=10)
         # ax[0].axvline(x=np.mean(r_all), color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
         # ax[0,1].set_title('sigma(r), '+str(np.mean(sigma_all))+' +/- '+str(np.std(sigma_all)))
         # ax[0,1].hist( sigma_all, 20, color='DarkOrange', histtype='step', linewidth=4.0, alpha=0.8)
@@ -666,7 +668,6 @@ def main():
             for b in range(len(bins_AL_m)-1):
                 bins_AL_m[b] = (bins_AL[b+1]+bins_AL[b])/2
             # find the max 
-            print('n_AL = ', n_AL)
             (mu_AL, sigma_AL) = norm.fit(AL_all)
             print('(mu_AL, sigma_AL)=', (mu_AL, sigma_AL))
             y_AL = norm.pdf( bins_AL, mu_AL, sigma_AL)
@@ -682,15 +683,10 @@ def main():
             sigma_AL_pos = AL_pos[np.argmin(np.abs(cum_pos -  0.68))] - AL_fit
             # find the positive error bar
             AL_neg = bins_AL_m[bins_AL_m < AL_fit]
-            print('bins_AL_m=', bins_AL_m)
             print('AL_fit=', AL_fit)
-            print('AL_neg = ', AL_neg)
             plike_neg = n_AL[bins_AL_m < AL_fit]
-            print('plike_neg = ', plike_neg)
             cum_neg = np.cumsum(plike_neg[::-1])
-            print('cum_neg = ', cum_neg)
             cum_neg /= cum_neg[-1]
-            print('cum_neg = ', cum_neg)
             sigma_AL_neg = AL_fit - AL_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
             print('sigma_AL_neg = ', sigma_AL_neg)
 
@@ -718,6 +714,45 @@ def main():
         f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
         f_.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_Bd_Bs_'+args.tag+'.pdf'))
         pl.close()
+
+        if args.dust_marginalization:
+
+            f, ax = pl.subplots(1, 1)
+            n_Ad,bins_Ad,_ = ax.hist( Ad_all, 50, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)#, label='r = '+str(np.mean(AL_all))+' +/- '+str(np.std(AL_all)))
+            ax.axvline(x=0.0, color='r', linestyle='-', alpha=0.8, linewidth=2.0)
+            bins_Ad_m = np.zeros_like(n_Ad)
+            for b in range(len(bins_Ad_m)-1):
+                bins_Ad_m[b] = (bins_Ad[b+1]+bins_Ad[b])/2
+            # find the max 
+            (mu_Ad, sigma_Ad) = norm.fit(Ad_all)
+            print('(mu_Ad, sigma_Ad)=', (mu_Ad, sigma_Ad))
+            y_Ad = norm.pdf( bins_Ad, mu_Ad, sigma_Ad)
+            ax.plot(bins_Ad, y_Ad*max(n_Ad)/max(y_Ad), 'r--', linewidth=2)
+            Ad_fit = mu_Ad#bins_AL_m[np.argmax(n_AL[1:-1])+1]
+            print('Ad_fit=', Ad_fit)
+            ax.axvline(x=Ad_fit, color='DarkGray', linestyle='--', alpha=0.8, linewidth=2.0)
+            # find the positive error bar
+            Ad_pos = bins_Ad_m[bins_Ad_m > Ad_fit]
+            plike_pos = n_Ad[bins_Ad_m > Ad_fit]
+            cum_pos = np.cumsum(plike_pos)
+            cum_pos /= cum_pos[-1]
+            sigma_Ad_pos = Ad_pos[np.argmin(np.abs(cum_pos -  0.68))] - Ad_fit
+            # find the positive error bar
+            Ad_neg = bins_Ad_m[bins_Ad_m < Ad_fit]
+            print('Ad_fit=', Ad_fit)
+            plike_neg = n_Ad[bins_Ad_m < Ad_fit]
+            cum_neg = np.cumsum(plike_neg[::-1])
+            cum_neg /= cum_neg[-1]
+            sigma_Ad_neg = Ad_fit - Ad_neg[::-1][np.argmin(np.abs(cum_neg -  0.68))]
+            print('sigma_Ad_neg = ', sigma_Ad_neg)
+
+            ax.set_title('$A_d$ ='+str(round(Ad_fit,5))+'$^{+'+str(round(sigma_Ad_pos,5))+'}_{-'+str(round(sigma_Ad_neg,5))+'}$', fontsize=10)
+
+            ax.set_xlabel(r'$A_{\rm dust}$', fontsize=12)
+            ax.set_ylabel('# of sims', fontsize=12)
+
+
+            f.savefig(os.path.join(args.path_to_temp_files,'histogram_Adust_'+args.tag+'.pdf'))
 
     if mpi: barrier()
     
