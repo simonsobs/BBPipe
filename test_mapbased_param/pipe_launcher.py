@@ -556,8 +556,7 @@ def main():
             sigma_all.append(sigma_)
             if args.dust_marginalization:
                 Cl_BB_all_dust_marg.append(ClBB_obs-Cl_noise-Ad_*Cl_dust)
-            else:
-                Cl_BB_all.append(ClBB_obs-Cl_noise)
+            Cl_BB_all.append(ClBB_obs-Cl_noise)
             W_av_all.append(np.mean(W[0,:,0,obs_pix].T, axis=1))
 
             if len(spectral_parameters.shape) == 1:
