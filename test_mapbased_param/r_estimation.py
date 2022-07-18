@@ -323,9 +323,11 @@ class BBREstimation(PipelineStage):
                     else:
                         r_loc, A_dust = p_loc 
                 # if 0.0>r_loc or 0.0>A_dust:
-                if 0.0>A_dust:
-                    return -np.inf
-                else: return 0.0
+                # if 0.0>A_dust:
+                    # return -np.inf
+                # else: return 0.0
+
+                return 0.0
                 # if -1e-3<=r_loc  and 
                 # if 0.0<=A_dust:
                     # return 0.0
