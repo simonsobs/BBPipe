@@ -512,6 +512,7 @@ def main():
         Cl_BB_all = []
         Cl_BB_all_dust_marg = []
         W_av_all = []
+        W_std_all = []
         for dir_ in list_output_dir:
             try:
                 if args.dust_marginalization: 
@@ -558,6 +559,7 @@ def main():
                 Cl_BB_all_dust_marg.append(ClBB_obs-Cl_noise-Ad_*Cl_dust)
             Cl_BB_all.append(ClBB_obs-Cl_noise)
             W_av_all.append(np.mean(W[0,:,0,obs_pix].T, axis=1))
+            W_std_all.append(np.std(W[0,:,0,obs_pix].T, axis=1))
 
             if len(spectral_parameters.shape) == 1:
                 spectral_parameters = spectral_parameters[np.newaxis]
@@ -575,6 +577,7 @@ def main():
         np.save(os.path.join(args.path_to_temp_files,'Bs_all_'+args.tag), Bs_all)
         np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_'+args.tag), Cl_BB_all)
         np.save(os.path.join(args.path_to_temp_files,'W_av_all_'+args.tag), W_av_all)
+        np.save(os.path.join(args.path_to_temp_files,'W_std_all_'+args.tag), W_std_all)
         if args.dust_marginalization: 
             np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_dust_marg_'+args.tag), Cl_BB_all_dust_marg)
             np.save(os.path.join(args.path_to_temp_files,'Ad_all_'+args.tag), Ad_all)
@@ -739,7 +742,6 @@ def main():
             sigma_Ad_pos = Ad_pos[np.argmin(np.abs(cum_pos -  0.68))] - Ad_fit
             # find the positive error bar
             Ad_neg = bins_Ad_m[bins_Ad_m < Ad_fit]
-            print('Ad_fit=', Ad_fit)
             plike_neg = n_Ad[bins_Ad_m < Ad_fit]
             cum_neg = np.cumsum(plike_neg[::-1])
             cum_neg /= cum_neg[-1]
@@ -753,6 +755,7 @@ def main():
 
 
             f.savefig(os.path.join(args.path_to_temp_files,'histogram_Adust_'+args.tag+'.pdf'))
+
 
     if mpi: barrier()
     
