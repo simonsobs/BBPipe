@@ -187,7 +187,7 @@ class BBREstimation(PipelineStage):
                 if self.config['noise_option']!='no_noise': 
                     ClBB_model_other_than_prim_ += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
                 Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
-                                                + ClBB_model_other_than_prim_
+                                                + ClBB_model_other_than_prim_ + A_dust*Cl_dust_obs
 
                 if self.config['sync_marginalization']: 
                     Cov_model += A_sync*Cl_sync_obs
