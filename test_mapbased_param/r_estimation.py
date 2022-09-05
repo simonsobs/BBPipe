@@ -179,8 +179,15 @@ class BBREstimation(PipelineStage):
                         r_loc, A_dust = p_loc
                         AL = 1.0
 
-                Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
-                                            + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]
+                # Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                                            # + ClBB_model_other_than_prim_and_lens + A_dust*Cl_dust_obs + AL*Cl_BB_lens_bin[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]
+
+                Cl_BB_lens_bin_ = bins.bin_cell(AL_loc*Cl_BB_lens[:3*self.config['nside']])
+                ClBB_model_other_than_prim_ = Cl_BB_lens_bin_[(ell_v>=lmin)&(ell_v<=lmax)]
+                if self.config['noise_option']!='no_noise': 
+                    ClBB_model_other_than_prim_ += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
+                Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                                                + ClBB_model_other_than_prim_
 
                 if self.config['sync_marginalization']: 
                     Cov_model += A_sync*Cl_sync_obs
@@ -347,26 +354,26 @@ class BBREstimation(PipelineStage):
             if self.config['sync_marginalization']:
                 if self.config['AL_marginalization']:
                     bounds = [(0.0, None), (0.0, None), (0.0, None), (0.0, None)]
-                    p0 = [1.0,0.1,0.1, 1.0]
+                    # p0 = [1.0,0.1,0.1, 1.0]
                     names = ["r", "\Lambda_d", "\Lambda_s", "A_L"]
                     labels =  ["r", "\Lambda_d", "\Lambda_s", "A_L"]
                 else:
                     bounds = [(0.0, None), (0.0, None), (0.0, None)]
-                    p0 = [1.0,0.1,0.1]
+                    # p0 = [1.0,0.1,0.1]
                     names = ["r", "\Lambda_d", "\Lambda_s"]
                     labels =  ["r", "\Lambda_d", "\Lambda_s"]
             else:
                 if self.config['AL_marginalization']:
                     # bounds = [(0.0, None), (0.0, None), (0.0, None)]
                     bounds = [(None, None), (None, None), (None, None)]
-                    p0 = [1.0, 0.1, 1.0]
+                    # p0 = [1.0, 0.1, 1.0]
                     names = ["r", "\Lambda_d", "A_L"]
                     labels =  ["r", "\Lambda_d", "A_L"]
                 else:
                     bounds = [(0.0, None), (0.0, None)]
                     # bounds = [(-0.01, None), (0.0, None)]
                     # bounds = [(None, None), (None, None)]
-                    p0 = [1.0,0.1]
+                    # p0 = [1.0,0.1]
                     names = ["r", "\Lambda_d",]
                     labels =  ["r", "\Lambda_d"]
             '''
