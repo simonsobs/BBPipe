@@ -186,7 +186,7 @@ class BBREstimation(PipelineStage):
                 ClBB_model_other_than_prim_ = Cl_BB_lens_bin_[(ell_v>=lmin)&(ell_v<=lmax)]
                 if self.config['noise_option']!='no_noise': 
                     ClBB_model_other_than_prim_ += Cl_noise_bias[1][(ell_v>=lmin)&(ell_v<=lmax)]
-                Cov_model = bins.bin_cell(Cl_BB_prim[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
+                Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*self.config['nside']]*r_loc)[(ell_v>=self.config['lmin'])&(ell_v<=self.config['lmax'])]\
                                                 + ClBB_model_other_than_prim_ + A_dust*Cl_dust_obs
 
                 if self.config['sync_marginalization']: 
