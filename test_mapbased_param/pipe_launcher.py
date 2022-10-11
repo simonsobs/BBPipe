@@ -798,8 +798,12 @@ def main():
             # for j in range(ax.shape[1]):
             # ax[i].set_xscale('log')
 
-        f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
-        f_.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_Bd_Bs_'+args.tag+'.pdf'))
+        if args.dust_marginalization:
+            f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'_dust_marginalization.pdf'))
+            f_.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_Bd_Bs_'+args.tag+'_dust_marginalization.pdf'))
+        else:
+            f.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_r_and_sigma_'+args.tag+'.pdf'))
+            f_.savefig(os.path.join(args.path_to_temp_files,'histogram_measured_Bd_Bs_'+args.tag+'.pdf'))
         pl.close()
 
         if args.dust_marginalization:
