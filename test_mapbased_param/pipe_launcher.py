@@ -14,6 +14,7 @@ import numpy as np
 import pylab as pl
 import sys
 import healpy as hp
+from .Cl_estimation import binning_definition
 
 ######################################################################################################
 # MPI VARIABLES
@@ -511,6 +512,8 @@ def main():
         sigma_AL_all = []
         Cl_BB_all = []
         Cl_BB_all_dust_marg = []
+        Nl_BB_all = []
+        Cl_BB_all_dust = []
         W_av_all = []
         W_std_all = []
         for dir_ in list_output_dir:
@@ -538,6 +541,7 @@ def main():
                     else:
                         print('I am trying to do an histogram \n and this is a missing file: ', os.path.join(args.path_to_temp_files,dir_,'estimated_cosmo_params.txt'))
                     sys.exit()
+
             if args.dust_marginalization: 
                 if args.AL_marginalization:
                     r_, Ad_, AL_, sigma_, sigma_Ad_, sigma_AL_ = estimated_parameters
@@ -557,7 +561,9 @@ def main():
             sigma_all.append(sigma_)
             if args.dust_marginalization:
                 Cl_BB_all_dust_marg.append(ClBB_obs-Cl_noise-Ad_*Cl_dust)
+                Cl_BB_all_dust.append(Ad_*Cl_dust)
             Cl_BB_all.append(ClBB_obs-Cl_noise)
+            Nl_BB_all.append(Cl_noise)
             W_av_all.append(np.mean(W[0,:,0,obs_pix].T, axis=1))
             W_std_all.append(np.std(W[0,:,0,obs_pix].T, axis=1))
 
@@ -576,11 +582,53 @@ def main():
         np.save(os.path.join(args.path_to_temp_files,'Bd_all_'+args.tag), Bd_all)
         np.save(os.path.join(args.path_to_temp_files,'Bs_all_'+args.tag), Bs_all)
         np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_'+args.tag), Cl_BB_all)
+        np.save(os.path.join(args.path_to_temp_files,'Nl_BB_all_'+args.tag), Nl_BB_all)
+        np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_dust_'+args.tag), Cl_BB_all_dust)
         np.save(os.path.join(args.path_to_temp_files,'W_av_all_'+args.tag), W_av_all)
         np.save(os.path.join(args.path_to_temp_files,'W_std_all_'+args.tag), W_std_all)
         if args.dust_marginalization: 
             np.save(os.path.join(args.path_to_temp_files,'Cl_BB_all_dust_marg_'+args.tag), Cl_BB_all_dust_marg)
             np.save(os.path.join(args.path_to_temp_files,'Ad_all_'+args.tag), Ad_all)
+        
+
+        #################################
+        
+        Cl_BB_prim_r1 = hp.read_cl(args.path_to_ClBBprim)[2]
+        Cl_BB_lens = hp.read_cl(args.path_to_ClBBlens)[2]
+
+        bins = binning_definition(args.nside, lmin=args.lmin, lmax=args.lmax, nlb=args.nlb, custom_bins=args.custom_bins)
+
+        def average_likelihood(p_loc, bins=bins):
+            if args.sync_marginalization:
+                if args.AL_marginalization:
+                    r_loc, A_dust, A_sync, AL = p_loc 
+                else:
+                    r_loc, A_dust, A_sync = p_loc 
+                    AL = 1.0
+            else:
+                if args.AL_marginalization:
+                    r_loc, A_dust, AL = p_loc
+                else:
+                    r_loc, A_dust = p_loc
+                    AL = 1.0
+            Cl_BB_lens_bin_ = bins.bin_cell(Cl_BB_lens[:3*args.nside])
+            ClBB_model_other_than_prim_ = Cl_BB_lens_bin_[(ell_v>=args.lmin)&(ell_v<=args.lmax)]
+            ClBB_model_other_than_prim_ += np.mean(Nl_BB_all)
+            Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*args.nside]*r_loc)[(ell_v>=args.lmin)&(ell_v<=args.lmax)]\
+                                            + ClBB_model_other_than_prim_ + np.mean(Cl_BB_all_dust)
+            logL = 0.0
+            for b in range(len(ClBB_obs)):
+                logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
+            if logL!=logL: 
+                logL = 0.0
+            return logL
+
+        logL_v = [average_likelihood([r_, 1.0, 1.0]) for r_ in np.linspace(0.0,0.1,num=1000)]
+
+        breakpoint()
+
+
+        #################################
 
         # if args.AL_marginalization:
             # f, ax = pl.subplots(2, 2, sharey=True)
