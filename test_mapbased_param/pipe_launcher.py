@@ -621,7 +621,7 @@ def main():
         Cl_BB_lens = hp.read_cl(args.path_to_ClBBlens)[2]
         bins = binning_definition(args.nside, lmin=args.lmin, lmax=args.lmax, nlb=args.nlb, custom_bins=args.custom_bins)
 
-        def average_likelihood(p_loc, bins=bins):
+        def average_likelihood(p_loc, bins=bins, make_figure=False):
             if args.sync_marginalization:
                 if args.AL_marginalization:
                     r_loc, A_dust, A_sync, AL = p_loc 
@@ -636,10 +636,18 @@ def main():
                     AL = 1.0
             Cl_BB_lens_bin_ = bins.bin_cell(Cl_BB_lens[:3*args.nside])
             ClBB_model_other_than_prim_ = Cl_BB_lens_bin_[(ell_v>=args.lmin)&(ell_v<=args.lmax)]
-            ClBB_model_other_than_prim_ += np.mean(Nl_BB_all)
+            ClBB_model_other_than_prim_ += np.mean(Nl_BB_all, axis=0)
             Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*args.nside]*r_loc)[(ell_v>=args.lmin)&(ell_v<=args.lmax)]\
                                             + ClBB_model_other_than_prim_ + np.mean(Cl_BB_all_dust)
-            ClBB_obs = np.mean(Cl_BB_all) + np.mean(Nl_BB_all)
+            ClBB_obs = np.mean(Cl_BB_all + Nl_BB_all, axis=0)
+
+            if make_figure:
+                pl.figure()
+                pl.loglog(bins.get_ell_list(b), ClBB_obs, 'k-')
+                pl.loglog(bins.get_ell_list(b), Cov_model, 'r--')
+                pl.savefig(os.path.join(args.path_to_temp_files,'test_average_spectra_best_fit_'+args.tag+'.pdf'))
+                pl.close()
+
             logL = 0.0
             for b in range(len(ClBB_obs)):
                 logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
@@ -650,8 +658,8 @@ def main():
         rv = np.linspace(-0.02,0.02,num=1000)
         logL_v = -np.array([average_likelihood([r_, 1.0, 1.0]) for r_ in rv])
         logL_v += np.min(logL_v)
-        print('logL_v = ', logL_v)
         L_v = np.exp(logL_v)
+        average_likelihood([0.0, 1.0, 1.0], make_figure=True)
 
 
         #################################
