@@ -647,8 +647,8 @@ def main():
             return logL
 
         rv = np.linspace(-0.02,0.02,num=1000)
-        logL_v = np.array([average_likelihood([r_, 1.0, 1.0]) for r_ in rv])
-        logL_v -= np.min(logL_v)
+        logL_v = -np.array([average_likelihood([r_, 1.0, 1.0]) for r_ in rv])
+        logL_v += np.min(logL_v)
         print('logL_v = ', logL_v)
         L_v = np.exp(logL_v)
 
