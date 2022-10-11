@@ -665,7 +665,7 @@ def main():
         logL_v = -np.array([average_likelihood([r_, 1.0, 1.0]) for r_ in rv])
         logL_v += np.min(logL_v)
         L_v = np.exp(logL_v)
-        average_likelihood([0.001, 1.0, 0.5], make_figure=True)
+        average_likelihood([0.001, 1.0, 0.1], make_figure=True)
 
 
         #################################
