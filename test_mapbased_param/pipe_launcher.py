@@ -14,7 +14,6 @@ import numpy as np
 import pylab as pl
 import sys
 import healpy as hp
-from Cl_estimation import binning_definition
 
 ######################################################################################################
 # MPI VARIABLES
@@ -38,6 +37,26 @@ rand_string = ''*10
 if rank==0:
     rand_string = ''.join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10) )
 if mpi: rand_string = comm.bcast( rand_string, root=0 )
+
+
+########################################
+def binning_definition(nside, lmin=2, lmax=200, nlb=[], custom_bins=False):
+    if custom_bins:
+        ells=np.arange(3*nside,dtype='int32') #Array of multipoles
+        weights=(1.0/nlb)*np.ones_like(ells) #Array of weights
+        bpws=-1+np.zeros_like(ells) #Array of bandpower indices
+        i=0;
+        while (nlb+1)*(i+1)+lmin<lmax :
+            bpws[(nlb+1)*i+lmin:(nlb+1)*(i+1)+lmin]=i
+            i+=1 
+        ##### adding a trash bin 2<=ell<=lmin
+        # bpws[lmin:(nlb+1)*i+lmin] += 1
+        # bpws[2:lmin] = 0
+        # weights[2:lmin]= 1.0/(lmin-2-1)
+        b=nmt.NmtBin(nside,bpws=bpws, ells=ells, weights=weights)
+    else:
+        b=nmt.NmtBin(nside, nlb=int(1./self.config['fsky']))
+    return b
 
 
 ######################################################################################################
