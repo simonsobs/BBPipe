@@ -122,6 +122,7 @@ def grabargs():
     parser.add_argument("--noise_cov_beam_correction", action='store_true', help = "correct the noise covariance to deal with the common beam convolution", default=False)
     parser.add_argument("--external_noise_sims_for_noise_bias", action='store_true', help = "use external noise simulations to estimate the noise bias angular spectrum", default=False)
     parser.add_argument("--bypass_noise_cov", action='store_true', help = "use the exact input noise simulation to estimate the noise covariance", default=False)
+    parser.add_argument("--lmin", type=int, help = "lmin for the harmonic analysis", default=30)
     parser.add_argument("--lmax", type=int, help = "lmax for the harmonic analysis", default=1024)
     parser.add_argument("--exact_noise_bias", action='store_true', help = "use the exact same noise realization to estimate the noise bias", default=False)
     parser.add_argument("--qos", type=str, help = "type of queue at NERSC, shared, regular, debug, etc.", default="shared")
@@ -214,7 +215,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 pixel_based_noise_cov=False, highpass_filtering=False, harmonic_comp_sep=False,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
                 Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
-                external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmax=1024, 
+                external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmin=30, lmax=1024, 
                 exact_noise_bias=False, cut_on_hits=0.9, Nsims_bias_Nl=None):
     
     if Nsims_bias_Nl is None: Nsims_bias_Nl=Nsims_bias
@@ -232,7 +233,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
 global:
     frequencies: '''+str(frequencies)+'''
     nside: '''+str(nside)+'''
-    lmin: 30
+    lmin: '''+str(lmin)+'''
     lmax: '''+str(lmax)+'''
     nlb: '''+str(nlb)+'''
     custom_bins: True
