@@ -644,6 +644,8 @@ def main():
             if make_figure:
                 pl.figure()
                 pl.loglog(np.mean(Cl_BB_all, axis=0), 'k-', label='ClBB')
+                pl.loglog(np.mean(Cl_BB_all, axis=0)+np.std(Cl_BB_all), 'k:', label='ClBB+std')
+                pl.loglog(np.mean(Cl_BB_all, axis=0)-np.std(Cl_BB_all), 'k:', label='ClBB-std')
                 pl.loglog(np.mean(Nl_BB_all, axis=0), 'k--', label='NlBB')
                 pl.loglog(bins.bin_cell(Cl_BB_prim_r1[:3*args.nside]*r_loc)[(ell_v>=args.lmin)&(ell_v<=args.lmax)], 'r:', label='prim BB')
                 pl.loglog(ClBB_model_other_than_prim_, 'r--', label='lensing + noise')
@@ -663,7 +665,7 @@ def main():
         logL_v = -np.array([average_likelihood([r_, 1.0, 1.0]) for r_ in rv])
         logL_v += np.min(logL_v)
         L_v = np.exp(logL_v)
-        average_likelihood([0.0, 1.0, 1.0], make_figure=True)
+        average_likelihood([0.001, 1.0, 1.0], make_figure=True)
 
 
         #################################
