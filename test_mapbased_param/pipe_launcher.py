@@ -634,7 +634,7 @@ def main():
                 else:
                     r_loc, A_dust = p_loc
                     AL = 1.0
-            Cl_BB_lens_bin_ = bins.bin_cell(Cl_BB_lens[:3*args.nside])
+            Cl_BB_lens_bin_ = bins.bin_cell(AL*Cl_BB_lens[:3*args.nside])
             ClBB_model_other_than_prim_ = Cl_BB_lens_bin_[(ell_v>=args.lmin)&(ell_v<=args.lmax)]
             ClBB_model_other_than_prim_ += np.mean(Nl_BB_all, axis=0)
             Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*args.nside]*r_loc)[(ell_v>=args.lmin)&(ell_v<=args.lmax)]\
@@ -665,7 +665,7 @@ def main():
         logL_v = -np.array([average_likelihood([r_, 1.0, 1.0]) for r_ in rv])
         logL_v += np.min(logL_v)
         L_v = np.exp(logL_v)
-        average_likelihood([0.001, 1.0, 1.0], make_figure=True)
+        average_likelihood([0.001, 1.0, 0.5], make_figure=True)
 
 
         #################################
