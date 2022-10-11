@@ -643,8 +643,12 @@ def main():
 
             if make_figure:
                 pl.figure()
-                pl.loglog(ClBB_obs, 'k-')
-                pl.loglog(Cov_model, 'r--')
+                pl.loglog(np.mean(Cl_BB_all, axis=0), 'k-', label='ClBB')
+                pl.loglog(np.mean(Nl_BB_all, axis=0), 'k--', label='NlBB')
+                pl.loglog(bins.bin_cell(Cl_BB_prim_r1[:3*args.nside]*r_loc)[(ell_v>=args.lmin)&(ell_v<=args.lmax)], 'r:', label='prim BB')
+                pl.loglog(ClBB_model_other_than_prim_, 'r--', label='lensing + noise')
+                pl.loglog(np.mean(Cl_BB_all_dust), 'r-', label='fitted dust')
+                pl.legend()
                 pl.savefig(os.path.join(args.path_to_temp_files,'test_average_spectra_best_fit_'+args.tag+'.pdf'))
                 pl.close()
 
