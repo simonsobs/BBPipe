@@ -127,6 +127,7 @@ def grabargs():
     parser.add_argument("--exact_noise_bias", action='store_true', help = "use the exact same noise realization to estimate the noise bias", default=False)
     parser.add_argument("--qos", type=str, help = "type of queue at NERSC, shared, regular, debug, etc.", default="shared")
     parser.add_argument("--force_cosmo_analysis", action='store_true', help = "even if previous cosmo analysis has been performed, this forces the submission of extra cosmo analysis", default=False)
+    parser.add_argument("--custom_bins", action='store_true', help = "Custom multipole bins", default=True)
 
     args = parser.parse_args()
 
@@ -216,7 +217,7 @@ def generate_config_yml(id_tag, sensitivity_mode=1, knee_mode=1, ny_lf=1.0,
                 common_beam_correction=0.0, effective_beam_correction=False, combined_directory='',
                 Nico_noise_combination=False, isim=0, noise_cov_beam_correction=False,
                 external_noise_sims_for_noise_bias=False, bypass_noise_cov=False, lmin=30, lmax=1024, 
-                exact_noise_bias=False, cut_on_hits=0.9, Nsims_bias_Nl=None):
+                exact_noise_bias=False, cut_on_hits=0.9, Nsims_bias_Nl=None, custom_bins=True):
     
     if Nsims_bias_Nl is None: Nsims_bias_Nl=Nsims_bias
 
@@ -236,7 +237,7 @@ global:
     lmin: '''+str(lmin)+'''
     lmax: '''+str(lmax)+'''
     nlb: '''+str(nlb)+'''
-    custom_bins: True
+    custom_bins: '''+str(custom_bins)+'''
     noise_option: \''''+str(noise_option)+'''\'
     include_stat_res: '''+str(include_stat_res)+'''
     r_input: '''+str(r_input)+'''
