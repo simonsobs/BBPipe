@@ -596,6 +596,9 @@ def main():
                 Bd_all.append(spectral_parameters[i,0])
                 Bs_all.append(spectral_parameters[i,1])
 
+            fsky_eff = np.loadtxt(os.path.join(args.path_to_temp_files,dir_,'fsky_eff.txt')) 
+            print('fsky_eff = ', fsky_eff)
+
         # saving all products 
         np.save(os.path.join(args.path_to_temp_files,'r_all_'+args.tag), r_all)
         np.save(os.path.join(args.path_to_temp_files,'sigma_all_'+args.tag), sigma_all)
@@ -617,7 +620,6 @@ def main():
         
         Cl_BB_prim_r1 = hp.read_cl(args.path_to_ClBBprim)[2]
         Cl_BB_lens = hp.read_cl(args.path_to_ClBBlens)[2]
-
         bins = binning_definition(args.nside, lmin=args.lmin, lmax=args.lmax, nlb=args.nlb, custom_bins=args.custom_bins)
 
         def average_likelihood(p_loc, bins=bins):
