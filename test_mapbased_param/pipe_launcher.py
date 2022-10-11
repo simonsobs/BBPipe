@@ -643,8 +643,8 @@ def main():
 
             if make_figure:
                 pl.figure()
-                pl.loglog(bins.get_ell_list(b), ClBB_obs, 'k-')
-                pl.loglog(bins.get_ell_list(b), Cov_model, 'r--')
+                pl.loglog(ClBB_obs, 'k-')
+                pl.loglog(Cov_model, 'r--')
                 pl.savefig(os.path.join(args.path_to_temp_files,'test_average_spectra_best_fit_'+args.tag+'.pdf'))
                 pl.close()
 
