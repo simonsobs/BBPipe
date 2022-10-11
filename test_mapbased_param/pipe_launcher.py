@@ -14,7 +14,7 @@ import numpy as np
 import pylab as pl
 import sys
 import healpy as hp
-from .Cl_estimation import binning_definition
+from Cl_estimation import binning_definition
 
 ######################################################################################################
 # MPI VARIABLES
