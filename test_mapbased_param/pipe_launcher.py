@@ -639,6 +639,7 @@ def main():
             ClBB_model_other_than_prim_ += np.mean(Nl_BB_all)
             Cov_model = bins.bin_cell(Cl_BB_prim_r1[:3*args.nside]*r_loc)[(ell_v>=args.lmin)&(ell_v<=args.lmax)]\
                                             + ClBB_model_other_than_prim_ + np.mean(Cl_BB_all_dust)
+            ClBB_obs = np.mean(Cl_BB_all) + np.mean(Nl_BB_all)
             logL = 0.0
             for b in range(len(ClBB_obs)):
                 logL -= np.sum((2*bins.get_ell_list(b)+1))*fsky_eff*( np.log( Cov_model[b] ) + ClBB_obs[b]/Cov_model[b] )
