@@ -647,9 +647,10 @@ def main():
                 logL = 0.0
             return logL
 
-        logL_v = [average_likelihood([r_, 1.0, 1.0]) for r_ in np.linspace(0.0,0.1,num=1000)]
-
-        breakpoint()
+        rv = np.linspace(0.0,0.1,num=1000)
+        logL_v = [average_likelihood([r_, 1.0, 1.0]) for r_ in rv]
+        logL_v -= np.min(logL_v)
+        L_v = np.exp(-logL_v)
 
 
         #################################
@@ -665,7 +666,8 @@ def main():
         # ax[0].set_title('r = '+str(round(np.mean(r_all),5))+' +/- '+str(round(np.std(r_all),5)), fontsize=10)
         n_r,bins,_ = ax[0].hist( r_all, 50, color='DarkGray', histtype='step', linewidth=3.0, alpha=0.8)
         ax[0].axvline(x=0.0, color='r', linestyle='-', alpha=0.8, linewidth=2.0)
-
+        ax[0].plot(rv, L_v, color='DarkOrange', linewidth=2.0, alpha=0.7)
+        
         bins_m = np.zeros_like(n_r)
         for b in range(len(bins_m)-1):
             bins_m[b] = (bins[b+1]+bins[b])/2
