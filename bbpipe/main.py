@@ -26,7 +26,7 @@ def run(pipeline_config_filename, dry_run=False, pycmd='python3'):
     init_time_ms = int(time.time()*1e3)
 
     # YAML input file.
-    pipe_config = yaml.load(open(pipeline_config_filename))
+    pipe_config = yaml.safe_load(open(pipeline_config_filename))
     output_dir = pipe_config['output_dir']
     os.makedirs(output_dir, exist_ok=True)
 
