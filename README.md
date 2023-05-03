@@ -2,6 +2,14 @@ Building Beautiful pipelines - A pipeline constructor
 ----------------------------
 A framework for creating pipelines for the Simons Observatory. Documentation is still under development, but details about how to use this package to create new pipelines can be found below and in [CONTRIBUTING.md](CONTRIBUTING.md). 
 
+## Dependencies
+- python<=3.9.x
+- numpy
+- healpy
+- ipython_genutils
+- pyyaml
+- parsl<0.6.0
+
 ## Installation
 To install `BBPipe`, just clone this repository and run
 ```bash
