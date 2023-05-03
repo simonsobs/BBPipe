@@ -11,7 +11,7 @@ python setup.py install
 
 Once installed, you can test the installation by running it on the current [test power-spectrum pipeline](bbpower_test) (mostly made out of placeholders). To do so, type:
 ```bash
-bbpipe test/test.yml
+bbpipe test/test_ini.yml
 ```
 
 ## Creating a pipeline
