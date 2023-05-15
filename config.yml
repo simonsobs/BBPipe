@@ -1,0 +1,39 @@
+global:
+    nside: 1024
+   
+BB_HILC:
+    verbose: True
+    Nsimul: 7
+
+BB_Cl_Process:
+    pol: True
+    verbose: True
+    Nsimul: 7
+    beam: 10.0
+
+BB_Likelihood:
+    # Sampler type (choose 'emcee', 'maximum_likelihood', 'single_point' or 'timing')
+    sampler: 'emcee'
+    # If you chose emcee:
+    # Number of walkers
+    nwalkers: 128
+    # Number of iterations per walker
+    n_iters: 1000
+    # Likelihood type (choose 'chi2' or 'h&l')
+    likelihood_type: 'chi2'
+    # Which polarization channels do you want to include?
+    pol_channels: ['B']
+    # Scale cuts (will apply to all frequencies)
+    #l_min: 30
+    #l_max: 300
+    
+    # CMB model
+    cmb_model:
+        cmb_templates: ["./inputs/camb_23262367_lensedtotcls_r0.dat",
+                        "./inputs/camb_89906757_totcls_r1.dat"]
+        params:
+            # tensor-to-scalar ratio
+            # See below for the meaning of the different elements in the list.
+            r_tensor: ['r_tensor', 'tophat', [0.00, 0.00, "inf"]]
+            # Lensing amplitude
+            A_lens: ['A_lens', 'tophat', [0.00,1.0,2.00]]
